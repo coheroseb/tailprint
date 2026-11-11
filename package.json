@@ -1,6 +1,6 @@
 {
   "name": "tailprint",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tailwind-Native Render & PDF Engine + AI Web Scraper (tailprint.com)",
   "type": "module",
   "main": "dist/server.js",
