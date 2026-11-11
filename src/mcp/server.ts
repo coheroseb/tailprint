@@ -2,6 +2,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { browserService } from '../services/browser.js';
 import { scraperService } from '../services/scraper.js';
+import { qrService } from '../services/qr.js';
+import { chartService } from '../services/chart.js';
+import { mockupService } from '../services/mockup.js';
+import { pdfStamperService } from '../services/pdfStamper.js';
 import { TEMPLATES } from '../config/templates.js';
 
 export interface McpServerOptions {
@@ -366,6 +370,231 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             {
               type: 'text',
               text: `Error rendering template "${template_id}": ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 7: render_chart (High-DPI Data Visualizations)
+  server.tool(
+    'render_chart',
+    'Renders high-DPI, interactive-grade data visualizations (Bar, Line, Pie, Doughnut, PolarArea, Radar) using Chart.js inside headless Chromium. In compatible MCP clients (Claude Desktop, Cursor), the chart displays inline directly in chat.',
+    {
+      type: z.enum(['bar', 'line', 'pie', 'doughnut', 'radar', 'polarArea']).describe('Chart type'),
+      labels: z.array(z.string()).describe('Array of category or time labels (e.g. ["Jan", "Feb", "Mar", "Apr"])'),
+      datasets: z.array(z.object({
+        label: z.string().describe('Dataset name'),
+        data: z.array(z.number()).describe('Array of numeric values matching the labels'),
+        backgroundColor: z.union([z.string(), z.array(z.string())]).optional().describe('Color hex or array of color hexes'),
+        borderColor: z.union([z.string(), z.array(z.string())]).optional().describe('Border or line color hex'),
+        borderWidth: z.number().optional().describe('Border line width in pixels'),
+        fill: z.boolean().optional().describe('Whether to fill the area under the line (for line charts)'),
+      })).describe('Array of datasets to plot'),
+      title: z.string().optional().describe('Optional chart headline/title'),
+      theme: z.enum(['dark', 'light']).optional().default('dark').describe('Color theme (default: dark)'),
+      width: z.number().optional().default(1000).describe('Chart image width in pixels (default: 1000)'),
+      height: z.number().optional().default(600).describe('Chart image height in pixels (default: 600)'),
+    },
+    async ({ type, labels, datasets, title, theme, width, height }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('render_chart');
+        }
+
+        const buffer = await chartService.renderChart({
+          type,
+          data: { labels, datasets },
+          title,
+          theme: theme || 'dark',
+          width: width || 1000,
+          height: height || 600,
+        });
+
+        const base64Img = buffer.toString('base64');
+        const sizeKb = (buffer.byteLength / 1024).toFixed(1);
+
+        return {
+          content: [
+            {
+              type: 'image',
+              data: base64Img,
+              mimeType: 'image/png',
+            },
+            {
+              type: 'text',
+              text: `✅ ${type.toUpperCase()} Chart successfully generated (${width || 1000}x${height || 600}, ${sizeKb} KB).\n\nBase64 Data URI:\ndata:image/png;base64,${base64Img}`,
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error rendering chart: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 8: generate_qr (Scannable QR Codes)
+  server.tool(
+    'generate_qr',
+    'Generates mathematically verified, high-resolution scannable QR codes for URLs, WiFi credentials, vCard contact cards, or payment links. Returns an inline image content block and base64 PNG data URI.',
+    {
+      text: z.string().describe('Content to encode in the QR code (e.g. "https://tailprint.com", "WIFI:S:MyNetwork;T:WPA;P:Secret;;", "TEL:+4512345678")'),
+      size: z.number().optional().default(512).describe('QR code width/height in pixels (default: 512)'),
+      dark_color: z.string().optional().default('#000000').describe('Hex color for dark modules (default: "#000000")'),
+      light_color: z.string().optional().default('#ffffff').describe('Hex color for light background (default: "#ffffff")'),
+      error_correction: z.enum(['L', 'M', 'Q', 'H']).optional().default('M').describe('Error correction level (L: 7%, M: 15%, Q: 25%, H: 30%)'),
+    },
+    async ({ text, size, dark_color, light_color, error_correction }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('generate_qr');
+        }
+
+        const buffer = await qrService.generatePngBuffer({
+          text,
+          size: size || 512,
+          darkColor: dark_color || '#000000',
+          lightColor: light_color || '#ffffff',
+          errorCorrection: error_correction || 'M',
+        });
+
+        const base64Img = buffer.toString('base64');
+        const sizeKb = (buffer.byteLength / 1024).toFixed(1);
+
+        return {
+          content: [
+            {
+              type: 'image',
+              data: base64Img,
+              mimeType: 'image/png',
+            },
+            {
+              type: 'text',
+              text: `✅ Verified Scannable QR Code generated (${size || 512}x${size || 512}, ${sizeKb} KB) for: "${text}".\n\nBase64 Data URI:\ndata:image/png;base64,${base64Img}`,
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error generating QR code: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 9: render_device_mockup (Multi-Device Responsive Mockup)
+  server.tool(
+    'render_device_mockup',
+    'Captures any public website URL and renders it into a photorealistic MacBook Pro + floating iPhone multi-device presentation mockup on a studio gradient. Returns an inline image content block and base64 PNG.',
+    {
+      url: z.string().url().describe('Public website URL to capture as responsive mockup (e.g. "https://stripe.com" or "https://tailprint.com")'),
+      title: z.string().optional().describe('Optional title label on the mockup header'),
+      delay_ms: z.number().optional().default(500).describe('Delay in milliseconds before capturing screenshots to allow fonts/animations to load (max 5000)'),
+    },
+    async ({ url, title, delay_ms }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('render_device_mockup');
+        }
+
+        const buffer = await mockupService.renderDeviceMockup({
+          url,
+          title,
+          delay_ms: Math.min(delay_ms || 500, 5000),
+        });
+
+        const base64Img = buffer.toString('base64');
+        const sizeKb = (buffer.byteLength / 1024).toFixed(1);
+
+        return {
+          content: [
+            {
+              type: 'image',
+              data: base64Img,
+              mimeType: 'image/png',
+            },
+            {
+              type: 'text',
+              text: `✅ Responsive Device Mockup successfully rendered (1600x1000, ${sizeKb} KB) for "${url}".\n\nBase64 Data URI:\ndata:image/png;base64,${base64Img}`,
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error rendering device mockup for "${url}": ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 10: stamp_pdf (PDF Watermark & Status Overlay)
+  server.tool(
+    'stamp_pdf',
+    'Applies a diagonal semi-transparent watermark or status stamp (e.g. "CONFIDENTIAL", "DRAFT", "FORTROLIGT", "TILBUD") across all pages of an existing vector PDF using pdf-lib.',
+    {
+      pdf_base64: z.string().describe('Base64-encoded PDF string (e.g. output from render_pdf or render_template)'),
+      watermark_text: z.string().describe('Watermark text to stamp diagonally across each page (e.g. "CONFIDENTIAL", "DRAFT", "FORTROLIGT", "TILBUD")'),
+      opacity: z.number().optional().default(0.15).describe('Watermark opacity from 0.05 (subtle) to 0.5 (prominent) - default: 0.15'),
+      color: z.enum(['red', 'gray', 'blue']).optional().default('red').describe('Watermark color: "red", "gray", or "blue" (default: "red")'),
+      font_size: z.number().optional().default(54).describe('Font size of watermark text in points (default: 54)'),
+    },
+    async ({ pdf_base64, watermark_text, opacity, color, font_size }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('stamp_pdf');
+        }
+
+        // Clean base64 string if it contains data URI header
+        const cleanBase64 = pdf_base64.replace(/^data:application\/pdf;base64,/, '').trim();
+        const inputBuffer = Buffer.from(cleanBase64, 'base64');
+
+        const stampedBuffer = await pdfStamperService.applyWatermark({
+          pdfBuffer: inputBuffer,
+          text: watermark_text,
+          opacity: opacity || 0.15,
+          color: color || 'red',
+          fontSize: font_size || 54,
+        });
+
+        const outputBase64 = stampedBuffer.toString('base64');
+        const sizeKb = (stampedBuffer.byteLength / 1024).toFixed(1);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `✅ PDF successfully stamped with watermark "${watermark_text}" (${sizeKb} KB).\n\nBase64 Data URI:\ndata:application/pdf;base64,${outputBase64}`,
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error stamping PDF: ${err.message || 'Unknown error'}`,
             },
           ],
         };

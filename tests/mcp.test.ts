@@ -36,6 +36,10 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('list_templates');
     expect(toolNames).toContain('get_template_source');
     expect(toolNames).toContain('render_template');
+    expect(toolNames).toContain('render_chart');
+    expect(toolNames).toContain('generate_qr');
+    expect(toolNames).toContain('render_device_mockup');
+    expect(toolNames).toContain('stamp_pdf');
 
     await client.close();
     await server.close();
@@ -197,6 +201,100 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(promptResult.messages.length).toBe(1);
     expect((promptResult.messages[0].content as any).text).toContain('Stark Industries');
     expect((promptResult.messages[0].content as any).text).toContain('render_template');
+
+    await client.close();
+    await server.close();
+  });
+
+  it('executes render_chart tool to return inline chart image', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const chartRes = (await client.callTool({
+      name: 'render_chart',
+      arguments: {
+        type: 'bar',
+        labels: ['Jan', 'Feb', 'Mar'],
+        datasets: [{ label: 'Sales', data: [100, 250, 400] }],
+        title: 'Q1 Growth',
+        theme: 'dark',
+        width: 800,
+        height: 500,
+      },
+    })) as any;
+
+    expect(chartRes.isError).toBeFalsy();
+    const imgBlock = chartRes.content.find((c: any) => c.type === 'image');
+    expect(imgBlock).toBeDefined();
+    expect(imgBlock.mimeType).toBe('image/png');
+    expect(imgBlock.data.length).toBeGreaterThan(100);
+
+    await client.close();
+    await server.close();
+  });
+
+  it('executes generate_qr tool to create scannable QR code', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const qrRes = (await client.callTool({
+      name: 'generate_qr',
+      arguments: {
+        text: 'https://tailprint.com',
+        size: 300,
+        dark_color: '#4f46e5',
+        light_color: '#ffffff',
+      },
+    })) as any;
+
+    expect(qrRes.isError).toBeFalsy();
+    const imgBlock = qrRes.content.find((c: any) => c.type === 'image');
+    expect(imgBlock).toBeDefined();
+    expect(imgBlock.mimeType).toBe('image/png');
+    expect(qrRes.content[1].text).toContain('data:image/png;base64,');
+
+    await client.close();
+    await server.close();
+  });
+
+  it('executes stamp_pdf tool to watermark an existing PDF', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    // 1. Generate sample PDF first
+    const samplePdf = await browserService.renderPdf({
+      html: '<h1 class="text-3xl font-bold">Confidential NDA Agreement</h1><p>Trade secrets description.</p>',
+      format: 'A4',
+      landscape: false,
+      print_background: true,
+    });
+
+    // 2. Stamp with watermark
+    const stampRes = (await client.callTool({
+      name: 'stamp_pdf',
+      arguments: {
+        pdf_base64: samplePdf.toString('base64'),
+        watermark_text: 'FORTROLIGT',
+        opacity: 0.2,
+        color: 'red',
+      },
+    })) as any;
+
+    expect(stampRes.isError).toBeFalsy();
+    expect(stampRes.content[0].text).toContain('FORTROLIGT');
+    expect(stampRes.content[0].text).toContain('data:application/pdf;base64,');
 
     await client.close();
     await server.close();
