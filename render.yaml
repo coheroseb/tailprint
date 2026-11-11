@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: eaas-render-engine
+    runtime: docker
+    plan: starter # 2GB RAM recommended for headless Chromium
+    region: frankfurt # or oregon
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: HOST
+        value: 0.0.0.0
+      - key: CONCURRENCY_LIMIT
+        value: 5
+      - key: RENDER_TIMEOUT_MS
+        value: 8000
+      - key: CACHE_TTL_SECONDS
+        value: 604800
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false

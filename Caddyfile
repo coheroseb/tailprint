@@ -1,0 +1,11 @@
+tailprint.com, www.tailprint.com, api.tailprint.com {
+    # Automatic HTTPS with Let's Encrypt
+    encode zstd gzip
+
+    reverse_proxy render-engine:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

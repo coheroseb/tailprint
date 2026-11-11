@@ -1,0 +1,230 @@
+import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import { z } from 'zod';
+import { env } from '../config/env.js';
+import {
+  RenderPdfRequestSchema,
+  RenderImageRequestSchema,
+  ErrorResponseSchema,
+} from '../schemas/render.js';
+import { browserService } from '../services/browser.js';
+import { redisService } from '../services/redis.js';
+
+export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
+  // Helper to authenticate Bearer token and check monthly quota
+  async function authenticateAndCheckQuota(request: any, reply: any) {
+    const authHeader = request.headers.authorization;
+    let token: string | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    } else if (env.NODE_ENV === 'development') {
+      token = env.DEV_DEFAULT_API_KEY || 'sec_live_dev_test_key_12345';
+    }
+
+    if (!token) {
+      reply.code(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Missing or invalid Bearer authentication token. Example header: Authorization: Bearer sec_live_dev_test_key_12345',
+      });
+      return null;
+    }
+
+    const apiKey = await redisService.getApiKey(token);
+    if (!apiKey) {
+      reply.code(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Invalid API key provided',
+      });
+      return null;
+    }
+
+    if (apiKey.status !== 'active') {
+      reply.code(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'API key is inactive or subscription has expired',
+      });
+      return null;
+    }
+
+    const quota = await redisService.incrementAndCheckQuota(token, apiKey.monthly_limit);
+    reply.header('X-RateLimit-Limit', String(quota.limit));
+    reply.header('X-RateLimit-Remaining', String(quota.remaining));
+
+    if (!quota.allowed) {
+      reply.code(429).send({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: `Monthly quota exceeded (${quota.currentUsage}/${quota.limit} renders). Please upgrade your plan.`,
+      });
+      return null;
+    }
+
+    return { token, apiKey, quota };
+  }
+
+  // Canonical POST /v1/render/pdf (Documented in OpenAPI / Scalar)
+  fastify.post(
+    '/v1/render/pdf',
+    {
+      schema: {
+        tags: ['Rendering'],
+        summary: 'Render HTML with Tailwind to PDF',
+        description: 'Converts provided HTML containing Tailwind CSS classes into a high-fidelity PDF document.',
+        security: [{ bearerAuth: [] }],
+        body: RenderPdfRequestSchema,
+        response: {
+          200: z.any().describe('Binary PDF stream (application/pdf)'),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          429: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+          504: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const auth = await authenticateAndCheckQuota(request, reply);
+      if (!auth) return;
+
+      const pdfBuffer = await browserService.renderPdf(request.body);
+
+      return reply
+        .code(200)
+        .header('Content-Type', 'application/pdf')
+        .header('Content-Disposition', 'inline; filename="rendered.pdf"')
+        .header('Content-Length', String(pdfBuffer.length))
+        .send(pdfBuffer);
+    }
+  );
+
+  // Alias POST /render/pdf (Hidden from OpenAPI docs to prevent duplicates)
+  fastify.post(
+    '/render/pdf',
+    {
+      schema: {
+        hide: true,
+        body: RenderPdfRequestSchema,
+      },
+    },
+    async (request, reply) => {
+      const auth = await authenticateAndCheckQuota(request, reply);
+      if (!auth) return;
+
+      const pdfBuffer = await browserService.renderPdf(request.body);
+
+      return reply
+        .code(200)
+        .header('Content-Type', 'application/pdf')
+        .header('Content-Disposition', 'inline; filename="rendered.pdf"')
+        .header('Content-Length', String(pdfBuffer.length))
+        .send(pdfBuffer);
+    }
+  );
+
+  // Canonical POST /v1/render/image (Documented in OpenAPI / Scalar)
+  fastify.post(
+    '/v1/render/image',
+    {
+      schema: {
+        tags: ['Rendering'],
+        summary: 'Render HTML with Tailwind to Open Graph / Image',
+        description: 'Generates an optimized PNG or JPEG image from HTML containing Tailwind CSS classes. Results are hashed and cached.',
+        security: [{ bearerAuth: [] }],
+        body: RenderImageRequestSchema,
+        response: {
+          200: z.any().describe('Binary image stream (image/png or image/jpeg)'),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          429: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+          504: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const auth = await authenticateAndCheckQuota(request, reply);
+      if (!auth) return;
+
+      const { html, width, height, type } = request.body;
+      const mimeType = type === 'jpeg' ? 'image/jpeg' : 'image/png';
+
+      // 1. Generate SHA-256 cache key
+      const cacheHash = redisService.generateImageCacheHash({
+        html,
+        width,
+        height,
+        type,
+      });
+
+      // 2. Check cache
+      const cached = await redisService.getCachedImage(cacheHash);
+      if (cached) {
+        return reply
+          .code(200)
+          .header('Content-Type', mimeType)
+          .header('X-Cache', 'HIT')
+          .header('Content-Length', String(cached.length))
+          .send(cached);
+      }
+
+      // 3. Render and cache image
+      const imageBuffer = await browserService.renderImage(request.body);
+      await redisService.setCachedImage(cacheHash, imageBuffer);
+
+      return reply
+        .code(200)
+        .header('Content-Type', mimeType)
+        .header('X-Cache', 'MISS')
+        .header('Content-Length', String(imageBuffer.length))
+        .send(imageBuffer);
+    }
+  );
+
+  // Alias POST /render/image (Hidden from OpenAPI docs to prevent duplicates)
+  fastify.post(
+    '/render/image',
+    {
+      schema: {
+        hide: true,
+        body: RenderImageRequestSchema,
+      },
+    },
+    async (request, reply) => {
+      const auth = await authenticateAndCheckQuota(request, reply);
+      if (!auth) return;
+
+      const { html, width, height, type } = request.body;
+      const mimeType = type === 'jpeg' ? 'image/jpeg' : 'image/png';
+
+      const cacheHash = redisService.generateImageCacheHash({
+        html,
+        width,
+        height,
+        type,
+      });
+
+      const cached = await redisService.getCachedImage(cacheHash);
+      if (cached) {
+        return reply
+          .code(200)
+          .header('Content-Type', mimeType)
+          .header('X-Cache', 'HIT')
+          .header('Content-Length', String(cached.length))
+          .send(cached);
+      }
+
+      const imageBuffer = await browserService.renderImage(request.body);
+      await redisService.setCachedImage(cacheHash, imageBuffer);
+
+      return reply
+        .code(200)
+        .header('Content-Type', mimeType)
+        .header('X-Cache', 'MISS')
+        .header('Content-Length', String(imageBuffer.length))
+        .send(imageBuffer);
+    }
+  );
+};
