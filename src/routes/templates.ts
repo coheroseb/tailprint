@@ -309,7 +309,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <!-- Speech Bubble on hover / dynamic tips -->
           <div id="speech-bubble" class="mb-3 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-indigo-500/40 text-xs font-medium text-indigo-200 shadow-xl backdrop-blur-md flex items-center space-x-2 transition-all duration-300 group-hover:border-indigo-400 group-hover:scale-105">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span id="speech-text" class="transition-opacity duration-150">Hej dev! Klik på mig for hurtige tips ⚡</span>
+            <span id="speech-text" class="transition-opacity duration-150">Hey dev! Click me for quick tips ⚡</span>
           </div>
 
           <!-- Avatar Illustration -->
@@ -398,7 +398,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </h1>
 
       <p class="mt-6 text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-        Eliminer komplekse browser-infrastrukturer og build-steps. Send rå utility classes og modtag printklare vektor-dokumenter eller cached sociale preview-billeder på under 500 ms.
+        Eliminate complex browser infrastructure and build steps. Submit raw HTML with arbitrary utility classes and generate print-ready PDFs or cached social preview banners in under 500ms.
       </p>
 
       <div class="mt-8 flex flex-wrap justify-center items-center gap-4">
@@ -1393,12 +1393,12 @@ This domain is for use in documentation examples without needing permission. Thi
   <script>
     // Interactive Avatar Mascot Easter Eggs & Tips
     const botTips = [
-      "⚡ Lynhurtig rendering: Sub-500ms fra Tailwind til færdig PDF!",
-      "🤖 MCP Server Ready: Forbind direkte til Claude Desktop eller Cursor!",
-      "🎨 100% Tailwind: Fuld support for arbitrary classes som w-[340px] og grid-cols-12.",
-      "🔒 Sikkerhed først: Automatisk SSRF-blokering og isolerede Chromium instanser.",
-      "🚀 Zero Chrome setup på din maskine. Bare lav en POST request!",
-      "📄 Prøv sandkassen lige nedenfor og se koden kompilere live ⬇️"
+      "⚡ Ultra-fast rendering: Sub-500ms execution from Tailwind HTML to vector PDF!",
+      "🤖 MCP Server Ready: Connect Claude Desktop, Cursor, or Windsurf directly via /v1/mcp/sse.",
+      "🎨 100% Tailwind Native: Arbitrary utility classes like w-[340px] and grid-cols-12 supported out of the box.",
+      "🔒 Enterprise Security: Automatic SSRF blocking and pre-warmed isolated Chromium sandboxes.",
+      "🚀 Zero headless browser setup: Just send a POST request or prompt your AI agent.",
+      "📄 Try the interactive live playground right below to test your markup ⬇️"
     ];
     let tipIdx = 0;
     window.cycleAvatarTip = function() {

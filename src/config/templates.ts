@@ -494,8 +494,8 @@ export const TEMPLATES: TemplateItem[] = [
       <p class="font-black text-slate-400 uppercase tracking-wider text-[10px]">SHIP TO (RECIPIENT)</p>
       <p class="font-extrabold text-slate-900 text-sm mt-1">Sebastian Viste</p>
       <p class="text-slate-600 mt-1 leading-relaxed">
-        Strandboulevarden 42, 3. th.<br>
-        2100 Copenhagen Ø<br>
+        Strandboulevarden 42<br>
+        2100 Copenhagen<br>
         Denmark<br>
         Tel: +45 20 30 40 50
       </p>
@@ -669,7 +669,7 @@ export const TEMPLATES: TemplateItem[] = [
     <!-- Header -->
     <div class="text-center pb-4 border-b border-dashed border-neutral-400">
       <h1 class="text-base font-black tracking-wider uppercase">COPENHAGEN COFFEE LAB</h1>
-      <p class="text-[11px] text-neutral-500 mt-0.5">Strandgade 14, 1401 København K</p>
+      <p class="text-[11px] text-neutral-500 mt-0.5">Strandgade 14, 1401 Copenhagen</p>
       <p class="text-[11px] text-neutral-500">CVR: 38294102 • Tlf: +45 33 12 40 00</p>
       <div class="mt-2 text-[10px] text-neutral-400">
         <span>Receipt: #REC-48291</span> • <span>Station: Register 2</span>
