@@ -133,7 +133,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tailprint - Tailwind-Native Render & PDF Engine</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E" />
   <meta name="description" content="Tailprint is the high-performance Tailwind-Native Render & PDF Engine + AI Web Scraper. Convert HTML with Tailwind to vector PDFs, Open Graph images, or LLM-clean Markdown with MCP." />
   <meta property="og:title" content="Tailprint - Tailwind-Native Render & PDF Engine" />
   <meta property="og:description" content="Sub-500ms PDF & Open Graph image generation from Tailwind CSS, plus LLM-ready web scraping with 90%+ token savings. Model Context Protocol (MCP) ready." />
@@ -142,6 +142,13 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Tailprint - Tailwind-Native Render & PDF Engine" />
   <meta name="twitter:description" content="Turn Tailwind CSS into high-fidelity PDFs and Open Graph images. Scrape web pages to clean Markdown for AI agents." />
+  <script>
+    const _warn = console.warn;
+    console.warn = function(...args) {
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+      _warn.apply(console, args);
+    };
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -170,11 +177,21 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800/80">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-indigo-500/20">
-          ⚡
+        <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-lg shadow-indigo-500/10 overflow-hidden relative">
+          <svg class="w-7 h-7" viewBox="0 0 100 100" fill="none">
+            <path d="M14 24 L14 14 L24 14" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+            <path d="M86 24 L86 14 L76 14" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+            <path d="M14 76 L14 86 L24 86" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+            <path d="M86 76 L86 86 L76 86" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+            <path d="M35 28 L23 50 L35 72" stroke="#818cf8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M65 28 L77 50 L65 72" stroke="#f472b6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="56" y1="26" x2="44" y2="74" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="4" fill="#f43f5e"/>
+          </svg>
         </div>
-        <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
-          Tailprint <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold ml-1">Engine</span>
+        <span class="font-extrabold text-lg tracking-tight text-white flex items-center">
+          <span class="text-indigo-400 font-mono font-bold mr-0.5">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-0.5">/&gt;</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold ml-2">Engine</span>
         </span>
       </div>
 
@@ -829,36 +846,11 @@ This domain is for use in documentation examples without needing permission. Thi
     };
 
     window.playgroundPresets = {
-      invoice: '<div class="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-slate-100 font-sans">\n' +
-        '  <div class="flex items-center justify-between pb-6 border-b border-slate-100">\n' +
-        '    <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Tailprint Pro</span>\n' +
-        '    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold">Paid</span>\n' +
-        '  </div>\n' +
-        '  <h2 class="text-2xl font-black text-slate-900 mt-4">Invoice #INV-2026-042</h2>\n' +
-        '  <p class="text-xs text-slate-500 mt-1">Due November 30, 2026</p>\n' +
-        '  <div class="mt-6 flex justify-between items-baseline pt-4 border-t border-slate-100">\n' +
-        '    <span class="text-sm font-semibold text-slate-600">Total Amount</span>\n' +
-        '    <span class="text-2xl font-black text-slate-900">$4,500.00</span>\n' +
-        '  </div>\n' +
-        '</div>',
+      invoice: templatesData['invoice'] || '',
       ticket: templatesData['ticket'] || '',
       receipt: templatesData['receipt'] || '',
-      certificate: '<div class="p-12 bg-slate-900 text-white rounded-2xl border-4 border-indigo-500/40 text-center font-sans">\n' +
-        '  <p class="text-xs font-bold text-indigo-400 tracking-widest uppercase">Certificate of Completion</p>\n' +
-        '  <h1 class="text-3xl font-black mt-3">Fullstack AI Engineering</h1>\n' +
-        '  <p class="text-xs text-slate-400 mt-2">Awarded to <strong class="text-white">Sebastian Viste</strong> for mastering autonomous agents and Playwright engines.</p>\n' +
-        '  <div class="mt-8 flex justify-center space-x-6 text-xs text-slate-400 border-t border-slate-800 pt-4">\n' +
-        '    <span>Verified Credential</span> • <span>ID: #TP-8849</span>\n' +
-        '  </div>\n' +
-        '</div>',
-      badge: '<div class="max-w-xs mx-auto p-6 bg-gradient-to-br from-indigo-900 to-purple-950 text-white rounded-3xl shadow-2xl border border-indigo-500/30 text-center font-sans">\n' +
-        '  <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/50">⚡</div>\n' +
-        '  <h3 class="text-xl font-black mt-4">Alex Morgan</h3>\n' +
-        '  <p class="text-xs text-indigo-300 font-semibold mt-0.5">Staff Platform Architect</p>\n' +
-        '  <div class="mt-6 p-2 rounded-xl bg-slate-950/60 font-mono text-[11px] text-slate-400 border border-slate-800">\n' +
-        '    ACCESS TIER: VIP DEVELOPER\n' +
-        '  </div>\n' +
-        '</div>'
+      certificate: templatesData['certificate'] || '',
+      badge: '<div class="max-w-xs mx-auto p-6 bg-gradient-to-br from-indigo-900 to-purple-950 text-white rounded-3xl shadow-2xl border border-indigo-500/30 text-center font-sans"><div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/50">⚡</div><h3 class="text-xl font-black mt-4">Alex Morgan</h3><p class="text-xs text-indigo-300 font-semibold mt-0.5">Staff Platform Architect</p><div class="mt-6 p-2 rounded-xl bg-slate-950/60 font-mono text-[11px] text-slate-400 border border-slate-800">ACCESS TIER: VIP DEVELOPER</div></div>'
     };
 
     window.loadPlaygroundPreset = function(presetName) {
