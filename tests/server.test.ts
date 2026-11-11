@@ -281,6 +281,59 @@ describe('Tailprint Test Suite', () => {
       expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
     }, 20000);
 
+    it('POST /v1/render/pdf renders a public web URL directly to vector PDF', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          url: 'https://example.com',
+          format: 'A4',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('application/pdf');
+      expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+    }, 20000);
+
+    it('POST /v1/render/image captures a public web URL directly to PNG image', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/image',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          url: 'https://example.com',
+          width: 800,
+          height: 600,
+          type: 'png',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('image/png');
+      expect(response.rawPayload[0]).toBe(0x89); // PNG magic byte
+    }, 20000);
+
+    it('POST /v1/render/pdf rejects when neither html nor url is provided (400)', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          format: 'A4',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('POST /v1/render/playground renders PDF without requiring API key', async () => {
       const response = await app.inject({
         method: 'POST',

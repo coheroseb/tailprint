@@ -225,14 +225,22 @@ export class BrowserService {
   }
 
   public async renderPdf(params: RenderPdfRequest): Promise<Buffer> {
-    const fullHtml = this.prepareHtmlWithTailwind(params.html);
-
     return this.executeWithTimeout(
       async (_context, page) => {
-        await page.setContent(fullHtml, {
-          waitUntil: 'load',
-          timeout: env.RENDER_TIMEOUT_MS,
-        });
+        if (params.url) {
+          await page.goto(params.url, {
+            waitUntil: 'load',
+            timeout: env.RENDER_TIMEOUT_MS,
+          });
+        } else if (params.html) {
+          const fullHtml = this.prepareHtmlWithTailwind(params.html);
+          await page.setContent(fullHtml, {
+            waitUntil: 'load',
+            timeout: env.RENDER_TIMEOUT_MS,
+          });
+        } else {
+          throw new Error('Either "html" or "url" must be provided');
+        }
 
         // Wait for Tailwind JIT runtime and fonts
         await Promise.all([
@@ -296,14 +304,22 @@ export class BrowserService {
   }
 
   public async renderImage(params: RenderImageRequest): Promise<Buffer> {
-    const fullHtml = this.prepareHtmlWithTailwind(params.html);
-
     return this.executeWithTimeout(
       async (_context, page) => {
-        await page.setContent(fullHtml, {
-          waitUntil: 'load',
-          timeout: env.RENDER_TIMEOUT_MS,
-        });
+        if (params.url) {
+          await page.goto(params.url, {
+            waitUntil: 'load',
+            timeout: env.RENDER_TIMEOUT_MS,
+          });
+        } else if (params.html) {
+          const fullHtml = this.prepareHtmlWithTailwind(params.html);
+          await page.setContent(fullHtml, {
+            waitUntil: 'load',
+            timeout: env.RENDER_TIMEOUT_MS,
+          });
+        } else {
+          throw new Error('Either "html" or "url" must be provided');
+        }
 
         // Wait for Tailwind JIT runtime and fonts
         await Promise.all([

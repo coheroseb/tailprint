@@ -266,13 +266,17 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
         
         <!-- Left: Code Editor (6 cols) -->
         <div class="lg:col-span-6 flex flex-col rounded-2xl bg-slate-900/90 border border-slate-800 p-5 shadow-2xl">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-bold text-slate-300">HTML & Tailwind Editor</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">live jit</span>
+          <!-- Mode Tabs & Presets Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 mb-3 gap-2">
+            <!-- Mode Switcher -->
+            <div class="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+              <button onclick="setPlaygroundMode('editor')" id="mode-tab-editor" class="px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white transition">HTML Editor</button>
+              <button onclick="setPlaygroundMode('url')" id="mode-tab-url" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">URL to PDF</button>
+              <button onclick="setPlaygroundMode('snippets')" id="mode-tab-snippets" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">SDK Code</button>
             </div>
-            <!-- Preset switcher -->
-            <div class="flex flex-wrap gap-1">
+
+            <!-- Preset switcher (Editor mode only) -->
+            <div id="playground-presets-row" class="flex flex-wrap gap-1">
               <button onclick="loadPlaygroundPreset('invoice')" id="btn-pre-invoice" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white">Invoice</button>
               <button onclick="loadPlaygroundPreset('ticket')" id="btn-pre-ticket" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">Ticket</button>
               <button onclick="loadPlaygroundPreset('receipt')" id="btn-pre-receipt" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">Receipt</button>
@@ -281,12 +285,57 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
             </div>
           </div>
 
-          <textarea
-            id="playground-editor"
-            rows="16"
-            class="flex-1 w-full bg-slate-950 font-mono text-xs text-indigo-200 p-4 rounded-xl border border-slate-800/80 focus:outline-none focus:border-indigo-500 leading-relaxed resize-none shadow-inner"
-            spellcheck="false"
-          ></textarea>
+          <!-- Mode 1: HTML Textarea -->
+          <div id="container-mode-editor" class="flex-1 flex flex-col">
+            <textarea
+              id="playground-editor"
+              rows="16"
+              class="flex-1 w-full bg-slate-950 font-mono text-xs text-indigo-200 p-4 rounded-xl border border-slate-800/80 focus:outline-none focus:border-indigo-500 leading-relaxed resize-none shadow-inner"
+              spellcheck="false"
+            ></textarea>
+          </div>
+
+          <!-- Mode 2: Direct URL Input -->
+          <div id="container-mode-url" class="hidden flex-1 flex flex-col justify-center space-y-4 py-8 px-2">
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-slate-300">Target Web URL to Render</label>
+              <div class="flex items-center space-x-2">
+                <input
+                  id="playground-url-input"
+                  type="url"
+                  value="https://example.com"
+                  placeholder="https://yourdomain.com/dashboard/invoice"
+                  class="flex-1 bg-slate-950 font-mono text-xs text-indigo-200 p-3.5 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 shadow-inner"
+                />
+              </div>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                Chromium navigates to the target URL, executes JavaScript, waits for custom fonts and networkidle, and captures a pixel-perfect vector PDF.
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 space-y-1.5">
+              <div class="flex items-center space-x-1.5 text-emerald-400 font-semibold">
+                <span>🛡️ Enterprise SSRF Protected:</span>
+              </div>
+              <p>Loopback, internal IP ranges (127.0.0.1, 10.0.0.0/8, 192.168.0.0/16) and cloud instance metadata (169.254.169.254) are automatically blocked.</p>
+            </div>
+          </div>
+
+          <!-- Mode 3: Multi-Language Code Snippets -->
+          <div id="container-mode-snippets" class="hidden flex-1 flex flex-col space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex space-x-1.5 text-xs">
+                <button onclick="setSnippetLang('curl')" id="btn-lang-curl" class="px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white">cURL</button>
+                <button onclick="setSnippetLang('node')" id="btn-lang-node" class="px-2.5 py-1 rounded-lg font-semibold bg-slate-800 text-slate-400 hover:text-white">Node / TS</button>
+                <button onclick="setSnippetLang('python')" id="btn-lang-python" class="px-2.5 py-1 rounded-lg font-semibold bg-slate-800 text-slate-400 hover:text-white">Python</button>
+                <button onclick="setSnippetLang('php')" id="btn-lang-php" class="px-2.5 py-1 rounded-lg font-semibold bg-slate-800 text-slate-400 hover:text-white">PHP</button>
+              </div>
+              <button onclick="copyCurrentSnippet()" id="btn-copy-snippet" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-indigo-300 transition flex items-center space-x-1">
+                <span>📋 Copy Snippet</span>
+              </button>
+            </div>
+            <pre id="playground-snippet-code" class="flex-1 bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-[11px] text-indigo-200 overflow-x-auto whitespace-pre leading-relaxed max-h-72"></pre>
+          </div>
 
           <div class="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
             <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400">
@@ -840,7 +889,156 @@ This domain is for use in documentation examples without needing permission. Thi
       badge: '<div class="max-w-xs mx-auto p-6 bg-gradient-to-br from-indigo-900 to-purple-950 text-white rounded-3xl shadow-2xl border border-indigo-500/30 text-center font-sans"><div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/50">⚡</div><h3 class="text-xl font-black mt-4">Alex Morgan</h3><p class="text-xs text-indigo-300 font-semibold mt-0.5">Staff Platform Architect</p><div class="mt-6 p-2 rounded-xl bg-slate-950/60 font-mono text-[11px] text-slate-400 border border-slate-800">ACCESS TIER: VIP DEVELOPER</div></div>'
     };
 
+    window.currentPlaygroundMode = 'editor';
+    window.currentSnippetLang = 'curl';
+
+    window.setPlaygroundMode = function(mode) {
+      window.currentPlaygroundMode = mode;
+      ['editor', 'url', 'snippets'].forEach(function(m) {
+        const btn = document.getElementById('mode-tab-' + m);
+        const container = document.getElementById('container-mode-' + m);
+        if (btn && container) {
+          if (m === mode) {
+            btn.className = 'px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white transition';
+            container.classList.remove('hidden');
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition';
+            container.classList.add('hidden');
+          }
+        }
+      });
+
+      const presetsRow = document.getElementById('playground-presets-row');
+      if (presetsRow) {
+        if (mode === 'editor') {
+          presetsRow.classList.remove('hidden');
+        } else {
+          presetsRow.classList.add('hidden');
+        }
+      }
+
+      if (mode === 'snippets') {
+        window.updateSnippetCode();
+      }
+    };
+
+    window.setSnippetLang = function(lang) {
+      window.currentSnippetLang = lang;
+      ['curl', 'node', 'python', 'php'].forEach(function(l) {
+        const btn = document.getElementById('btn-lang-' + l);
+        if (btn) {
+          if (l === lang) {
+            btn.className = 'px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg font-semibold bg-slate-800 text-slate-400 hover:text-white';
+          }
+        }
+      });
+      window.updateSnippetCode();
+    };
+
+    window.updateSnippetCode = function() {
+      const pre = document.getElementById('playground-snippet-code');
+      if (!pre) return;
+
+      const editor = document.getElementById('playground-editor');
+      const urlInput = document.getElementById('playground-url-input');
+      const formatSelect = document.getElementById('playground-format');
+      const passwordInput = document.getElementById('playground-password');
+
+      const isUrl = window.currentPlaygroundMode === 'url';
+      const targetParam = isUrl
+        ? '"url": "' + (urlInput && urlInput.value ? urlInput.value.trim() : 'https://example.com') + '"'
+        : '"html": "<div class=\\"...\\">...</div>"';
+
+      const format = formatSelect ? formatSelect.value : 'A4';
+      const isLandscape = format.includes('landscape');
+      const paperFormat = isLandscape ? 'A4' : format;
+      const pass = passwordInput && passwordInput.value.trim() ? passwordInput.value.trim() : null;
+
+      let code = '';
+      if (window.currentSnippetLang === 'curl') {
+        code = 'curl -X POST https://api.tailprint.com/v1/render/pdf \\\n' +
+          '  -H "Authorization: Bearer sec_live_YOUR_API_KEY" \\\n' +
+          '  -H "Content-Type: application/json" \\\n' +
+          '  -d \'{\n' +
+          '    ' + targetParam + ',\n' +
+          '    "format": "' + paperFormat + '",\n' +
+          '    "landscape": ' + isLandscape +
+          (pass ? ',\n    "password": "' + pass + '"' : '') + '\n' +
+          '  }\' \\\n' +
+          '  --output output.pdf';
+      } else if (window.currentSnippetLang === 'node') {
+        code = 'import fs from "node:fs/promises";\n\n' +
+          'const response = await fetch("https://api.tailprint.com/v1/render/pdf", {\n' +
+          '  method: "POST",\n' +
+          '  headers: {\n' +
+          '    "Authorization": "Bearer " + (process.env.TAILPRINT_API_KEY || "sec_live_YOUR_KEY"),\n' +
+          '    "Content-Type": "application/json",\n' +
+          '  },\n' +
+          '  body: JSON.stringify({\n' +
+          '    ' + targetParam + ',\n' +
+          '    format: "' + paperFormat + '",\n' +
+          '    landscape: ' + isLandscape +
+          (pass ? ',\n    password: "' + pass + '"' : '') + '\n' +
+          '  }),\n' +
+          '});\n\n' +
+          'const buffer = Buffer.from(await response.arrayBuffer());\n' +
+          'await fs.writeFile("document.pdf", buffer);';
+      } else if (window.currentSnippetLang === 'python') {
+        code = 'import requests\nimport os\n\n' +
+          'api_key = os.environ.get("TAILPRINT_API_KEY", "sec_live_YOUR_KEY")\n' +
+          'res = requests.post(\n' +
+          '    "https://api.tailprint.com/v1/render/pdf",\n' +
+          '    headers={\n' +
+          '        "Authorization": f"Bearer {api_key}",\n' +
+          '        "Content-Type": "application/json",\n' +
+          '    },\n' +
+          '    json={\n' +
+          '        ' + targetParam + ',\n' +
+          '        "format": "' + paperFormat + '",\n' +
+          '        "landscape": ' + (isLandscape ? 'True' : 'False') +
+          (pass ? ',\n        "password": "' + pass + '"' : '') + '\n' +
+          '    },\n' +
+          ')\n\n' +
+          'with open("document.pdf", "wb") as f:\n' +
+          '    f.write(res.content)';
+      } else if (window.currentSnippetLang === 'php') {
+        code = '<?php\n' +
+          '$ch = curl_init("https://api.tailprint.com/v1/render/pdf");\n' +
+          'curl_setopt($ch, CURLOPT_HTTPHEADER, [\n' +
+          '    "Authorization: Bearer " . getenv("TAILPRINT_API_KEY"),\n' +
+          '    "Content-Type: application/json"\n' +
+          ']);\n' +
+          'curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([\n' +
+          '    ' + targetParam + ',\n' +
+          '    "format" => "' + paperFormat + '",\n' +
+          '    "landscape" => ' + (isLandscape ? 'true' : 'false') +
+          (pass ? ',\n    "password" => "' + pass + '"' : '') + '\n' +
+          ']));\n' +
+          'curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\n' +
+          '$pdf = curl_exec($ch);\n' +
+          'file_put_contents("document.pdf", $pdf);';
+      }
+
+      pre.innerText = code;
+    };
+
+    window.copyCurrentSnippet = function() {
+      const pre = document.getElementById('playground-snippet-code');
+      const btn = document.getElementById('btn-copy-snippet');
+      if (pre && btn) {
+        navigator.clipboard.writeText(pre.innerText);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>✅ Copied!</span>';
+        setTimeout(function() {
+          btn.innerHTML = originalText;
+        }, 1800);
+      }
+    };
+
     window.loadPlaygroundPreset = function(presetName) {
+      window.setPlaygroundMode('editor');
       const editor = document.getElementById('playground-editor');
       const formatSelect = document.getElementById('playground-format');
       if (editor && window.playgroundPresets[presetName]) {
@@ -868,6 +1066,7 @@ This domain is for use in documentation examples without needing permission. Thi
 
     window.renderPlaygroundPdf = async function() {
       const editor = document.getElementById('playground-editor');
+      const urlInput = document.getElementById('playground-url-input');
       const formatSelect = document.getElementById('playground-format');
       const headerFooterCb = document.getElementById('playground-header-footer');
       const passwordInput = document.getElementById('playground-password');
@@ -878,7 +1077,15 @@ This domain is for use in documentation examples without needing permission. Thi
       const downloadBtn = document.getElementById('playground-download-btn');
       const statusBadge = document.getElementById('playground-status-badge');
 
-      if (!editor || !editor.value) return;
+      const isUrlMode = window.currentPlaygroundMode === 'url';
+      if (isUrlMode) {
+        if (!urlInput || !urlInput.value.trim()) {
+          alert('Please enter a target URL');
+          return;
+        }
+      } else {
+        if (!editor || !editor.value) return;
+      }
 
       const formatVal = formatSelect ? formatSelect.value : 'A4';
       const isLandscape = formatVal.includes('landscape');
@@ -893,10 +1100,15 @@ This domain is for use in documentation examples without needing permission. Thi
       const startTime = performance.now();
 
       const payload = {
-        html: editor.value,
         format: paperFormat,
         landscape: isLandscape
       };
+
+      if (isUrlMode) {
+        payload.url = urlInput.value.trim();
+      } else {
+        payload.html = editor.value;
+      }
 
       if (headerFooterCb && headerFooterCb.checked) {
         payload.header_html = '<div style="font-size: 8px; color: #64748b; width: 100%; display: flex; justify-content: space-between; padding: 0 15mm; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;"><span>Tailprint PDF Engine</span><span class="date"></span></div>';

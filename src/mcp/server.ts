@@ -78,7 +78,8 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
     'render_pdf',
     'Converts HTML with full Tailwind CSS classes into a pixel-perfect, vector PDF document. Returns the document as base64 data URI.',
     {
-      html: z.string().describe('HTML markup to render. Tailwind CSS utility classes are supported automatically.'),
+      html: z.string().optional().describe('HTML markup to render. Tailwind CSS utility classes are supported automatically. Either html or url is required.'),
+      url: z.string().url().optional().describe('Public web URL to render directly to PDF (e.g. https://news.ycombinator.com). Either html or url is required.'),
       format: z.enum(['A4', 'Letter']).optional().default('A4').describe('Paper format: "A4" or "Letter" (default: "A4")'),
       landscape: z.boolean().optional().default(false).describe('Whether to generate PDF in landscape orientation (default: false)'),
       print_background: z.boolean().optional().default(true).describe('Whether to print CSS backgrounds and colors (default: true)'),
@@ -88,7 +89,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       wait_for: z.string().optional().describe('Optional CSS selector to wait for before rendering'),
       delay_ms: z.number().optional().describe('Optional delay in milliseconds before rendering (max 5000)'),
     },
-    async ({ html, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms }) => {
+    async ({ html, url, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms }) => {
       try {
         if (options.onUsage) {
           await options.onUsage('render_pdf');
@@ -96,6 +97,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
 
         const buffer = await browserService.renderPdf({
           html,
+          url,
           format: format || 'A4',
           landscape: landscape || false,
           print_background: print_background !== false,
@@ -136,14 +138,15 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
     'render_image',
     'Renders HTML with Tailwind CSS to a high-resolution PNG or JPEG image (ideal for Open Graph social banners, dashboard screenshots, or dynamic cards).',
     {
-      html: z.string().describe('HTML markup to render with Tailwind CSS styling.'),
+      html: z.string().optional().describe('HTML markup to render with Tailwind CSS styling. Either html or url is required.'),
+      url: z.string().url().optional().describe('Public web URL to capture as image (e.g. https://github.com). Either html or url is required.'),
       width: z.number().optional().default(1200).describe('Image width in pixels (default: 1200 for OG banners)'),
       height: z.number().optional().default(630).describe('Image height in pixels (default: 630 for OG banners)'),
       type: z.enum(['png', 'jpeg']).optional().default('png').describe('Image output format (default: png)'),
       wait_for: z.string().optional().describe('Optional CSS selector to wait for before rendering'),
       delay_ms: z.number().optional().describe('Optional delay in milliseconds before rendering (max 5000)'),
     },
-    async ({ html, width, height, type, wait_for, delay_ms }) => {
+    async ({ html, url, width, height, type, wait_for, delay_ms }) => {
       try {
         if (options.onUsage) {
           await options.onUsage('render_image');
@@ -155,6 +158,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
 
         const buffer = await browserService.renderImage({
           html,
+          url,
           width: imgWidth,
           height: imgHeight,
           type: imgType,
