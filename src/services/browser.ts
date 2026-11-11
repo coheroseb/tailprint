@@ -1,5 +1,6 @@
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
 import pLimit from 'p-limit';
+import { encryptPDF } from 'cryptpdf';
 import { env } from '../config/env.js';
 import type { RenderPdfRequest, RenderImageRequest } from '../schemas/render.js';
 
@@ -239,19 +240,54 @@ export class BrowserService {
           page.evaluate(() => (document as any).fonts?.ready).catch(() => {}),
         ]);
 
-        const pdfBuffer = await page.pdf({
+        // Dynamic selector wait if requested
+        if (params.wait_for) {
+          await page.waitForSelector(params.wait_for, { timeout: 5000 });
+        }
+
+        // Delay in ms before rendering (e.g. for animations/charts to settle)
+        if (params.delay_ms && params.delay_ms > 0) {
+          const cappedDelay = Math.min(params.delay_ms, 5000);
+          await new Promise((r) => setTimeout(r, cappedDelay));
+        }
+
+        const hasHeaderFooter = Boolean(
+          params.display_header_footer || params.header_html || params.footer_html
+        );
+
+        // Sensible default margins when headers or footers are present to avoid overlapping content
+        const defaultMargins = hasHeaderFooter
+          ? { top: '15mm', bottom: '15mm', left: '10mm', right: '10mm' }
+          : undefined;
+
+        const margin = params.margin
+          ? {
+              top: params.margin.top,
+              bottom: params.margin.bottom,
+              left: params.margin.left,
+              right: params.margin.right,
+            }
+          : defaultMargins;
+
+        let pdfBuffer = await page.pdf({
           format: params.format,
           landscape: params.landscape,
           printBackground: params.print_background,
-          margin: params.margin
-            ? {
-                top: params.margin.top,
-                bottom: params.margin.bottom,
-                left: params.margin.left,
-                right: params.margin.right,
-              }
-            : undefined,
+          displayHeaderFooter: hasHeaderFooter,
+          headerTemplate: params.header_html || '<span></span>',
+          footerTemplate: params.footer_html || '<span></span>',
+          margin,
         });
+
+        // Optional AES-256 PDF encryption with user and optional owner password
+        if (params.password) {
+          const encrypted = await encryptPDF(
+            new Uint8Array(pdfBuffer),
+            params.password,
+            params.owner_password || params.password
+          );
+          pdfBuffer = Buffer.from(encrypted);
+        }
 
         return pdfBuffer;
       },
@@ -274,6 +310,17 @@ export class BrowserService {
           page.waitForLoadState('networkidle', { timeout: 2500 }).catch(() => {}),
           page.evaluate(() => (document as any).fonts?.ready).catch(() => {}),
         ]);
+
+        // Dynamic selector wait if requested
+        if (params.wait_for) {
+          await page.waitForSelector(params.wait_for, { timeout: 5000 });
+        }
+
+        // Delay in ms before capturing (e.g. for animations/charts to settle)
+        if (params.delay_ms && params.delay_ms > 0) {
+          const cappedDelay = Math.min(params.delay_ms, 5000);
+          await new Promise((r) => setTimeout(r, cappedDelay));
+        }
 
         const imageBuffer = await page.screenshot({
           type: params.type,

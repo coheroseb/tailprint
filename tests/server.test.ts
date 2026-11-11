@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
+import { decryptPDF } from 'cryptpdf';
 import { buildApp } from '../src/server.js';
 import { env } from '../src/config/env.js';
 import { redisService } from '../src/services/redis.js';
@@ -61,7 +62,7 @@ describe('Tailprint Test Suite', () => {
 
       expect(response.statusCode).toBe(200);
       const data = JSON.parse(response.body);
-      expect(data.templates.length).toBe(6);
+      expect(data.templates.length).toBe(8);
       expect(data.templates.map((t: any) => t.id)).toEqual([
         'invoice',
         'certificate',
@@ -69,6 +70,8 @@ describe('Tailprint Test Suite', () => {
         'resume',
         'og-card',
         'shipping-label',
+        'ticket',
+        'receipt',
       ]);
     });
 
@@ -209,6 +212,73 @@ describe('Tailprint Test Suite', () => {
       expect(pdfBuffer.length).toBeGreaterThan(1000);
       // Valid PDF files start with %PDF-
       expect(pdfBuffer.subarray(0, 5).toString()).toBe('%PDF-');
+    }, 20000);
+
+    it('POST /v1/render/pdf supports header_html and footer_html with page numbering', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          html: '<div class="p-12 text-slate-900"><h1>Multi-page Document</h1><div style="page-break-after: always;">Page 1</div><div>Page 2</div></div>',
+          display_header_footer: true,
+          header_html: '<div style="font-size: 8px; width: 100%; text-align: right; padding-right: 20px;">Tailprint Header</div>',
+          footer_html: '<div style="font-size: 8px; width: 100%; text-align: center;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('application/pdf');
+      expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+    }, 20000);
+
+    it('POST /v1/render/pdf encrypts PDF with password and protects contents', async () => {
+      const secretPassword = 'MySecretTailprintPass123!';
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          html: '<div class="p-8 bg-slate-900 text-white"><h1>Classified Information</h1></div>',
+          password: secretPassword,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('application/pdf');
+      const encryptedPdf = response.rawPayload;
+      expect(encryptedPdf.subarray(0, 5).toString()).toBe('%PDF-');
+
+      // Attempt to decrypt with cryptpdf
+      const decrypted = await decryptPDF(new Uint8Array(encryptedPdf), secretPassword);
+      expect(decrypted).toBeDefined();
+      expect(decrypted.length).toBeGreaterThan(500);
+
+      // Verify wrong password rejects
+      await expect(decryptPDF(new Uint8Array(encryptedPdf), 'WrongPassword999')).rejects.toThrow();
+    }, 20000);
+
+    it('POST /v1/render/pdf waits for dynamic selector and delay_ms', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          html: '<div><h1 id="chart-ready">Loaded Chart</h1></div>',
+          wait_for: '#chart-ready',
+          delay_ms: 200,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('application/pdf');
+      expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
     }, 20000);
 
     it('POST /v1/render/playground renders PDF without requiring API key', async () => {

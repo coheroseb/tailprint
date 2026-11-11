@@ -82,8 +82,13 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       format: z.enum(['A4', 'Letter']).optional().default('A4').describe('Paper format: "A4" or "Letter" (default: "A4")'),
       landscape: z.boolean().optional().default(false).describe('Whether to generate PDF in landscape orientation (default: false)'),
       print_background: z.boolean().optional().default(true).describe('Whether to print CSS backgrounds and colors (default: true)'),
+      header_html: z.string().optional().describe('Optional HTML template for page header (e.g. with pageNumber / totalPages)'),
+      footer_html: z.string().optional().describe('Optional HTML template for page footer (e.g. with pageNumber / totalPages)'),
+      password: z.string().optional().describe('Optional password to encrypt the PDF with AES-256'),
+      wait_for: z.string().optional().describe('Optional CSS selector to wait for before rendering'),
+      delay_ms: z.number().optional().describe('Optional delay in milliseconds before rendering (max 5000)'),
     },
-    async ({ html, format, landscape, print_background }) => {
+    async ({ html, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms }) => {
       try {
         if (options.onUsage) {
           await options.onUsage('render_pdf');
@@ -94,6 +99,11 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           format: format || 'A4',
           landscape: landscape || false,
           print_background: print_background !== false,
+          header_html,
+          footer_html,
+          password,
+          wait_for,
+          delay_ms,
         });
 
         const base64Pdf = buffer.toString('base64');
@@ -103,7 +113,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           content: [
             {
               type: 'text',
-              text: `✅ PDF successfully generated (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}).\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
+              text: `✅ PDF successfully generated (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}${password ? ', Encrypted' : ''}).\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
             },
           ],
         };
@@ -130,8 +140,10 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       width: z.number().optional().default(1200).describe('Image width in pixels (default: 1200 for OG banners)'),
       height: z.number().optional().default(630).describe('Image height in pixels (default: 630 for OG banners)'),
       type: z.enum(['png', 'jpeg']).optional().default('png').describe('Image output format (default: png)'),
+      wait_for: z.string().optional().describe('Optional CSS selector to wait for before rendering'),
+      delay_ms: z.number().optional().describe('Optional delay in milliseconds before rendering (max 5000)'),
     },
-    async ({ html, width, height, type }) => {
+    async ({ html, width, height, type, wait_for, delay_ms }) => {
       try {
         if (options.onUsage) {
           await options.onUsage('render_image');
@@ -146,6 +158,8 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           width: imgWidth,
           height: imgHeight,
           type: imgType,
+          wait_for,
+          delay_ms,
         });
 
         const base64Img = buffer.toString('base64');

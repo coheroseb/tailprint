@@ -148,7 +148,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
 
-      const { html, width, height, type } = request.body;
+      const { html, width, height, type, wait_for, delay_ms } = request.body;
       const mimeType = type === 'jpeg' ? 'image/jpeg' : 'image/png';
 
       // 1. Generate SHA-256 cache key
@@ -157,6 +157,8 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         width,
         height,
         type,
+        wait_for,
+        delay_ms,
       });
 
       // 2. Check cache
@@ -196,7 +198,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
 
-      const { html, width, height, type } = request.body;
+      const { html, width, height, type, wait_for, delay_ms } = request.body;
       const mimeType = type === 'jpeg' ? 'image/jpeg' : 'image/png';
 
       const cacheHash = redisService.generateImageCacheHash({
@@ -204,6 +206,8 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         width,
         height,
         type,
+        wait_for,
+        delay_ms,
       });
 
       const cached = await redisService.getCachedImage(cacheHash);

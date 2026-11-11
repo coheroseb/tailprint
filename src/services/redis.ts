@@ -244,8 +244,15 @@ export class RedisService {
     }
   }
 
-  public generateImageCacheHash(params: { html: string; width: number; height: number; type: string }): string {
-    const payload = `${params.type}:${params.width}x${params.height}:${params.html}`;
+  public generateImageCacheHash(params: {
+    html: string;
+    width: number;
+    height: number;
+    type: string;
+    wait_for?: string;
+    delay_ms?: number;
+  }): string {
+    const payload = `${params.type}:${params.width}x${params.height}:${params.wait_for || ''}:${params.delay_ms || ''}:${params.html}`;
     return crypto.createHash('sha256').update(payload).digest('hex');
   }
 

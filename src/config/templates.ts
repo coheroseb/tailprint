@@ -568,4 +568,188 @@ export const TEMPLATES: TemplateItem[] = [
   </div>
 </div>`,
   },
+  {
+    id: 'ticket',
+    title: 'VIP Event Pass & Boarding Ticket',
+    category: 'Events & Ticketing',
+    description: 'High-contrast event ticket with perforated tear-line styling, barcode, seat tier badge, and speaker lineup.',
+    format: 'A4',
+    landscape: true,
+    html: `<div class="max-w-4xl mx-auto p-12 bg-slate-950 text-slate-100 font-sans">
+  <div class="relative bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+    <!-- Main Ticket Body -->
+    <div class="p-8 flex-1 flex flex-col justify-between border-b md:border-b-0 md:border-r border-dashed border-slate-700/80 relative">
+      <!-- Cutout notches for ticket effect -->
+      <div class="hidden md:block absolute -top-4 -right-4 w-8 h-8 rounded-full bg-slate-950 border border-slate-800"></div>
+      <div class="hidden md:block absolute -bottom-4 -right-4 w-8 h-8 rounded-full bg-slate-950 border border-slate-800"></div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center font-black text-white text-sm">TP</div>
+            <span class="font-extrabold tracking-tight text-white text-lg">TAILPRINT CONF 2026</span>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            VIP All-Access Pass
+          </span>
+        </div>
+
+        <div class="mt-8">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Attendee Name</p>
+          <h2 class="text-3xl font-black text-white mt-1">Sebastian Viste</h2>
+          <p class="text-sm text-indigo-400 font-medium mt-0.5">Founder & Lead Architect @ Cohero</p>
+        </div>
+
+        <div class="mt-8 grid grid-cols-3 gap-6">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Date & Time</p>
+            <p class="text-sm font-bold text-white mt-1">Nov 18, 2026</p>
+            <p class="text-xs text-slate-400">09:00 AM CET</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Location</p>
+            <p class="text-sm font-bold text-white mt-1">KB Hallen</p>
+            <p class="text-xs text-slate-400">Copenhagen, DK</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Seat / Tier</p>
+            <p class="text-sm font-bold text-indigo-300 mt-1">Front Row • A14</p>
+            <p class="text-xs text-slate-400">Stage Access</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+        <p>Order ID: #TP-98214-X</p>
+        <p class="text-slate-400">Includes Keynote, Workshop & Afterparty</p>
+      </div>
+    </div>
+
+    <!-- Stub / Barcode Sidebar -->
+    <div class="p-8 w-full md:w-64 bg-slate-900/60 flex flex-col justify-between items-center text-center">
+      <div class="w-full">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Security Token</span>
+        <div class="mt-3 p-3 bg-white rounded-xl inline-block shadow-inner">
+          <!-- Visual QR Pattern -->
+          <div class="w-28 h-28 bg-slate-950 flex flex-col justify-between p-2 rounded">
+            <div class="flex justify-between">
+              <div class="w-6 h-6 border-2 border-white flex items-center justify-center"><div class="w-2 h-2 bg-white"></div></div>
+              <div class="w-6 h-6 border-2 border-white flex items-center justify-center"><div class="w-2 h-2 bg-white"></div></div>
+            </div>
+            <div class="flex items-center justify-center space-x-1">
+              <div class="w-1.5 h-1.5 bg-white"></div>
+              <div class="w-2 h-2 bg-white"></div>
+              <div class="w-1.5 h-1.5 bg-white"></div>
+            </div>
+            <div class="flex justify-between">
+              <div class="w-6 h-6 border-2 border-white flex items-center justify-center"><div class="w-2 h-2 bg-white"></div></div>
+              <div class="w-4 h-4 bg-white"></div>
+            </div>
+          </div>
+        </div>
+        <p class="text-[11px] font-mono text-slate-400 mt-3 tracking-widest">GATE-A // SCAN</p>
+      </div>
+
+      <div class="w-full mt-6 pt-4 border-t border-slate-800 text-[10px] text-slate-400">
+        Non-transferable. Must present government photo ID at check-in.
+      </div>
+    </div>
+  </div>
+</div>`,
+  },
+  {
+    id: 'receipt',
+    title: 'POS Thermal Retail Receipt',
+    category: 'Retail & Commerce',
+    description: 'Compact thermal printer styled receipt with item breakdown, tax details, payment method, and dashed tear line.',
+    format: 'A4',
+    landscape: false,
+    html: `<div class="max-w-md mx-auto p-8 bg-neutral-100 font-mono text-neutral-800 text-xs antialiased">
+  <div class="bg-white p-6 rounded-lg shadow-sm border border-neutral-300">
+    <!-- Header -->
+    <div class="text-center pb-4 border-b border-dashed border-neutral-400">
+      <h1 class="text-base font-black tracking-wider uppercase">COPENHAGEN COFFEE LAB</h1>
+      <p class="text-[11px] text-neutral-500 mt-0.5">Strandgade 14, 1401 København K</p>
+      <p class="text-[11px] text-neutral-500">CVR: 38294102 • Tlf: +45 33 12 40 00</p>
+      <div class="mt-2 text-[10px] text-neutral-400">
+        <span>Receipt: #REC-48291</span> • <span>Station: Register 2</span>
+      </div>
+    </div>
+
+    <!-- Date & Server -->
+    <div class="py-3 border-b border-dashed border-neutral-400 flex justify-between text-[11px]">
+      <span>Date: 2026-11-11 14:23</span>
+      <span>Cashier: Mikkel K.</span>
+    </div>
+
+    <!-- Items -->
+    <div class="py-4 space-y-2.5">
+      <div class="flex justify-between font-medium">
+        <span>2x Flat White (Oat Milk)</span>
+        <span>96.00 DKK</span>
+      </div>
+      <div class="text-[10px] text-neutral-400 pl-4 -mt-1.5">
+        @ 48.00 DKK (incl. 25% VAT)
+      </div>
+
+      <div class="flex justify-between font-medium">
+        <span>1x Cardamom Bun</span>
+        <span>38.00 DKK</span>
+      </div>
+
+      <div class="flex justify-between font-medium">
+        <span>1x Ethiopian Pour-Over (Single Origin)</span>
+        <span>52.00 DKK</span>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="pt-3 border-t-2 border-neutral-900 space-y-1.5">
+      <div class="flex justify-between text-neutral-600">
+        <span>Subtotal (Net)</span>
+        <span>148.80 DKK</span>
+      </div>
+      <div class="flex justify-between text-neutral-600">
+        <span>Moms / VAT (25%)</span>
+        <span>37.20 DKK</span>
+      </div>
+      <div class="flex justify-between text-base font-black text-neutral-900 pt-2 border-t border-dashed border-neutral-300">
+        <span>TOTAL DUE</span>
+        <span>186.00 DKK</span>
+      </div>
+    </div>
+
+    <!-- Payment info -->
+    <div class="mt-5 pt-3 border-t border-dashed border-neutral-400 space-y-1 text-[11px] text-neutral-600">
+      <div class="flex justify-between">
+        <span>Paid via Apple Pay (Visa **** 4028)</span>
+        <span class="font-bold text-neutral-900">APPROVED</span>
+      </div>
+      <div class="flex justify-between text-[10px] text-neutral-400">
+        <span>Auth Code: 894102</span>
+        <span>Seq: 004819</span>
+      </div>
+    </div>
+
+    <!-- Footer Barcode & Thank You -->
+    <div class="mt-6 pt-4 border-t border-dashed border-neutral-400 text-center">
+      <!-- Simulated 1D Barcode -->
+      <div class="inline-flex space-x-0.5 items-end h-8 bg-white p-1">
+        <div class="w-1 h-full bg-neutral-900"></div>
+        <div class="w-2 h-full bg-neutral-900"></div>
+        <div class="w-0.5 h-full bg-neutral-900"></div>
+        <div class="w-1.5 h-full bg-neutral-900"></div>
+        <div class="w-0.5 h-full bg-neutral-900"></div>
+        <div class="w-2 h-full bg-neutral-900"></div>
+        <div class="w-1 h-full bg-neutral-900"></div>
+        <div class="w-3 h-full bg-neutral-900"></div>
+        <div class="w-0.5 h-full bg-neutral-900"></div>
+        <div class="w-2 h-full bg-neutral-900"></div>
+      </div>
+      <p class="text-[10px] text-neutral-400 mt-1">Thank you for visiting Copenhagen Coffee Lab!</p>
+      <p class="text-[9px] text-neutral-400">Retain receipt for 14-day exchange</p>
+    </div>
+  </div>
+</div>`,
+  },
 ];

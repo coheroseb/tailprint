@@ -13,6 +13,13 @@ export const RenderPdfRequestSchema = z.object({
   landscape: z.boolean().default(false).describe('Whether to print in landscape orientation'),
   print_background: z.boolean().default(true).describe('Whether to print background graphics and colors'),
   margin: PdfMarginSchema.optional(),
+  display_header_footer: z.boolean().optional().describe('Whether to display header and footer. Automatically enabled if header_html or footer_html is provided.'),
+  header_html: z.string().optional().describe('HTML template for the print header. Must include font-size styling (e.g. font-size: 10px). Supports Chromium template classes: pageNumber, totalPages, date, title, url.'),
+  footer_html: z.string().optional().describe('HTML template for the print footer. Must include font-size styling (e.g. font-size: 10px). Supports Chromium template classes: pageNumber, totalPages, date, title, url.'),
+  password: z.string().min(1).max(128).optional().describe('Optional user password to encrypt the PDF with industry-standard AES-256 encryption.'),
+  owner_password: z.string().min(1).max(128).optional().describe('Optional owner password for PDF permission controls.'),
+  wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
+  delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
 });
 
 export type RenderPdfRequest = z.infer<typeof RenderPdfRequestSchema>;
@@ -22,6 +29,8 @@ export const RenderImageRequestSchema = z.object({
   width: z.coerce.number().int().min(10).max(4000).default(1200).describe('Viewport and image width in pixels (e.g. 1200 for OG image)'),
   height: z.coerce.number().int().min(10).max(4000).default(630).describe('Viewport and image height in pixels (e.g. 630 for OG image)'),
   type: z.enum(['png', 'jpeg']).default('png').describe('Output image format'),
+  wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
+  delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
 });
 
 export type RenderImageRequest = z.infer<typeof RenderImageRequestSchema>;

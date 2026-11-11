@@ -268,10 +268,12 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">live jit</span>
             </div>
             <!-- Preset switcher -->
-            <div class="flex space-x-1.5">
-              <button onclick="loadPlaygroundPreset('invoice')" id="btn-pre-invoice" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white">Invoice</button>
-              <button onclick="loadPlaygroundPreset('certificate')" id="btn-pre-certificate" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">Certificate</button>
-              <button onclick="loadPlaygroundPreset('badge')" id="btn-pre-badge" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">ID Card</button>
+            <div class="flex flex-wrap gap-1">
+              <button onclick="loadPlaygroundPreset('invoice')" id="btn-pre-invoice" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white">Invoice</button>
+              <button onclick="loadPlaygroundPreset('ticket')" id="btn-pre-ticket" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">Ticket</button>
+              <button onclick="loadPlaygroundPreset('receipt')" id="btn-pre-receipt" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">Receipt</button>
+              <button onclick="loadPlaygroundPreset('certificate')" id="btn-pre-certificate" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">Certificate</button>
+              <button onclick="loadPlaygroundPreset('badge')" id="btn-pre-badge" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">ID Badge</button>
             </div>
           </div>
 
@@ -282,19 +284,39 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
             spellcheck="false"
           ></textarea>
 
-          <div class="mt-4 flex items-center justify-between pt-3 border-t border-slate-800">
-            <div class="flex items-center space-x-2 text-xs text-slate-400">
-              <span>Paper:</span>
-              <select id="playground-format" class="bg-slate-950 text-slate-200 border border-slate-800 rounded-lg px-2 py-1 text-xs focus:outline-none">
-                <option value="A4">A4 Portrait</option>
-                <option value="Letter">Letter Portrait</option>
-                <option value="A4-landscape">A4 Landscape</option>
-              </select>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+              <div class="flex items-center space-x-1.5">
+                <span>Paper:</span>
+                <select id="playground-format" class="bg-slate-950 text-slate-200 border border-slate-800 rounded-lg px-2 py-1 text-xs focus:outline-none">
+                  <option value="A4">A4 Portrait</option>
+                  <option value="Letter">Letter Portrait</option>
+                  <option value="A4-landscape">A4 Landscape</option>
+                </select>
+              </div>
+
+              <!-- Header / Footer Toggle -->
+              <label class="flex items-center space-x-1 cursor-pointer text-slate-300 hover:text-white select-none">
+                <input id="playground-header-footer" type="checkbox" class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0 text-xs">
+                <span class="text-[11px]">Header & Page #</span>
+              </label>
+
+              <!-- Password Protection Option -->
+              <div class="flex items-center space-x-1">
+                <span class="text-[11px] text-slate-400">🔒</span>
+                <input
+                  id="playground-password"
+                  type="text"
+                  placeholder="Password (AES-256)"
+                  class="bg-slate-950 text-slate-200 border border-slate-800 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:border-indigo-500 w-32 placeholder:text-slate-600"
+                />
+              </div>
             </div>
+
             <button
               id="playground-render-btn"
               onclick="renderPlaygroundPdf()"
-              class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center space-x-2"
+              class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center space-x-2"
             >
               <span>⚡ Render PDF</span>
             </button>
@@ -411,12 +433,12 @@ This domain is for use in documentation examples without needing permission. Thi
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-400 text-xs font-semibold mb-3">
           <span>Ready to Copy & Render</span>
         </div>
-        <h2 class="text-3xl font-extrabold text-white">6 Production Tailwind Templates</h2>
+        <h2 class="text-3xl font-extrabold text-white">8 Production Tailwind Templates</h2>
         <p class="text-slate-400 mt-2">One-click copy for clean Tailwind HTML or cURL terminal commands. Test immediate rendering on any template.</p>
       </div>
 
       <!-- Tab Buttons Grid -->
-      <div class="flex flex-wrap justify-center mb-8 gap-2.5 max-w-4xl mx-auto">
+      <div class="flex flex-wrap justify-center mb-8 gap-2.5 max-w-5xl mx-auto">
         ${TEMPLATES.map(
           (t, index) => `
           <button onclick="switchTab('${t.id}')" id="btn-${t.id}" class="px-4 py-2 rounded-xl font-bold text-xs ${
@@ -433,6 +455,10 @@ This domain is for use in documentation examples without needing permission. Thi
                 ? '📊'
                 : t.id === 'resume'
                 ? '👤'
+                : t.id === 'ticket'
+                ? '🎟️'
+                : t.id === 'receipt'
+                ? '🏷️'
                 : t.id === 'og-card'
                 ? '🖼️'
                 : '📦'
@@ -803,48 +829,58 @@ This domain is for use in documentation examples without needing permission. Thi
     };
 
     window.playgroundPresets = {
-      invoice: '<div class="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-slate-100 font-sans">\\n' +
-        '  <div class="flex items-center justify-between pb-6 border-b border-slate-100">\\n' +
-        '    <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Tailprint Pro</span>\\n' +
-        '    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold">Paid</span>\\n' +
-        '  </div>\\n' +
-        '  <h2 class="text-2xl font-black text-slate-900 mt-4">Invoice #INV-2026-042</h2>\\n' +
-        '  <p class="text-xs text-slate-500 mt-1">Due November 30, 2026</p>\\n' +
-        '  <div class="mt-6 flex justify-between items-baseline pt-4 border-t border-slate-100">\\n' +
-        '    <span class="text-sm font-semibold text-slate-600">Total Amount</span>\\n' +
-        '    <span class="text-2xl font-black text-slate-900">$4,500.00</span>\\n' +
-        '  </div>\\n' +
+      invoice: '<div class="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-slate-100 font-sans">\n' +
+        '  <div class="flex items-center justify-between pb-6 border-b border-slate-100">\n' +
+        '    <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Tailprint Pro</span>\n' +
+        '    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold">Paid</span>\n' +
+        '  </div>\n' +
+        '  <h2 class="text-2xl font-black text-slate-900 mt-4">Invoice #INV-2026-042</h2>\n' +
+        '  <p class="text-xs text-slate-500 mt-1">Due November 30, 2026</p>\n' +
+        '  <div class="mt-6 flex justify-between items-baseline pt-4 border-t border-slate-100">\n' +
+        '    <span class="text-sm font-semibold text-slate-600">Total Amount</span>\n' +
+        '    <span class="text-2xl font-black text-slate-900">$4,500.00</span>\n' +
+        '  </div>\n' +
         '</div>',
-      certificate: '<div class="p-12 bg-slate-900 text-white rounded-2xl border-4 border-indigo-500/40 text-center font-sans">\\n' +
-        '  <p class="text-xs font-bold text-indigo-400 tracking-widest uppercase">Certificate of Completion</p>\\n' +
-        '  <h1 class="text-3xl font-black mt-3">Fullstack AI Engineering</h1>\\n' +
-        '  <p class="text-xs text-slate-400 mt-2">Awarded to <strong class="text-white">Sebastian Viste</strong> for mastering autonomous agents and Playwright engines.</p>\\n' +
-        '  <div class="mt-8 flex justify-center space-x-6 text-xs text-slate-400 border-t border-slate-800 pt-4">\\n' +
-        '    <span>Verified Credential</span> • <span>ID: #TP-8849</span>\\n' +
-        '  </div>\\n' +
+      ticket: templatesData['ticket'] || '',
+      receipt: templatesData['receipt'] || '',
+      certificate: '<div class="p-12 bg-slate-900 text-white rounded-2xl border-4 border-indigo-500/40 text-center font-sans">\n' +
+        '  <p class="text-xs font-bold text-indigo-400 tracking-widest uppercase">Certificate of Completion</p>\n' +
+        '  <h1 class="text-3xl font-black mt-3">Fullstack AI Engineering</h1>\n' +
+        '  <p class="text-xs text-slate-400 mt-2">Awarded to <strong class="text-white">Sebastian Viste</strong> for mastering autonomous agents and Playwright engines.</p>\n' +
+        '  <div class="mt-8 flex justify-center space-x-6 text-xs text-slate-400 border-t border-slate-800 pt-4">\n' +
+        '    <span>Verified Credential</span> • <span>ID: #TP-8849</span>\n' +
+        '  </div>\n' +
         '</div>',
-      badge: '<div class="max-w-xs mx-auto p-6 bg-gradient-to-br from-indigo-900 to-purple-950 text-white rounded-3xl shadow-2xl border border-indigo-500/30 text-center font-sans">\\n' +
-        '  <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/50">⚡</div>\\n' +
-        '  <h3 class="text-xl font-black mt-4">Alex Morgan</h3>\\n' +
-        '  <p class="text-xs text-indigo-300 font-semibold mt-0.5">Staff Platform Architect</p>\\n' +
-        '  <div class="mt-6 p-2 rounded-xl bg-slate-950/60 font-mono text-[11px] text-slate-400 border border-slate-800">\\n' +
-        '    ACCESS TIER: VIP DEVELOPER\\n' +
-        '  </div>\\n' +
+      badge: '<div class="max-w-xs mx-auto p-6 bg-gradient-to-br from-indigo-900 to-purple-950 text-white rounded-3xl shadow-2xl border border-indigo-500/30 text-center font-sans">\n' +
+        '  <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/50">⚡</div>\n' +
+        '  <h3 class="text-xl font-black mt-4">Alex Morgan</h3>\n' +
+        '  <p class="text-xs text-indigo-300 font-semibold mt-0.5">Staff Platform Architect</p>\n' +
+        '  <div class="mt-6 p-2 rounded-xl bg-slate-950/60 font-mono text-[11px] text-slate-400 border border-slate-800">\n' +
+        '    ACCESS TIER: VIP DEVELOPER\n' +
+        '  </div>\n' +
         '</div>'
     };
 
     window.loadPlaygroundPreset = function(presetName) {
       const editor = document.getElementById('playground-editor');
+      const formatSelect = document.getElementById('playground-format');
       if (editor && window.playgroundPresets[presetName]) {
         editor.value = window.playgroundPresets[presetName];
       }
-      ['invoice', 'certificate', 'badge'].forEach(function(p) {
+      if (formatSelect) {
+        if (presetName === 'ticket') {
+          formatSelect.value = 'A4-landscape';
+        } else {
+          formatSelect.value = 'A4';
+        }
+      }
+      ['invoice', 'ticket', 'receipt', 'certificate', 'badge'].forEach(function(p) {
         const btn = document.getElementById('btn-pre-' + p);
         if (btn) {
           if (p === presetName) {
-            btn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white';
+            btn.className = 'px-2 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white';
           } else {
-            btn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white';
+            btn.className = 'px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white';
           }
         }
       });
@@ -854,6 +890,8 @@ This domain is for use in documentation examples without needing permission. Thi
     window.renderPlaygroundPdf = async function() {
       const editor = document.getElementById('playground-editor');
       const formatSelect = document.getElementById('playground-format');
+      const headerFooterCb = document.getElementById('playground-header-footer');
+      const passwordInput = document.getElementById('playground-password');
       const btn = document.getElementById('playground-render-btn');
       const loader = document.getElementById('playground-loading');
       const iframe = document.getElementById('playground-iframe');
@@ -875,15 +913,26 @@ This domain is for use in documentation examples without needing permission. Thi
 
       const startTime = performance.now();
 
+      const payload = {
+        html: editor.value,
+        format: paperFormat,
+        landscape: isLandscape
+      };
+
+      if (headerFooterCb && headerFooterCb.checked) {
+        payload.header_html = '<div style="font-size: 8px; color: #64748b; width: 100%; display: flex; justify-content: space-between; padding: 0 15mm; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;"><span>Tailprint PDF Engine</span><span class="date"></span></div>';
+        payload.footer_html = '<div style="font-size: 8px; color: #64748b; width: 100%; display: flex; justify-content: space-between; padding: 0 15mm; border-top: 1px solid #e2e8f0; padding-top: 3px;"><span>Confidential Document</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>';
+      }
+
+      if (passwordInput && passwordInput.value.trim()) {
+        payload.password = passwordInput.value.trim();
+      }
+
       try {
         const res = await fetch('/v1/render/playground', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            html: editor.value,
-            format: paperFormat,
-            landscape: isLandscape
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
@@ -896,7 +945,7 @@ This domain is for use in documentation examples without needing permission. Thi
 
         const duration = Math.round(performance.now() - startTime);
         timeBadge.innerText = duration + 'ms';
-        statusBadge.innerText = 'Rendered (' + duration + 'ms)';
+        statusBadge.innerText = 'Rendered (' + duration + 'ms)' + (payload.password ? ' 🔒' : '');
         statusBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30 font-bold';
 
         const pdfBlob = await res.blob();
