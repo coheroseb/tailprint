@@ -41,8 +41,8 @@ export class StripeService {
     cancelUrl?: string;
   }): Promise<{ sessionId: string; url: string | null; isMock?: boolean }> {
     const plan = getPlanById(params.planId);
-    const successUrl = params.successUrl || `${env.APP_URL}/?checkout_success=true&session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = params.cancelUrl || `${env.APP_URL}/?checkout_cancelled=true`;
+    const successUrl = params.successUrl || `${env.APP_URL}/dashboard?checkout_success=true&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = params.cancelUrl || `${env.APP_URL}/#pricing?checkout_cancelled=true`;
 
     const isPlaceholderKey =
       !env.STRIPE_SECRET_KEY ||
@@ -106,6 +106,44 @@ export class StripeService {
         return {
           sessionId: mockSessionId,
           url: `https://checkout.stripe.com/c/pay/${mockSessionId}#plan=${plan.id}`,
+          isMock: true,
+        };
+      }
+      throw err;
+    }
+  }
+
+  public async createCustomerPortalSession(params: {
+    customerId: string;
+    returnUrl?: string;
+  }): Promise<{ url: string; isMock?: boolean }> {
+    const returnUrl = params.returnUrl || `${env.APP_URL}/dashboard`;
+
+    const isPlaceholderKey =
+      !env.STRIPE_SECRET_KEY ||
+      env.STRIPE_SECRET_KEY.includes('sk_test_placeholder') ||
+      env.STRIPE_SECRET_KEY.length < 20;
+
+    if (isPlaceholderKey && env.NODE_ENV === 'development') {
+      return {
+        url: `https://billing.stripe.com/p/session/test_portal#customer=${params.customerId}`,
+        isMock: true,
+      };
+    }
+
+    try {
+      const portalSession = await this.stripe.billingPortal.sessions.create({
+        customer: params.customerId,
+        return_url: returnUrl,
+      });
+
+      return {
+        url: portalSession.url,
+      };
+    } catch (err: any) {
+      if (env.NODE_ENV === 'development') {
+        return {
+          url: `https://billing.stripe.com/p/session/test_portal#customer=${params.customerId}`,
           isMock: true,
         };
       }

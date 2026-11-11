@@ -41,6 +41,18 @@ describe('Tailprint Test Suite', () => {
       expect(response.body).toContain('Certificate');
     });
 
+    it('GET /dashboard renders the customer self-service dashboard page', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/dashboard',
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('text/html');
+      expect(response.body).toContain('Customer Dashboard');
+      expect(response.body).toContain('tailprint_api_key');
+    });
+
     it('GET /templates returns catalog of available templates', async () => {
       const response = await app.inject({
         method: 'GET',

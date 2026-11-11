@@ -12,6 +12,7 @@ import { env } from './config/env.js';
 import { renderRoutes } from './routes/render.js';
 import { webhookRoutes } from './routes/webhooks.js';
 import { templateRoutes } from './routes/templates.js';
+import { dashboardRoutes } from './routes/dashboard.js';
 import { scrapeRoutes } from './routes/scrape.js';
 import { mcpRoutes } from './routes/mcp.js';
 import { usageRoutes } from './routes/usage.js';
@@ -105,6 +106,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // 5. Register application routes
   await fastify.register(templateRoutes);
+  await fastify.register(dashboardRoutes);
   await fastify.register(renderRoutes);
   await fastify.register(scrapeRoutes);
   await fastify.register(mcpRoutes);

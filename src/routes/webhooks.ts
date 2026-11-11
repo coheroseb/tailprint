@@ -95,4 +95,60 @@ export const webhookRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
   fastify.get('/v1/billing/session-key', { schema: { hide: true } }, sessionKeyHandler);
   fastify.get('/billing/session-key', { schema: { hide: true } }, sessionKeyHandler);
+
+  // POST /v1/billing/portal - Generate Stripe Customer Portal URL for logged in key
+  const portalHandler = async (request: any, reply: any) => {
+    const authHeader = request.headers.authorization;
+    let token: string | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    }
+
+    if (!token) {
+      return reply.code(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Bearer API key required to access customer portal',
+      });
+    }
+
+    const keyRecord = await redisService.getApiKey(token);
+    if (!keyRecord) {
+      return reply.code(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Invalid API key provided',
+      });
+    }
+
+    const customerId = keyRecord.customer_id;
+    if (!customerId) {
+      return reply.code(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'No associated Stripe customer ID found for this API key',
+      });
+    }
+
+    try {
+      const portal = await stripeService.createCustomerPortalSession({
+        customerId,
+      });
+
+      return reply.code(200).send({
+        url: portal.url,
+      });
+    } catch (err: any) {
+      request.log.error({ err }, 'Failed to create Stripe portal session');
+      return reply.code(500).send({
+        statusCode: 500,
+        error: 'Portal Error',
+        message: err.message || 'Failed to initialize customer portal session',
+      });
+    }
+  };
+
+  fastify.post('/v1/billing/portal', { schema: { hide: true } }, portalHandler);
+  fastify.post('/billing/portal', { schema: { hide: true } }, portalHandler);
 };
