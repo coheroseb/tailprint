@@ -174,26 +174,73 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
 <body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white">
 
   <!-- Navigation -->
-  <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800/80">
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/85 border-b border-slate-800/80">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <a href="/" class="flex items-center group">
-        <span class="font-extrabold text-2xl tracking-tight text-white flex items-center">
-          <span class="text-indigo-400 font-mono font-bold mr-1">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-1">/&gt;</span>
-        </span>
-      </a>
+      
+      <!-- Brand Logo & Main Navigation -->
+      <div class="flex items-center space-x-8">
+        <a href="/" class="flex items-center group transition hover:opacity-90">
+          <span class="font-extrabold text-2xl tracking-tight text-white flex items-center">
+            <span class="text-indigo-400 font-mono font-bold mr-1">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-1">/&gt;</span>
+          </span>
+        </a>
 
-      <nav class="flex items-center space-x-6 text-sm font-medium">
-        <a href="#playground" class="text-indigo-400 hover:text-white transition font-semibold">Live Playground</a>
-        <a href="#scraper" class="text-slate-400 hover:text-white transition">URL-to-Markdown</a>
-        <a href="#templates" class="text-slate-400 hover:text-white transition">Templates (${TEMPLATES.length})</a>
-        <a href="#mcp" class="text-slate-400 hover:text-white transition">MCP for AI</a>
-        <a href="#pricing" class="text-slate-400 hover:text-white transition">Pricing</a>
-        <a href="/docs" target="_blank" class="text-slate-400 hover:text-white transition">Docs</a>
-        <a href="/dashboard" class="text-slate-400 hover:text-white transition">Dashboard</a>
-        <button onclick="openFreeKeyModal()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition shadow-md shadow-emerald-600/30 flex items-center space-x-1.5">
-          <span>⚡ Get Free API Key</span>
+        <!-- Main Product Links (Desktop) -->
+        <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
+          <a href="#playground" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+            <span>Playground</span>
+          </a>
+          <a href="#templates" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
+            <span>Templates</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono leading-none">${TEMPLATES.length}</span>
+          </a>
+          <a href="#scraper" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
+            Scraper
+          </a>
+          <a href="#mcp" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
+            <span>MCP Server</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold uppercase tracking-wider leading-none">AI</span>
+          </a>
+          <a href="#pricing" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
+            Pricing
+          </a>
+          <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1">
+            <span>Docs</span>
+            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </nav>
+      </div>
+
+      <!-- User Actions & CTA -->
+      <div class="flex items-center space-x-3">
+        <a href="/dashboard" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 transition">
+          Customer Portal
+        </a>
+        <button onclick="openFreeKeyModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/20 flex items-center space-x-1.5">
+          <span class="text-xs">⚡</span>
+          <span>Claim Free Key</span>
         </button>
-      </nav>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800" aria-label="Toggle navigation">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Slide-down Navigation -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800/80 bg-slate-950/95 px-6 py-4 space-y-2">
+      <a href="#playground" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-900">Live Playground</a>
+      <a href="#templates" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Templates (${TEMPLATES.length})</a>
+      <a href="#scraper" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">URL Scraper</a>
+      <a href="#mcp" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">MCP Server (AI)</a>
+      <a href="#pricing" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Pricing</a>
+      <a href="/docs" target="_blank" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">API Documentation</a>
+      <a href="/dashboard" class="block px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:bg-slate-900">Customer Dashboard</a>
     </div>
   </header>
 

@@ -45,22 +45,33 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
 <body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white flex flex-col justify-between">
 
   <!-- Header -->
-  <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
+  <header class="border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md sticky top-0 z-40">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <a href="/" class="flex items-center group">
+        <a href="/" class="flex items-center group transition hover:opacity-90">
           <span class="font-extrabold text-2xl tracking-tight text-white flex items-center">
             <span class="text-indigo-400 font-mono font-bold mr-1">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-1">/&gt;</span>
           </span>
         </a>
+        <span class="text-slate-600 font-mono text-sm">/</span>
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mono">Customer Portal</span>
       </div>
 
-      <nav class="flex items-center space-x-4 text-xs font-semibold">
-        <a href="/docs" target="_blank" class="text-slate-400 hover:text-white transition">API Docs (/docs)</a>
-        <a href="/" class="text-slate-400 hover:text-white transition">Landing Page</a>
+      <nav class="flex items-center space-x-3 text-xs font-semibold">
+        <a href="/#playground" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition">
+          Live Sandbox
+        </a>
+        <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center space-x-1">
+          <span>API Reference</span>
+          <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+        <div class="h-4 w-px bg-slate-800"></div>
         <button id="logout-btn" onclick="logout()" class="hidden px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 transition">
           Switch Key
         </button>
+        <a href="/" class="px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white transition">
+          Main Site →
+        </a>
       </nav>
     </div>
   </header>
