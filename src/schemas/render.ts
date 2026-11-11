@@ -22,13 +22,16 @@ export const RenderPdfRequestSchema = z
     owner_password: z.string().min(1).max(128).optional().describe('Optional owner password for PDF permission controls.'),
     wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
     delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
+    store: z.boolean().default(false).describe('If true, saves the rendered PDF to Tailprint hosted delivery and returns a public hostedUrl link.'),
+    expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration for the hosted link (1h, 24h, or 7d). Defaults to 24h.'),
   })
   .refine((data) => Boolean(data.html || data.url), {
     message: 'Either "html" or "url" must be provided',
     path: ['html'],
   });
 
-export type RenderPdfRequest = z.infer<typeof RenderPdfRequestSchema>;
+export type RenderPdfRequest = z.input<typeof RenderPdfRequestSchema>;
+export type RenderPdfOutput = z.infer<typeof RenderPdfRequestSchema>;
 
 export const RenderImageRequestSchema = z
   .object({
@@ -39,13 +42,28 @@ export const RenderImageRequestSchema = z
     type: z.enum(['png', 'jpeg']).default('png').describe('Output image format'),
     wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
     delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
+    store: z.boolean().default(false).describe('If true, saves the rendered image to Tailprint hosted delivery and returns a public hostedUrl link.'),
+    expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration for the hosted link (1h, 24h, or 7d). Defaults to 24h.'),
   })
   .refine((data) => Boolean(data.html || data.url), {
     message: 'Either "html" or "url" must be provided',
     path: ['html'],
   });
 
-export type RenderImageRequest = z.infer<typeof RenderImageRequestSchema>;
+export type RenderImageRequest = z.input<typeof RenderImageRequestSchema>;
+export type RenderImageOutput = z.infer<typeof RenderImageRequestSchema>;
+
+export const HostedFileResponseSchema = z.object({
+  success: z.boolean(),
+  hostedUrl: z.string().url().describe('Directly accessible public CDN/document link'),
+  fileId: z.string().describe('Unique secure identifier of the stored file'),
+  filename: z.string().describe('Original or assigned file name'),
+  mimeType: z.string().describe('MIME type of the stored document'),
+  sizeBytes: z.number().describe('File size in bytes'),
+  expiresAt: z.string().describe('ISO timestamp of expiration'),
+});
+
+export type HostedFileResponse = z.infer<typeof HostedFileResponseSchema>;
 
 export const ErrorResponseSchema = z.object({
   statusCode: z.number().describe('HTTP status code'),

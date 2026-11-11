@@ -406,6 +406,91 @@ describe('Tailprint Test Suite', () => {
       expect(res2.rawPayload.equals(pngBuffer1)).toBe(true);
     }, 20000);
 
+    it('POST /v1/render/pdf with store: true returns hostedUrl and GET /d/:fileId serves it', async () => {
+      const renderRes = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          html: '<div class="p-8 bg-indigo-900 text-white font-bold">Hosted PDF Delivery Test</div>',
+          store: true,
+          expires_in: '24h',
+        },
+      });
+
+      expect(renderRes.statusCode).toBe(200);
+      const data = JSON.parse(renderRes.body);
+      expect(data.success).toBe(true);
+      expect(data.hostedUrl).toBeDefined();
+      expect(data.fileId).toBeDefined();
+      expect(data.fileId).toMatch(/^f_[a-f0-9]+\.pdf$/);
+      expect(data.mimeType).toBe('application/pdf');
+      expect(data.sizeBytes).toBeGreaterThan(1000);
+      expect(data.expiresAt).toBeDefined();
+      expect(renderRes.headers['x-tailprint-hosted-url']).toBe(data.hostedUrl);
+
+      // Now fetch the hosted file via GET /d/:fileId
+      const fetchRes = await app.inject({
+        method: 'GET',
+        url: `/d/${data.fileId}`,
+      });
+
+      expect(fetchRes.statusCode).toBe(200);
+      expect(fetchRes.headers['content-type']).toBe('application/pdf');
+      expect(fetchRes.headers['content-disposition']).toContain('inline');
+      expect(fetchRes.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+
+      // Verify ?download=true sets attachment
+      const downloadRes = await app.inject({
+        method: 'GET',
+        url: `/d/${data.fileId}?download=true`,
+      });
+      expect(downloadRes.statusCode).toBe(200);
+      expect(downloadRes.headers['content-disposition']).toContain('attachment');
+    }, 20000);
+
+    it('POST /v1/render/image with store: true returns hostedUrl and GET /d/:fileId serves it', async () => {
+      const renderRes = await app.inject({
+        method: 'POST',
+        url: '/v1/render/image',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          html: '<div class="w-[400px] h-[200px] bg-emerald-700 text-white p-4 font-bold">Hosted Image Test</div>',
+          store: true,
+          type: 'png',
+        },
+      });
+
+      expect(renderRes.statusCode).toBe(200);
+      const data = JSON.parse(renderRes.body);
+      expect(data.success).toBe(true);
+      expect(data.hostedUrl).toBeDefined();
+      expect(data.fileId).toMatch(/^f_[a-f0-9]+\.png$/);
+      expect(data.mimeType).toBe('image/png');
+
+      const fetchRes = await app.inject({
+        method: 'GET',
+        url: `/d/${data.fileId}`,
+      });
+      expect(fetchRes.statusCode).toBe(200);
+      expect(fetchRes.headers['content-type']).toBe('image/png');
+      expect(fetchRes.rawPayload[0]).toBe(0x89); // PNG
+    }, 20000);
+
+    it('GET /d/:fileId returns 404 for non-existent file', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/d/f_non_existent_12345.pdf',
+      });
+      expect(res.statusCode).toBe(404);
+      const data = JSON.parse(res.body);
+      expect(data.error).toBe('Not Found');
+    });
+
     it('validates request input and rejects invalid schema (400)', async () => {
       const response = await app.inject({
         method: 'POST',

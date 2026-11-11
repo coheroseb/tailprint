@@ -345,7 +345,7 @@ export class BrowserService {
 
         return imageBuffer;
       },
-      { width: params.width, height: params.height }
+      { width: params.width || 1200, height: params.height || 630 }
     );
   }
 }

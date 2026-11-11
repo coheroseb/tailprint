@@ -28,6 +28,9 @@ const envSchema = z.object({
   // Caching
   CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(604800), // 7 days
 
+  // Cloud Storage / Hosted Delivery Directory
+  STORAGE_PATH: z.string().default(process.env.STORAGE_PATH || 'storage'),
+
   // Tailwind CDN
   TAILWIND_CDN_URL: z.string().url().default('https://cdn.tailwindcss.com'),
 

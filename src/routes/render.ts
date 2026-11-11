@@ -8,6 +8,7 @@ import {
 } from '../schemas/render.js';
 import { browserService } from '../services/browser.js';
 import { redisService } from '../services/redis.js';
+import { storageService } from '../services/storage.js';
 
 export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // Helper to authenticate Bearer token and check monthly quota
@@ -91,6 +92,28 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
       const pdfBuffer = await browserService.renderPdf(request.body);
 
+      if (request.body.store) {
+        const stored = await storageService.saveFile(pdfBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: 'document.pdf',
+          expiresIn: request.body.expires_in,
+        });
+
+        return reply
+          .code(200)
+          .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+          .send({
+            success: true,
+            hostedUrl: stored.hostedUrl,
+            fileId: stored.fileId,
+            filename: stored.filename,
+            mimeType: stored.mimeType,
+            sizeBytes: stored.sizeBytes,
+            expiresAt: stored.expiresAt,
+          });
+      }
+
       return reply
         .code(200)
         .header('Content-Type', 'application/pdf')
@@ -114,6 +137,28 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       if (!auth) return;
 
       const pdfBuffer = await browserService.renderPdf(request.body);
+
+      if (request.body.store) {
+        const stored = await storageService.saveFile(pdfBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: 'document.pdf',
+          expiresIn: request.body.expires_in,
+        });
+
+        return reply
+          .code(200)
+          .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+          .send({
+            success: true,
+            hostedUrl: stored.hostedUrl,
+            fileId: stored.fileId,
+            filename: stored.filename,
+            mimeType: stored.mimeType,
+            sizeBytes: stored.sizeBytes,
+            expiresAt: stored.expiresAt,
+          });
+      }
 
       return reply
         .code(200)
@@ -165,6 +210,29 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       // 2. Check cache
       const cached = await redisService.getCachedImage(cacheHash);
       if (cached) {
+        if (request.body.store) {
+          const stored = await storageService.saveFile(cached, {
+            mimeType,
+            extension: type || 'png',
+            filename: `render.${type || 'png'}`,
+            expiresIn: request.body.expires_in,
+          });
+
+          return reply
+            .code(200)
+            .header('X-Cache', 'HIT')
+            .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+            .send({
+              success: true,
+              hostedUrl: stored.hostedUrl,
+              fileId: stored.fileId,
+              filename: stored.filename,
+              mimeType: stored.mimeType,
+              sizeBytes: stored.sizeBytes,
+              expiresAt: stored.expiresAt,
+            });
+        }
+
         return reply
           .code(200)
           .header('Content-Type', mimeType)
@@ -176,6 +244,29 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       // 3. Render and cache image
       const imageBuffer = await browserService.renderImage(request.body);
       await redisService.setCachedImage(cacheHash, imageBuffer);
+
+      if (request.body.store) {
+        const stored = await storageService.saveFile(imageBuffer, {
+          mimeType,
+          extension: type || 'png',
+          filename: `render.${type || 'png'}`,
+          expiresIn: request.body.expires_in,
+        });
+
+        return reply
+          .code(200)
+          .header('X-Cache', 'MISS')
+          .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+          .send({
+            success: true,
+            hostedUrl: stored.hostedUrl,
+            fileId: stored.fileId,
+            filename: stored.filename,
+            mimeType: stored.mimeType,
+            sizeBytes: stored.sizeBytes,
+            expiresAt: stored.expiresAt,
+          });
+      }
 
       return reply
         .code(200)
@@ -214,6 +305,29 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
       const cached = await redisService.getCachedImage(cacheHash);
       if (cached) {
+        if (request.body.store) {
+          const stored = await storageService.saveFile(cached, {
+            mimeType,
+            extension: type || 'png',
+            filename: `render.${type || 'png'}`,
+            expiresIn: request.body.expires_in,
+          });
+
+          return reply
+            .code(200)
+            .header('X-Cache', 'HIT')
+            .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+            .send({
+              success: true,
+              hostedUrl: stored.hostedUrl,
+              fileId: stored.fileId,
+              filename: stored.filename,
+              mimeType: stored.mimeType,
+              sizeBytes: stored.sizeBytes,
+              expiresAt: stored.expiresAt,
+            });
+        }
+
         return reply
           .code(200)
           .header('Content-Type', mimeType)
@@ -225,12 +339,77 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       const imageBuffer = await browserService.renderImage(request.body);
       await redisService.setCachedImage(cacheHash, imageBuffer);
 
+      if (request.body.store) {
+        const stored = await storageService.saveFile(imageBuffer, {
+          mimeType,
+          extension: type || 'png',
+          filename: `render.${type || 'png'}`,
+          expiresIn: request.body.expires_in,
+        });
+
+        return reply
+          .code(200)
+          .header('X-Cache', 'MISS')
+          .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+          .send({
+            success: true,
+            hostedUrl: stored.hostedUrl,
+            fileId: stored.fileId,
+            filename: stored.filename,
+            mimeType: stored.mimeType,
+            sizeBytes: stored.sizeBytes,
+            expiresAt: stored.expiresAt,
+          });
+      }
+
       return reply
         .code(200)
         .header('Content-Type', mimeType)
         .header('X-Cache', 'MISS')
         .header('Content-Length', String(imageBuffer.length))
         .send(imageBuffer);
+    }
+  );
+
+  // Public Hosted Delivery Endpoint: GET /d/:fileId
+  fastify.get(
+    '/d/:fileId',
+    {
+      schema: {
+        tags: ['Hosted Delivery'],
+        summary: 'Access hosted PDF or image document',
+        description: 'Serves an ephemeral or hosted document generated with store: true. Cached with immutable CDN headers.',
+        params: z.object({
+          fileId: z.string().describe('File ID returned from hosted render'),
+        }),
+        querystring: z.object({
+          download: z.coerce.boolean().optional().describe('Force attachment download instead of inline browser display'),
+        }),
+      },
+    },
+    async (request, reply) => {
+      const { fileId } = request.params as { fileId: string };
+      const { download } = (request.query as { download?: boolean }) || {};
+
+      const file = await storageService.getFile(fileId);
+      if (!file) {
+        return reply.code(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: 'The requested hosted document does not exist or has expired.',
+        });
+      }
+
+      const disposition = download ? 'attachment' : 'inline';
+
+      return reply
+        .code(200)
+        .header('Content-Type', file.metadata.mimeType)
+        .header('Content-Length', String(file.buffer.length))
+        .header('Content-Disposition', `${disposition}; filename="${file.metadata.filename}"`)
+        .header('Cache-Control', 'public, max-age=86400, immutable')
+        .header('X-Tailprint-Expires-At', file.metadata.expiresAt)
+        .send(file.buffer);
     }
   );
 

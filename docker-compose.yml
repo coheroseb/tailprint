@@ -29,6 +29,8 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM:-Tailprint <noreply@tailprint.com>}
+    volumes:
+      - ./storage:/app/storage
     deploy:
       resources:
         limits:

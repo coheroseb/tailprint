@@ -6,6 +6,7 @@ import { qrService } from '../services/qr.js';
 import { chartService } from '../services/chart.js';
 import { mockupService } from '../services/mockup.js';
 import { pdfStamperService } from '../services/pdfStamper.js';
+import { storageService } from '../services/storage.js';
 import { TEMPLATES } from '../config/templates.js';
 
 export interface McpServerOptions {
@@ -130,11 +131,17 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
         const base64Pdf = buffer.toString('base64');
         const sizeKb = (buffer.byteLength / 1024).toFixed(1);
 
+        const stored = await storageService.saveFile(buffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: 'rendered.pdf',
+        });
+
         return {
           content: [
             {
               type: 'text',
-              text: `✅ PDF successfully generated (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}${password ? ', Encrypted' : ''}).\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
+              text: `✅ **PDF successfully generated!** (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}${password ? ', Encrypted' : ''})\n\n🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Link hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
             },
           ],
         };
@@ -188,6 +195,12 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
         const base64Img = buffer.toString('base64');
         const sizeKb = (buffer.byteLength / 1024).toFixed(1);
 
+        const stored = await storageService.saveFile(buffer, {
+          mimeType: `image/${imgType}`,
+          extension: imgType,
+          filename: `rendered.${imgType}`,
+        });
+
         return {
           content: [
             {
@@ -197,7 +210,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             },
             {
               type: 'text',
-              text: `✅ Image successfully rendered (${imgWidth}x${imgHeight} ${imgType.toUpperCase()}, ${sizeKb} KB).\n\nBase64 Data URI:\ndata:image/${imgType};base64,${base64Img}`,
+              text: `✅ **Image successfully rendered!** (${imgWidth}x${imgHeight} ${imgType.toUpperCase()}, ${sizeKb} KB)\n\n🔗 **Direct Image Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:image/${imgType};base64,${base64Img}`,
             },
           ],
         };
@@ -326,11 +339,17 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           const base64Pdf = buffer.toString('base64');
           const sizeKb = (buffer.byteLength / 1024).toFixed(1);
 
+          const stored = await storageService.saveFile(buffer, {
+            mimeType: 'application/pdf',
+            extension: 'pdf',
+            filename: `${template.id}.pdf`,
+          });
+
           return {
             content: [
               {
                 type: 'text',
-                text: `✅ Template "${template.title}" rendered to PDF (${sizeKb} KB, ${template.format || 'A4'}${password ? ', Encrypted' : ''}).\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
+                text: `✅ **Template "${template.title}" rendered to PDF!** (${sizeKb} KB, ${template.format || 'A4'}${password ? ', Encrypted' : ''})\n\n🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Link hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
               },
             ],
           };
@@ -415,6 +434,12 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
         const base64Img = buffer.toString('base64');
         const sizeKb = (buffer.byteLength / 1024).toFixed(1);
 
+        const stored = await storageService.saveFile(buffer, {
+          mimeType: 'image/png',
+          extension: 'png',
+          filename: 'chart.png',
+        });
+
         return {
           content: [
             {
@@ -424,7 +449,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             },
             {
               type: 'text',
-              text: `✅ ${type.toUpperCase()} Chart successfully generated (${width || 1000}x${height || 600}, ${sizeKb} KB).\n\nBase64 Data URI:\ndata:image/png;base64,${base64Img}`,
+              text: `✅ **${type.toUpperCase()} Chart successfully generated!** (${width || 1000}x${height || 600}, ${sizeKb} KB)\n\n🔗 **Direct Image Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:image/png;base64,${base64Img}`,
             },
           ],
         };
@@ -521,6 +546,12 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
         const base64Img = buffer.toString('base64');
         const sizeKb = (buffer.byteLength / 1024).toFixed(1);
 
+        const stored = await storageService.saveFile(buffer, {
+          mimeType: 'image/png',
+          extension: 'png',
+          filename: 'device-mockup.png',
+        });
+
         return {
           content: [
             {
@@ -530,7 +561,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             },
             {
               type: 'text',
-              text: `✅ Responsive Device Mockup successfully rendered (1600x1000, ${sizeKb} KB) for "${url}".\n\nBase64 Data URI:\ndata:image/png;base64,${base64Img}`,
+              text: `✅ **Responsive Device Mockup successfully rendered!** (1600x1000, ${sizeKb} KB) for "${url}".\n\n🔗 **Direct Image Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:image/png;base64,${base64Img}`,
             },
           ],
         };
@@ -580,11 +611,17 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
         const outputBase64 = stampedBuffer.toString('base64');
         const sizeKb = (stampedBuffer.byteLength / 1024).toFixed(1);
 
+        const stored = await storageService.saveFile(stampedBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: 'watermarked.pdf',
+        });
+
         return {
           content: [
             {
               type: 'text',
-              text: `✅ PDF successfully stamped with watermark "${watermark_text}" (${sizeKb} KB).\n\nBase64 Data URI:\ndata:application/pdf;base64,${outputBase64}`,
+              text: `✅ **PDF successfully stamped with watermark "${watermark_text}"!** (${sizeKb} KB)\n\n🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Link hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:application/pdf;base64,${outputBase64}`,
             },
           ],
         };

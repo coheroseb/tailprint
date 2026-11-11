@@ -79,9 +79,11 @@ RUN mkdir -p /ms-playwright \
     && npx playwright install chromium \
     && chmod -R 777 /ms-playwright
 
-# Create non-privileged user
+# Create non-privileged user and persistent storage directory
 RUN groupadd -r renderuser && useradd -r -g renderuser -G audio,video renderuser \
-    && chown -R renderuser:renderuser /app /ms-playwright
+    && mkdir -p /app/storage \
+    && chown -R renderuser:renderuser /app /ms-playwright /app/storage \
+    && chmod -R 775 /app/storage
 
 # Copy compiled application code
 COPY --from=builder /app/dist ./dist
