@@ -85,8 +85,9 @@ RUN groupadd -r renderuser && useradd -r -g renderuser -G audio,video renderuser
     && chown -R renderuser:renderuser /app /ms-playwright /app/storage \
     && chmod -R 775 /app/storage
 
-# Copy compiled application code
+# Copy compiled application code and static assets
 COPY --from=builder /app/dist ./dist
+COPY assets ./assets
 
 USER renderuser
 

@@ -31,6 +31,7 @@ services:
       - SMTP_FROM=${SMTP_FROM:-Tailprint <noreply@tailprint.com>}
     volumes:
       - ./storage:/app/storage
+      - ./assets:/app/assets:ro
     deploy:
       resources:
         limits:
