@@ -766,6 +766,126 @@ This domain is for use in documentation examples without needing permission. Thi
             </div>
           </div>
 
+          <!-- Use Case 5: Native Data Visualizations & Charts -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-violet-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-violet-500/10 text-violet-400 text-lg">📊</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-violet-400 transition">5. High-DPI Charts & Data Visuals</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-800/40">render_chart</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-violet-400 font-bold">You to Claude:</span> "Plot our monthly MRR growth vs burn rate for the last 6 months as a dark-mode dual bar chart."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Compiles Chart.js options into a high-DPI image and streams it back inline in chat.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> No text approximations or ugly ASCII art. Real, presentation-ready charts right inside your LLM workflow.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 6: Scannable QR Codes & Barcodes -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-emerald-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-lg">📱</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-emerald-400 transition">6. Instant Verified QR Codes &amp; Barcodes</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/40">generate_qr</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-emerald-400 font-bold">You to Cursor:</span> "Generate a scannable high-resolution QR code pointing to https://tailprint.com/dashboard with dark theme."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Generates mathematically verified PNG or SVG QR matrices with custom error correction (L/M/Q/H).</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Chatbots can't draw scannable QR matrices on their own. Tailprint delivers scan-ready codes instantly.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 7: Multi-Device Studio Mockups -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-blue-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-blue-500/10 text-blue-400 text-lg">💻</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-blue-400 transition">7. Responsive Studio Device Mockups</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-950/80 text-blue-300 border border-blue-800/40">render_device_mockup</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-blue-400 font-bold">You to Claude:</span> "Create a showcase device mockup of https://tailprint.com on a MacBook Pro and floating iPhone 16."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Captures desktop and mobile viewports in parallel and composites them into a 1600x1000 studio scene.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Perfect for landing page hero assets, pitch decks, and social media announcements in 1 click.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 8: Watermarking & Document Stamping -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-rose-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-rose-500/10 text-rose-400 text-lg">🔒</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-rose-400 transition">8. PDF Watermarking &amp; Compliance Stamping</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-800/40">stamp_pdf</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-rose-400 font-bold">You to Claude:</span> "Stamp this PDF contract with a diagonal semi-transparent 'FORTROLIGT / CONFIDENTIAL' across all pages."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Streams the PDF through pdf-lib, injecting vector watermark layers with custom rotation, opacity, and color.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Ensures enterprise compliance and NDA adherence before documents leave your AI workflow.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -786,8 +906,8 @@ This domain is for use in documentation examples without needing permission. Thi
             <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
               <span class="text-base">🛠️</span>
               <div>
-                <h4 class="text-xs font-bold text-white">6 Tools (Functions)</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">scrape_markdown, render_pdf, render_image, render_template, list_templates, get_template_source.</p>
+                <h4 class="text-xs font-bold text-white">10 Native Tools</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">render_pdf, render_image, render_chart, generate_qr, render_device_mockup, stamp_pdf, scrape_markdown, render_template, list_templates, get_template_source.</p>
               </div>
             </div>
 
