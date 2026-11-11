@@ -176,24 +176,11 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <!-- Navigation -->
   <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800/80">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-lg shadow-indigo-500/10 overflow-hidden relative">
-          <svg class="w-7 h-7" viewBox="0 0 100 100" fill="none">
-            <path d="M14 24 L14 14 L24 14" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
-            <path d="M86 24 L86 14 L76 14" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
-            <path d="M14 76 L14 86 L24 86" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
-            <path d="M86 76 L86 86 L76 86" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
-            <path d="M35 28 L23 50 L35 72" stroke="#818cf8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M65 28 L77 50 L65 72" stroke="#f472b6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="56" y1="26" x2="44" y2="74" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
-            <circle cx="50" cy="50" r="4" fill="#f43f5e"/>
-          </svg>
-        </div>
-        <span class="font-extrabold text-lg tracking-tight text-white flex items-center">
-          <span class="text-indigo-400 font-mono font-bold mr-0.5">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-0.5">/&gt;</span>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold ml-2">Engine</span>
+      <a href="/" class="flex items-center group">
+        <span class="font-extrabold text-2xl tracking-tight text-white flex items-center">
+          <span class="text-indigo-400 font-mono font-bold mr-1">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-1">/&gt;</span>
         </span>
-      </div>
+      </a>
 
       <nav class="flex items-center space-x-6 text-sm font-medium">
         <a href="#playground" class="text-indigo-400 hover:text-white transition font-semibold">Live Playground</a>
