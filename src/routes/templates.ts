@@ -615,46 +615,195 @@ This domain is for use in documentation examples without needing permission. Thi
   </section>
 
   <!-- Model Context Protocol (MCP) Section -->
-  <section id="mcp" class="py-20 border-b border-slate-800/80 bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="text-center max-w-2xl mx-auto mb-12">
-        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-950/60 border border-purple-800/50 text-purple-400 text-xs font-semibold mb-3">
-          <span>AI Native Standard</span>
+  <section id="mcp" class="py-24 border-b border-slate-800/80 bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950">
+    <div class="max-w-7xl mx-auto px-6 space-y-16">
+      
+      <!-- Section Header -->
+      <div class="text-center max-w-3xl mx-auto">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-950/60 border border-purple-800/50 text-purple-400 text-xs font-semibold mb-4">
+          <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+          <span>Official Model Context Protocol (MCP) Server</span>
         </div>
-        <h2 class="text-3xl font-extrabold text-white">Model Context Protocol (MCP) Support</h2>
-        <p class="text-slate-400 mt-2">Connect Tailprint directly to Claude Desktop, Cursor, Windsurf, or autonomous LLM agents in seconds.</p>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Give Your AI Assistants Hands to <span class="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">Scrape &amp; Print</span>
+        </h2>
+        <p class="text-slate-400 mt-3 text-sm sm:text-base leading-relaxed">
+          Connect Tailprint to Claude Desktop, Cursor, Windsurf, or autonomous LLM agents in 30 seconds. Turn conversational prompts into pixel-perfect PDF briefs, dynamic invoices, and inline preview images.
+        </p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        <!-- Left: Capabilities & Prompts -->
-        <div class="lg:col-span-5 space-y-6">
-          <div class="space-y-4">
-            <h3 class="text-xl font-bold text-white">5 Powerful Tools in Your AI Assistant</h3>
+      <!-- 4 Concrete Real-World Use Cases & Business Value -->
+      <div>
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-bold text-white">Concrete Real-World Use Cases</h3>
+            <p class="text-xs text-slate-400 mt-1">What you can ask your AI assistant to build right now with Tailprint MCP.</p>
+          </div>
+          <span class="hidden sm:inline-block text-xs font-semibold text-purple-400 px-3 py-1 rounded-lg bg-purple-950/60 border border-purple-800/40">
+            Tools • Resources • Prompts
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- Use Case 1: Executive Briefs from URL -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-indigo-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 text-lg">📑</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-indigo-400 transition">1. Web Article to 1-Page Executive PDF</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/40">scrape + render</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-indigo-400 font-bold">You to Claude:</span> "Read this 15-page article at <span class="text-slate-500">https://example.com/report</span>, extract the key data, and render a 1-page executive summary PDF with benchmark bars."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Tailprint strips cookie walls & ads (saving 85% LLM tokens), structures key findings, and compiles a vector PDF.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Saves 2+ hours of manual report formatting and copy-pasting into Word/Canva.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 2: On-Demand Invoicing & Billing -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-emerald-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-lg">🧾</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-emerald-400 transition">2. Instant Client Invoicing &amp; Billing</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/40">render_template</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-emerald-400 font-bold">You to Claude:</span> "Create a PDF invoice for Acme Corp: 15h engineering at $150/hr, invoice #INV-2026-042, due in 14 days."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Calls <code class="text-slate-300">render_template('invoice', variables)</code>. The engine injects line items into our battle-tested Tailwind layout.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Zero CSS hallucinations. LLMs don't break page margins or table alignment, yielding instant, clean invoices.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 3: Inline Social Preview Cards -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-cyan-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 text-lg">🖼️</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-cyan-400 transition">3. Inline Social Share Images (Open Graph)</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/40">inline image block</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-cyan-400 font-bold">You to Cursor:</span> "Generate a modern dark 1200x630 Open Graph banner for my blog post 'Shipping Fast with Autonomous Agents'."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Renders HTML with Tailwind CSS and returns a native MCP <code class="text-slate-300">image</code> object.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Displays directly inside your AI chat window for visual verification before publishing to production.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 4: Backoffice Automation -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-amber-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400 text-lg">🎟️</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-amber-400 transition">4. Fulfillment: Tickets, Receipts &amp; Shipping Labels</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/40">autonomous agents</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-amber-400 font-bold">Your Agent:</span> "Order #8492 placed. Issue a POS receipt, generate shipping label for DHL, and email customer."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Agenter kalder <code class="text-slate-300">render_template('ticket' | 'receipt' | 'shipping-label')</code> on-demand via JSON-RPC.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Eliminates headless Chrome dependencies and Puppeteer crashes in your application backend.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Quickstart Config Box & Protocol Breakdown -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-8 border-t border-slate-800/80">
+        
+        <!-- Left: Protocol Capabilities Breakdown -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="space-y-2">
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Protocol Architecture</span>
+            <h3 class="text-xl font-bold text-white">Full MCP Protocol Compliance</h3>
             <p class="text-xs text-slate-400 leading-relaxed">
-              Once connected, your AI model can scrape websites without token bloat and render PDFs or Open Graph social images on-demand.
+              Tailprint implements all three official Model Context Protocol primitives for complete interoperability across all leading AI runtimes.
             </p>
           </div>
 
-          <div class="space-y-3">
-            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start space-x-3">
-              <span class="text-lg">⚡</span>
+          <div class="space-y-3 pt-2">
+            <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
+              <span class="text-base">🛠️</span>
               <div>
-                <h4 class="text-xs font-bold text-white">scrape_markdown</h4>
-                <p class="text-xs text-slate-400 mt-0.5">Scrapes any page, strips cookie walls & ads, returns token-efficient Markdown with savings analytics.</p>
+                <h4 class="text-xs font-bold text-white">6 Tools (Functions)</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">scrape_markdown, render_pdf, render_image, render_template, list_templates, get_template_source.</p>
               </div>
             </div>
-            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start space-x-3">
-              <span class="text-lg">📄</span>
+
+            <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
+              <span class="text-base">📚</span>
               <div>
-                <h4 class="text-xs font-bold text-white">render_pdf & render_image</h4>
-                <p class="text-xs text-slate-400 mt-0.5">Turns Tailwind CSS markup into vector PDFs or OG banners with base64 data URIs.</p>
+                <h4 class="text-xs font-bold text-white">10 Resources (Context URI)</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">tailprint://templates/catalog, tailprint://docs/tailwind-guide, and static HTML templates directly readable into context.</p>
               </div>
             </div>
-            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start space-x-3">
-              <span class="text-lg">📑</span>
+
+            <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
+              <span class="text-base">💬</span>
               <div>
-                <h4 class="text-xs font-bold text-white">list_templates & get_template_source</h4>
-                <p class="text-xs text-slate-400 mt-0.5">Lets your AI agent pull our invoice, certificate, or report templates and customize them on the fly.</p>
+                <h4 class="text-xs font-bold text-white">3 Prompts (1-Click Workflows)</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">generate_invoice, summarize_url_to_pdf, create_social_card prompts pre-configured for Claude.</p>
               </div>
             </div>
           </div>
@@ -666,7 +815,7 @@ This domain is for use in documentation examples without needing permission. Thi
             <div class="flex space-x-2">
               <button onclick="switchMcpTab('claude')" id="btn-mcp-claude" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white">Claude Desktop</button>
               <button onclick="switchMcpTab('cursor')" id="btn-mcp-cursor" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Cursor / Windsurf</button>
-              <button onclick="switchMcpTab('sse')" id="btn-mcp-sse" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Remote SSE Endpoint</button>
+              <button onclick="switchMcpTab('sse')" id="btn-mcp-sse" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Remote Cloud SSE</button>
             </div>
             <button onclick="copyMcpSnippet()" id="mcp-copy-btn" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1">
               <span>📋 Copy Config</span>
@@ -675,11 +824,11 @@ This domain is for use in documentation examples without needing permission. Thi
 
           <pre id="mcp-code-block" class="p-4 bg-slate-950 rounded-xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed border border-slate-800/80">{
   "mcpServers": {
-    "renderengine": {
-      "command": "node",
-      "args": ["/opt/renderengine/dist/mcp/stdio.js"],
+    "tailprint": {
+      "command": "npx",
+      "args": ["-y", "tailprint"],
       "env": {
-        "RENDERENGINE_API_KEY": "sec_live_your_key_here"
+        "TAILPRINT_API_KEY": "sec_live_your_key_here"
       }
     }
   }
@@ -688,7 +837,9 @@ This domain is for use in documentation examples without needing permission. Thi
             Add this snippet to <code class="text-indigo-300">~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS.
           </p>
         </div>
+
       </div>
+
     </div>
   </section>
 
@@ -1329,23 +1480,19 @@ This domain is for use in documentation examples without needing permission. Thi
     window.mcpSnippets = {
       claude: JSON.stringify({
         mcpServers: {
-          renderengine: {
+          tailprint: {
             command: "npx",
-            args: ["-y", "eaas-render-engine", "mcp"],
+            args: ["-y", "tailprint"],
             env: {
-              RENDERENGINE_API_KEY: "sec_live_your_key_here"
+              TAILPRINT_API_KEY: "sec_live_your_key_here"
             }
           }
         }
       }, null, 2),
       cursor: JSON.stringify({
         mcpServers: {
-          renderengine: {
-            command: "node",
-            args: ["./dist/mcp/stdio.js"],
-            env: {
-              RENDERENGINE_API_KEY: "sec_live_your_key_here"
-            }
+          tailprint: {
+            url: window.location.origin + "/v1/mcp/sse?api_key=sec_live_your_key_here"
           }
         }
       }, null, 2),
