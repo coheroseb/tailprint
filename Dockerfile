@@ -73,9 +73,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
 
-# Install Playwright's Chromium browser binary globally
+# Install Playwright's Chromium browser binary globally (cached layer)
 RUN mkdir -p /ms-playwright \
     && npx playwright install chromium \
     && chmod -R 777 /ms-playwright
@@ -83,6 +82,9 @@ RUN mkdir -p /ms-playwright \
 # Create non-privileged user
 RUN groupadd -r renderuser && useradd -r -g renderuser -G audio,video renderuser \
     && chown -R renderuser:renderuser /app /ms-playwright
+
+# Copy compiled application code
+COPY --from=builder /app/dist ./dist
 
 USER renderuser
 
