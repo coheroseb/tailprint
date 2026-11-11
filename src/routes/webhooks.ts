@@ -93,20 +93,6 @@ export const webhookRoutes: FastifyPluginAsyncZod = async (fastify) => {
     });
   };
 
-  fastify.get(
-    '/v1/billing/session-key',
-    {
-      schema: {
-        tags: ['Account & Usage'],
-        summary: 'Retrieve Newly Created API Key for Checkout Session',
-        description: 'Used by the checkout success modal to reveal the newly generated live API key immediately after payment.',
-        querystring: z.object({
-          session_id: z.string().describe('The Stripe Checkout Session ID'),
-        }),
-      },
-    },
-    sessionKeyHandler
-  );
-
+  fastify.get('/v1/billing/session-key', { schema: { hide: true } }, sessionKeyHandler);
   fastify.get('/billing/session-key', { schema: { hide: true } }, sessionKeyHandler);
 };

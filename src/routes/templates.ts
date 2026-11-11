@@ -87,29 +87,9 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     }
   );
 
-  // POST /v1/billing/checkout & POST /billing/create-checkout-session
-  const checkoutSchema = {
-    schema: {
-      tags: ['Billing'],
-      summary: 'Create Stripe Checkout Session',
-      description: 'Generates a Stripe Hosted Checkout Session URL for self-service subscription onboarding.',
-      body: z.object({
-        planId: z.enum(['starter', 'pro', 'business', 'enterprise']).default('starter').describe('Chosen subscription plan'),
-        customerEmail: z.string().email().optional().describe('Customer email address for invoice delivery'),
-      }),
-      response: {
-        200: z.object({
-          success: z.boolean(),
-          sessionId: z.string(),
-          checkoutUrl: z.string().nullable(),
-          isMock: z.boolean().optional(),
-        }),
-      },
-    },
-  };
-
-  fastify.post('/v1/billing/checkout', checkoutSchema, async (request, reply) => {
-    const { planId, customerEmail } = request.body;
+  // Internal checkout endpoints for frontend landing page pricing buttons
+  fastify.post('/v1/billing/checkout', { schema: { hide: true } }, async (request, reply) => {
+    const { planId, customerEmail } = request.body as any;
     const session = await stripeService.createCheckoutSession({
       planId,
       customerEmail,
@@ -123,8 +103,8 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     });
   });
 
-  fastify.post('/billing/create-checkout-session', checkoutSchema, async (request, reply) => {
-    const { planId, customerEmail } = request.body;
+  fastify.post('/billing/create-checkout-session', { schema: { hide: true } }, async (request, reply) => {
+    const { planId, customerEmail } = request.body as any;
     const session = await stripeService.createCheckoutSession({
       planId,
       customerEmail,
