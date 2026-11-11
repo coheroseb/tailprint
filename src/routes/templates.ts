@@ -217,7 +217,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
         <a href="/dashboard" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 transition">
           Customer Portal
         </a>
-        <button onclick="openFreeKeyModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/20 flex items-center space-x-1.5">
+        <button onclick="startCheckout('free')" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/20 flex items-center space-x-1.5">
           <span class="text-xs">⚡</span>
           <span>Claim Free Key</span>
         </button>
@@ -262,7 +262,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </p>
 
       <div class="mt-8 flex flex-wrap justify-center items-center gap-4">
-        <button onclick="openFreeKeyModal()" class="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/30 flex items-center space-x-2">
+        <button onclick="startCheckout('free')" class="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/30 flex items-center space-x-2">
           <span>⚡ Claim 100 Free Renders</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-black uppercase">No CC</span>
         </button>
