@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -22,6 +24,11 @@ services:
       - RENDER_TIMEOUT_MS=8000
       - CACHE_TTL_SECONDS=604800
       - APP_URL=https://tailprint.com
+      - SMTP_HOST=${SMTP_HOST:-mail.fortrolig.dk}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM:-Tailprint <noreply@tailprint.com>}
     deploy:
       resources:
         limits:
