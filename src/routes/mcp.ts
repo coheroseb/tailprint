@@ -60,7 +60,7 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
     const transport = new SSEServerTransport(messagesEndpoint, reply.raw);
 
     const mcpServer = createMcpServer({
-      name: 'renderengine-cloud-mcp',
+      name: 'tailprint-mcp',
       version: '1.0.0',
       onUsage: async (_toolName) => {
         // Enforce quota usage on every tool execution

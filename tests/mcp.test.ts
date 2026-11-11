@@ -35,6 +35,7 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('render_image');
     expect(toolNames).toContain('list_templates');
     expect(toolNames).toContain('get_template_source');
+    expect(toolNames).toContain('render_template');
 
     await client.close();
     await server.close();
@@ -57,6 +58,8 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     const parsedList = JSON.parse(templatesRes.content[0].text);
     expect(Array.isArray(parsedList)).toBe(true);
     expect(parsedList.some((t: any) => t.id === 'invoice')).toBe(true);
+    expect(parsedList.some((t: any) => t.id === 'ticket')).toBe(true);
+    expect(parsedList.some((t: any) => t.id === 'receipt')).toBe(true);
 
     // Test get_template_source
     const invoiceRes = (await client.callTool({
@@ -70,7 +73,7 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     await server.close();
   });
 
-  it('executes render_image tool to return a base64 image', async () => {
+  it('executes render_image tool and returns inline image content block', async () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createMcpServer();
     await server.connect(serverTransport);
@@ -89,8 +92,111 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     })) as any;
 
     expect(imageRes.isError).toBeFalsy();
-    expect(imageRes.content[0].text).toContain('data:image/png;base64,');
-    expect(imageRes.content[0].text).toContain('600x315');
+    // Check for inline image content block for rich MCP clients
+    const imgBlock = imageRes.content.find((c: any) => c.type === 'image');
+    expect(imgBlock).toBeDefined();
+    expect(imgBlock.mimeType).toBe('image/png');
+    expect(imgBlock.data.length).toBeGreaterThan(100);
+
+    // Check for text block with summary and data URI
+    const textBlock = imageRes.content.find((c: any) => c.type === 'text');
+    expect(textBlock).toBeDefined();
+    expect(textBlock.text).toContain('data:image/png;base64,');
+
+    await client.close();
+    await server.close();
+  });
+
+  it('executes render_template tool with data variables', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    // Test render_template for PDF
+    const renderRes = (await client.callTool({
+      name: 'render_template',
+      arguments: {
+        template_id: 'invoice',
+        variables: {
+          'INV-2024-001': 'INV-2026-999',
+          'Acme Corp': 'Global Dynamics LLC',
+        },
+        output_format: 'pdf',
+      },
+    })) as any;
+
+    expect(renderRes.isError).toBeFalsy();
+    expect(renderRes.content[0].text).toContain('data:application/pdf;base64,');
+    expect(renderRes.content[0].text).toContain('rendered to PDF');
+
+    await client.close();
+    await server.close();
+  });
+
+  it('lists and reads MCP Resources (templates & guide)', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    // List resources
+    const resourceList = await client.listResources();
+    const uris = resourceList.resources.map((r) => r.uri);
+
+    expect(uris).toContain('tailprint://templates/catalog');
+    expect(uris).toContain('tailprint://docs/tailwind-guide');
+    expect(uris).toContain('tailprint://templates/invoice');
+    expect(uris).toContain('tailprint://templates/ticket');
+
+    // Read templates catalog resource
+    const catalogResource = await client.readResource({ uri: 'tailprint://templates/catalog' });
+    expect(catalogResource.contents.length).toBeGreaterThan(0);
+    const parsedCatalog = JSON.parse((catalogResource.contents[0] as any).text);
+    expect(Array.isArray(parsedCatalog)).toBe(true);
+
+    // Read tailwind guide resource
+    const guideResource = await client.readResource({ uri: 'tailprint://docs/tailwind-guide' });
+    expect((guideResource.contents[0] as any).text).toContain('Tailprint Guide');
+
+    await client.close();
+    await server.close();
+  });
+
+  it('lists and executes MCP Prompts (workflows)', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    // List prompts
+    const promptList = await client.listPrompts();
+    const promptNames = promptList.prompts.map((p) => p.name);
+
+    expect(promptNames).toContain('generate_invoice');
+    expect(promptNames).toContain('summarize_url_to_pdf');
+    expect(promptNames).toContain('create_social_card');
+
+    // Execute generate_invoice prompt
+    const promptResult = await client.getPrompt({
+      name: 'generate_invoice',
+      arguments: {
+        client_name: 'Stark Industries',
+        invoice_number: 'INV-STARK-01',
+        items_description: 'Arc Reactor Consult - $50,000',
+        total_amount: '$50,000.00',
+      },
+    });
+
+    expect(promptResult.messages.length).toBe(1);
+    expect((promptResult.messages[0].content as any).text).toContain('Stark Industries');
+    expect((promptResult.messages[0].content as any).text).toContain('render_template');
 
     await client.close();
     await server.close();

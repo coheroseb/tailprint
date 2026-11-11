@@ -210,6 +210,7 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
             <button onclick="switchSnippet('curl')" id="btn-snip-curl" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white">cURL</button>
             <button onclick="switchSnippet('node')" id="btn-snip-node" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Node.js</button>
             <button onclick="switchSnippet('python')" id="btn-snip-python" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Python</button>
+            <button onclick="switchSnippet('mcp')" id="btn-snip-mcp" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-purple-400 hover:text-purple-300 border border-purple-500/30">MCP (Claude &amp; Cursor)</button>
           </div>
         </div>
 
@@ -374,10 +375,13 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
     let currentSnippetType = 'curl';
     window.switchSnippet = function(type) {
       currentSnippetType = type;
-      ['curl', 'node', 'python'].forEach(t => {
+      ['curl', 'node', 'python', 'mcp'].forEach(t => {
         const btn = document.getElementById('btn-snip-' + t);
+        if (!btn) return;
         if (t === type) {
           btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white';
+        } else if (t === 'mcp') {
+          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-purple-400 hover:text-purple-300 border border-purple-500/30';
         } else {
           btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white';
         }
@@ -427,6 +431,22 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
           'response = requests.post(url, json=payload, headers=headers)',
           'with open("document.pdf", "wb") as f:',
           '  f.write(response.content)'
+        ].join('\\n');
+      } else if (type === 'mcp') {
+        const mcpConfig = {
+          mcpServers: {
+            tailprint: {
+              url: origin + '/v1/mcp/sse?api_key=' + key
+            }
+          }
+        };
+        box.textContent = [
+          '// Claude Desktop Configuration (claude_desktop_config.json) or Cursor Remote MCP:',
+          JSON.stringify(mcpConfig, null, 2),
+          '',
+          '// Available Tools: scrape_markdown, render_pdf, render_image, render_template, list_templates',
+          '// Available Resources: tailprint://templates/catalog, tailprint://docs/tailwind-guide',
+          '// Available Prompts: generate_invoice, summarize_url_to_pdf, create_social_card'
         ].join('\\n');
       }
     }
