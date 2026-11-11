@@ -53,7 +53,41 @@ export async function buildApp(): Promise<FastifyInstance> {
           '```http\n' +
           'Authorization: Bearer sec_live_...\n' +
           '```\n' +
-          'To obtain an API key or manage your plan, visit [tailprint.com/#pricing](https://tailprint.com/#pricing) or access your [Customer Dashboard](https://tailprint.com/dashboard).',
+          'To obtain an API key or manage your plan, visit [tailprint.com/#pricing](https://tailprint.com/#pricing) or access your [Customer Dashboard](https://tailprint.com/dashboard).\n\n' +
+          '---\n\n' +
+          '### 🤖 Model Context Protocol (MCP) Reference\n' +
+          'Tailprint provides a production-grade, 100% compliant Model Context Protocol server exposing **12 Native Tools** across local stdio and remote Server-Sent Events (SSE):\n\n' +
+          '| MCP Tool | Category | Returns | Purpose |\n' +
+          '|---|---|---|---|\n' +
+          '| `render_pdf` | Documents | PDF Link + Base64 | Renders Tailwind HTML or public URL into vector PDF with headers/footers & encryption. |\n' +
+          '| `render_image` | Open Graph | Inline PNG + CDN Link | Renders Open Graph social preview cards from Tailwind CSS. |\n' +
+          '| `render_chart` | Data Visuals | Inline PNG + CDN Link | High-DPI bar, line, radar, doughnut, and pie charts with Chart.js. |\n' +
+          '| `generate_qr` | Utilities | Inline PNG + CDN Link | Mathematically verified scan-ready QR codes and barcodes. |\n' +
+          '| `render_device_mockup` | Marketing | Inline PNG + CDN Link | Wraps any URL into a MacBook Pro + floating iPhone 16 studio mockup canvas. |\n' +
+          '| `stamp_pdf` | Security | PDF Link + Base64 | Stamps diagonal watermarks (CONFIDENTIAL, DRAFT, FORTROLIGT) across all PDF pages. |\n' +
+          '| `compare_snapshots` | QA / Testing | Inline PNG + CDN Link | 3-panel visual regression diff heatmap highlighting layout shifts with neon-pink overlay. |\n' +
+          '| `render_carousel` | Social Media | LinkedIn PDF + PNG Cover | Multi-slide 1080x1350 px portrait carousels for LinkedIn and Instagram. |\n' +
+          '| `scrape_markdown` | AI Ingestion | Clean Markdown | Scrapes any web URL, stripping cookie walls and ads with 90%+ token savings. |\n' +
+          '| `render_template` | Automation | PDF / PNG + CDN Link | Directly renders 8 pre-built Tailwind templates with data substitution. |\n' +
+          '| `list_templates` | Automation | JSON Catalog | Lists all available templates in the Tailprint catalog. |\n' +
+          '| `get_template_source` | Automation | HTML Source | Retrieves full template source code for LLM inspection and customization. |\n\n' +
+          '#### Connecting Claude Desktop\n' +
+          'Add this configuration to `~/Library/Application Support/Claude/claude_desktop_config.json`:\n' +
+          '```json\n' +
+          '{\n' +
+          '  "mcpServers": {\n' +
+          '    "tailprint": {\n' +
+          '      "command": "npx",\n' +
+          '      "args": ["-y", "tailprint"],\n' +
+          '      "env": {\n' +
+          '        "TAILPRINT_API_KEY": "sec_live_your_key_here"\n' +
+          '      }\n' +
+          '    }\n' +
+          '  }\n' +
+          '}\n' +
+          '```\n\n' +
+          '#### Remote SSE Endpoint\n' +
+          'Connect remote AI runtimes directly to `GET https://tailprint.com/v1/mcp/sse?api_key=sec_live_...`.',
         contact: {
           name: 'Tailprint Support',
           url: 'https://tailprint.com',
