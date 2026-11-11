@@ -1061,10 +1061,12 @@ This domain is for use in documentation examples without needing permission. Thi
           if (data.status === 'ready' && data.apiKey) {
             keyEl.innerText = data.apiKey;
             keyEl.className = 'font-mono text-sm text-emerald-400 break-all bg-emerald-950/40 p-3 rounded-lg border border-emerald-500/40 font-bold';
+            const sq = String.fromCharCode(39);
+            const demoPayload = '{"html":"<h1 class=\\"text-2xl font-bold text-indigo-600\\">Hello from Tailprint</h1>"}';
             curlEl.innerText = 'curl -X POST ' + window.location.origin + '/v1/render/pdf \\\n' +
               '  -H "Authorization: Bearer ' + data.apiKey + '" \\\n' +
               '  -H "Content-Type: application/json" \\\n' +
-              '  -d \'{"html":"<h1 class=\\"text-2xl font-bold text-indigo-600\\">Hello from Tailprint</h1>"}\' \\\n' +
+              '  -d ' + sq + demoPayload + sq + ' \\\n' +
               '  --output test.pdf';
             return;
           }
