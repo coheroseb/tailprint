@@ -1,0 +1,22 @@
+# Smithery Configuration for Tailprint MCP Server
+# https://smithery.ai
+version: 1
+server:
+  name: "tailprint"
+  title: "Tailprint - Render & PDF Engine"
+  description: "High-performance Tailwind CSS to PDF & Image rendering, visual regression diff heatmap, social media carousels, and EU Factur-X / PEPPOL e-invoicing for AI agents."
+startCommand:
+  type: stdio
+  config:
+    command: npx
+    args:
+      - "-y"
+      - "tailprint"
+    env:
+      TAILPRINT_API_KEY:
+        type: string
+        description: "Your Tailprint API key (claim 100 free renders at https://tailprint.com)"
+        required: true
+remote:
+  url: "https://tailprint.com/v1/mcp/sse"
+  type: sse

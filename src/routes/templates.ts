@@ -1,5 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import fs from 'node:fs';
+import path from 'node:path';
 import { TEMPLATES } from '../config/templates.js';
 import { PLANS } from '../config/plans.js';
 import { browserService } from '../services/browser.js';
@@ -118,6 +120,146 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     });
   });
 
+  // GET /og-image.png - Open Graph preview image
+  fastify.get('/og-image.png', { schema: { hide: true } }, async (_request, reply) => {
+    const ogPath = path.join(process.cwd(), 'assets', 'og-image.png');
+    if (fs.existsSync(ogPath)) {
+      const buffer = fs.readFileSync(ogPath);
+      return reply
+        .header('Content-Type', 'image/png')
+        .header('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
+        .send(buffer);
+    }
+    return reply.code(404).send({ error: 'OG image not found' });
+  });
+
+  // GET /robots.txt - Search & AI Crawler Directives (SEO & GEO)
+  fastify.get('/robots.txt', { schema: { hide: true } }, async (_request, reply) => {
+    const robots = [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /v1/billing/portal',
+      '',
+      '# AI Crawlers & Answer Engines (GEO - Generative Engine Optimization)',
+      'User-agent: GPTBot',
+      'Allow: /',
+      '',
+      'User-agent: ChatGPT-User',
+      'Allow: /',
+      '',
+      'User-agent: PerplexityBot',
+      'Allow: /',
+      '',
+      'User-agent: ClaudeBot',
+      'Allow: /',
+      '',
+      'User-agent: Anthropic-ai',
+      'Allow: /',
+      '',
+      'User-agent: Google-Extended',
+      'Allow: /',
+      '',
+      'User-agent: Cohere-ai',
+      'Allow: /',
+      '',
+      'Sitemap: https://tailprint.com/sitemap.xml',
+      ''
+    ].join('\n');
+
+    return reply
+      .header('Content-Type', 'text/plain; charset=utf-8')
+      .header('Cache-Control', 'public, max-age=3600')
+      .send(robots);
+  });
+
+  // GET /sitemap.xml - XML Sitemap for Search Engines
+  fastify.get('/sitemap.xml', { schema: { hide: true } }, async (_request, reply) => {
+    const today = new Date().toISOString().split('T')[0];
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://tailprint.com/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/docs</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/dashboard</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/llms.txt</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>`;
+
+    return reply
+      .header('Content-Type', 'application/xml; charset=utf-8')
+      .header('Cache-Control', 'public, max-age=3600')
+      .send(sitemap);
+  });
+
+  // GET /llms.txt - Generative Engine Optimization standard for AI (llmstxt.org)
+  fastify.get('/llms.txt', { schema: { hide: true } }, async (_request, reply) => {
+    const llms = `# Tailprint — Tailwind-Native Render & PDF Engine + AI Web Scraper
+
+> High-performance developer API and Model Context Protocol (MCP) server for converting Tailwind CSS HTML into vector PDFs and cached Open Graph preview images in under 500ms.
+
+## Core Capabilities
+- **Tailwind-Native PDF Engine**: Submits raw HTML styled with arbitrary Tailwind CSS classes (including JIT syntax like \`w-[350px]\` and dynamic grids) and generates vector-sharp, print-ready PDF documents without build steps or headless browser maintenance.
+- **Open Graph Card Generator**: Renders social preview cards (PNG/JPEG) with automatic SHA-256 caching and sub-400ms cached delivery.
+- **LLM Web Scraper**: Scrapes public URLs, strips ads, scripts, and clutter with Mozilla Readability, and outputs token-efficient structured Markdown saving 90%+ context window tokens.
+- **Model Context Protocol (MCP)**: Native Remote SSE and stdio CLI integration for Claude Desktop, Cursor, Windsurf, and autonomous AI agents.
+
+## Quick API Reference
+- Base URL: https://tailprint.com
+- Documentation: https://tailprint.com/docs
+- MCP Remote SSE Endpoint: https://tailprint.com/v1/mcp/sse
+- Developer Free Tier: 100 free monthly renders with zero credit card required
+
+### Key Endpoints
+- POST /v1/render/pdf : Compiles raw HTML + Tailwind CSS to vector PDF
+- POST /v1/render/image : Compiles raw HTML + Tailwind CSS to 1200x630 PNG/JPEG
+- POST /v1/scrape/markdown : Scrapes public URL to clean LLM-ready Markdown
+- POST /v1/auth/claim-free-key : Claim instant free developer API key
+
+## Model Context Protocol (MCP) Setup
+Claude Desktop (\`claude_desktop_config.json\`):
+\`\`\`json
+{
+  "mcpServers": {
+    "tailprint": {
+      "url": "https://tailprint.com/v1/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+\`\`\`
+
+Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
+- Name: tailprint
+- Type: sse
+- URL: https://tailprint.com/v1/mcp/sse?api_key=YOUR_API_KEY
+`;
+
+    return reply
+      .header('Content-Type', 'text/markdown; charset=utf-8')
+      .header('Cache-Control', 'public, max-age=3600')
+      .send(llms);
+  });
+
   // GET / - Showcase Landing Page & Template Gallery
   fastify.get(
     '/',
@@ -132,16 +274,146 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tailprint - Tailwind-Native Render & PDF Engine</title>
+  <title>Tailprint — Tailwind-Native Render &amp; PDF Engine + AI Web Scraper</title>
+  <link rel="canonical" href="https://tailprint.com" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E" />
-  <meta name="description" content="Tailprint is the high-performance Tailwind-Native Render & PDF Engine + AI Web Scraper. Convert HTML with Tailwind to vector PDFs, Open Graph images, or LLM-clean Markdown with MCP." />
-  <meta property="og:title" content="Tailprint - Tailwind-Native Render & PDF Engine" />
-  <meta property="og:description" content="Sub-500ms PDF & Open Graph image generation from Tailwind CSS, plus LLM-ready web scraping with 90%+ token savings. Model Context Protocol (MCP) ready." />
+  
+  <!-- Primary Meta Tags (SEO) -->
+  <meta name="description" content="Tailprint is the high-performance Tailwind-Native Render &amp; PDF Engine + Model Context Protocol (MCP) server. Generate print-ready vector PDFs and cached social cards in under 500ms." />
+  <meta name="keywords" content="Tailwind HTML to PDF, Tailwind CSS PDF API, PDF generation API, Model Context Protocol PDF, MCP server, vector PDF engine, Open Graph image generator, HTML to image API, web scraper for LLM, token efficient markdown" />
+  <meta name="author" content="Tailprint" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="theme-color" content="#090d16" />
+
+  <!-- Open Graph / Facebook / LinkedIn / Discord -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tailprint.com" />
+  <meta property="og:site_name" content="Tailprint" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content="Tailprint — Tailwind-Native Render &amp; PDF Engine + AI Web Scraper" />
+  <meta property="og:description" content="Sub-500ms PDF &amp; Open Graph image generation from raw Tailwind CSS, plus LLM-ready web scraping with 90%+ token savings. Model Context Protocol (MCP) ready." />
+  <meta property="og:image" content="https://tailprint.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Tailprint — Developer Render &amp; PDF Engine" />
+
+  <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Tailprint - Tailwind-Native Render & PDF Engine" />
-  <meta name="twitter:description" content="Turn Tailwind CSS into high-fidelity PDFs and Open Graph images. Scrape web pages to clean Markdown for AI agents." />
+  <meta name="twitter:url" content="https://tailprint.com" />
+  <meta name="twitter:site" content="@tailprint" />
+  <meta name="twitter:creator" content="@tailprint" />
+  <meta name="twitter:title" content="Tailprint — Tailwind-Native Render &amp; PDF Engine" />
+  <meta name="twitter:description" content="Turn Tailwind CSS HTML into high-fidelity vector PDFs and Open Graph preview cards in under 500ms. Official MCP server for Claude and Cursor." />
+  <meta name="twitter:image" content="https://tailprint.com/og-image.png" />
+  <meta name="twitter:image:alt" content="Tailprint — Developer Render &amp; PDF Engine" />
+
+  <!-- Schema.org JSON-LD Structured Data for Search & Generative Engines (SEO & GEO) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://tailprint.com/#webapp",
+        "name": "Tailprint",
+        "url": "https://tailprint.com",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "All (Cloud API & MCP Server)",
+        "description": "High-performance Tailwind-Native Render & PDF Engine + AI Web Scraper. Compiles raw Tailwind CSS HTML into vector PDFs and cached social preview images in under 500ms.",
+        "offers": [
+          {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "name": "Developer Free Tier",
+            "description": "100 free monthly renders, zero credit card required"
+          },
+          {
+            "@type": "Offer",
+            "price": "14",
+            "priceCurrency": "USD",
+            "name": "Starter Plan",
+            "description": "2,500 monthly renders"
+          },
+          {
+            "@type": "Offer",
+            "price": "39",
+            "priceCurrency": "USD",
+            "name": "Pro Plan",
+            "description": "20,000 monthly renders with prioritized Chromium pool"
+          }
+        ],
+        "featureList": [
+          "Tailwind CSS JIT Rendering without build steps",
+          "Sub-500ms Vector PDF Generation",
+          "Open Graph Social Preview Cards (PNG/JPEG)",
+          "Model Context Protocol (MCP) Server for Claude Desktop & Cursor",
+          "LLM-Ready Web Scraper returning structured Markdown with 90%+ token savings",
+          "SHA-256 Deduplication Image Caching",
+          "Automated SSRF Sandboxing and Private IP Blocking"
+        ]
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://tailprint.com/#organization",
+        "name": "Tailprint",
+        "url": "https://tailprint.com",
+        "logo": "https://tailprint.com/assets/tailprint-logo.svg",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "support@tailprint.com",
+          "contactType": "customer support"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://tailprint.com/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How does Tailprint convert Tailwind CSS HTML to vector PDF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tailprint uses isolated, pre-warmed Chromium instances with native Tailwind CSS JIT compilation. You send raw HTML containing arbitrary utility classes (e.g. w-[350px], grid-cols-12, custom gradients), and Tailprint compiles print-ready vector PDFs in under 500ms with zero build steps or PostCSS configurations."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I connect Tailprint to Claude Desktop, Cursor, or AI coding agents via MCP?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tailprint implements the official Model Context Protocol (MCP) specification. You can connect it via Remote SSE at https://tailprint.com/v1/mcp/sse by adding Authorization: Bearer YOUR_API_KEY to your claude_desktop_config.json or Cursor MCP settings, or run it locally via stdio using npx @tailprint/mcp."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What are the latency benchmarks and caching mechanisms?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Fresh PDF renders execute in 350-500ms on pre-warmed Chromium instances. For images and social cards, Tailprint calculates a SHA-256 hash of the input markup, returning instant cache hits in under 50ms with X-Cache: HIT."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What security and SSRF protections does Tailprint enforce?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tailprint features an enterprise-grade network security sandbox that automatically blocks all local, internal, and private IP ranges including 127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, and cloud metadata services like 169.254.169.254 to prevent Server-Side Request Forgery (SSRF)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Tailprint offer a free tier?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, Tailprint provides a Developer Free Sandbox offering 100 free monthly renders with zero credit card required. It includes full access to the Tailwind rendering engine, PDF generator, and MCP server."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <script>
     const _warn = console.warn;
     console.warn = function(...args) {
@@ -234,6 +506,9 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <a href="#pricing" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
             Pricing
           </a>
+          <a href="#faq" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
+            FAQ
+          </a>
           <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1">
             <span>Docs</span>
             <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -268,6 +543,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
       <a href="#scraper" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">URL Scraper</a>
       <a href="#mcp" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">MCP Server (AI)</a>
       <a href="#pricing" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Pricing</a>
+      <a href="#faq" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">FAQ</a>
       <a href="/docs" target="_blank" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">API Documentation</a>
       <a href="/dashboard" class="block px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:bg-slate-900">Customer Dashboard</a>
     </div>
@@ -406,6 +682,10 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <span>⚡ Claim 100 Free Renders</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-black uppercase">No CC</span>
         </button>
+        <a href="#mcp" class="px-6 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition shadow-lg shadow-purple-600/30 flex items-center space-x-2">
+          <span>🤖 Connect Claude / Cursor</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-950 text-purple-200 font-bold border border-purple-400/30">13 Tools</span>
+        </a>
         <a href="#playground" class="px-6 py-3.5 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 text-white font-bold transition shadow-lg shadow-indigo-600/20">
           Try Live Sandbox
         </a>
@@ -1086,11 +1366,41 @@ This domain is for use in documentation examples without needing permission. Thi
             </div>
           </div>
 
+          <!-- Use Case 11: EU Factur-X / PEPPOL E-Invoicing -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-emerald-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-lg">🇪🇺</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-emerald-400 transition">11. EU Factur-X &amp; PEPPOL E-Invoicing</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/40">generate_einvoice</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-indigo-400 font-bold">You to Claude:</span> "Bill BMW AG in Munich for 40 hours consulting at 150 EUR/hr. Make it an official EU Factur-X hybrid invoice with my Danish IBAN."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Generates a Tailwind A4 PDF with valid <strong class="text-slate-200">factur-x.xml</strong> (EN 16931) embedded directly in the PDF catalog.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Ingestible by SAP, DATEV, Dinero &amp; Chorus Pro. Complies with upcoming EU mandatory B2B e-invoicing laws.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
       <!-- Quickstart Config Box & Protocol Breakdown -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-8 border-t border-slate-800/80">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-8 border-t border-slate-800/80">
         
         <!-- Left: Protocol Capabilities Breakdown -->
         <div class="lg:col-span-5 space-y-4">
@@ -1106,8 +1416,8 @@ This domain is for use in documentation examples without needing permission. Thi
             <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
               <span class="text-base">🛠️</span>
               <div>
-                <h4 class="text-xs font-bold text-white">12 Native Tools</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">render_pdf, render_image, render_chart, generate_qr, render_device_mockup, stamp_pdf, compare_snapshots, render_carousel, scrape_markdown, render_template, list_templates, get_template_source.</p>
+                <h4 class="text-xs font-bold text-white">13 Native Tools</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">render_pdf, render_image, render_chart, generate_qr, render_device_mockup, stamp_pdf, compare_snapshots, render_carousel, generate_einvoice, scrape_markdown, render_template, list_templates, get_template_source.</p>
               </div>
             </div>
 
@@ -1130,32 +1440,36 @@ This domain is for use in documentation examples without needing permission. Thi
         </div>
 
         <!-- Right: Config Snippets & Code Box -->
-        <div class="lg:col-span-7 bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl">
-          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
-            <div class="flex space-x-2">
+        <div class="lg:col-span-7 bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div class="flex flex-wrap gap-1.5">
               <button onclick="switchMcpTab('claude')" id="btn-mcp-claude" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white">Claude Desktop</button>
-              <button onclick="switchMcpTab('cursor')" id="btn-mcp-cursor" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Cursor / Windsurf</button>
+              <button onclick="switchMcpTab('cursor')" id="btn-mcp-cursor" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Cursor</button>
               <button onclick="switchMcpTab('sse')" id="btn-mcp-sse" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white">Remote Cloud SSE</button>
             </div>
-            <button onclick="copyMcpSnippet()" id="mcp-copy-btn" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1">
-              <span>📋 Copy Config</span>
+            <div class="flex items-center space-x-2">
+              <a id="btn-cursor-deeplink" href="#" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center space-x-1.5 shadow-md shadow-cyan-600/20">
+                <span>⚡ 1-Click Install in Cursor</span>
+              </a>
+              <button onclick="copyMcpSnippet()" id="mcp-copy-btn" class="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold flex items-center space-x-1 transition">
+                <span>📋 Copy Config</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Key Status Banner -->
+          <div id="mcp-key-banner" class="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
+            <div class="flex items-center space-x-2">
+              <span id="mcp-key-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span id="mcp-key-text" class="text-slate-400">Using placeholder key</span>
+            </div>
+            <button onclick="openFreeKeyModal()" id="mcp-key-action-btn" class="text-indigo-400 hover:text-indigo-300 font-bold transition">
+              Get 100 free renders ⚡
             </button>
           </div>
 
-          <pre id="mcp-code-block" class="p-4 bg-slate-950 rounded-xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed border border-slate-800/80">{
-  "mcpServers": {
-    "tailprint": {
-      "command": "npx",
-      "args": ["-y", "tailprint"],
-      "env": {
-        "TAILPRINT_API_KEY": "sec_live_your_key_here"
-      }
-    }
-  }
-}</pre>
-          <p id="mcp-hint" class="text-[11px] text-slate-400 mt-3">
-            Add this snippet to <code class="text-indigo-300">~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS.
-          </p>
+          <pre id="mcp-code-block" class="p-4 bg-slate-950 rounded-xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed border border-slate-800/80 max-h-80 whitespace-pre"></pre>
+          <p id="mcp-hint" class="text-[11px] text-slate-400 leading-relaxed"></p>
         </div>
 
       </div>
@@ -1289,6 +1603,76 @@ This domain is for use in documentation examples without needing permission. Thi
         <button onclick="startCheckout('enterprise')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition whitespace-nowrap border border-slate-700">
           Deploy Enterprise ($199/mo)
         </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Frequently Asked Questions Section (SEO & GEO Knowledge Engine) -->
+  <section id="faq" class="py-20 bg-slate-900/40 border-t border-slate-800/80">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-400 text-xs font-semibold mb-3">
+          <span>Architecture & Knowledge Base</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Frequently Asked Questions</h2>
+        <p class="text-slate-400 mt-2 text-sm">Everything you need to know about Tailwind rendering, the MCP server, performance, and security.</p>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Q1 -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90" open>
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>How does Tailprint convert Tailwind CSS HTML to vector PDF?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            Tailprint uses isolated, pre-warmed Chromium instances with native Tailwind CSS JIT compilation. You submit raw HTML containing arbitrary utility classes (e.g. <code class="text-indigo-300 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">w-[350px]</code>, <code class="text-indigo-300 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">grid-cols-12</code>, custom gradients), and Tailprint compiles print-ready vector PDFs in under 500ms without build steps, PostCSS configs, or local browser dependencies.
+          </p>
+        </details>
+
+        <!-- Q2 -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>How do I connect Tailprint to Claude Desktop, Cursor, or AI coding agents via MCP?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            Tailprint implements the official <a href="#mcp" class="text-indigo-400 underline font-semibold">Model Context Protocol (MCP)</a> specification. Connect via Remote SSE at <code class="text-indigo-300 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">https://tailprint.com/v1/mcp/sse</code> by passing your API key in the headers of your Claude Desktop configuration (<code class="text-slate-400 text-xs font-mono">claude_desktop_config.json</code>) or Cursor IDE settings. Autonomous agents can then call tools like <code class="text-purple-300 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">render_pdf</code>, <code class="text-purple-300 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">render_image</code>, and <code class="text-purple-300 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">scrape_markdown</code> directly.
+          </p>
+        </details>
+
+        <!-- Q3 -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>What are the latency benchmarks and caching mechanisms?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            Fresh PDF renders execute in 350ms to 500ms on pre-warmed Chromium instances with memory pooling and strict concurrency throttling (<code class="text-slate-400 text-xs font-mono">p-limit</code>). For social preview cards and images, Tailprint automatically computes a SHA-256 hash of the input markup, returning instant cache hits in under 50ms with an <code class="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">X-Cache: HIT</code> header.
+          </p>
+        </details>
+
+        <!-- Q4 -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>What security and Server-Side Request Forgery (SSRF) protections are in place?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            Tailprint provides an enterprise-hardened network sandbox. All outbound network requests are scrutinized, and requests targeting local addresses or private IP subnets (<code class="text-slate-400 text-xs font-mono">127.0.0.1</code>, <code class="text-slate-400 text-xs font-mono">10.0.0.0/8</code>, <code class="text-slate-400 text-xs font-mono">172.16.0.0/12</code>, <code class="text-slate-400 text-xs font-mono">192.168.0.0/16</code>, and cloud metadata services like <code class="text-slate-400 text-xs font-mono">169.254.169.254</code>) are blocked instantly before socket connection.
+          </p>
+        </details>
+
+        <!-- Q5 -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>Is there a free tier available for developers?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            Yes. Tailprint offers a <strong>Developer Free Sandbox</strong> granting 100 free monthly renders with zero credit card required. You can claim an instant API key directly from the homepage and start using it with cURL, Node.js, Python, or MCP immediately.
+          </p>
+        </details>
       </div>
     </div>
   </section>
@@ -1826,37 +2210,66 @@ This domain is for use in documentation examples without needing permission. Thi
       });
     };
 
-    window.mcpSnippets = {
-      claude: JSON.stringify({
-        mcpServers: {
-          tailprint: {
-            command: "npx",
-            args: ["-y", "tailprint"],
-            env: {
-              TAILPRINT_API_KEY: "sec_live_your_key_here"
+    function getStoredApiKey() {
+      return localStorage.getItem('tailprint_api_key') || 'sec_live_your_key_here';
+    }
+
+    function updateMcpKeyBanner() {
+      const key = localStorage.getItem('tailprint_api_key');
+      const dot = document.getElementById('mcp-key-dot');
+      const text = document.getElementById('mcp-key-text');
+      const action = document.getElementById('mcp-key-action-btn');
+      if (!dot || !text || !action) return;
+
+      if (key && key.startsWith('sec_live_')) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        text.innerHTML = 'Using your active API key: <code class="text-emerald-300 font-mono">' + key.slice(0, 16) + '...</code>';
+        action.outerHTML = '<a href="/dashboard" id="mcp-key-action-btn" class="text-indigo-400 hover:text-indigo-300 font-bold transition">View Dashboard →</a>';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        text.innerText = 'Using placeholder key';
+      }
+    }
+
+    window.getMcpSnippets = function() {
+      const apiKey = getStoredApiKey();
+      return {
+        claude: JSON.stringify({
+          mcpServers: {
+            tailprint: {
+              command: "npx",
+              args: ["-y", "tailprint"],
+              env: {
+                TAILPRINT_API_KEY: apiKey
+              }
             }
           }
-        }
-      }, null, 2),
-      cursor: JSON.stringify({
-        mcpServers: {
-          tailprint: {
-            url: window.location.origin + "/v1/mcp/sse?api_key=sec_live_your_key_here"
+        }, null, 2),
+        cursor: JSON.stringify({
+          mcpServers: {
+            tailprint: {
+              url: window.location.origin + "/v1/mcp/sse?api_key=" + apiKey
+            }
           }
-        }
-      }, null, 2),
-      sse: "# Remote MCP via Server-Sent Events (SSE)\\n" +
-           "URL: " + window.location.origin + "/v1/mcp/sse?api_key=sec_live_your_key_here\\n" +
-           "POST Messages: " + window.location.origin + "/v1/mcp/messages\\n\\n" +
-           "# Header Auth Option:\\n" +
-           "Authorization: Bearer sec_live_your_key_here"
+        }, null, 2),
+        sse: "# Remote MCP via Server-Sent Events (SSE)\n" +
+             "URL: " + window.location.origin + "/v1/mcp/sse?api_key=" + apiKey + "\n" +
+             "POST Messages: " + window.location.origin + "/v1/mcp/messages\n\n" +
+             "# Header Auth Option:\n" +
+             "Authorization: Bearer " + apiKey
+      };
     };
 
     window.switchMcpTab = function(type) {
       const block = document.getElementById('mcp-code-block');
       const hint = document.getElementById('mcp-hint');
+      const cursorBtn = document.getElementById('btn-cursor-deeplink');
       const tabs = ['claude', 'cursor', 'sse'];
+      const snippets = window.getMcpSnippets();
+      const apiKey = getStoredApiKey();
       
+      updateMcpKeyBanner();
+
       tabs.forEach(function(t) {
         const btn = document.getElementById('btn-mcp-' + t);
         if (btn) {
@@ -1868,23 +2281,38 @@ This domain is for use in documentation examples without needing permission. Thi
         }
       });
 
+      if (cursorBtn) {
+        if (type === 'cursor') {
+          cursorBtn.href = 'cursor://anysphere.cursor-mcp/install?name=tailprint&url=' + encodeURIComponent(window.location.origin + '/v1/mcp/sse?api_key=' + apiKey);
+          cursorBtn.classList.remove('hidden');
+        } else {
+          cursorBtn.classList.add('hidden');
+        }
+      }
+
       if (type === 'claude') {
-        block.innerText = window.mcpSnippets.claude;
-        hint.innerHTML = 'Add this snippet to <code class="text-indigo-300">~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS.';
+        block.innerText = snippets.claude;
+        hint.innerHTML = 'Add this snippet to <code class="text-indigo-300">~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS (or <code class="text-indigo-300">%APPDATA%\\Claude\\claude_desktop_config.json</code> on Windows).';
       } else if (type === 'cursor') {
-        block.innerText = window.mcpSnippets.cursor;
-        hint.innerHTML = 'Add this snippet to your project root under <code class="text-indigo-300">.cursor/mcp.json</code>.';
+        block.innerText = snippets.cursor;
+        hint.innerHTML = 'Add this snippet to your project root under <code class="text-indigo-300">.cursor/mcp.json</code> or open Cursor Settings &gt; MCP to add via Remote SSE.';
       } else if (type === 'sse') {
-        block.innerText = window.mcpSnippets.sse;
+        block.innerText = snippets.sse;
         hint.innerHTML = 'Directly connect web agents, custom GPTs, LangChain, or remote LLM runtimes to this live endpoint.';
       }
     };
 
     window.copyMcpSnippet = function() {
       const block = document.getElementById('mcp-code-block');
+      const btn = document.getElementById('mcp-copy-btn');
       if (!block) return;
       navigator.clipboard.writeText(block.innerText).then(function() {
-        alert('MCP configuration copied to clipboard!');
+        if (btn) {
+          btn.innerHTML = '<span>✅ Copied!</span>';
+          setTimeout(function() {
+            btn.innerHTML = '<span>📋 Copy Config</span>';
+          }, 2000);
+        }
       });
     };
 
@@ -2017,6 +2445,9 @@ This domain is for use in documentation examples without needing permission. Thi
 
         localStorage.setItem('tailprint_api_key', data.apiKey);
         keyDisplay.innerText = data.apiKey;
+        if (typeof window.switchMcpTab === 'function') {
+          window.switchMcpTab('claude');
+        }
 
         const sq = String.fromCharCode(39);
         const demoPayload = '{"html":"<h1 class=\\"text-2xl font-bold text-indigo-600\\">Hello from Tailprint</h1>"}';
@@ -2045,6 +2476,13 @@ This domain is for use in documentation examples without needing permission. Thi
         setTimeout(function() { if (btn) btn.innerText = 'Copy'; }, 2000);
       });
     };
+
+    // Initialize default MCP config on page load
+    setTimeout(function() {
+      if (typeof window.switchMcpTab === 'function') {
+        window.switchMcpTab('claude');
+      }
+    }, 100);
   </script>
 </body>
 </html>`;
