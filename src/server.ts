@@ -46,16 +46,32 @@ export async function buildApp(): Promise<FastifyInstance> {
         title: 'Tailprint API',
         version: '1.0.0',
         description:
-          'Tailwind-Native Render & PDF Engine + AI Web Scraper (tailprint.com). High-performance rendering of HTML + Tailwind CSS to PDF documents, Open Graph images, and clean Markdown for LLMs.',
+          'Tailprint is the high-performance Tailwind-Native Render & PDF Engine + AI Web Scraper (https://tailprint.com).\n\n' +
+          'Convert HTML styled with Tailwind CSS into pixel-perfect PDF documents and Open Graph preview images. Scrape any public URL into token-efficient Markdown for LLMs with 90%+ context savings.\n\n' +
+          '### Authentication\n' +
+          'All requests to `/v1/...` require an API key passed in the Authorization header:\n' +
+          '```http\n' +
+          'Authorization: Bearer sec_live_...\n' +
+          '```\n' +
+          'To obtain an API key or manage your plan, visit [tailprint.com/#pricing](https://tailprint.com/#pricing) or access your [Customer Dashboard](https://tailprint.com/dashboard).',
         contact: {
           name: 'Tailprint Support',
           url: 'https://tailprint.com',
+          email: 'support@tailprint.com',
         },
       },
       servers: [
         {
+          url: 'https://tailprint.com',
+          description: 'Production Server (HTTPS)',
+        },
+        {
+          url: 'https://api.tailprint.com',
+          description: 'Production API Subdomain (HTTPS)',
+        },
+        {
           url: `http://${env.HOST === '0.0.0.0' ? 'localhost' : env.HOST}:${env.PORT}`,
-          description: 'Current Environment Server',
+          description: 'Local Development Server',
         },
       ],
       components: {
@@ -80,6 +96,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       darkMode: true,
       metaData: {
         title: 'Tailprint API Reference',
+        description: 'Official API documentation and interactive test console for Tailprint (https://tailprint.com)',
       },
     },
   });
