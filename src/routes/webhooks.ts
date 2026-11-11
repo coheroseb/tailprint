@@ -1,7 +1,8 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import crypto from 'node:crypto';
 import { stripeService } from '../services/stripe.js';
-import { redisService } from '../services/redis.js';
+import { redisService, type ApiKeyRecord } from '../services/redis.js';
 import { ErrorResponseSchema } from '../schemas/render.js';
 
 const WebhookSuccessResponseSchema = z.object({
@@ -151,4 +152,105 @@ export const webhookRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
   fastify.post('/v1/billing/portal', { schema: { hide: true } }, portalHandler);
   fastify.post('/billing/portal', { schema: { hide: true } }, portalHandler);
+
+  const claimFreeKeyHandler = async (
+    request: any,
+    reply: any
+  ) => {
+    const rawIp = request.ip || request.headers['x-forwarded-for'] || '127.0.0.1';
+    const clientIp = Array.isArray(rawIp) ? rawIp[0] : String(rawIp).split(',')[0].trim();
+
+    // Check rate limit per IP (max 10 claims/hour)
+    const rl = await redisService.checkClaimRateLimit(clientIp, 10);
+    reply.header('X-Claim-Remaining', rl.remaining);
+    if (!rl.allowed) {
+      return reply.code(429).send({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded for free key claims. Please try again in an hour.',
+      });
+    }
+
+    const email = request.body?.email?.trim();
+    if (!email || !email.includes('@') || email.length < 5) {
+      return reply.code(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Please provide a valid developer email address.',
+      });
+    }
+
+    // Check if an API key already exists for this email
+    const existingKey = await redisService.getFreeKeyByEmail(email);
+    if (existingKey) {
+      return reply.send({
+        success: true,
+        apiKey: existingKey,
+        plan: 'free',
+        monthlyLimit: 100,
+        isExisting: true,
+        message: 'Welcome back! Here is your active free API key (100 renders/month).',
+      });
+    }
+
+    // Generate new Free API key
+    const newApiKey = stripeService.generateApiKey();
+    const customerId = `cus_free_${crypto.randomBytes(8).toString('hex')}`;
+    const record: ApiKeyRecord = {
+      key_prefix: newApiKey.slice(0, 12),
+      customer_id: customerId,
+      plan: 'free',
+      monthly_limit: 100,
+      status: 'active',
+      created_at: new Date().toISOString(),
+    };
+
+    await redisService.storeApiKey(newApiKey, record);
+    await redisService.setFreeKeyEmail(email, newApiKey);
+
+    return reply.code(201).send({
+      success: true,
+      apiKey: newApiKey,
+      plan: 'free',
+      monthlyLimit: 100,
+      isExisting: false,
+      message: 'Free API key provisioned! 100 monthly renders ready to use.',
+    });
+  };
+
+  fastify.post(
+    '/v1/auth/claim-free-key',
+    {
+      schema: {
+        summary: 'Claim Free API Key (100 renders/month)',
+        description: 'Instantly provision a Developer Sandbox API key with 100 renders/month. No credit card required.',
+        tags: ['Account & Usage'],
+        body: z.object({
+          email: z.string().email().describe('Developer email address to associate with the key'),
+        }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            apiKey: z.string(),
+            plan: z.string(),
+            monthlyLimit: z.number(),
+            isExisting: z.boolean(),
+            message: z.string(),
+          }),
+          201: z.object({
+            success: z.boolean(),
+            apiKey: z.string(),
+            plan: z.string(),
+            monthlyLimit: z.number(),
+            isExisting: z.boolean(),
+            message: z.string(),
+          }),
+          400: ErrorResponseSchema,
+          429: ErrorResponseSchema,
+        },
+      },
+    },
+    claimFreeKeyHandler
+  );
+  fastify.post('/auth/claim-free-key', { schema: { hide: true } }, claimFreeKeyHandler);
 };

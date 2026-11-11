@@ -328,6 +328,27 @@ export class RedisService {
     const allowed = usage <= maxPerHour;
     return { allowed, remaining: Math.max(0, maxPerHour - usage) };
   }
+
+  public async getFreeKeyByEmail(email: string): Promise<string | null> {
+    const key = `free_key_email:${email.toLowerCase().trim()}`;
+    const val = await this.client.get<string>(key);
+    return val || null;
+  }
+
+  public async setFreeKeyEmail(email: string, rawApiKey: string): Promise<void> {
+    const key = `free_key_email:${email.toLowerCase().trim()}`;
+    await this.client.set(key, rawApiKey);
+  }
+
+  public async checkClaimRateLimit(ip: string, maxPerHour = 10): Promise<{ allowed: boolean; remaining: number }> {
+    const hour = Math.floor(Date.now() / (1000 * 60 * 60));
+    const key = `ratelimit:claim:${ip}:${hour}`;
+    const count = await this.client.incr(key);
+    return {
+      allowed: count <= maxPerHour,
+      remaining: Math.max(0, maxPerHour - count),
+    };
+  }
 }
 
 export const redisService = RedisService.getInstance();

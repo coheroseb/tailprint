@@ -186,9 +186,9 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
         <a href="#pricing" class="text-slate-400 hover:text-white transition">Pricing</a>
         <a href="/docs" target="_blank" class="text-slate-400 hover:text-white transition">Docs</a>
         <a href="/dashboard" class="text-slate-400 hover:text-white transition">Dashboard</a>
-        <a href="#pricing" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30">
-          Get API Key
-        </a>
+        <button onclick="openFreeKeyModal()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition shadow-md shadow-emerald-600/30 flex items-center space-x-1.5">
+          <span>⚡ Get Free API Key</span>
+        </button>
       </nav>
     </div>
   </header>
@@ -210,12 +210,16 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
         Eliminate complex browser infrastructure and build steps. Submit raw HTML with arbitrary utility classes and generate print-ready PDFs or cached social preview banners instantly.
       </p>
 
-      <div class="mt-8 flex justify-center items-center gap-4">
-        <a href="#playground" class="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-lg shadow-indigo-600/30">
-          ⚡ Try Live Playground
+      <div class="mt-8 flex flex-wrap justify-center items-center gap-4">
+        <button onclick="openFreeKeyModal()" class="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/30 flex items-center space-x-2">
+          <span>⚡ Claim 100 Free Renders</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-black uppercase">No CC</span>
+        </button>
+        <a href="#playground" class="px-6 py-3.5 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 text-white font-bold transition shadow-lg shadow-indigo-600/20">
+          Try Live Sandbox
         </a>
-        <a href="#templates" class="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold transition">
-          Explore 6 Templates
+        <a href="#templates" class="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-semibold transition">
+          Explore Templates (${TEMPLATES.length})
         </a>
       </div>
 
@@ -574,6 +578,32 @@ This domain is for use in documentation examples without needing permission. Thi
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+        <!-- Free / Developer Sandbox Plan -->
+        <div class="p-6 rounded-2xl bg-slate-900/70 border border-emerald-500/30 flex flex-col justify-between hover:border-emerald-500/50 transition relative">
+          <div class="absolute -top-3.5 right-6 px-3 py-0.5 rounded-full bg-emerald-600/90 text-white text-[10px] font-black tracking-wider uppercase">
+            NO CREDIT CARD
+          </div>
+          <div>
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-bold text-white">${PLANS.free.name}</h3>
+            </div>
+            <p class="text-xs text-emerald-400 font-medium mt-1">${PLANS.free.targetAudience}</p>
+            <div class="mt-5 flex items-baseline">
+              <span class="text-4xl font-extrabold text-white">$0</span>
+              <span class="text-slate-400 ml-1.5 text-sm">/ forever</span>
+            </div>
+            <p class="text-xs text-emerald-400 font-bold mt-1">100 renders / month</p>
+            <p class="text-xs text-slate-400 mt-3 leading-relaxed">${PLANS.free.description}</p>
+
+            <ul class="mt-6 space-y-2.5 text-xs text-slate-300">
+              ${PLANS.free.features.map((f) => `<li class="flex items-start space-x-2"><span class="text-emerald-400 font-bold mt-0.5">✓</span><span>${f}</span></li>`).join('')}
+            </ul>
+          </div>
+          <button onclick="openFreeKeyModal()" class="mt-6 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-xs shadow-lg shadow-emerald-600/20">
+            Claim 100 Free Renders ⚡
+          </button>
+        </div>
+
         <!-- Starter Plan -->
         <div class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition">
           <div>
@@ -625,7 +655,7 @@ This domain is for use in documentation examples without needing permission. Thi
 
         <!-- Business / Scale Plan -->
         <div class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition relative">
-          <div class="absolute -top-3.5 right-6 px-3 py-0.5 rounded-full bg-emerald-600/90 text-white text-[10px] font-black tracking-wider uppercase">
+          <div class="absolute -top-3.5 right-6 px-3 py-0.5 rounded-full bg-indigo-600/90 text-white text-[10px] font-black tracking-wider uppercase">
             SCALE VALUE
           </div>
           <div>
@@ -648,29 +678,20 @@ This domain is for use in documentation examples without needing permission. Thi
             Scale with Business ($99/mo)
           </button>
         </div>
+      </div>
 
-        <!-- Enterprise Plan -->
-        <div class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition">
-          <div>
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-bold text-white">${PLANS.enterprise.name}</h3>
-            </div>
-            <p class="text-xs text-purple-400 font-medium mt-1">${PLANS.enterprise.targetAudience}</p>
-            <div class="mt-5 flex items-baseline">
-              <span class="text-4xl font-extrabold text-white">$${PLANS.enterprise.priceUsd}</span>
-              <span class="text-slate-400 ml-1.5 text-sm">/ mo</span>
-            </div>
-            <p class="text-xs text-emerald-400 font-bold mt-1">100,000+ renders / month</p>
-            <p class="text-xs text-slate-400 mt-3 leading-relaxed">${PLANS.enterprise.description}</p>
-
-            <ul class="mt-6 space-y-2.5 text-xs text-slate-300">
-              ${PLANS.enterprise.features.map((f) => `<li class="flex items-start space-x-2"><span class="text-emerald-400 font-bold mt-0.5">✓</span><span>${f}</span></li>`).join('')}
-            </ul>
+      <!-- Enterprise Callout Banner -->
+      <div class="mt-10 p-6 rounded-2xl bg-slate-900/50 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div>
+          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold uppercase tracking-wider mb-1.5">
+            <span>Enterprise & Custom Pools</span>
           </div>
-          <button onclick="startCheckout('enterprise')" class="mt-6 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition text-xs">
-            Contact / Deploy Enterprise
-          </button>
+          <h4 class="text-white font-bold text-base">Need 100,000+ monthly renders, dedicated browser workers or strict 99.9% uptime SLA?</h4>
+          <p class="text-xs text-slate-400 mt-1">Enterprise plans start at $199/mo with dedicated Chromium instances and private Slack/Discord technical channel.</p>
         </div>
+        <button onclick="startCheckout('enterprise')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition whitespace-nowrap border border-slate-700">
+          Deploy Enterprise ($199/mo)
+        </button>
       </div>
     </div>
   </section>
@@ -709,6 +730,59 @@ This domain is for use in documentation examples without needing permission. Thi
         <button onclick="closeSuccessModal()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30">
           Start Building 🚀
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Claim Free API Key Modal -->
+  <div id="free-key-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div class="relative w-full max-w-md rounded-2xl bg-slate-900 border border-emerald-500/40 p-6 sm:p-8 shadow-2xl shadow-emerald-500/10">
+      <button onclick="closeFreeKeyModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
+
+      <div id="free-key-form-view">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-4">
+          ⚡
+        </div>
+        <h3 class="text-xl font-bold text-white">Claim 100 Free Renders / mo</h3>
+        <p class="text-xs text-slate-400 mt-1">Instant developer sandbox key. No credit card required. Works with cURL, Node.js, Python, and MCP.</p>
+
+        <form onsubmit="handleClaimFreeKey(event)" class="mt-6 space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Developer Email</label>
+            <input id="free-key-email" type="email" required placeholder="alex@company.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-emerald-500" />
+          </div>
+          <div id="free-key-error" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-900/50 p-2.5 rounded-lg"></div>
+          <button id="free-key-submit-btn" type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2">
+            <span>Claim 100 Free Renders ⚡</span>
+          </button>
+        </form>
+      </div>
+
+      <div id="free-key-success-view" class="hidden text-left">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-4">
+          ✓
+        </div>
+        <h3 class="text-xl font-bold text-white">Your Free API Key is Active!</h3>
+        <p class="text-xs text-slate-400 mt-1">100 monthly renders unlocked. Use it immediately in your code or terminal:</p>
+
+        <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 break-all flex items-center justify-between">
+          <span id="free-key-display"></span>
+          <button onclick="copyFreeKey()" id="copy-free-key-btn" class="ml-2 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] rounded font-sans font-semibold">Copy</button>
+        </div>
+
+        <div class="mt-4">
+          <span class="text-xs font-semibold text-slate-400">cURL Quickstart:</span>
+          <pre id="free-key-curl" class="mt-1.5 p-3 rounded-xl bg-slate-950 text-[10px] font-mono text-slate-300 overflow-x-auto border border-slate-800"></pre>
+        </div>
+
+        <div class="mt-6 flex space-x-3">
+          <a href="/dashboard" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold text-center transition">
+            Open Dashboard →
+          </a>
+          <button onclick="closeFreeKeyModal()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+            Done
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1097,6 +1171,85 @@ This domain is for use in documentation examples without needing permission. Thi
       const modal = document.getElementById('success-modal');
       if (modal) modal.classList.add('hidden');
       window.history.replaceState({}, document.title, window.location.pathname);
+    };
+
+    window.openFreeKeyModal = function() {
+      const modal = document.getElementById('free-key-modal');
+      const formView = document.getElementById('free-key-form-view');
+      const successView = document.getElementById('free-key-success-view');
+      const errEl = document.getElementById('free-key-error');
+      if (modal) modal.classList.remove('hidden');
+      if (formView) formView.classList.remove('hidden');
+      if (successView) successView.classList.add('hidden');
+      if (errEl) errEl.classList.add('hidden');
+    };
+
+    window.closeFreeKeyModal = function() {
+      const modal = document.getElementById('free-key-modal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.handleClaimFreeKey = async function(e) {
+      e.preventDefault();
+      const emailInput = document.getElementById('free-key-email');
+      const btn = document.getElementById('free-key-submit-btn');
+      const errEl = document.getElementById('free-key-error');
+      const formView = document.getElementById('free-key-form-view');
+      const successView = document.getElementById('free-key-success-view');
+      const keyDisplay = document.getElementById('free-key-display');
+      const curlDisplay = document.getElementById('free-key-curl');
+
+      if (!emailInput || !emailInput.value) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Provisioning Key...</span>';
+      if (errEl) errEl.classList.add('hidden');
+
+      try {
+        const res = await fetch('/v1/auth/claim-free-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailInput.value.trim() }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.innerText = data.message || 'Failed to claim key. Please try again.';
+          errEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.innerHTML = '<span>Claim 100 Free Renders ⚡</span>';
+          return;
+        }
+
+        localStorage.setItem('tailprint_api_key', data.apiKey);
+        keyDisplay.innerText = data.apiKey;
+
+        const sq = String.fromCharCode(39);
+        const demoPayload = '{"html":"<h1 class=\\"text-2xl font-bold text-indigo-600\\">Hello from Tailprint</h1>"}';
+        curlDisplay.innerText = 'curl -X POST ' + window.location.origin + '/v1/render/pdf \\\n' +
+          '  -H "Authorization: Bearer ' + data.apiKey + '" \\\n' +
+          '  -H "Content-Type: application/json" \\\n' +
+          '  -d ' + sq + demoPayload + sq + ' \\\n' +
+          '  --output invoice.pdf';
+
+        formView.classList.add('hidden');
+        successView.classList.remove('hidden');
+      } catch (err) {
+        errEl.innerText = 'Network error. Please try again.';
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Claim 100 Free Renders ⚡</span>';
+      }
+    };
+
+    window.copyFreeKey = function() {
+      const keyDisplay = document.getElementById('free-key-display');
+      if (!keyDisplay || !keyDisplay.innerText) return;
+      navigator.clipboard.writeText(keyDisplay.innerText).then(function() {
+        const btn = document.getElementById('copy-free-key-btn');
+        if (btn) btn.innerText = 'Copied!';
+        setTimeout(function() { if (btn) btn.innerText = 'Copy'; }, 2000);
+      });
     };
   </script>
 </body>

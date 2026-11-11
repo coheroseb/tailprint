@@ -13,6 +13,22 @@ export interface PlanConfig {
 }
 
 export const PLANS: Record<string, PlanConfig> = {
+  free: {
+    id: 'free',
+    name: 'Developer Free',
+    priceUsd: 0,
+    monthlyLimit: 100,
+    badge: '100% FREE',
+    targetAudience: 'Testing in development, indie hacking & local integration',
+    description: 'Instant API key to test Tailprint in your local codebase with zero credit card.',
+    features: [
+      '100 PDF & image renders / month',
+      'Full Tailwind CSS v3 & v4 support',
+      'LLM Web Scraper & Markdown API',
+      'Model Context Protocol (MCP) access',
+      'No credit card required',
+    ],
+  },
   starter: {
     id: 'starter',
     name: 'Starter',
