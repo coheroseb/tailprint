@@ -40,6 +40,8 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('generate_qr');
     expect(toolNames).toContain('render_device_mockup');
     expect(toolNames).toContain('stamp_pdf');
+    expect(toolNames).toContain('compare_snapshots');
+    expect(toolNames).toContain('render_carousel');
 
     await client.close();
     await server.close();
@@ -299,6 +301,70 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     await client.close();
     await server.close();
   });
+
+  it('executes compare_snapshots tool to detect differences between HTML versions', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const res = (await client.callTool({
+      name: 'compare_snapshots',
+      arguments: {
+        before_html: '<div style="width:400px;height:200px;background:blue;color:white;font-size:24px;">Button V1</div>',
+        after_html: '<div style="width:400px;height:200px;background:red;color:white;font-size:24px;">Button V2</div>',
+        width: 400,
+        height: 200,
+      },
+    })) as any;
+
+    expect(res.isError).toBeFalsy();
+    expect(res.content[0].type).toBe('image');
+    expect(res.content[0].mimeType).toBe('image/png');
+    expect(res.content[1].text).toContain('Visual Regression Report');
+    expect(res.content[1].text).toContain('Changed Pixels');
+
+    await client.close();
+    await server.close();
+  }, 25000);
+
+  it('executes render_carousel tool to generate multi-slide LinkedIn PDF and PNG preview', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const res = (await client.callTool({
+      name: 'render_carousel',
+      arguments: {
+        title: '3 Rules for High Output',
+        author_name: 'Test Author',
+        theme: 'dark',
+        markdown: `
+# Rule 1: Automate Visuals
+Never do manual screenshots when an API can do it.
+Takeaway: Speed wins.
+---
+# Rule 2: Keep Contexts Lean
+Strip extraneous DOM elements.
+Takeaway: 90% token savings.
+`,
+      },
+    })) as any;
+
+    expect(res.isError).toBeFalsy();
+    expect(res.content[0].type).toBe('image');
+    expect(res.content[0].mimeType).toBe('image/png');
+    expect(res.content[1].text).toContain('Multi-Slide Carousel Generated Successfully');
+    expect(res.content[1].text).toContain('LinkedIn Carousel (Multi-page PDF)');
+
+    await client.close();
+    await server.close();
+  }, 25000);
 
   it('rejects unauthenticated GET /v1/mcp/sse when no key is provided in production mode', async () => {
     const originalEnv = process.env.NODE_ENV;

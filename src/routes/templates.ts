@@ -886,6 +886,66 @@ This domain is for use in documentation examples without needing permission. Thi
             </div>
           </div>
 
+          <!-- Use Case 9: Visual Regression Diff Heatmap -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-amber-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400 text-lg">🔍</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-amber-400 transition">9. Visual Regression &amp; Layout Diff Heatmap</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/40">compare_snapshots</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-amber-400 font-bold">You to Cursor:</span> "Compare our staging homepage against production. Highlight any CSS regressions or unintended pixel shifts."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Compares screenshots pixel-by-pixel with pixelmatch and streams a 3-panel Before / Heatmap / After studio image inline.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Catch breaking CSS bugs and layout shifts before deploying to production without paying $500/mo for Percy.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 10: Multi-Slide Social Carousels -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-indigo-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 text-lg">📱</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-indigo-400 transition">10. Viral LinkedIn &amp; Instagram Carousels</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/40">render_carousel</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-indigo-400 font-bold">You to Claude:</span> "Turn my blog post into a 5-slide 1080x1350 portrait carousel PDF for LinkedIn with dark theme and swipe arrows."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Generates a multi-page vector PDF (LinkedIn carousel standard) + PNG cover preview hosted on CDN.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Solopreneurs and marketers turn thoughts into swipeable high-converting social assets in 5 seconds.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -906,8 +966,8 @@ This domain is for use in documentation examples without needing permission. Thi
             <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
               <span class="text-base">🛠️</span>
               <div>
-                <h4 class="text-xs font-bold text-white">10 Native Tools</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">render_pdf, render_image, render_chart, generate_qr, render_device_mockup, stamp_pdf, scrape_markdown, render_template, list_templates, get_template_source.</p>
+                <h4 class="text-xs font-bold text-white">12 Native Tools</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">render_pdf, render_image, render_chart, generate_qr, render_device_mockup, stamp_pdf, compare_snapshots, render_carousel, scrape_markdown, render_template, list_templates, get_template_source.</p>
               </div>
             </div>
 

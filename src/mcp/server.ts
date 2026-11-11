@@ -7,6 +7,8 @@ import { chartService } from '../services/chart.js';
 import { mockupService } from '../services/mockup.js';
 import { pdfStamperService } from '../services/pdfStamper.js';
 import { storageService } from '../services/storage.js';
+import { visualDiffService } from '../services/visualDiff.js';
+import { carouselService } from '../services/carousel.js';
 import { TEMPLATES } from '../config/templates.js';
 
 export interface McpServerOptions {
@@ -632,6 +634,149 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             {
               type: 'text',
               text: `Error stamping PDF: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 11: compare_snapshots (Visual Regression Diff Heatmap)
+  server.tool(
+    'compare_snapshots',
+    'Captures two URLs, HTML snippets, or base64 screenshots and generates a pixel-precise visual regression diff heatmap. Returns a 3-panel side-by-side studio comparison image and diff statistics.',
+    {
+      before_url: z.string().url().optional().describe('Baseline web URL before changes'),
+      after_url: z.string().url().optional().describe('Modified web URL after changes'),
+      before_html: z.string().optional().describe('Baseline HTML markup before changes'),
+      after_html: z.string().optional().describe('Modified HTML markup after changes'),
+      before_image_base64: z.string().optional().describe('Optional baseline PNG base64 string'),
+      after_image_base64: z.string().optional().describe('Optional modified PNG base64 string'),
+      width: z.number().optional().default(1200).describe('Viewport width in pixels (default: 1200)'),
+      height: z.number().optional().default(800).describe('Viewport height in pixels (default: 800)'),
+      threshold: z.number().optional().default(0.1).describe('Matching threshold from 0.0 (strict) to 1.0 (loose) - default: 0.1'),
+    },
+    async ({ before_url, after_url, before_html, after_html, before_image_base64, after_image_base64, width, height, threshold }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('compare_snapshots');
+        }
+
+        const result = await visualDiffService.compareSnapshots({
+          beforeUrl: before_url,
+          afterUrl: after_url,
+          beforeHtml: before_html,
+          afterHtml: after_html,
+          beforeImageBase64: before_image_base64,
+          afterImageBase64: after_image_base64,
+          width: width || 1200,
+          height: height || 800,
+          threshold: threshold !== undefined ? threshold : 0.1,
+        });
+
+        const stored = await storageService.saveFile(result.compositeImageBuffer, {
+          mimeType: 'image/png',
+          extension: 'png',
+          filename: 'visual-diff.png',
+        });
+
+        const compositeBase64 = result.compositeImageBuffer.toString('base64');
+        const statusText = result.isIdentical
+          ? 'Identical (0% difference)'
+          : `${result.diffPercentage}% layout shift (${result.differentPixels.toLocaleString()} changed pixels)`;
+
+        return {
+          content: [
+            {
+              type: 'image',
+              data: compositeBase64,
+              mimeType: 'image/png',
+            },
+            {
+              type: 'text',
+              text: `🔍 **Visual Regression Report Generated!**\n\n- **Status:** ${statusText}\n- **Total Pixels:** ${result.totalPixels.toLocaleString()}\n- **Changed Pixels:** ${result.differentPixels.toLocaleString()}\n- **Diff Percentage:** ${result.diffPercentage}%\n\n🔗 **Direct Studio Report Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Hosted on Tailprint CDN, expires in 24 hours)*`,
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error comparing snapshots: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 12: render_carousel (LinkedIn / Instagram Multi-Slide Carousel)
+  server.tool(
+    'render_carousel',
+    'Generates high-converting multi-slide social media carousels (1080x1350 px, 4:5 portrait) for LinkedIn (multi-page PDF) and Instagram/Twitter (PNG). Accepts markdown or structured slides.',
+    {
+      title: z.string().optional().describe('Carousel main title / topic'),
+      subtitle: z.string().optional().describe('Optional subtitle or hook'),
+      author_name: z.string().optional().default('Tailprint Insights').describe('Author name to brand each slide'),
+      author_handle: z.string().optional().default('@tailprint').describe('Social handle (e.g. @company or @founder)'),
+      author_role: z.string().optional().describe('Author title / role (e.g. "Full-Stack Engineer" or "Tech Lead")'),
+      theme: z.enum(['dark', 'light', 'emerald', 'gradient']).optional().default('dark').describe('Visual aesthetic theme (dark, light, emerald, gradient)'),
+      markdown: z.string().optional().describe('Markdown text where slides are separated by "---" with # headlines and bullet points.'),
+      slides: z
+        .array(
+          z.object({
+            headline: z.string().describe('Slide headline'),
+            content: z.union([z.string(), z.array(z.string())]).describe('Slide body paragraph or bullet points array'),
+            tag: z.string().optional().describe('Top tag pill (e.g. "RULE 01", "MISTAKE", "TIP")'),
+            takeaway: z.string().optional().describe('Bottom takeaway callout box'),
+          })
+        )
+        .optional()
+        .describe('Structured slide array'),
+    },
+    async ({ title, subtitle, author_name, author_handle, author_role, theme, markdown, slides }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('render_carousel');
+        }
+
+        const result = await carouselService.renderCarousel({
+          title,
+          subtitle,
+          author: {
+            name: author_name || 'Tailprint Insights',
+            handle: author_handle || '@tailprint',
+            role: author_role || 'High-Performance Engine',
+          },
+          theme: theme || 'dark',
+          markdown,
+          slides,
+        });
+
+        const previewBase64 = result.previewImageBuffer.toString('base64');
+
+        return {
+          content: [
+            {
+              type: 'image',
+              data: previewBase64,
+              mimeType: 'image/png',
+            },
+            {
+              type: 'text',
+              text: `📱 **Multi-Slide Carousel Generated Successfully!** (${result.slideCount} slides, 1080x1350 px)\n\n📥 **LinkedIn Carousel (Multi-page PDF):** [${result.pdfStored?.hostedUrl}](${result.pdfStored?.hostedUrl})\n*(Upload this PDF directly to LinkedIn as a document carousel post)*\n\n🖼️ **Instagram / Cover Slide (PNG):** [${result.previewStored?.hostedUrl}](${result.previewStored?.hostedUrl})\n*(Hosted on Tailprint CDN, expires in 24 hours)*`,
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error generating carousel: ${err.message || 'Unknown error'}`,
             },
           ],
         };
