@@ -227,4 +227,39 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         .send(imageBuffer);
     }
   );
+
+  // Public Interactive Playground Route for the Landing Page
+  fastify.post(
+    '/v1/render/playground',
+    {
+      schema: {
+        hide: true,
+        body: RenderPdfRequestSchema,
+      },
+    },
+    async (request, reply) => {
+      const clientIp = request.ip || 'anonymous';
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Playground rate limit exceeded (max 25 renders/hour). Please upgrade to an official plan for unlimited renders.',
+        });
+      }
+
+      const startTime = Date.now();
+      const pdfBuffer = await browserService.renderPdf(request.body);
+      const renderDuration = Date.now() - startTime;
+
+      return reply
+        .code(200)
+        .header('Content-Type', 'application/pdf')
+        .header('Content-Disposition', 'inline; filename="playground-preview.pdf"')
+        .header('X-Render-Time-Ms', String(renderDuration))
+        .header('X-Playground-Remaining', String(rateLimit.remaining))
+        .send(pdfBuffer);
+    }
+  );
 };

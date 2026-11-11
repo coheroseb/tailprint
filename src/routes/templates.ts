@@ -179,14 +179,12 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </div>
 
       <nav class="flex items-center space-x-6 text-sm font-medium">
+        <a href="#playground" class="text-indigo-400 hover:text-white transition font-semibold">Live Playground</a>
         <a href="#scraper" class="text-slate-400 hover:text-white transition">URL-to-Markdown</a>
         <a href="#templates" class="text-slate-400 hover:text-white transition">Templates (${TEMPLATES.length})</a>
         <a href="#mcp" class="text-slate-400 hover:text-white transition">MCP for AI</a>
         <a href="#pricing" class="text-slate-400 hover:text-white transition">Pricing</a>
-        <a href="/docs" target="_blank" class="text-indigo-400 hover:text-indigo-300 flex items-center space-x-1.5 transition">
-          <span>Scalar Docs</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-        </a>
+        <a href="/docs" target="_blank" class="text-slate-400 hover:text-white transition">Docs</a>
         <a href="/dashboard" class="text-slate-400 hover:text-white transition">Dashboard</a>
         <a href="#pricing" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/30">
           Get API Key
@@ -213,11 +211,11 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </p>
 
       <div class="mt-8 flex justify-center items-center gap-4">
-        <a href="#templates" class="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-lg shadow-indigo-600/30">
-          Explore 6 Pre-Built Templates
+        <a href="#playground" class="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-lg shadow-indigo-600/30">
+          ⚡ Try Live Playground
         </a>
-        <a href="/docs" target="_blank" class="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold transition">
-          Interactive Scalar UI
+        <a href="#templates" class="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold transition">
+          Explore 6 Templates
         </a>
       </div>
 
@@ -239,6 +237,106 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <p class="text-xs text-slate-400">Cache Layer</p>
           <p class="text-2xl font-black text-cyan-400 mt-1">SHA-256</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Interactive PDF Playground Section -->
+  <section id="playground" class="py-16 bg-slate-900/40 border-t border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-400 text-xs font-semibold mb-3">
+          <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+          <span>Interactive Browser Sandbox</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Live Tailwind HTML to PDF Playground</h2>
+        <p class="text-slate-400 mt-2">Edit Tailwind CSS markup in real-time. Render a pixel-perfect, vector PDF in under 500ms using our Chromium engine.</p>
+      </div>
+
+      <!-- Playground Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- Left: Code Editor (6 cols) -->
+        <div class="lg:col-span-6 flex flex-col rounded-2xl bg-slate-900/90 border border-slate-800 p-5 shadow-2xl">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-slate-300">HTML & Tailwind Editor</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono">live jit</span>
+            </div>
+            <!-- Preset switcher -->
+            <div class="flex space-x-1.5">
+              <button onclick="loadPlaygroundPreset('invoice')" id="btn-pre-invoice" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white">Invoice</button>
+              <button onclick="loadPlaygroundPreset('certificate')" id="btn-pre-certificate" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">Certificate</button>
+              <button onclick="loadPlaygroundPreset('badge')" id="btn-pre-badge" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white">ID Card</button>
+            </div>
+          </div>
+
+          <textarea
+            id="playground-editor"
+            rows="16"
+            class="flex-1 w-full bg-slate-950 font-mono text-xs text-indigo-200 p-4 rounded-xl border border-slate-800/80 focus:outline-none focus:border-indigo-500 leading-relaxed resize-none shadow-inner"
+            spellcheck="false"
+          ></textarea>
+
+          <div class="mt-4 flex items-center justify-between pt-3 border-t border-slate-800">
+            <div class="flex items-center space-x-2 text-xs text-slate-400">
+              <span>Paper:</span>
+              <select id="playground-format" class="bg-slate-950 text-slate-200 border border-slate-800 rounded-lg px-2 py-1 text-xs focus:outline-none">
+                <option value="A4">A4 Portrait</option>
+                <option value="Letter">Letter Portrait</option>
+                <option value="A4-landscape">A4 Landscape</option>
+              </select>
+            </div>
+            <button
+              id="playground-render-btn"
+              onclick="renderPlaygroundPdf()"
+              class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center space-x-2"
+            >
+              <span>⚡ Render PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Live PDF Preview / Viewer (6 cols) -->
+        <div class="lg:col-span-6 flex flex-col rounded-2xl bg-slate-900/90 border border-slate-800 p-5 shadow-2xl">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-slate-300">Live PDF Output</span>
+              <span id="playground-status-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30 font-bold">
+                Ready
+              </span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span id="playground-time" class="text-[11px] font-mono text-slate-400">~380ms</span>
+              <a
+                id="playground-download-btn"
+                href="#"
+                download="tailprint-rendered.pdf"
+                class="hidden px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition"
+              >
+                ⬇️ Download PDF
+              </a>
+            </div>
+          </div>
+
+          <!-- Preview Area -->
+          <div class="flex-1 w-full min-h-[380px] bg-slate-950 rounded-xl border border-slate-800/80 overflow-hidden relative flex items-center justify-center">
+            
+            <!-- Loading Indicator -->
+            <div id="playground-loading" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-3 z-10">
+              <div class="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
+              <p class="text-xs text-indigo-300 font-medium">Compiling Tailwind & Chromium...</p>
+            </div>
+
+            <!-- PDF Viewer Iframe -->
+            <iframe
+              id="playground-iframe"
+              class="w-full h-full min-h-[460px] border-0 rounded-xl"
+              title="Tailprint Live PDF Preview"
+            ></iframe>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -629,6 +727,126 @@ This domain is for use in documentation examples without needing permission. Thi
     const templateMeta = {
       ${TEMPLATES.map((t) => `'${t.id}': { landscape: ${t.landscape}, isImage: ${t.id === 'og-card'} }`).join(',\n      ')}
     };
+
+    window.playgroundPresets = {
+      invoice: '<div class="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl border border-slate-100 font-sans">\\n' +
+        '  <div class="flex items-center justify-between pb-6 border-b border-slate-100">\\n' +
+        '    <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Tailprint Pro</span>\\n' +
+        '    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold">Paid</span>\\n' +
+        '  </div>\\n' +
+        '  <h2 class="text-2xl font-black text-slate-900 mt-4">Invoice #INV-2026-042</h2>\\n' +
+        '  <p class="text-xs text-slate-500 mt-1">Due November 30, 2026</p>\\n' +
+        '  <div class="mt-6 flex justify-between items-baseline pt-4 border-t border-slate-100">\\n' +
+        '    <span class="text-sm font-semibold text-slate-600">Total Amount</span>\\n' +
+        '    <span class="text-2xl font-black text-slate-900">$4,500.00</span>\\n' +
+        '  </div>\\n' +
+        '</div>',
+      certificate: '<div class="p-12 bg-slate-900 text-white rounded-2xl border-4 border-indigo-500/40 text-center font-sans">\\n' +
+        '  <p class="text-xs font-bold text-indigo-400 tracking-widest uppercase">Certificate of Completion</p>\\n' +
+        '  <h1 class="text-3xl font-black mt-3">Fullstack AI Engineering</h1>\\n' +
+        '  <p class="text-xs text-slate-400 mt-2">Awarded to <strong class="text-white">Sebastian Viste</strong> for mastering autonomous agents and Playwright engines.</p>\\n' +
+        '  <div class="mt-8 flex justify-center space-x-6 text-xs text-slate-400 border-t border-slate-800 pt-4">\\n' +
+        '    <span>Verified Credential</span> • <span>ID: #TP-8849</span>\\n' +
+        '  </div>\\n' +
+        '</div>',
+      badge: '<div class="max-w-xs mx-auto p-6 bg-gradient-to-br from-indigo-900 to-purple-950 text-white rounded-3xl shadow-2xl border border-indigo-500/30 text-center font-sans">\\n' +
+        '  <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/50">⚡</div>\\n' +
+        '  <h3 class="text-xl font-black mt-4">Alex Morgan</h3>\\n' +
+        '  <p class="text-xs text-indigo-300 font-semibold mt-0.5">Staff Platform Architect</p>\\n' +
+        '  <div class="mt-6 p-2 rounded-xl bg-slate-950/60 font-mono text-[11px] text-slate-400 border border-slate-800">\\n' +
+        '    ACCESS TIER: VIP DEVELOPER\\n' +
+        '  </div>\\n' +
+        '</div>'
+    };
+
+    window.loadPlaygroundPreset = function(presetName) {
+      const editor = document.getElementById('playground-editor');
+      if (editor && window.playgroundPresets[presetName]) {
+        editor.value = window.playgroundPresets[presetName];
+      }
+      ['invoice', 'certificate', 'badge'].forEach(function(p) {
+        const btn = document.getElementById('btn-pre-' + p);
+        if (btn) {
+          if (p === presetName) {
+            btn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-400 hover:text-white';
+          }
+        }
+      });
+      window.renderPlaygroundPdf();
+    };
+
+    window.renderPlaygroundPdf = async function() {
+      const editor = document.getElementById('playground-editor');
+      const formatSelect = document.getElementById('playground-format');
+      const btn = document.getElementById('playground-render-btn');
+      const loader = document.getElementById('playground-loading');
+      const iframe = document.getElementById('playground-iframe');
+      const timeBadge = document.getElementById('playground-time');
+      const downloadBtn = document.getElementById('playground-download-btn');
+      const statusBadge = document.getElementById('playground-status-badge');
+
+      if (!editor || !editor.value) return;
+
+      const formatVal = formatSelect ? formatSelect.value : 'A4';
+      const isLandscape = formatVal.includes('landscape');
+      const paperFormat = isLandscape ? 'A4' : formatVal;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Rendering...</span>';
+      loader.classList.remove('hidden');
+      statusBadge.innerText = 'Rendering...';
+      statusBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-500/30 font-bold';
+
+      const startTime = performance.now();
+
+      try {
+        const res = await fetch('/v1/render/playground', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            html: editor.value,
+            format: paperFormat,
+            landscape: isLandscape
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(function() { return {}; });
+          alert('Render error: ' + (errData.message || 'Failed to render PDF'));
+          statusBadge.innerText = 'Error';
+          statusBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-500/30 font-bold';
+          return;
+        }
+
+        const duration = Math.round(performance.now() - startTime);
+        timeBadge.innerText = duration + 'ms';
+        statusBadge.innerText = 'Rendered (' + duration + 'ms)';
+        statusBadge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30 font-bold';
+
+        const pdfBlob = await res.blob();
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        iframe.src = blobUrl;
+        downloadBtn.href = blobUrl;
+        downloadBtn.classList.remove('hidden');
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      } finally {
+        loader.classList.add('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<span>⚡ Render PDF</span>';
+      }
+    };
+
+    // Auto-initialize playground editor on page load
+    setTimeout(function() {
+      const editor = document.getElementById('playground-editor');
+      if (editor && !editor.value) {
+        editor.value = window.playgroundPresets.invoice;
+        window.renderPlaygroundPdf();
+      }
+    }, 100);
 
     window.runLiveScrape = async function() {
       const input = document.getElementById('scraper-input');

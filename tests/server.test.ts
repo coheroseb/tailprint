@@ -211,6 +211,22 @@ describe('Tailprint Test Suite', () => {
       expect(pdfBuffer.subarray(0, 5).toString()).toBe('%PDF-');
     }, 20000);
 
+    it('POST /v1/render/playground renders PDF without requiring API key', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/playground',
+        payload: {
+          html: '<div class="p-8 bg-blue-600 text-white font-bold">Playground Live Test</div>',
+          format: 'A4',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('application/pdf');
+      expect(response.headers['x-render-time-ms']).toBeDefined();
+      expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+    }, 20000);
+
     it('POST /v1/render/image renders PNG and verifies SHA-256 caching', async () => {
       const uniqueId = Date.now();
       const htmlPayload = `

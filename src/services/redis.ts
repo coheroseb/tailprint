@@ -320,6 +320,14 @@ export class RedisService {
     }
     return val;
   }
+
+  public async checkPlaygroundRateLimit(ip: string, maxPerHour = 25): Promise<{ allowed: boolean; remaining: number }> {
+    const hour = Math.floor(Date.now() / (1000 * 60 * 60));
+    const key = `ratelimit:playground:${ip}:${hour}`;
+    const usage = await this.client.incr(key);
+    const allowed = usage <= maxPerHour;
+    return { allowed, remaining: Math.max(0, maxPerHour - usage) };
+  }
 }
 
 export const redisService = RedisService.getInstance();
