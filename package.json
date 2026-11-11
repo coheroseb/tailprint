@@ -5,8 +5,21 @@
   "type": "module",
   "main": "dist/server.js",
   "bin": {
-    "tailprint": "./dist/mcp/stdio.js",
-    "tailprint-mcp": "./dist/mcp/stdio.js"
+    "tailprint": "dist/mcp/stdio.js",
+    "tailprint-mcp": "dist/mcp/stdio.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coheroseb/tailprint.git"
+  },
+  "homepage": "https://tailprint.com",
+  "bugs": {
+    "url": "https://github.com/coheroseb/tailprint/issues"
   },
   "scripts": {
     "build": "tsc",
