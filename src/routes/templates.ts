@@ -169,6 +169,35 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   </script>
   <style>
     pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    @keyframes avatarFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
+    }
+    @keyframes cardFloatLeft {
+      0%, 100% { transform: translateY(0px) rotate(-2deg); }
+      50% { transform: translateY(-6px) rotate(-1deg); }
+    }
+    @keyframes cardFloatRight {
+      0%, 100% { transform: translateY(0px) rotate(2deg); }
+      50% { transform: translateY(-7px) rotate(3deg); }
+    }
+    @keyframes eyeBlink {
+      0%, 90%, 100% { transform: scaleY(1); }
+      95% { transform: scaleY(0.1); }
+    }
+    .animate-avatar {
+      animation: avatarFloat 4.2s ease-in-out infinite;
+    }
+    .animate-float-left {
+      animation: cardFloatLeft 5s ease-in-out infinite;
+    }
+    .animate-float-right {
+      animation: cardFloatRight 5.5s ease-in-out infinite 0.5s;
+    }
+    .avatar-eye-left, .avatar-eye-right {
+      transform-origin: center;
+      animation: eyeBlink 3.6s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white">
@@ -245,20 +274,131 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   </header>
 
   <!-- Hero Section -->
-  <section class="relative pt-20 pb-16 overflow-hidden">
-    <div class="max-w-5xl mx-auto px-6 text-center">
-      <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-400 text-xs font-semibold mb-6">
+  <section class="relative pt-12 pb-20 overflow-hidden">
+    <!-- Ambient Gradient Backdrops -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-indigo-600/20 via-purple-600/15 to-cyan-500/15 rounded-full blur-[110px] pointer-events-none"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-25"></div>
+
+    <div class="max-w-6xl mx-auto px-6 relative z-10 text-center">
+      
+      <!-- Top Banner Pill -->
+      <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-950/70 border border-indigo-800/60 text-indigo-300 text-xs font-semibold mb-6 backdrop-blur-md shadow-lg shadow-indigo-950/50">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Production-Grade Chromium Engine (Sub-500ms Execution)</span>
+        <span>Sub-500ms Chromium Engine • Tailwind v3 & v4 JIT</span>
+      </div>
+
+      <!-- Avatar & Floating Interactive Mascot Unit -->
+      <div class="relative max-w-xl mx-auto mb-8 flex items-center justify-center">
+        
+        <!-- Left Floating Card (PDF Result) -->
+        <div class="hidden sm:flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/70 backdrop-blur-xl shadow-xl shadow-black/40 animate-float-left absolute -left-8 lg:-left-16 top-4 z-20">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-500/30">
+            📄
+          </div>
+          <div class="text-left">
+            <div class="text-xs font-bold text-white flex items-center space-x-1.5">
+              <span>invoice.pdf</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono leading-none">382ms</span>
+            </div>
+            <div class="text-[10px] text-slate-400">100% Vector • Tailwind styled</div>
+          </div>
+        </div>
+
+        <!-- Center: Interactive Avatar Character -->
+        <div class="relative flex flex-col items-center cursor-pointer group" onclick="cycleAvatarTip()">
+          <!-- Speech Bubble on hover / dynamic tips -->
+          <div id="speech-bubble" class="mb-3 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-indigo-500/40 text-xs font-medium text-indigo-200 shadow-xl backdrop-blur-md flex items-center space-x-2 transition-all duration-300 group-hover:border-indigo-400 group-hover:scale-105">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span id="speech-text" class="transition-opacity duration-150">Hej dev! Klik på mig for hurtige tips ⚡</span>
+          </div>
+
+          <!-- Avatar Illustration -->
+          <div class="animate-avatar relative">
+            <div class="absolute -inset-3 bg-gradient-to-r from-indigo-500/30 to-cyan-500/30 rounded-full blur-xl pointer-events-none group-hover:opacity-100 opacity-60 transition duration-300"></div>
+            <svg class="w-28 h-28 sm:w-32 sm:h-32 filter drop-shadow-[0_10px_25px_rgba(99,102,241,0.35)] cursor-pointer select-none transition-transform duration-300 group-hover:scale-105" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" id="hero-avatar">
+              <defs>
+                <linearGradient id="botBody" x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#1e1b4b"/>
+                  <stop offset="50%" stop-color="#0f172a"/>
+                  <stop offset="100%" stop-color="#020617"/>
+                </linearGradient>
+                <linearGradient id="antennaBeam" x1="60" y1="12" x2="60" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#38bdf8"/>
+                  <stop offset="100%" stop-color="#6366f1"/>
+                </linearGradient>
+                <filter id="glowEyes" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#38bdf8" flood-opacity="0.9"/>
+                </filter>
+              </defs>
+
+              <!-- Antenna with pinging radar -->
+              <line x1="60" y1="14" x2="60" y2="28" stroke="url(#antennaBeam)" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="60" cy="12" r="5" fill="#38bdf8" class="animate-ping origin-center" opacity="0.75"/>
+              <circle cx="60" cy="12" r="4.5" fill="#38bdf8"/>
+              <circle cx="60" cy="12" r="2" fill="#ffffff"/>
+
+              <!-- Head Base with Metallic Bevel -->
+              <rect x="22" y="26" width="76" height="66" rx="24" fill="url(#botBody)" stroke="#334155" stroke-width="2"/>
+              <rect x="23" y="27" width="74" height="64" rx="23" stroke="#6366f1" stroke-width="1.2" stroke-opacity="0.4"/>
+
+              <!-- Cute Audio Ports / Ears -->
+              <rect x="14" y="46" width="8" height="26" rx="4" fill="#334155" stroke="#475569" stroke-width="1.5"/>
+              <circle cx="18" cy="59" r="2" fill="#38bdf8"/>
+              <rect x="98" y="46" width="8" height="26" rx="4" fill="#334155" stroke="#475569" stroke-width="1.5"/>
+              <circle cx="102" cy="59" r="2" fill="#c084fc"/>
+
+              <!-- Visor Screen -->
+              <rect x="28" y="38" width="64" height="42" rx="15" fill="#030712" stroke="#1e293b" stroke-width="1.5"/>
+              <path d="M30 46 C45 42, 75 42, 90 46" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round"/>
+
+              <!-- Glowing Cyan Eyes (Blinks with CSS animation) -->
+              <g filter="url(#glowEyes)">
+                <ellipse cx="46" cy="58" rx="6" ry="8" fill="#38bdf8" class="avatar-eye-left"/>
+                <circle cx="48" cy="56" r="2.2" fill="#ffffff"/>
+                <ellipse cx="74" cy="58" rx="6" ry="8" fill="#38bdf8" class="avatar-eye-right"/>
+                <circle cx="76" cy="56" r="2.2" fill="#ffffff"/>
+              </g>
+
+              <!-- Friendly Smile -->
+              <path d="M52 70 Q60 74 68 70" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/>
+
+              <!-- Cheeks Blush -->
+              <circle cx="36" cy="65" r="3" fill="#f43f5e" opacity="0.4"/>
+              <circle cx="84" cy="65" r="3" fill="#f43f5e" opacity="0.4"/>
+
+              <!-- Floating Paper / PDF sheet being held/printed -->
+              <rect x="42" y="86" width="36" height="24" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+              <line x1="48" y1="92" x2="72" y2="92" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="48" y1="97" x2="68" y2="97" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="48" y1="102" x2="62" y2="102" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="71" cy="102" r="1.5" fill="#f43f5e"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Right Floating Card (MCP & AI Agent) -->
+        <div class="hidden sm:flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/70 backdrop-blur-xl shadow-xl shadow-black/40 animate-float-right absolute -right-8 lg:-right-16 top-6 z-20">
+          <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm border border-purple-500/30">
+            🤖
+          </div>
+          <div class="text-left">
+            <div class="text-xs font-bold text-white flex items-center space-x-1.5">
+              <span>MCP Protocol</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+            <div class="text-[10px] text-slate-400">Claude Desktop & Cursor</div>
+          </div>
+        </div>
+
       </div>
 
       <h1 class="text-5xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-        Send <span class="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Tailwind HTML</span>.<br>
-        Receive Pixel-Perfect <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">PDFs & OG Images</span>.
+        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML</span>.<br>
+        Receive Pixel-Perfect <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">PDFs & OG Images</span>.
       </h1>
 
       <p class="mt-6 text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-        Eliminate complex browser infrastructure and build steps. Submit raw HTML with arbitrary utility classes and generate print-ready PDFs or cached social preview banners instantly.
+        Eliminer komplekse browser-infrastrukturer og build-steps. Send rå utility classes og modtag printklare vektor-dokumenter eller cached sociale preview-billeder på under 500 ms.
       </p>
 
       <div class="mt-8 flex flex-wrap justify-center items-center gap-4">
@@ -1251,6 +1391,35 @@ This domain is for use in documentation examples without needing permission. Thi
 
   <!-- Script for Interactivity -->
   <script>
+    // Interactive Avatar Mascot Easter Eggs & Tips
+    const botTips = [
+      "⚡ Lynhurtig rendering: Sub-500ms fra Tailwind til færdig PDF!",
+      "🤖 MCP Server Ready: Forbind direkte til Claude Desktop eller Cursor!",
+      "🎨 100% Tailwind: Fuld support for arbitrary classes som w-[340px] og grid-cols-12.",
+      "🔒 Sikkerhed først: Automatisk SSRF-blokering og isolerede Chromium instanser.",
+      "🚀 Zero Chrome setup på din maskine. Bare lav en POST request!",
+      "📄 Prøv sandkassen lige nedenfor og se koden kompilere live ⬇️"
+    ];
+    let tipIdx = 0;
+    window.cycleAvatarTip = function() {
+      tipIdx = (tipIdx + 1) % botTips.length;
+      const el = document.getElementById('speech-text');
+      const avatar = document.getElementById('hero-avatar');
+      if (el) {
+        el.style.opacity = '0';
+        setTimeout(function() {
+          el.innerText = botTips[tipIdx];
+          el.style.opacity = '1';
+        }, 150);
+      }
+      if (avatar) {
+        avatar.classList.add('rotate-6', 'scale-110');
+        setTimeout(function() {
+          avatar.classList.remove('rotate-6', 'scale-110');
+        }, 300);
+      }
+    };
+
     const templatesData = {
       ${TEMPLATES.map((t) => `'${t.id}': ${JSON.stringify(t.html)}`).join(',\n      ')}
     };
