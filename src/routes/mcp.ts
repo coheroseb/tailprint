@@ -284,6 +284,28 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
       examplePrompt: 'Give me the HTML source of the invoice template so I can customize the table headers.',
     },
+    {
+      name: 'generate_einvoice',
+      category: 'Compliance & E-Invoicing',
+      description: 'Generates an EU-compliant hybrid electronic invoice (Factur-X / ZUGFeRD 2.2 / EN 16931). Produces a Tailwind A4 PDF with embedded CrossIndustryInvoice XML (/EmbeddedFiles) for direct automated ingestion by ERP & accounting platforms (DATEV, SAP, Chorus Pro, Dinero, Billy).',
+      outputType: 'application/pdf (hosted CDN URL + XML data)',
+      arguments: {
+        invoice_number: 'string - Unique invoice identifier (e.g. "INV-2026-0042")',
+        seller_name: 'string - Supplier company name',
+        seller_vat_id: 'string (optional) - Supplier VAT ID (e.g. "DK12345678")',
+        seller_country: 'string (default: "DK") - 2-letter ISO country code',
+        buyer_name: 'string - Customer company name',
+        buyer_vat_id: 'string (optional) - Buyer VAT ID',
+        buyer_country: 'string (default: "DE") - 2-letter ISO country code',
+        line_items: 'array of { name, quantity, unit_price, vat_rate? }',
+        currency: 'string (default: "EUR") - 3-letter currency code (e.g. EUR, DKK)',
+        due_date: 'string (optional) - Due date in YYYY-MM-DD',
+        payment_iban: 'string (optional) - Bank IBAN for wire transfer',
+        payment_bic: 'string (optional) - Bank SWIFT/BIC code',
+        profile: '"BASIC" | "EN16931" (default: "BASIC")',
+      },
+      examplePrompt: 'Issue an EU-compliant Factur-X e-invoice to BMW AG for 40 hours consulting at 150 EUR/hr with 25% VAT and my IBAN.',
+    },
   ];
 
   // GET /v1/mcp/tools - Comprehensive Tool Catalog & Documentation
@@ -292,8 +314,8 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       schema: {
         tags: ['MCP'],
-        summary: 'List All 12 Model Context Protocol (MCP) Tools & Schemas',
-        description: 'Returns the full catalog of 12 native MCP tools supported by Tailprint, including argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
+        summary: 'List All 13 Model Context Protocol (MCP) Tools & Schemas',
+        description: 'Returns the full catalog of 13 native MCP tools supported by Tailprint, including argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
         response: {
           200: z.object({
             totalTools: z.number().describe('Number of registered tools'),

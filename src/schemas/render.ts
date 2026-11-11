@@ -65,6 +65,42 @@ export const HostedFileResponseSchema = z.object({
 
 export type HostedFileResponse = z.infer<typeof HostedFileResponseSchema>;
 
+export const EInvoicePartySchema = z.object({
+  name: z.string().min(1).describe('Company or person legal name'),
+  vatId: z.string().optional().describe('VAT ID / Tax identifier (e.g. DK12345678, DE987654321)'),
+  country: z.string().length(2).default('DK').describe('ISO 3166-1 alpha-2 country code (e.g. DK, DE, FR)'),
+  street: z.string().optional().describe('Street address and building number'),
+  city: z.string().optional().describe('City name'),
+  postcode: z.string().optional().describe('Postal code / ZIP code'),
+  email: z.string().email().optional().describe('Contact email address'),
+});
+
+export const EInvoiceLineItemSchema = z.object({
+  name: z.string().min(1).describe('Product or service description'),
+  quantity: z.number().positive().describe('Quantity of items or hours'),
+  unitPrice: z.number().nonnegative().describe('Unit price excluding VAT'),
+  vatRate: z.number().nonnegative().default(25).describe('VAT / Tax rate in percent (e.g. 25 for 25% VAT, 0 for exempt)'),
+});
+
+export const RenderEInvoiceRequestSchema = z.object({
+  invoiceNumber: z.string().min(1).describe('Unique invoice reference number (e.g. INV-2026-001)'),
+  issueDate: z.string().optional().describe('Invoice date (YYYY-MM-DD)'),
+  dueDate: z.string().optional().describe('Due payment date (YYYY-MM-DD)'),
+  currency: z.string().length(3).default('EUR').describe('ISO 4217 3-letter currency code (e.g. EUR, DKK, USD, SEK)'),
+  seller: EInvoicePartySchema.describe('Supplier / Seller billing details'),
+  buyer: EInvoicePartySchema.describe('Customer / Buyer billing details'),
+  lineItems: z.array(EInvoiceLineItemSchema).min(1).describe('Line items to bill'),
+  paymentIban: z.string().optional().describe('Bank transfer IBAN number'),
+  paymentBic: z.string().optional().describe('Bank BIC / SWIFT code'),
+  notes: z.string().optional().describe('Optional payment terms or invoice notes'),
+  profile: z.enum(['BASIC', 'EN16931']).default('BASIC').describe('Factur-X / ZUGFeRD profile compliance level'),
+  store: z.boolean().default(false).describe('If true, returns hosted CDN URL in JSON response; if false, returns binary hybrid PDF'),
+  expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration if store is true'),
+});
+
+export type RenderEInvoiceRequest = z.input<typeof RenderEInvoiceRequestSchema>;
+export type RenderEInvoiceOutput = z.infer<typeof RenderEInvoiceRequestSchema>;
+
 export const ErrorResponseSchema = z.object({
   statusCode: z.number().describe('HTTP status code'),
   error: z.string().describe('Error name / status title'),

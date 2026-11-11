@@ -9,6 +9,7 @@ import { pdfStamperService } from '../services/pdfStamper.js';
 import { storageService } from '../services/storage.js';
 import { visualDiffService } from '../services/visualDiff.js';
 import { carouselService } from '../services/carousel.js';
+import { eInvoiceService } from '../services/eInvoice.js';
 import { TEMPLATES } from '../config/templates.js';
 
 export interface McpServerOptions {
@@ -777,6 +778,143 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             {
               type: 'text',
               text: `Error generating carousel: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 13: generate_einvoice
+  server.tool(
+    'generate_einvoice',
+    'Generates a legally compliant European hybrid electronic invoice (Factur-X / ZUGFeRD 2.2 / EN 16931). Renders a beautiful visual PDF and embeds machine-readable CrossIndustryInvoice XML (/EmbeddedFiles) for automated ingestion by ERP and accounting platforms (DATEV, SAP, Chorus Pro, Dinero, Billy).',
+    {
+      invoice_number: z.string().describe('Unique invoice reference number (e.g. "INV-2026-0042")'),
+      seller_name: z.string().describe('Supplier/seller company name'),
+      seller_vat_id: z.string().optional().describe('Supplier VAT ID / Tax number (e.g. "DK12345678" or "DE987654321")'),
+      seller_country: z.string().length(2).optional().default('DK').describe('2-letter ISO country code of seller (e.g. DK, DE, FR, NL)'),
+      seller_street: z.string().optional().describe('Seller street address'),
+      seller_city: z.string().optional().describe('Seller city'),
+      seller_postcode: z.string().optional().describe('Seller postal code'),
+      seller_email: z.string().optional().describe('Seller billing email'),
+      buyer_name: z.string().describe('Customer/buyer company or client name'),
+      buyer_vat_id: z.string().optional().describe('Buyer VAT ID / Tax number (e.g. "DE123456789")'),
+      buyer_country: z.string().length(2).optional().default('DE').describe('2-letter ISO country code of buyer (e.g. DE, FR, DK)'),
+      buyer_street: z.string().optional().describe('Buyer street address'),
+      buyer_city: z.string().optional().describe('Buyer city'),
+      buyer_postcode: z.string().optional().describe('Buyer postal code'),
+      buyer_email: z.string().optional().describe('Buyer contact/AP email'),
+      line_items: z
+        .array(
+          z.object({
+            name: z.string().describe('Product or service description'),
+            quantity: z.number().positive().describe('Quantity or units'),
+            unit_price: z.number().nonnegative().describe('Price per unit excluding VAT'),
+            vat_rate: z.number().nonnegative().optional().default(25).describe('VAT percentage (e.g. 25 for 25% or 0 for exempt)'),
+          })
+        )
+        .min(1)
+        .describe('List of invoice items or billed services'),
+      currency: z.string().length(3).optional().default('EUR').describe('ISO 4217 currency code (e.g. EUR, DKK, USD, SEK)'),
+      due_date: z.string().optional().describe('Due payment date (YYYY-MM-DD)'),
+      payment_iban: z.string().optional().describe('Bank transfer IBAN for direct wire payment'),
+      payment_bic: z.string().optional().describe('Bank SWIFT/BIC code'),
+      notes: z.string().optional().describe('Optional payment terms or notes'),
+      profile: z.enum(['BASIC', 'EN16931']).optional().default('BASIC').describe('Factur-X compliance profile level'),
+    },
+    async ({
+      invoice_number,
+      seller_name,
+      seller_vat_id,
+      seller_country,
+      seller_street,
+      seller_city,
+      seller_postcode,
+      seller_email,
+      buyer_name,
+      buyer_vat_id,
+      buyer_country,
+      buyer_street,
+      buyer_city,
+      buyer_postcode,
+      buyer_email,
+      line_items,
+      currency,
+      due_date,
+      payment_iban,
+      payment_bic,
+      notes,
+      profile,
+    }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('generate_einvoice');
+        }
+
+        const result = await eInvoiceService.generateHybridInvoice({
+          invoiceNumber: invoice_number,
+          currency: currency || 'EUR',
+          dueDate: due_date,
+          seller: {
+            name: seller_name,
+            vatId: seller_vat_id,
+            country: seller_country || 'DK',
+            street: seller_street,
+            city: seller_city,
+            postcode: seller_postcode,
+            email: seller_email,
+          },
+          buyer: {
+            name: buyer_name,
+            vatId: buyer_vat_id,
+            country: buyer_country || 'DE',
+            street: buyer_street,
+            city: buyer_city,
+            postcode: buyer_postcode,
+            email: buyer_email,
+          },
+          lineItems: line_items.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            unitPrice: item.unit_price,
+            vatRate: item.vat_rate,
+          })),
+          paymentIban: payment_iban,
+          paymentBic: payment_bic,
+          notes,
+          profile: profile || 'BASIC',
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `🇪🇺 **Factur-X / ZUGFeRD 2.2 Compliant Hybrid E-Invoice Generated!**`,
+                ``,
+                `- **Invoice Number:** \`${result.invoiceNumber}\``,
+                `- **Currency:** \`${result.currency}\``,
+                `- **Subtotal (Net):** \`${result.netTotal.toFixed(2)} ${result.currency}\``,
+                `- **Total VAT:** \`${result.taxTotal.toFixed(2)} ${result.currency}\``,
+                `- **Total Due (Gross):** \`${result.grossTotal.toFixed(2)} ${result.currency}\``,
+                `- **Standard:** EN 16931 / PEPPOL / Factur-X (${profile || 'BASIC'} Profile)`,
+                `- **Embedded Machine Data:** \`factur-x.xml\` (CrossIndustryInvoice, attached to PDF catalog)`,
+                ``,
+                `📥 **Download Hybrid PDF:** [${result.pdfStored?.hostedUrl}](${result.pdfStored?.hostedUrl})`,
+                ``,
+                `*Compatible with DATEV, SAP, Chorus Pro, Dinero, Billy, and all European tax authorities.*`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error generating EU E-Invoice: ${err.message || 'Unknown error'}`,
             },
           ],
         };

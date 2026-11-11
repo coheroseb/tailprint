@@ -42,6 +42,8 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('stamp_pdf');
     expect(toolNames).toContain('compare_snapshots');
     expect(toolNames).toContain('render_carousel');
+    expect(toolNames).toContain('generate_einvoice');
+    expect(toolNames.length).toBe(13);
 
     await client.close();
     await server.close();
@@ -361,6 +363,45 @@ Takeaway: 90% token savings.
     expect(res.content[0].mimeType).toBe('image/png');
     expect(res.content[1].text).toContain('Multi-Slide Carousel Generated Successfully');
     expect(res.content[1].text).toContain('LinkedIn Carousel (Multi-page PDF)');
+
+    await client.close();
+    await server.close();
+  }, 25000);
+
+  it('executes generate_einvoice tool to produce hybrid Factur-X PDF with embedded XML', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const res = (await client.callTool({
+      name: 'generate_einvoice',
+      arguments: {
+        invoice_number: 'INV-TEST-2026-01',
+        seller_name: 'Tailprint ApS',
+        seller_vat_id: 'DK12345678',
+        seller_country: 'DK',
+        buyer_name: 'Acme Europe GmbH',
+        buyer_vat_id: 'DE987654321',
+        buyer_country: 'DE',
+        currency: 'EUR',
+        line_items: [
+          { name: 'API Subscription - Scale Plan', quantity: 1, unit_price: 299, vat_rate: 25 },
+          { name: 'Dedicated Support Hours', quantity: 5, unit_price: 150, vat_rate: 25 },
+        ],
+        payment_iban: 'DK0012345678901234',
+        payment_bic: 'DABA2100',
+      },
+    })) as any;
+
+    expect(res.isError).toBeFalsy();
+    expect(res.content[0].type).toBe('text');
+    expect(res.content[0].text).toContain('Factur-X / ZUGFeRD 2.2 Compliant Hybrid E-Invoice');
+    expect(res.content[0].text).toContain('INV-TEST-2026-01');
+    expect(res.content[0].text).toContain('Download Hybrid PDF');
+    expect(res.content[0].text).toContain('factur-x.xml');
 
     await client.close();
     await server.close();

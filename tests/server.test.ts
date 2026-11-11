@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
 import { decryptPDF } from 'cryptpdf';
+import { PDFDocument } from 'pdf-lib';
 import { buildApp } from '../src/server.js';
 import { env } from '../src/config/env.js';
 import { redisService } from '../src/services/redis.js';
@@ -489,6 +490,108 @@ describe('Tailprint Test Suite', () => {
       expect(res.statusCode).toBe(404);
       const data = JSON.parse(res.body);
       expect(data.error).toBe('Not Found');
+    });
+
+    it('POST /v1/render/einvoice generates compliant Factur-X hybrid PDF with embedded XML', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/einvoice',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          invoiceNumber: 'INV-2026-EU-001',
+          currency: 'EUR',
+          seller: {
+            name: 'Nordic Cloud ApS',
+            vatId: 'DK99887766',
+            country: 'DK',
+            street: 'Vesterbrogade 12',
+            city: 'København V',
+            postcode: '1620',
+          },
+          buyer: {
+            name: 'Berlin Tech AG',
+            vatId: 'DE112233445',
+            country: 'DE',
+            street: 'Friedrichstraße 44',
+            city: 'Berlin',
+            postcode: '10117',
+          },
+          lineItems: [
+            { name: 'Infrastructure Engineering (hrs)', quantity: 20, unitPrice: 160, vatRate: 25 },
+            { name: 'Dedicated Support Retainer', quantity: 1, unitPrice: 500, vatRate: 25 },
+          ],
+          paymentIban: 'DK5000400440116243',
+          paymentBic: 'DABA2100',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('application/pdf');
+      expect(response.headers['content-disposition']).toContain('factur-x-INV-2026-EU-001.pdf');
+      expect(response.headers['x-invoice-currency']).toBe('EUR');
+      expect(response.headers['x-invoice-total']).toBe('4625'); // (20*160 + 500) = 3700 net + 25% VAT (925) = 4625 gross
+      expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+
+      // Verify valid PDF structure and embedded factur-x.xml
+      const rawPdfString = response.rawPayload.toString('latin1');
+      expect(rawPdfString).toContain('factur-x.xml');
+      expect(rawPdfString).toContain('EmbeddedFiles');
+
+      const doc = await PDFDocument.load(response.rawPayload);
+      expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
+    }, 25000);
+
+    it('POST /v1/render/einvoice with store: true returns hostedUrl link and saves file', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/einvoice',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          invoiceNumber: 'INV-HOSTED-002',
+          currency: 'DKK',
+          seller: {
+            name: 'København Software ApS',
+            vatId: 'DK12345678',
+            country: 'DK',
+          },
+          buyer: {
+            name: 'Aarhus Konsulenter A/S',
+            vatId: 'DK87654321',
+            country: 'DK',
+          },
+          lineItems: [
+            { name: 'Software Licens', quantity: 1, unitPrice: 10000, vatRate: 25 },
+          ],
+          store: true,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.hostedUrl).toBeDefined();
+      expect(data.fileId).toMatch(/^f_[a-f0-9]+\.pdf$/);
+      expect(data.mimeType).toBe('application/pdf');
+      expect(response.headers['x-invoice-total']).toBe('12500');
+    }, 25000);
+
+    it('GET /v1/mcp/tools returns catalog of 13 registered tools including generate_einvoice', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/mcp/tools',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.totalTools).toBe(13);
+      const names = data.tools.map((t: any) => t.name);
+      expect(names).toContain('generate_einvoice');
+      expect(names).toContain('render_carousel');
+      expect(names).toContain('compare_snapshots');
     });
 
     it('validates request input and rejects invalid schema (400)', async () => {

@@ -4,11 +4,15 @@ import { env } from '../config/env.js';
 import {
   RenderPdfRequestSchema,
   RenderImageRequestSchema,
+  RenderEInvoiceRequestSchema,
+  type RenderEInvoiceOutput,
+  HostedFileResponseSchema,
   ErrorResponseSchema,
 } from '../schemas/render.js';
 import { browserService } from '../services/browser.js';
 import { redisService } from '../services/redis.js';
 import { storageService } from '../services/storage.js';
+import { eInvoiceService } from '../services/eInvoice.js';
 
 export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // Helper to authenticate Bearer token and check monthly quota
@@ -368,6 +372,75 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         .header('X-Cache', 'MISS')
         .header('Content-Length', String(imageBuffer.length))
         .send(imageBuffer);
+    }
+  );
+
+  // POST /v1/render/einvoice - Factur-X / PEPPOL European E-Invoicing
+  fastify.post(
+    '/v1/render/einvoice',
+    {
+      schema: {
+        tags: ['Rendering'],
+        summary: 'Generate European Hybrid E-Invoice (Factur-X / ZUGFeRD / EN 16931)',
+        description: 'Generates an EU-compliant hybrid electronic invoice conforming to EN 16931 / Factur-X / ZUGFeRD 2.2. Automatically creates CrossIndustryInvoice XML, attaches it directly to the PDF catalog, and produces a print-ready visual invoice. Saves with uncompressed object streams for maximum compatibility with ERP and legacy accounting systems.',
+        body: RenderEInvoiceRequestSchema,
+        response: {
+          200: z.union([
+            HostedFileResponseSchema,
+            z.any().describe('Binary hybrid PDF stream (application/pdf)'),
+          ]),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          429: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const auth = await authenticateAndCheckQuota(request, reply);
+      if (!auth) return;
+
+      const body = request.body as RenderEInvoiceOutput;
+      const result = await eInvoiceService.generateHybridInvoice({
+        invoiceNumber: body.invoiceNumber,
+        issueDate: body.issueDate,
+        dueDate: body.dueDate,
+        currency: body.currency,
+        seller: body.seller,
+        buyer: body.buyer,
+        lineItems: body.lineItems,
+        paymentIban: body.paymentIban,
+        paymentBic: body.paymentBic,
+        notes: body.notes,
+        profile: body.profile,
+        expiresIn: body.expires_in,
+      });
+
+      if (body.store && result.pdfStored) {
+        return reply
+          .code(200)
+          .header('X-Tailprint-Hosted-Url', result.pdfStored.hostedUrl)
+          .header('X-Invoice-Total', String(result.grossTotal))
+          .send({
+            success: true,
+            hostedUrl: result.pdfStored.hostedUrl,
+            fileId: result.pdfStored.fileId,
+            filename: result.pdfStored.filename,
+            mimeType: result.pdfStored.mimeType,
+            sizeBytes: result.pdfStored.sizeBytes,
+            expiresAt: result.pdfStored.expiresAt,
+          });
+      }
+
+      return reply
+        .code(200)
+        .header('Content-Type', 'application/pdf')
+        .header('Content-Disposition', `inline; filename="factur-x-${result.invoiceNumber}.pdf"`)
+        .header('Content-Length', String(result.pdfBuffer.length))
+        .header('X-Invoice-Total', String(result.grossTotal))
+        .header('X-Invoice-Currency', result.currency)
+        .header('X-Tailprint-Hosted-Url', result.pdfStored?.hostedUrl || '')
+        .send(result.pdfBuffer);
     }
   );
 
