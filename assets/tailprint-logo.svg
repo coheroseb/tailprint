@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" fill="none">
+  <defs>
+    <linearGradient id="tpGradH" x1="10" y1="10" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="50%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="laserGradH" x1="56" y1="24" x2="44" y2="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="160" y1="30" x2="350" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#e0e7ff"/>
+      <stop offset="100%" stop-color="#c7d2fe"/>
+    </linearGradient>
+    <linearGradient id="printGrad" x1="220" y1="30" x2="360" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <filter id="glowDotH" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#f43f5e" flood-opacity="0.9"/>
+    </filter>
+  </defs>
+
+  <!-- Icon Emblem (Left) -->
+  <g transform="translate(0, 0)">
+    <rect width="90" height="90" rx="22" fill="#090d16"/>
+    <rect x="0.5" y="0.5" width="89" height="89" rx="21.5" stroke="#1e293b" stroke-width="1"/>
+    
+    <!-- Crop Marks -->
+    <path d="M12 21 L12 12 L21 12" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M78 21 L78 12 L69 12" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M12 69 L12 78 L21 78" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M78 69 L78 78 L69 78" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+
+    <!-- Brackets < and > -->
+    <path d="M31 25 L20 45 L31 65" stroke="url(#tpGradH)" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M59 25 L70 45 L59 65" stroke="url(#tpGradH)" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Laser Beam -->
+    <line x1="51" y1="23" x2="39" y2="67" stroke="url(#laserGradH)" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- Target Dot -->
+    <circle cx="45" cy="45" r="3.2" fill="#f43f5e" filter="url(#glowDotH)"/>
+  </g>
+
+  <!-- Wordmark Text (Right) -->
+  <g transform="translate(108, 0)">
+    <!-- Main title: <tailprint/> -->
+    <text x="0" y="52" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-weight="900" letter-spacing="-1.5" fill="#818cf8">&lt;</text>
+    <text x="24" y="52" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-weight="800" letter-spacing="-1" fill="url(#textGrad)">tail<tspan fill="url(#printGrad)">print</tspan></text>
+    <text x="220" y="52" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-weight="900" letter-spacing="-1.5" fill="#f472b6">/&gt;</text>
+
+    <!-- Subtitle / Tagline -->
+    <text x="4" y="73" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" letter-spacing="2.5" fill="#64748b">VECTOR ENGINE • MCP READY</text>
+  </g>
+</svg>

@@ -15,7 +15,14 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Customer Dashboard - Tailprint</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E" />
+  <script>
+    const _warn = console.warn;
+    console.warn = function(...args) {
+      if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+      _warn.apply(console, args);
+    };
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -42,11 +49,21 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <a href="/" class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-indigo-500/20">
-            ⚡
+          <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-lg shadow-indigo-500/10 overflow-hidden relative">
+            <svg class="w-7 h-7" viewBox="0 0 100 100" fill="none">
+              <path d="M14 24 L14 14 L24 14" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+              <path d="M86 24 L86 14 L76 14" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+              <path d="M14 76 L14 86 L24 86" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+              <path d="M86 76 L86 86 L76 86" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+              <path d="M35 28 L23 50 L35 72" stroke="#818cf8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M65 28 L77 50 L65 72" stroke="#f472b6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="56" y1="26" x2="44" y2="74" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="50" cy="50" r="4" fill="#f43f5e"/>
+            </svg>
           </div>
-          <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
-            Tailprint <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold ml-1">Dashboard</span>
+          <span class="font-extrabold text-lg tracking-tight text-white flex items-center">
+            <span class="text-indigo-400 font-mono font-bold mr-0.5">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-0.5">/&gt;</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold ml-2">Dashboard</span>
           </span>
         </a>
       </div>
@@ -373,36 +390,46 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
     function updateSnippet(type) {
       const box = document.getElementById('code-snippet-box');
       const origin = window.location.origin;
+      const key = activeApiKey || 'sec_live_abcdef123456...';
 
       if (type === 'curl') {
-        box.innerText = 'curl -X POST ' + origin + '/v1/render/pdf \\\n' +
-          '  -H "Authorization: Bearer ' + activeApiKey + '" \\\n' +
-          '  -H "Content-Type: application/json" \\\n' +
-          '  -d \'{"html":"<div class=\\"p-12 text-2xl font-bold text-indigo-600\\">Invoice from Tailprint</div>"}\' \\\n' +
-          '  --output invoice.pdf';
+        const payload = JSON.stringify({ html: '<div class="p-12 text-2xl font-bold text-indigo-600">Invoice from Tailprint</div>' });
+        box.textContent = [
+          'curl -X POST ' + origin + '/v1/render/pdf \\\\',
+          '  -H "Authorization: Bearer ' + key + '" \\\\',
+          '  -H "Content-Type: application/json" \\\\',
+          "  -d '" + payload + "' \\\\",
+          '  --output invoice.pdf'
+        ].join('\\n');
       } else if (type === 'node') {
-        box.innerText = 'const response = await fetch("' + origin + '/v1/render/pdf", {\n' +
-          '  method: "POST",\n' +
-          '  headers: {\n' +
-          '    "Authorization": "Bearer ' + activeApiKey + '",\n' +
-          '    "Content-Type": "application/json"\n' +
-          '  },\n' +
-          '  body: JSON.stringify({\n' +
-          '    html: "<div class=\\"p-8 text-xl font-bold\\">Hello Tailprint</div>"\n' +
-          '  })\n' +
-          '});\n' +
-          'const pdfBuffer = await response.arrayBuffer();';
+        box.textContent = [
+          'const response = await fetch("' + origin + '/v1/render/pdf", {',
+          '  method: "POST",',
+          '  headers: {',
+          '    "Authorization": "Bearer ' + key + '",',
+          '    "Content-Type": "application/json"',
+          '  },',
+          '  body: JSON.stringify({',
+          '    html: \\'<div class="p-8 text-xl font-bold">Hello Tailprint</div>\\'',
+          '  })',
+          '});',
+          'const pdfBuffer = await response.arrayBuffer();'
+        ].join('\\n');
       } else if (type === 'python') {
-        box.innerText = 'import requests\n\n' +
-          'url = "' + origin + '/v1/render/pdf"\n' +
-          'headers = {\n' +
-          '    "Authorization": "Bearer ' + activeApiKey + '",\n' +
-          '    "Content-Type": "application/json"\n' +
-          '}\n' +
-          'payload = {"html": "<h1 class=\'text-3xl font-bold\'>Hello Tailprint</h1>"}\n\n' +
-          'response = requests.post(url, json=payload, headers=headers)\n' +
-          'with open("document.pdf", "wb") as f:\n' +
-          '    f.write(response.content)';
+        box.textContent = [
+          'import requests',
+          '',
+          'url = "' + origin + '/v1/render/pdf"',
+          'headers = {',
+          '  "Authorization": "Bearer ' + key + '",',
+          '  "Content-Type": "application/json"',
+          '}',
+          'payload = {"html": "<h1 class=\\'text-3xl font-bold\\'>Hello Tailprint</h1>"}',
+          '',
+          'response = requests.post(url, json=payload, headers=headers)',
+          'with open("document.pdf", "wb") as f:',
+          '  f.write(response.content)'
+        ].join('\\n');
       }
     }
   </script>
