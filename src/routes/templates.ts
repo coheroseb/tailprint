@@ -994,78 +994,89 @@ This domain is for use in documentation examples without needing permission. Thi
       const passwordInput = document.getElementById('playground-password');
 
       const isUrl = window.currentPlaygroundMode === 'url';
-      const targetParam = isUrl
-        ? '"url": "' + (urlInput && urlInput.value ? urlInput.value.trim() : 'https://example.com') + '"'
-        : '"html": "<div class=\\"...\\">...</div>"';
-
       const format = formatSelect ? formatSelect.value : 'A4';
       const isLandscape = format.includes('landscape');
       const paperFormat = isLandscape ? 'A4' : format;
       const pass = passwordInput && passwordInput.value.trim() ? passwordInput.value.trim() : null;
 
+      const payloadObj = {
+        format: paperFormat,
+        landscape: isLandscape
+      };
+
+      if (isUrl) {
+        payloadObj.url = urlInput && urlInput.value ? urlInput.value.trim() : 'https://example.com';
+      } else {
+        payloadObj.html = editor && editor.value ? editor.value.slice(0, 80) + '...' : '<h1>Hello</h1>';
+      }
+
+      if (pass) {
+        payloadObj.password = pass;
+      }
+
+      const jsonStr = JSON.stringify(payloadObj, null, 2);
+      const sq = String.fromCharCode(39);
+      const bslash = String.fromCharCode(92);
+      const nl = String.fromCharCode(10);
       let code = '';
+
       if (window.currentSnippetLang === 'curl') {
-        code = 'curl -X POST https://api.tailprint.com/v1/render/pdf \\\n' +
-          '  -H "Authorization: Bearer sec_live_YOUR_API_KEY" \\\n' +
-          '  -H "Content-Type: application/json" \\\n' +
-          '  -d \'{\n' +
-          '    ' + targetParam + ',\n' +
-          '    "format": "' + paperFormat + '",\n' +
-          '    "landscape": ' + isLandscape +
-          (pass ? ',\n    "password": "' + pass + '"' : '') + '\n' +
-          '  }\' \\\n' +
-          '  --output output.pdf';
+        code = [
+          'curl -X POST https://api.tailprint.com/v1/render/pdf ' + bslash,
+          '  -H "Authorization: Bearer sec_live_YOUR_API_KEY" ' + bslash,
+          '  -H "Content-Type: application/json" ' + bslash,
+          '  -d ' + sq + jsonStr + sq + ' ' + bslash,
+          '  --output output.pdf'
+        ].join(nl);
       } else if (window.currentSnippetLang === 'node') {
-        code = 'import fs from "node:fs/promises";\n\n' +
-          'const response = await fetch("https://api.tailprint.com/v1/render/pdf", {\n' +
-          '  method: "POST",\n' +
-          '  headers: {\n' +
-          '    "Authorization": "Bearer " + (process.env.TAILPRINT_API_KEY || "sec_live_YOUR_KEY"),\n' +
-          '    "Content-Type": "application/json",\n' +
-          '  },\n' +
-          '  body: JSON.stringify({\n' +
-          '    ' + targetParam + ',\n' +
-          '    format: "' + paperFormat + '",\n' +
-          '    landscape: ' + isLandscape +
-          (pass ? ',\n    password: "' + pass + '"' : '') + '\n' +
-          '  }),\n' +
-          '});\n\n' +
-          'const buffer = Buffer.from(await response.arrayBuffer());\n' +
-          'await fs.writeFile("document.pdf", buffer);';
+        code = [
+          'import fs from "node:fs/promises";',
+          '',
+          'const response = await fetch("https://api.tailprint.com/v1/render/pdf", {',
+          '  method: "POST",',
+          '  headers: {',
+          '    "Authorization": "Bearer " + (process.env.TAILPRINT_API_KEY || "sec_live_YOUR_KEY"),',
+          '    "Content-Type": "application/json",',
+          '  },',
+          '  body: JSON.stringify(' + jsonStr + ', null, 2),',
+          '});',
+          '',
+          'const buffer = Buffer.from(await response.arrayBuffer());',
+          'await fs.writeFile("document.pdf", buffer);'
+        ].join(nl);
       } else if (window.currentSnippetLang === 'python') {
-        code = 'import requests\nimport os\n\n' +
-          'api_key = os.environ.get("TAILPRINT_API_KEY", "sec_live_YOUR_KEY")\n' +
-          'res = requests.post(\n' +
-          '    "https://api.tailprint.com/v1/render/pdf",\n' +
-          '    headers={\n' +
-          '        "Authorization": f"Bearer {api_key}",\n' +
-          '        "Content-Type": "application/json",\n' +
-          '    },\n' +
-          '    json={\n' +
-          '        ' + targetParam + ',\n' +
-          '        "format": "' + paperFormat + '",\n' +
-          '        "landscape": ' + (isLandscape ? 'True' : 'False') +
-          (pass ? ',\n        "password": "' + pass + '"' : '') + '\n' +
-          '    },\n' +
-          ')\n\n' +
-          'with open("document.pdf", "wb") as f:\n' +
-          '    f.write(res.content)';
+        code = [
+          'import requests',
+          'import os',
+          '',
+          'api_key = os.environ.get("TAILPRINT_API_KEY", "sec_live_YOUR_KEY")',
+          'payload = ' + jsonStr.replace(/: true/g, ': True').replace(/: false/g, ': False'),
+          '',
+          'res = requests.post(',
+          '    "https://api.tailprint.com/v1/render/pdf",',
+          '    headers={',
+          '        "Authorization": f"Bearer {api_key}",',
+          '        "Content-Type": "application/json",',
+          '    },',
+          '    json=payload,',
+          ')',
+          '',
+          'with open("document.pdf", "wb") as f:',
+          '    f.write(res.content)'
+        ].join(nl);
       } else if (window.currentSnippetLang === 'php') {
-        code = '<?php\n' +
-          '$ch = curl_init("https://api.tailprint.com/v1/render/pdf");\n' +
-          'curl_setopt($ch, CURLOPT_HTTPHEADER, [\n' +
-          '    "Authorization: Bearer " . getenv("TAILPRINT_API_KEY"),\n' +
-          '    "Content-Type: application/json"\n' +
-          ']);\n' +
-          'curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([\n' +
-          '    ' + targetParam + ',\n' +
-          '    "format" => "' + paperFormat + '",\n' +
-          '    "landscape" => ' + (isLandscape ? 'true' : 'false') +
-          (pass ? ',\n    "password" => "' + pass + '"' : '') + '\n' +
-          ']));\n' +
-          'curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\n' +
-          '$pdf = curl_exec($ch);\n' +
-          'file_put_contents("document.pdf", $pdf);';
+        code = [
+          '<?php',
+          '$ch = curl_init("https://api.tailprint.com/v1/render/pdf");',
+          'curl_setopt($ch, CURLOPT_HTTPHEADER, [',
+          '    "Authorization: Bearer " . getenv("TAILPRINT_API_KEY"),',
+          '    "Content-Type: application/json"',
+          ']);',
+          'curl_setopt($ch, CURLOPT_POSTFIELDS, ' + sq + jsonStr + sq + ');',
+          'curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);',
+          '$pdf = curl_exec($ch);',
+          'file_put_contents("document.pdf", $pdf);'
+        ].join(nl);
       }
 
       pre.innerText = code;
