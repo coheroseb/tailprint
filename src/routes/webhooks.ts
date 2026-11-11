@@ -20,13 +20,7 @@ export const webhookRoutes: FastifyPluginAsyncZod = async (fastify) => {
         rawBody: true,
       },
       schema: {
-        tags: ['Webhooks'],
-        summary: 'Stripe Webhook Listener',
-        description: 'Handles lifecycle events from Stripe (checkout completion, recurring payment success, subscription cancellation).',
-        response: {
-          200: WebhookSuccessResponseSchema,
-          400: ErrorResponseSchema,
-        },
+        hide: true,
       },
     },
     async (request, reply) => {
