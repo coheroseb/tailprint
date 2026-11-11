@@ -25,6 +25,7 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
     HOST=0.0.0.0 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
@@ -74,12 +75,14 @@ COPY package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
-# Install Playwright's Chromium browser binary
-RUN npx playwright install chromium
+# Install Playwright's Chromium browser binary globally
+RUN mkdir -p /ms-playwright \
+    && npx playwright install chromium \
+    && chmod -R 777 /ms-playwright
 
 # Create non-privileged user
 RUN groupadd -r renderuser && useradd -r -g renderuser -G audio,video renderuser \
-    && chown -R renderuser:renderuser /app /root/.cache
+    && chown -R renderuser:renderuser /app /ms-playwright
 
 USER renderuser
 
