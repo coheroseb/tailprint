@@ -3,6 +3,7 @@ import { z } from 'zod';
 import crypto from 'node:crypto';
 import { stripeService } from '../services/stripe.js';
 import { redisService, type ApiKeyRecord } from '../services/redis.js';
+import { emailService } from '../services/email.js';
 import { ErrorResponseSchema } from '../schemas/render.js';
 
 const WebhookSuccessResponseSchema = z.object({
@@ -183,13 +184,19 @@ export const webhookRoutes: FastifyPluginAsyncZod = async (fastify) => {
     // Check if an API key already exists for this email
     const existingKey = await redisService.getFreeKeyByEmail(email);
     if (existingKey) {
+      emailService.sendFreeApiKeyEmail({
+        to: email,
+        apiKey: existingKey,
+        monthlyLimit: 100,
+      }).catch((err) => request.log.error({ err }, 'Failed to dispatch free key email'));
+
       return reply.send({
         success: true,
         apiKey: existingKey,
         plan: 'free',
         monthlyLimit: 100,
         isExisting: true,
-        message: 'Welcome back! Here is your active free API key (100 renders/month).',
+        message: 'Welcome back! Your API key has been emailed to you and is ready to use.',
       });
     }
 
@@ -208,13 +215,19 @@ export const webhookRoutes: FastifyPluginAsyncZod = async (fastify) => {
     await redisService.storeApiKey(newApiKey, record);
     await redisService.setFreeKeyEmail(email, newApiKey);
 
+    emailService.sendFreeApiKeyEmail({
+      to: email,
+      apiKey: newApiKey,
+      monthlyLimit: 100,
+    }).catch((err) => request.log.error({ err }, 'Failed to dispatch free key email'));
+
     return reply.code(201).send({
       success: true,
       apiKey: newApiKey,
       plan: 'free',
       monthlyLimit: 100,
       isExisting: false,
-      message: 'Free API key provisioned! 100 monthly renders ready to use.',
+      message: 'Free API key provisioned! Sent to your email and ready to use.',
     });
   };
 

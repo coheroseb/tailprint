@@ -33,6 +33,13 @@ const envSchema = z.object({
 
   // Dev bypass (for quick local testing without Redis if needed)
   DEV_DEFAULT_API_KEY: z.string().optional().default('sec_live_dev_test_key_12345'),
+
+  // SMTP Email Server (Fortrolig.dk)
+  SMTP_HOST: z.string().default('mail.fortrolig.dk'),
+  SMTP_PORT: z.coerce.number().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().default('Tailprint <noreply@tailprint.com>'),
 });
 
 export type Env = z.infer<typeof envSchema>;

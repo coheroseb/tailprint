@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { env } from '../config/env.js';
 import { getPlanById } from '../config/plans.js';
 import { redisService, type ApiKeyRecord } from './redis.js';
+import { emailService } from './email.js';
 
 export class StripeService {
   private static instance: StripeService | null = null;
@@ -175,6 +176,16 @@ export class StripeService {
 
         await redisService.storeApiKey(newRawApiKey, record);
         await redisService.saveSessionKey(session.id, newRawApiKey, planConfig.id, planConfig.monthlyLimit);
+
+        const customerEmail = session.customer_details?.email || session.customer_email;
+        if (customerEmail) {
+          emailService.sendPaidApiKeyEmail({
+            to: customerEmail,
+            apiKey: newRawApiKey,
+            planName: planConfig.name,
+            monthlyLimit: planConfig.monthlyLimit,
+          }).catch((err) => console.error('[StripeWebhook] Failed to dispatch paid API key email:', err.message));
+        }
 
         return {
           handled: true,
