@@ -26,7 +26,8 @@ export const PLANS: Record<string, PlanConfig> = {
       'Full Tailwind CSS v3 & v4 support',
       'LLM Web Scraper & Markdown API',
       'Model Context Protocol (MCP) access',
-      'No credit card required',
+      'No credit card required (via Stripe)',
+      '1-click instant upgrade to paid',
     ],
   },
   starter: {

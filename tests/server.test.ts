@@ -474,6 +474,66 @@ describe('Tailprint Test Suite', () => {
       expect(storedKey?.monthly_limit).toBe(20000);
     });
 
+    it('updates customer plan and limits on customer.subscription.updated', async () => {
+      const eventPayload = {
+        id: 'evt_test_update',
+        object: 'event',
+        type: 'customer.subscription.updated',
+        data: {
+          object: {
+            id: 'sub_test_123',
+            customer: 'cus_customer_abc',
+            metadata: {
+              plan: 'business',
+            },
+          },
+        },
+      };
+
+      const rawBody = JSON.stringify(eventPayload);
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signature = stripeService.stripe.webhooks.generateTestHeaderString({
+        payload: rawBody,
+        secret: env.STRIPE_WEBHOOK_SECRET,
+        timestamp,
+      });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/webhooks/stripe',
+        headers: {
+          'stripe-signature': signature,
+          'content-type': 'application/json',
+        },
+        payload: rawBody,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const result = JSON.parse(response.body);
+      expect(result.action).toBe('subscription_updated');
+      expect(result.details.plan).toBe('business');
+      expect(result.details.monthlyLimit).toBe(75000);
+    });
+
+    it('creates a checkout session for free plan via POST /v1/billing/checkout', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/billing/checkout',
+        headers: {
+          'content-type': 'application/json',
+        },
+        payload: JSON.stringify({
+          planId: 'free',
+          customerEmail: 'trial@example.com',
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.checkoutUrl).toBeDefined();
+    });
+
     it('deactivates subscription on customer.subscription.deleted', async () => {
       const eventPayload = {
         id: 'evt_test_cancel',

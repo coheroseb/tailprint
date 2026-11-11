@@ -725,8 +725,8 @@ This domain is for use in documentation examples without needing permission. Thi
               ${PLANS.free.features.map((f) => `<li class="flex items-start space-x-2"><span class="text-emerald-400 font-bold mt-0.5">✓</span><span>${f}</span></li>`).join('')}
             </ul>
           </div>
-          <button onclick="openFreeKeyModal()" class="mt-6 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-xs shadow-lg shadow-emerald-600/20">
-            Claim 100 Free Renders ⚡
+          <button onclick="startCheckout('free')" class="mt-6 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-xs shadow-lg shadow-emerald-600/20">
+            Start Free via Stripe (No Card) ⚡
           </button>
         </div>
 

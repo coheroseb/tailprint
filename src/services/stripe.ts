@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import crypto from 'node:crypto';
 import { env } from '../config/env.js';
-import { getPlanById } from '../config/plans.js';
+import { getPlanById, getPlanByStripePriceId } from '../config/plans.js';
 import { redisService, type ApiKeyRecord } from './redis.js';
 import { emailService } from './email.js';
 
@@ -90,6 +90,12 @@ export class StripeService {
         mode: 'subscription',
         customer_email: params.customerEmail,
         line_items: lineItems,
+        payment_method_collection: 'if_required',
+        subscription_data: {
+          metadata: {
+            plan: plan.id,
+          },
+        },
         metadata: {
           plan: plan.id,
         },
@@ -212,6 +218,32 @@ export class StripeService {
           handled: true,
           action: 'monthly_quota_reset',
           details: { customerId },
+        };
+      }
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId =
+          typeof subscription.customer === 'string'
+            ? subscription.customer
+            : subscription.customer?.id;
+
+        const priceId = subscription.items?.data[0]?.price?.id;
+        const metaPlan = subscription.metadata?.plan;
+        const newPlan = metaPlan ? getPlanById(metaPlan) : getPlanByStripePriceId(priceId);
+
+        if (customerId && newPlan) {
+          await redisService.updateCustomerPlan(customerId, newPlan.id, newPlan.monthlyLimit);
+        }
+
+        return {
+          handled: true,
+          action: 'subscription_updated',
+          details: {
+            customerId,
+            plan: newPlan.id,
+            monthlyLimit: newPlan.monthlyLimit,
+          },
         };
       }
 

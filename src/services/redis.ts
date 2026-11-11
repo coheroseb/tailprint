@@ -209,6 +209,28 @@ export class RedisService {
     return updatedCount;
   }
 
+  public async updateCustomerPlan(customerId: string, plan: string, monthlyLimit: number): Promise<number> {
+    let hashes: string[] = [];
+    if ('smembers' in this.client) {
+      hashes = await (this.client as any).smembers(`customer_keys:${customerId}`);
+    }
+
+    let updatedCount = 0;
+    for (const hash of hashes) {
+      const key = `api_keys:${hash}`;
+      const record = await this.client.get<ApiKeyRecord | string>(key);
+      if (record) {
+        const parsed: ApiKeyRecord = typeof record === 'string' ? JSON.parse(record) : record;
+        parsed.plan = plan;
+        parsed.monthly_limit = monthlyLimit;
+        parsed.status = 'active';
+        await this.client.set(key, parsed);
+        updatedCount++;
+      }
+    }
+    return updatedCount;
+  }
+
   public getMonthString(date = new Date()): string {
     const y = date.getUTCFullYear();
     const m = String(date.getUTCMonth() + 1).padStart(2, '0');
