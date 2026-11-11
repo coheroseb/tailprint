@@ -677,22 +677,17 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
         Eliminate complex browser infrastructure and build steps. Submit raw HTML with arbitrary utility classes and generate print-ready PDFs or cached social preview banners in under 500ms.
       </p>
 
-      <div class="mt-8 flex flex-wrap justify-center items-center gap-4">
-        <button onclick="startCheckout('free')" class="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/30 flex items-center space-x-2">
+      <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-3.5">
+        <button onclick="startCheckout('free')" class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2.5 group">
           <span>⚡ Claim 100 Free Renders</span>
-          <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-black uppercase">No CC</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-200 font-bold uppercase tracking-wider">No CC</span>
         </button>
-        <a href="#mcp" class="px-6 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition shadow-lg shadow-purple-600/30 flex items-center space-x-2">
-          <span>🤖 Connect Claude / Cursor</span>
-          <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-950 text-purple-200 font-bold border border-purple-400/30">13 Tools</span>
-        </a>
-        <a href="#playground" class="px-6 py-3.5 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 text-white font-bold transition shadow-lg shadow-indigo-600/20">
-          Try Live Sandbox
-        </a>
-        <a href="#templates" class="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-semibold transition">
-          Explore Templates (${TEMPLATES.length})
+        <a href="#playground" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 font-semibold transition flex items-center justify-center space-x-2">
+          <span>Try Live Sandbox</span>
+          <span class="text-slate-400">→</span>
         </a>
       </div>
+      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • 100% serverless</p>
 
       <!-- System Stats -->
       <div class="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto text-left">
