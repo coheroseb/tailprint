@@ -30,7 +30,7 @@ export class BrowserService {
   }
 
   public async init(): Promise<void> {
-    if (this.browser) return;
+    if (this.browser?.isConnected()) return;
     if (this.isInitializing) {
       while (this.isInitializing) {
         await new Promise((r) => setTimeout(r, 50));

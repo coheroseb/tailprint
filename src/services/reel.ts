@@ -247,6 +247,8 @@ Respond ONLY with valid JSON in this exact structure:
                 logoUrl: scraped.logo_url || undefined,
                 brandColors,
                 theme: 'brand',
+                layout: 'classic',
+                cleanExport: true,
                 aspectRatio: '9:16',
                 language: detected.code,
                 languageLabel: detected.label,
@@ -294,6 +296,8 @@ Respond ONLY with valid JSON in this exact structure:
               logoUrl: scraped.logo_url || undefined,
               brandColors,
               theme: 'brand',
+              layout: 'classic',
+              cleanExport: true,
               aspectRatio: '9:16',
               language: detected.code,
               languageLabel: detected.label,
@@ -515,9 +519,11 @@ Respond ONLY with valid JSON in this exact structure:
       logoUrl,
       brandColors,
       theme: 'brand',
+      layout: 'classic',
+      cleanExport: true,
       aspectRatio: '9:16',
       screenrecordUrl: screenrecord?.hostedUrl,
-      screenrecordMode: screenrecord ? 'inset' : 'none',
+      screenrecordMode: screenrecord ? 'backdrop' : 'none',
       language: detected.code,
       languageLabel: detected.label,
       slides,
@@ -884,7 +890,7 @@ Respond ONLY with valid JSON in this exact structure:
             ...script,
             slides,
             layout: script.layout || 'classic',
-            cleanExport: script.cleanExport === true,
+            cleanExport: script.cleanExport !== false,
             screenrecordUrl: resolvedScreenrecordUrl,
             screenrecordMode: script.screenrecordMode || (resolvedScreenrecordUrl ? 'inset' : 'none'),
             brandColors: script.brandColors || deriveBrandPalette(),
@@ -1026,7 +1032,8 @@ Respond ONLY with valid JSON in this exact structure:
                     ctx.fillStyle = '#ffffff';
                     ctx.fillText(word, curX, curY);
                   } else {
-                    ctx.fillStyle = t.sub + '66';
+                    // High-contrast legible silver-white (no more dull muddy invisible text!)
+                    ctx.fillStyle = 'rgba(241, 245, 249, 0.90)';
                     ctx.fillText(word, curX, curY);
                   }
                   ctx.restore();
@@ -1148,8 +1155,9 @@ Respond ONLY with valid JSON in this exact structure:
               }
             }
 
-            // 3. Brand Header
-            const headerY = cleanExport ? 76 : 140;
+            // 3. Brand Header with Safe Zone for Social Media (Instagram / TikTok)
+            const isPortrait = !isLandscape && !isSquare;
+            const headerY = isPortrait ? (cleanExport ? 150 : 160) : (cleanExport ? 76 : 130);
             const logoImg = (window as any).__logoImg as HTMLImageElement | undefined;
             if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
               ctx.save();
@@ -1161,12 +1169,56 @@ Respond ONLY with valid JSON in this exact structure:
               ctx.drawImage(logoImg, padX + 10, headerY + 10, 72, 72);
               ctx.restore();
             } else {
-              ctx.fillStyle = t.accent;
+              const brandLower = (st.brand || '').toLowerCase();
+              const handleLower = (st.handle || '').toLowerCase();
+              const isTailprint = brandLower.includes('tailprint') || handleLower.includes('tailprint');
+
+              ctx.save();
+              // Sleek dark glass rounded tile with subtle neon accent border
+              ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
               roundRect(padX, headerY, 92, 92, 24);
               ctx.fill();
-              ctx.fillStyle = '#090d16';
-              ctx.font = '900 36px Inter, sans-serif';
-              ctx.fillText((st.brand || 'TP').slice(0, 2).toUpperCase(), padX + 22, headerY + 58);
+              ctx.strokeStyle = t.accent + '77';
+              ctx.lineWidth = 2.5;
+              roundRect(padX, headerY, 92, 92, 24);
+              ctx.stroke();
+
+              if (isTailprint) {
+                // Official Tailprint </> Neon Brand Glyphs
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                // Left bracket <
+                ctx.strokeStyle = t.accent;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(padX + 32, headerY + 34);
+                ctx.lineTo(padX + 22, headerY + 46);
+                ctx.lineTo(padX + 32, headerY + 58);
+                ctx.stroke();
+                // Middle slash /
+                ctx.strokeStyle = '#f472b6';
+                ctx.lineWidth = 4.5;
+                ctx.beginPath();
+                ctx.moveTo(padX + 53, headerY + 28);
+                ctx.lineTo(padX + 39, headerY + 64);
+                ctx.stroke();
+                // Right bracket >
+                ctx.strokeStyle = t.accent;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(padX + 60, headerY + 34);
+                ctx.lineTo(padX + 70, headerY + 46);
+                ctx.lineTo(padX + 60, headerY + 58);
+                ctx.stroke();
+              } else {
+                // Modern glowing monogram
+                const mono = (st.brand || 'TP').slice(0, 2).toUpperCase();
+                ctx.fillStyle = t.accent;
+                ctx.font = '900 38px Inter, sans-serif';
+                const mw = ctx.measureText(mono).width;
+                ctx.fillText(mono, padX + (92 - mw) / 2, headerY + 58);
+              }
+              ctx.restore();
             }
 
             ctx.fillStyle = t.text;
@@ -1349,9 +1401,9 @@ Respond ONLY with valid JSON in this exact structure:
             } else {
               // 'classic' layout (supports inset browser window when videoReady && screenrecordMode === 'inset')
               const hasInsetVideo = videoReady && st.screenrecordMode === 'inset' && !isLandscape;
-              let curY = hasInsetVideo ? headerY + 165 : (isSquare ? 310 : 490);
-              const headFont = hasInsetVideo ? 58 : (isSquare ? 56 : 74);
-              const headLineH = hasInsetVideo ? 70 : (isSquare ? 68 : 88);
+              let curY = hasInsetVideo ? headerY + 155 : (isSquare ? 300 : (cleanExport ? 410 : 450));
+              const headFont = hasInsetVideo ? 56 : (isSquare ? 56 : 74);
+              const headLineH = hasInsetVideo ? 68 : (isSquare ? 68 : 88);
 
               ctx.fillStyle = t.text;
               ctx.font = `900 ${headFont}px Inter, sans-serif`;
@@ -1362,17 +1414,22 @@ Respond ONLY with valid JSON in this exact structure:
               });
 
               if (hasInsetVideo) {
-                curY += 10;
+                curY += 12;
                 const winW = W - padX * 2;
-                const winH = isSquare ? 260 : 430;
+                const winH = isSquare ? 260 : 420;
                 const winX = padX;
                 const winY = curY;
 
                 ctx.save();
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-                roundRect(winX, winY, winW, winH, 28);
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+                roundRect(winX, winY, winW, winH, 26);
                 ctx.fill();
-                roundRect(winX, winY, winW, winH, 28);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+                ctx.lineWidth = 2;
+                roundRect(winX, winY, winW, winH, 26);
+                ctx.stroke();
+
+                roundRect(winX, winY, winW, winH, 26);
                 ctx.clip();
 
                 // Browser top bar
@@ -1385,54 +1442,64 @@ Respond ONLY with valid JSON in this exact structure:
                 ctx.fillStyle = '#34d399';
                 ctx.beginPath(); ctx.arc(winX + 68, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
 
-                ctx.drawImage(bgVid!, winX, winY + 44, winW, winH - 44);
+                // Center-crop / object-fit cover to NEVER stretch or squash the video
+                const vW = (bgVid as any).videoWidth || 720;
+                const vH = (bgVid as any).videoHeight || 1280;
+                const contentH = winH - 44;
+                const scale = Math.max(winW / vW, contentH / vH);
+                const sW = winW / scale;
+                const sH = contentH / scale;
+                const sx = (vW - sW) / 2;
+                const sy = Math.max(0, Math.min(vH - sH, (vH - sH) * 0.15));
+
+                ctx.drawImage(bgVid!, sx, sy, sW, sH, winX, winY + 44, winW, contentH);
                 ctx.restore();
 
-                curY += winH + 54;
+                curY += winH + 46;
               }
 
               if (slide.stat) {
                 curY += 16;
-                const statBoxH = hasInsetVideo ? 130 : 168;
+                const statBoxH = hasInsetVideo ? 124 : 160;
 
                 ctx.save();
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
-                roundRect(padX, curY, W - padX * 2, statBoxH, 28);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+                roundRect(padX, curY, W - padX * 2, statBoxH, 26);
                 ctx.fill();
 
                 // Sleek Neon Glow Accent Border
-                ctx.strokeStyle = t.accent + '77';
+                ctx.strokeStyle = t.accent + '88';
                 ctx.lineWidth = 3;
                 ctx.shadowColor = t.accent;
-                ctx.shadowBlur = 14;
-                roundRect(padX, curY, W - padX * 2, statBoxH, 28);
+                ctx.shadowBlur = 16;
+                roundRect(padX, curY, W - padX * 2, statBoxH, 26);
                 ctx.stroke();
                 ctx.restore();
 
                 ctx.fillStyle = t.accent;
-                ctx.font = `900 ${hasInsetVideo ? 68 : 84}px Inter, sans-serif`;
+                ctx.font = `900 ${hasInsetVideo ? 64 : 80}px Inter, sans-serif`;
                 const statW = ctx.measureText(slide.stat).width;
-                ctx.fillText(slide.stat, padX + 40, curY + (hasInsetVideo ? 90 : 112));
+                ctx.fillText(slide.stat, padX + 36, curY + (hasInsetVideo ? 86 : 108));
 
-                ctx.fillStyle = t.text;
-                ctx.font = 'bold 30px Inter, sans-serif';
-                ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), padX + 40 + statW + 32, curY + (hasInsetVideo ? 78 : 98));
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 28px Inter, sans-serif';
+                ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), padX + 36 + statW + 28, curY + (hasInsetVideo ? 76 : 96));
 
-                curY += statBoxH + 56;
+                curY += statBoxH + 46;
               } else {
                 curY += 28;
               }
 
-              const bodyFont = hasInsetVideo ? 38 : (isSquare ? 36 : 44);
-              const bodyLineH = hasInsetVideo ? 54 : (isSquare ? 52 : 64);
+              const bodyFont = hasInsetVideo ? 38 : (isSquare ? 36 : 46);
+              const bodyLineH = hasInsetVideo ? 54 : (isSquare ? 52 : 68);
               ctx.font = `600 ${bodyFont}px Inter, sans-serif`;
               drawKaraokeText(slide.body || '', padX, curY, W - padX * 2, bodyLineH, slideProgress);
             }
 
             ctx.restore();
 
-            // 5. Footer CTA with Breathing Pulsing Dot
-            const footerY = H - (isLandscape ? 85 : 115);
+            // 5. Footer CTA with Instagram & TikTok Safe Zone Protection (Min 240px from bottom)
+            const footerY = isPortrait ? (H - 240) : (isLandscape ? H - 85 : H - 115);
             const pulse = 0.85 + 0.15 * Math.sin(slideProgress * Math.PI * 6);
 
             if (!cleanExport) {
@@ -1458,24 +1525,28 @@ Respond ONLY with valid JSON in this exact structure:
               const scW = ctx.measureText(slideCountText).width;
               ctx.fillText(slideCountText, W - padX - scW, footerY);
             } else {
+              ctx.save();
               ctx.font = 'bold 28px Inter, sans-serif';
-              const ctaText = st.cta || 'Learn more';
-              const pillW = Math.min(W - padX * 2, ctx.measureText(ctaText).width + 82);
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+              const ctaText = st.cta || 'Follow for more • Link in bio';
+              const pillW = Math.min(W - padX * 2, ctx.measureText(ctaText).width + 84);
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
               roundRect(padX, footerY - 42, pillW, 60, 30);
               ctx.fill();
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+              ctx.lineWidth = 1.5;
+              roundRect(padX, footerY - 42, pillW, 60, 30);
+              ctx.stroke();
 
-              ctx.save();
               ctx.fillStyle = '#10b981';
               ctx.shadowColor = '#10b981';
               ctx.shadowBlur = 12 * pulse;
               ctx.beginPath();
-              ctx.arc(padX + 30, footerY - 12, 9 * pulse, 0, Math.PI * 2);
+              ctx.arc(padX + 28, footerY - 12, 9 * pulse, 0, Math.PI * 2);
               ctx.fill();
-              ctx.restore();
 
-              ctx.fillStyle = t.text;
-              ctx.fillText(ctaText, padX + 54, footerY - 2);
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(ctaText, padX + 52, footerY - 1);
+              ctx.restore();
             }
 
             ctx.restore();

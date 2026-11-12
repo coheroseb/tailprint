@@ -3666,6 +3666,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       if (body.aspectRatio) script.aspectRatio = body.aspectRatio;
       if (body.brand) script.brand = body.brand;
       if (body.handle) script.handle = body.handle;
+      if (body.cleanExport !== undefined) script.cleanExport = body.cleanExport;
+      else script.cleanExport = true;
 
       const rawDur = Number(body.duration) || 15;
       const durationSec = rawDur > 50 ? rawDur / 1000 : rawDur;
