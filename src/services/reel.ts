@@ -837,7 +837,9 @@ Respond ONLY with valid JSON in this exact structure:
         videoOutPath,
       ];
 
-      await browserService.executeTask(async (context) => {
+      const taskTimeoutMs = Math.max(45000, Math.round((totalDurationSec + 25) * 1000));
+      await browserService.executeTask(
+        async (context) => {
         const page = await context.newPage();
         await page.setViewportSize({ width: dim.outW, height: dim.outH });
         await page.setContent(`<!DOCTYPE html>
@@ -1419,7 +1421,7 @@ Respond ONLY with valid JSON in this exact structure:
 
         ffmpegProc.stdin.end();
         await ffmpegExitPromise;
-      });
+      }, { width: dim.outW, height: dim.outH }, false, taskTimeoutMs);
 
       const mp4Buffer = await readFile(videoOutPath);
       const safeBrand = (script.brand || 'reel').toLowerCase().replace(/[^a-z0-9]/g, '') || 'reel';

@@ -409,15 +409,17 @@ export class BrowserService {
   public async executeTask<T>(
     task: (context: BrowserContext, page: Page) => Promise<T>,
     viewport = { width: 1200, height: 630 },
-    blockPopups = false
+    blockPopups = false,
+    timeoutMs: number = env.RENDER_TIMEOUT_MS
   ): Promise<T> {
-    return this.executeWithTimeout(task, viewport, blockPopups);
+    return this.executeWithTimeout(task, viewport, blockPopups, timeoutMs);
   }
 
   private async executeWithTimeout<T>(
     task: (context: BrowserContext, page: Page) => Promise<T>,
     viewport = { width: 1200, height: 630 },
-    blockPopups = false
+    blockPopups = false,
+    timeoutMs: number = env.RENDER_TIMEOUT_MS
   ): Promise<T> {
     await this.init();
     if (!this.browser) {
@@ -431,8 +433,8 @@ export class BrowserService {
       let timeoutHandle: NodeJS.Timeout | null = null;
       const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutHandle = setTimeout(() => {
-          reject(new RenderTimeoutError(`Operation exceeded limit of ${env.RENDER_TIMEOUT_MS}ms`));
-        }, env.RENDER_TIMEOUT_MS);
+          reject(new RenderTimeoutError(`Operation exceeded limit of ${timeoutMs}ms`));
+        }, timeoutMs);
       });
 
       const workPromise = (async () => {
@@ -443,8 +445,8 @@ export class BrowserService {
           });
           page = await context.newPage();
 
-          page.setDefaultTimeout(env.RENDER_TIMEOUT_MS);
-          page.setDefaultNavigationTimeout(env.RENDER_TIMEOUT_MS);
+          page.setDefaultTimeout(timeoutMs);
+          page.setDefaultNavigationTimeout(timeoutMs);
 
           this.setupSsrfProtection(page, blockPopups);
 
