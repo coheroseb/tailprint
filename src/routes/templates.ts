@@ -595,6 +595,19 @@ Cursor IDE & Windsurf:
                   </div>
                 </a>
 
+                <a href="/tools/reel" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-rose-500/20">
+                    🎬
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1.5">
+                      <span>Social Reel &amp; Short Maker</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-semibold">9:16</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Turn any URL into a 9:16 vertical Reel / Story video</p>
+                  </div>
+                </a>
+
                 <a href="/tools/factur-x" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-emerald-500/20">
                     🇪🇺
@@ -2219,7 +2232,7 @@ This domain is for use in documentation examples without needing permission. Thi
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
         <div>
           <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 text-xs font-semibold mb-3">
-            <span>🛠️ Suite of 5 Free Browser Tools</span>
+            <span>🛠️ Suite of 6 Free Browser Tools</span>
           </div>
           <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Interactive Developer Tools Hub</h2>
           <p class="text-slate-400 mt-2 text-sm max-w-xl">Zero signup required. Run high-performance Chromium rendering and conversion workflows directly in your browser.</p>
@@ -2237,7 +2250,7 @@ This domain is for use in documentation examples without needing permission. Thi
           <div>
             <div class="flex items-center justify-between mb-4">
               <span class="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 text-xl border border-purple-500/20 group-hover:scale-110 transition duration-200">⚡</span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">NEW</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">IDE</span>
             </div>
             <h3 class="text-lg font-bold text-white group-hover:text-purple-300 transition">Interactive Template Studio</h3>
             <p class="text-xs text-slate-400 mt-2 leading-relaxed">Browser-based IDE with real-time Tailwind JIT preview, canvas sizing (A4, 16:9 Presentation, OG Card), and Smart Pagination Shield.</p>
@@ -2245,6 +2258,22 @@ This domain is for use in documentation examples without needing permission. Thi
           <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-purple-400 font-semibold">
             <span>Launch Studio</span>
             <span class="group-hover:translate-x-1 transition duration-200">/studio →</span>
+          </div>
+        </a>
+
+        <!-- Tool 1.5: AI Social Reel & Short Video Maker -->
+        <a href="/tools/reel" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-rose-500/50 transition shadow-xl group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 text-xl border border-rose-500/20 group-hover:scale-110 transition duration-200">🎬</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-800/40">9:16 REELS</span>
+            </div>
+            <h3 class="text-lg font-bold text-white group-hover:text-rose-300 transition">Social Reel &amp; Short Video Maker</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Paste any URL or article to generate vertical 9:16 animated Stories/Reels with kinetic typography, progress bars, and instant video download.</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-rose-400 font-semibold">
+            <span>Create 9:16 Reel</span>
+            <span class="group-hover:translate-x-1 transition duration-200">/tools/reel →</span>
           </div>
         </a>
 

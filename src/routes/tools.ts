@@ -4,6 +4,7 @@ import { carouselService } from '../services/carousel.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { visualDiffService } from '../services/visualDiff.js';
 import { mockupService } from '../services/mockup.js';
+import { reelService } from '../services/reel.js';
 import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
 
@@ -59,6 +60,19 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
                       LinkedIn Carousel Maker
                     </div>
                     <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Markdown to 1080×1350 multi-page PDF & PNG covers</p>
+                  </div>
+                </a>
+
+                <a href="/tools/reel" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'Social Reel Maker' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                    🎬
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1.5">
+                      <span>Social Reel &amp; Short Maker</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-semibold">9:16</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Turn any URL into a 9:16 vertical Reel / Story video</p>
                   </div>
                 </a>
 
@@ -348,6 +362,29 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         </div>
         <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-indigo-400">
           <span>Open Carousel Maker</span>
+          <span class="group-hover:translate-x-1 transition">→</span>
+        </div>
+      </a>
+
+      <!-- Tool Card 1.5: AI Social Reel & Short Video Maker -->
+      <a href="/tools/reel" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-rose-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-2xl border border-rose-500/20 group-hover:scale-110 transition">
+            🎬
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/40 uppercase">Reels, TikTok &amp; Shorts</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">NEW</span>
+            </div>
+            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-rose-400 transition">AI Social Reel &amp; Video Maker</h2>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Paste any URL or article and convert it into a vertical 9:16 (1080×1920) animated Reel / Story with kinetic typography, progress bars, and instant video download.
+            </p>
+          </div>
+        </div>
+        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-rose-400">
+          <span>Create 9:16 Reel</span>
           <span class="group-hover:translate-x-1 transition">→</span>
         </div>
       </a>
@@ -1253,6 +1290,1020 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   fastify.get('/mockup', { schema: { hide: true } }, mockupHandler);
 
   // ==========================================
+  // PAGE 6: /tools/reel (AI Social Reel & Short Video Maker)
+  // ==========================================
+  const reelHandler = async (_request: any, reply: any) => {
+    const html = `<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Social Reel &amp; Short Video Maker (9:16) - Tailprint</title>
+  <meta name="description" content="Turn any live URL, article, or topic into an animated 9:16 vertical Reel, TikTok, or YouTube Short in seconds. Auto-scraped slides, kinetic typography, and direct video export." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #030712; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(1.05); }
+    }
+    .ambient-glow {
+      animation: pulseGlow 6s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+  ${renderHeader('Social Reel Maker')}
+
+  <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full space-y-10">
+    <!-- Header -->
+    <div class="text-center max-w-3xl mx-auto space-y-3">
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold">
+        <span>🎬 9:16 Vertical Video &amp; Story Creator • Instagram Reels, TikTok &amp; Shorts</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+        AI Social Reel &amp; Short Video Maker
+      </h1>
+      <p class="text-slate-400 text-sm">
+        Transform any webpage, blog post, or changelog into a high-converting 9:16 animated vertical Reel in 10 seconds. Auto-extracts key takeaways with kinetic typography and instant video download.
+      </p>
+    </div>
+
+    <!-- Main Studio Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Left Column: URL Scraper & Script Controls (7 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <!-- URL Scraper Box -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-rose-400">⚡ Auto-Generate from Any URL</span>
+            <span class="text-[10px] text-slate-500 font-mono">Scrapes &amp; Summarizes</span>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input
+              id="reel-url-input"
+              type="url"
+              value="https://tailprint.com"
+              placeholder="https://yourblog.com/article"
+              class="flex-1 bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-rose-500"
+            />
+            <button
+              id="btn-scrape-reel"
+              onclick="generateReelFromUrl()"
+              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-rose-600/25 flex items-center justify-center space-x-2 shrink-0"
+            >
+              <span>✨ Generate Reel</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Tailprint extracts your core takeaways, pain points, and stats into punchy mobile slides.
+          </p>
+        </div>
+
+        <!-- Branding & Themes Configuration -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Brand &amp; Visual Theme</span>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Brand Name</label>
+              <input id="reel-brand" type="text" value="Tailprint" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500 font-semibold" oninput="updateScriptBrand()" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Social Handle</label>
+              <input id="reel-handle" type="text" value="@tailprint" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500 font-mono" oninput="updateScriptHandle()" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Call to Action (CTA)</label>
+              <input id="reel-cta" type="text" value="Follow for more • Link in bio" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500" oninput="updateScriptCta()" />
+            </div>
+          </div>
+
+          <!-- Theme Selector -->
+          <div>
+            <label class="block text-[11px] text-slate-400 font-medium mb-2">Visual Color Theme</label>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="setReelTheme('gradient')" id="theme-btn-gradient" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-400/40">Gradient Glow</button>
+              <button onclick="setReelTheme('cyberpunk')" id="theme-btn-cyberpunk" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Cyberpunk Neon</button>
+              <button onclick="setReelTheme('midnight')" id="theme-btn-midnight" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Midnight Emerald</button>
+              <button onclick="setReelTheme('sunset')" id="theme-btn-sunset" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Sunset Amber</button>
+              <button onclick="setReelTheme('clean')" id="theme-btn-clean" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Clean Tech Light</button>
+            </div>
+          </div>
+
+          <!-- Slide Duration -->
+          <div class="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800">
+            <span>Slide Duration: <strong id="duration-label" class="text-white">3.0s</strong></span>
+            <input id="slide-duration" type="range" min="2000" max="6000" step="500" value="3000" class="w-48 accent-rose-500" oninput="updateDuration(this.value)" />
+          </div>
+        </div>
+
+        <!-- Slides List Editor -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Reel Slides (<span id="slide-count-badge">4</span>)</span>
+            <button onclick="addNewSlide()" class="text-xs font-bold text-rose-400 hover:text-rose-300 transition">+ Add Slide</button>
+          </div>
+
+          <div id="slides-editor-container" class="space-y-3">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Mobile 9:16 Reel Player & Exporter (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col items-center space-y-5 sticky top-24">
+        
+        <!-- iPhone 16 Pro Frame Mockup -->
+        <div class="relative w-[340px] h-[640px] bg-slate-950 rounded-[48px] p-3 shadow-2xl shadow-rose-950/20 border-4 border-slate-800 flex flex-col justify-between overflow-hidden">
+          
+          <!-- Outer Titanium Rim Highlight -->
+          <div class="absolute inset-0 rounded-[44px] border border-white/10 pointer-events-none"></div>
+
+          <!-- Top Dynamic Island Pill -->
+          <div class="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-30 flex items-center justify-end px-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-800"></div>
+          </div>
+
+          <!-- Inside Screen (9:16 Canvas Area) -->
+          <div id="reel-screen" class="w-full h-full rounded-[38px] p-6 flex flex-col justify-between relative overflow-hidden text-white transition-all duration-300">
+            
+            <!-- Ambient Animated Glow -->
+            <div id="screen-glow" class="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-indigo-500/30 blur-3xl ambient-glow pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-rose-500/25 blur-3xl ambient-glow pointer-events-none"></div>
+
+            <!-- Top Header & Progress Segments -->
+            <div class="z-20 pt-6">
+              <!-- Instagram Story Progress Bars -->
+              <div id="progress-bars-row" class="flex items-center space-x-1.5 w-full mb-4">
+                <!-- Injected via JS -->
+              </div>
+
+              <!-- Brand Bar -->
+              <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md">
+                    TP
+                  </div>
+                  <div>
+                    <div id="preview-brand" class="font-extrabold text-xs text-white leading-none">Tailprint</div>
+                    <div id="preview-handle" class="text-[10px] text-slate-400 font-mono mt-0.5">@tailprint</div>
+                  </div>
+                </div>
+                <span id="preview-tag" class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
+                  HOOK
+                </span>
+              </div>
+            </div>
+
+            <!-- Main Slide Content (Center) -->
+            <div class="my-auto z-20 space-y-3.5 py-4">
+              <h2 id="preview-headline" class="text-2xl font-black tracking-tight leading-tight text-white drop-shadow-md">
+                Sub-500ms Vector PDF Generation for Developers
+              </h2>
+
+              <div id="preview-stat-card" class="p-3.5 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl flex items-center space-x-3.5 shadow-lg">
+                <span id="preview-stat" class="text-3xl font-black text-cyan-400">94.2%</span>
+                <span id="preview-stat-label" class="text-xs font-bold uppercase text-white/90 tracking-wide">Context Savings</span>
+              </div>
+
+              <p id="preview-body" class="text-xs leading-relaxed text-slate-200/90 font-medium">
+                Eliminate complex browser infrastructure. Render arbitrary Tailwind HTML classes directly into vector PDFs.
+              </p>
+            </div>
+
+            <!-- Bottom CTA Footer -->
+            <div class="z-20 border-t border-white/10 pt-3 flex items-center justify-between text-[10px]">
+              <div class="flex items-center space-x-1.5 font-bold text-white">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span id="preview-cta">Follow for more • Link in bio</span>
+              </div>
+              <span id="preview-slide-indicator" class="font-mono text-slate-400 font-bold">1 / 4</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Playback Controls -->
+        <div class="flex items-center space-x-3 bg-slate-900 border border-slate-800 px-4 py-2 rounded-2xl shadow-xl">
+          <button onclick="prevSlide()" class="p-2 text-slate-400 hover:text-white transition" title="Previous Slide">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+          
+          <button id="btn-play-pause" onclick="togglePlayPause()" class="p-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white transition shadow-md shadow-rose-600/30" title="Play / Pause">
+            <svg id="icon-pause" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <svg id="icon-play" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+
+          <button onclick="nextSlide()" class="p-2 text-slate-400 hover:text-white transition" title="Next Slide">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+        </div>
+
+        <!-- Action Export Buttons -->
+        <div class="w-full max-w-[340px] space-y-2">
+          <!-- Video Export (Canvas MediaRecorder) -->
+          <button
+            id="btn-export-video"
+            onclick="exportReelVideo()"
+            class="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-2"
+          >
+            <span>🎥 Download 9:16 Video (MP4 / WebM)</span>
+          </button>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              onclick="downloadReelPdf()"
+              id="btn-download-pdf"
+              class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition border border-slate-700 flex items-center justify-center space-x-1.5"
+            >
+              <span>📥 Story PDF</span>
+            </button>
+            <button
+              onclick="saveCurrentSlidePng()"
+              class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition border border-slate-700 flex items-center justify-center space-x-1.5"
+            >
+              <span>🖼️ Save PNG</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Recording Progress Overlay -->
+        <div id="recording-overlay" class="hidden w-full max-w-[340px] p-3 rounded-xl bg-slate-900 border border-rose-500/50 text-center space-y-2">
+          <div class="flex items-center justify-center space-x-2 text-xs font-bold text-rose-400">
+            <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></div>
+            <span>Recording 9:16 Video Frames (<span id="record-percent">0%</span>)...</span>
+          </div>
+          <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+            <div id="record-progress-bar" class="bg-rose-500 h-full transition-all duration-150" style="width: 0%"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Hidden High-Res 1080x1920 Export Canvas -->
+    <canvas id="export-canvas" width="1080" height="1920" style="display: none;"></canvas>
+
+    <!-- Developer cURL & API Integration Callout -->
+    ${renderConversionCallout(
+      'Social Reel API',
+      'curl -X POST https://tailprint.com/v1/tools/reel \\\n' +
+        '  -H "Authorization: Bearer sec_live_..." \\\n' +
+        '  -H "Content-Type: application/json" \\\n' +
+        '  -d \'{\n' +
+        '    "brand": "Tailprint",\n' +
+        '    "theme": "gradient",\n' +
+        '    "slides": [\n' +
+        '      {"headline": "Sub-500ms Vector PDFs", "body": "Render arbitrary Tailwind HTML."}\n' +
+        '    ]\n' +
+        '  }\' \\\n' +
+        '  --output reel-story.pdf'
+    )}
+  </main>
+
+  <footer class="py-8 border-t border-slate-900 text-center text-xs text-slate-500">
+    <p>© 2026 Tailprint (tailprint.com). High-performance Chromium &amp; MCP Infrastructure.</p>
+  </footer>
+
+  <script>
+    // State
+    let reelState = {
+      title: "Instant Vector PDF Generation for Developers",
+      brand: "Tailprint",
+      handle: "@tailprint",
+      theme: "gradient",
+      cta: "Follow for daily insights • Link in bio",
+      duration: 3000,
+      slides: [
+        {
+          tag: "THE BREAKTHROUGH",
+          headline: "Sub-500ms Vector PDF Generation",
+          body: "Stop wrestling with fragile Puppeteer instances and slow local compilers.",
+          stat: "380ms",
+          statLabel: "Average Render Time"
+        },
+        {
+          tag: "THE PROBLEM",
+          headline: "Why PDF Generation Sucks",
+          body: "Table headers disappear on page 2. Rows get sliced in half. Memory leaks crash your servers.",
+          stat: "99.9%",
+          statLabel: "Headache Elimination"
+        },
+        {
+          tag: "SMART SHIELD",
+          headline: "Automatic Table Split Protection",
+          body: "Tailprint automatically repeats table headers across page breaks and locks row integrity.",
+          stat: "Zero",
+          statLabel: "Broken Page Breaks"
+        },
+        {
+          tag: "HOW TO USE",
+          headline: "Built for Modern Developers & AI",
+          body: "Connect Claude Desktop or Cursor via 22 native MCP tools or send simple cURL requests.",
+          stat: "100 Free",
+          statLabel: "Monthly Renders"
+        }
+      ]
+    };
+
+    let currentSlideIdx = 0;
+    let isPlaying = true;
+    let slideTimer = null;
+    let progressStartTime = 0;
+    let progressAnimFrame = null;
+
+    // Theme CSS maps
+    const themeMaps = {
+      gradient: {
+        bg: "linear-gradient(145deg, #1e1b4b 0%, #31104b 50%, #030712 100%)",
+        text: "#ffffff",
+        subtext: "rgba(233, 213, 255, 0.85)",
+        tagBg: "rgba(99, 102, 241, 0.2)",
+        tagBorder: "rgba(99, 102, 241, 0.4)",
+        tagText: "#a5b4fc",
+        statBg: "rgba(255, 255, 255, 0.08)",
+        statBorder: "rgba(255, 255, 255, 0.15)",
+        statColor: "#38bdf8"
+      },
+      cyberpunk: {
+        bg: "#09090b",
+        text: "#facc15",
+        subtext: "#d4d4d8",
+        tagBg: "rgba(250, 204, 21, 0.15)",
+        tagBorder: "rgba(250, 204, 21, 0.4)",
+        tagText: "#fef08a",
+        statBg: "rgba(250, 204, 21, 0.08)",
+        statBorder: "rgba(250, 204, 21, 0.3)",
+        statColor: "#ec4899"
+      },
+      midnight: {
+        bg: "#000000",
+        text: "#fafafa",
+        subtext: "#a1a1aa",
+        tagBg: "rgba(16, 185, 129, 0.15)",
+        tagBorder: "rgba(16, 185, 129, 0.3)",
+        tagText: "#34d399",
+        statBg: "rgba(16, 185, 129, 0.08)",
+        statBorder: "rgba(16, 185, 129, 0.2)",
+        statColor: "#10b981"
+      },
+      sunset: {
+        bg: "linear-gradient(180deg, #4c0519 0%, #030712 60%, #451a03 100%)",
+        text: "#ffffff",
+        subtext: "rgba(254, 205, 211, 0.85)",
+        tagBg: "rgba(244, 63, 94, 0.2)",
+        tagBorder: "rgba(244, 63, 94, 0.4)",
+        tagText: "#fda4af",
+        statBg: "rgba(244, 63, 94, 0.1)",
+        statBorder: "rgba(244, 63, 94, 0.25)",
+        statColor: "#f59e0b"
+      },
+      clean: {
+        bg: "#f8fafc",
+        text: "#0f172a",
+        subtext: "#475569",
+        tagBg: "#dbeafe",
+        tagBorder: "#bfdbfe",
+        tagText: "#1d4ed8",
+        statBg: "#ffffff",
+        statBorder: "#cbd5e1",
+        statColor: "#2563eb"
+      }
+    };
+
+    // Initialize UI
+    window.addEventListener('DOMContentLoaded', () => {
+      renderSlidesEditor();
+      updatePreviewDisplay();
+      startPlayback();
+    });
+
+    function updateScriptBrand() {
+      reelState.brand = document.getElementById('reel-brand').value || 'Brand';
+      updatePreviewDisplay();
+    }
+
+    function updateScriptHandle() {
+      reelState.handle = document.getElementById('reel-handle').value || '@brand';
+      updatePreviewDisplay();
+    }
+
+    function updateScriptCta() {
+      reelState.cta = document.getElementById('reel-cta').value || 'Link in bio';
+      updatePreviewDisplay();
+    }
+
+    function updateDuration(val) {
+      reelState.duration = parseInt(val, 10);
+      document.getElementById('duration-label').textContent = (reelState.duration / 1000).toFixed(1) + 's';
+      if (isPlaying) {
+        restartCurrentSlide();
+      }
+    }
+
+    function setReelTheme(themeName) {
+      reelState.theme = themeName;
+      ['gradient', 'cyberpunk', 'midnight', 'sunset', 'clean'].forEach(t => {
+        const btn = document.getElementById('theme-btn-' + t);
+        if (btn) {
+          if (t === themeName) {
+            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-400/40';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800';
+          }
+        }
+      });
+      updatePreviewDisplay();
+    }
+
+    function renderSlidesEditor() {
+      const container = document.getElementById('slides-editor-container');
+      document.getElementById('slide-count-badge').textContent = reelState.slides.length;
+
+      container.innerHTML = reelState.slides.map((s, idx) => {
+        return '<div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 relative group">' +
+          '<div class="flex items-center justify-between">' +
+            '<span class="text-xs font-bold text-rose-400 font-mono">Slide ' + (idx + 1) + '</span>' +
+            '<div class="flex items-center space-x-2">' +
+              '<button onclick="jumpToSlide(' + idx + ')" class="text-[11px] text-slate-400 hover:text-white transition">Preview 👁️</button>' +
+              (reelState.slides.length > 2 ? '<button onclick="deleteSlide(' + idx + ')" class="text-[11px] text-rose-400 hover:text-rose-300">Delete ✕</button>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
+            '<div>' +
+              '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Tag / Category</label>' +
+              '<input type="text" value="' + (s.tag || '') + '" oninput="updateSlideField(' + idx + ', \'tag\', this.value)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Headline</label>' +
+              '<input type="text" value="' + (s.headline || '') + '" oninput="updateSlideField(' + idx + ', \'headline\', this.value)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500 font-semibold" />' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Body Description</label>' +
+            '<textarea rows="2" oninput="updateSlideField(' + idx + ', \'body\', this.value)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500 leading-relaxed">' + (s.body || '') + '</textarea>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2">' +
+            '<div>' +
+              '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Stat Value (Optional)</label>' +
+              '<input type="text" value="' + (s.stat || '') + '" oninput="updateSlideField(' + idx + ', \'stat\', this.value)" placeholder="e.g. 99%+" class="w-full bg-slate-900 text-cyan-300 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-cyan-500" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Stat Label (Optional)</label>' +
+              '<input type="text" value="' + (s.statLabel || '') + '" oninput="updateSlideField(' + idx + ', \'statLabel\', this.value)" placeholder="e.g. Efficiency" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500" />' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function updateSlideField(idx, field, value) {
+      if (reelState.slides[idx]) {
+        reelState.slides[idx][field] = value;
+        if (currentSlideIdx === idx) {
+          updatePreviewDisplay();
+        }
+      }
+    }
+
+    function addNewSlide() {
+      reelState.slides.push({
+        tag: 'HIGHLIGHT',
+        headline: 'Next Big Breakthrough',
+        body: 'Explain your insight clearly to capture attention on TikTok and Reels.',
+        stat: '10x',
+        statLabel: 'Productivity'
+      });
+      renderSlidesEditor();
+      jumpToSlide(reelState.slides.length - 1);
+    }
+
+    function deleteSlide(idx) {
+      if (reelState.slides.length <= 2) return;
+      reelState.slides.splice(idx, 1);
+      if (currentSlideIdx >= reelState.slides.length) {
+        currentSlideIdx = reelState.slides.length - 1;
+      }
+      renderSlidesEditor();
+      updatePreviewDisplay();
+      restartCurrentSlide();
+    }
+
+    function updatePreviewDisplay() {
+      const slide = reelState.slides[currentSlideIdx] || reelState.slides[0];
+      const theme = themeMaps[reelState.theme] || themeMaps.gradient;
+      const screen = document.getElementById('reel-screen');
+
+      // Apply theme background
+      screen.style.background = theme.bg;
+      screen.style.color = theme.text;
+
+      // Brand & Avatar
+      document.getElementById('preview-brand').textContent = reelState.brand;
+      document.getElementById('preview-handle').textContent = reelState.handle;
+      document.getElementById('preview-avatar').textContent = reelState.brand.slice(0, 2).toUpperCase();
+
+      // Tag
+      const tagEl = document.getElementById('preview-tag');
+      tagEl.textContent = slide.tag || 'SLIDE ' + (currentSlideIdx + 1);
+      tagEl.style.backgroundColor = theme.tagBg;
+      tagEl.style.borderColor = theme.tagBorder;
+      tagEl.style.color = theme.tagText;
+
+      // Headline & Body
+      const headlineEl = document.getElementById('preview-headline');
+      headlineEl.textContent = slide.headline;
+      headlineEl.style.color = theme.text;
+
+      const bodyEl = document.getElementById('preview-body');
+      bodyEl.textContent = slide.body;
+      bodyEl.style.color = theme.subtext;
+
+      // Stat card
+      const statCard = document.getElementById('preview-stat-card');
+      const statVal = document.getElementById('preview-stat');
+      const statLabel = document.getElementById('preview-stat-label');
+
+      if (slide.stat) {
+        statCard.classList.remove('hidden');
+        statCard.style.backgroundColor = theme.statBg;
+        statCard.style.borderColor = theme.statBorder;
+        statVal.textContent = slide.stat;
+        statVal.style.color = theme.statColor;
+        statLabel.textContent = slide.statLabel || 'METRIC';
+      } else {
+        statCard.classList.add('hidden');
+      }
+
+      // CTA & Slide indicator
+      document.getElementById('preview-cta').textContent = reelState.cta;
+      document.getElementById('preview-slide-indicator').textContent = (currentSlideIdx + 1) + ' / ' + reelState.slides.length;
+
+      // Render top progress bar segments
+      renderProgressBars();
+    }
+
+    function renderProgressBars() {
+      const row = document.getElementById('progress-bars-row');
+      row.innerHTML = reelState.slides.map((_, i) => {
+        let barClass = 'h-1 flex-1 rounded-full overflow-hidden bg-white/20 relative';
+        let fillWidth = '0%';
+        if (i < currentSlideIdx) {
+          fillWidth = '100%';
+        } else if (i === currentSlideIdx) {
+          fillWidth = '0%';
+        }
+        return '<div class="' + barClass + '">' +
+          '<div id="progress-fill-' + i + '" class="h-full bg-white transition-none" style="width: ' + fillWidth + '"></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Playback loop
+    function startPlayback() {
+      isPlaying = true;
+      document.getElementById('icon-pause').classList.remove('hidden');
+      document.getElementById('icon-play').classList.add('hidden');
+      restartCurrentSlide();
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      document.getElementById('icon-pause').classList.add('hidden');
+      document.getElementById('icon-play').classList.remove('hidden');
+      if (slideTimer) clearTimeout(slideTimer);
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        pausePlayback();
+      } else {
+        startPlayback();
+      }
+    }
+
+    function restartCurrentSlide() {
+      if (slideTimer) clearTimeout(slideTimer);
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+
+      progressStartTime = performance.now();
+      const duration = reelState.duration;
+
+      function updateBar(now) {
+        if (!isPlaying) return;
+        const elapsed = now - progressStartTime;
+        const pct = Math.min(100, (elapsed / duration) * 100);
+        const fillEl = document.getElementById('progress-fill-' + currentSlideIdx);
+        if (fillEl) {
+          fillEl.style.width = pct + '%';
+        }
+        if (elapsed < duration) {
+          progressAnimFrame = requestAnimationFrame(updateBar);
+        }
+      }
+      progressAnimFrame = requestAnimationFrame(updateBar);
+
+      slideTimer = setTimeout(() => {
+        if (isPlaying) {
+          nextSlide();
+        }
+      }, duration);
+    }
+
+    function nextSlide() {
+      currentSlideIdx = (currentSlideIdx + 1) % reelState.slides.length;
+      updatePreviewDisplay();
+      if (isPlaying) {
+        restartCurrentSlide();
+      }
+    }
+
+    function prevSlide() {
+      currentSlideIdx = (currentSlideIdx - 1 + reelState.slides.length) % reelState.slides.length;
+      updatePreviewDisplay();
+      if (isPlaying) {
+        restartCurrentSlide();
+      }
+    }
+
+    function jumpToSlide(idx) {
+      currentSlideIdx = idx;
+      updatePreviewDisplay();
+      if (isPlaying) {
+        restartCurrentSlide();
+      }
+    }
+
+    // URL Scraper Auto-Generator
+    async function generateReelFromUrl() {
+      const input = document.getElementById('reel-url-input');
+      const btn = document.getElementById('btn-scrape-reel');
+      const url = input.value.trim();
+
+      if (!url) {
+        alert('Please enter a valid web URL.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>⚡ Scraping & Synthesizing...</span>';
+
+      try {
+        const res = await fetch('/v1/tools/reel/script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'Error generating reel from URL');
+        }
+
+        if (data.script) {
+          reelState.title = data.script.title || reelState.title;
+          reelState.brand = data.script.brand || reelState.brand;
+          reelState.handle = data.script.handle || reelState.handle;
+          reelState.slides = data.script.slides || reelState.slides;
+          reelState.cta = data.script.cta || reelState.cta;
+
+          document.getElementById('reel-brand').value = reelState.brand;
+          document.getElementById('reel-handle').value = reelState.handle;
+          document.getElementById('reel-cta').value = reelState.cta;
+
+          currentSlideIdx = 0;
+          renderSlidesEditor();
+          updatePreviewDisplay();
+          startPlayback();
+        }
+      } catch (err) {
+        alert('Failed to generate reel: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>✨ Generate Reel</span>';
+      }
+    }
+
+    // 1. Export Reel Video using HTML5 Canvas & MediaRecorder (1080x1920)
+    async function exportReelVideo() {
+      pausePlayback();
+      const canvas = document.getElementById('export-canvas');
+      const ctx = canvas.getContext('2d');
+      const overlay = document.getElementById('recording-overlay');
+      const percentEl = document.getElementById('record-percent');
+      const progressBar = document.getElementById('record-progress-bar');
+      const btn = document.getElementById('btn-export-video');
+
+      overlay.classList.remove('hidden');
+      btn.disabled = true;
+
+      const totalSlides = reelState.slides.length;
+      const slideDurationMs = 2500; // 2.5s per slide in video export
+      const fps = 30;
+      const framesPerSlide = (slideDurationMs / 1000) * fps;
+      const totalFrames = totalSlides * framesPerSlide;
+
+      // Setup MediaRecorder
+      const stream = canvas.captureStream(fps);
+      let mimeType = 'video/webm;codecs=vp9';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm';
+      }
+
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+      const finishedPromise = new Promise((resolve) => {
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'social-reel-' + reelState.brand.toLowerCase() + '.webm';
+          a.click();
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+      });
+
+      recorder.start();
+
+      // Render frame by frame
+      let frameCount = 0;
+      for (let sIdx = 0; sIdx < totalSlides; sIdx++) {
+        const slide = reelState.slides[sIdx];
+        const theme = themeMaps[reelState.theme] || themeMaps.gradient;
+
+        for (let f = 0; f < framesPerSlide; f++) {
+          frameCount++;
+          const progress = f / framesPerSlide;
+
+          // Draw Canvas Frame (1080 x 1920)
+          drawReelFrame(ctx, slide, sIdx, totalSlides, progress, theme);
+
+          const overallPct = Math.round((frameCount / totalFrames) * 100);
+          percentEl.textContent = overallPct + '%';
+          progressBar.style.width = overallPct + '%';
+
+          // Yield to let stream capture frame
+          await new Promise((r) => setTimeout(r, 1000 / fps));
+        }
+      }
+
+      recorder.stop();
+      await finishedPromise;
+
+      overlay.classList.add('hidden');
+      btn.disabled = false;
+      startPlayback();
+    }
+
+    // Helper: Draws single 1080x1920 frame on Canvas
+    function drawReelFrame(ctx, slide, slideIdx, totalSlides, slideProgress, theme) {
+      const W = 1080;
+      const H = 1920;
+
+      // 1. Background
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(0, 0, W, H);
+
+      // Gradient overlay
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      if (reelState.theme === 'cyberpunk') {
+        grad.addColorStop(0, '#09090b');
+        grad.addColorStop(1, '#18181b');
+      } else if (reelState.theme === 'midnight') {
+        grad.addColorStop(0, '#000000');
+        grad.addColorStop(1, '#050505');
+      } else if (reelState.theme === 'sunset') {
+        grad.addColorStop(0, '#4c0519');
+        grad.addColorStop(0.5, '#030712');
+        grad.addColorStop(1, '#451a03');
+      } else if (reelState.theme === 'clean') {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(1, '#e2e8f0');
+      } else {
+        grad.addColorStop(0, '#1e1b4b');
+        grad.addColorStop(0.5, '#2e1065');
+        grad.addColorStop(1, '#020617');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Subtle radial glow
+      const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
+      radial.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+      radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = radial;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Top Progress Bars (Reel Style)
+      const barTop = 90;
+      const barHeight = 8;
+      const barSpacing = 16;
+      const totalBarWidth = W - 160;
+      const singleBarWidth = (totalBarWidth - (barSpacing * (totalSlides - 1))) / totalSlides;
+
+      for (let i = 0; i < totalSlides; i++) {
+        const x = 80 + i * (singleBarWidth + barSpacing);
+        // Base bar
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        roundRect(ctx, x, barTop, singleBarWidth, barHeight, 4, true, false);
+
+        // Fill bar
+        let fillW = 0;
+        if (i < slideIdx) {
+          fillW = singleBarWidth;
+        } else if (i === slideIdx) {
+          fillW = singleBarWidth * slideProgress;
+        }
+        if (fillW > 0) {
+          ctx.fillStyle = '#ffffff';
+          roundRect(ctx, x, barTop, fillW, barHeight, 4, true, false);
+        }
+      }
+
+      // 3. Header: Brand Avatar & Name
+      const headerY = 160;
+      // Avatar
+      ctx.fillStyle = '#6366f1';
+      roundRect(ctx, 80, headerY, 80, 80, 24, true, false);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(reelState.brand.slice(0, 2).toUpperCase(), 120, headerY + 54);
+
+      // Brand & Handle
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = theme.text;
+      ctx.fillText(reelState.brand, 180, headerY + 40);
+
+      ctx.font = '500 24px monospace';
+      ctx.fillStyle = theme.subtext;
+      ctx.fillText(reelState.handle, 180, headerY + 72);
+
+      // Tag Pill
+      const tagText = (slide.tag || 'HOOK').toUpperCase();
+      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+      const tagWidth = ctx.measureText(tagText).width + 48;
+      ctx.fillStyle = theme.tagBg;
+      roundRect(ctx, W - 80 - tagWidth, headerY + 12, tagWidth, 54, 27, true, false);
+      ctx.fillStyle = theme.tagText;
+      ctx.textAlign = 'center';
+      ctx.fillText(tagText, W - 80 - tagWidth / 2, headerY + 47);
+
+      // 4. Headline (Wrapped)
+      ctx.textAlign = 'left';
+      ctx.font = '900 68px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = theme.text;
+      wrapText(ctx, slide.headline, 80, 480, W - 160, 88);
+
+      // 5. Stat Card (if present)
+      let bodyY = 820;
+      if (slide.stat) {
+        ctx.fillStyle = theme.statBg;
+        roundRect(ctx, 80, 800, W - 160, 150, 32, true, false);
+
+        ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.statColor;
+        ctx.fillText(slide.stat, 120, 905);
+
+        ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.text;
+        ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), 120 + ctx.measureText(slide.stat).width + 40, 895);
+
+        bodyY = 1040;
+      }
+
+      // 6. Body Text
+      ctx.font = '500 38px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = theme.subtext;
+      wrapText(ctx, slide.body, 80, bodyY, W - 160, 60);
+
+      // 7. Footer CTA
+      const footerY = H - 120;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, footerY - 50);
+      ctx.lineTo(W - 80, footerY - 50);
+      ctx.stroke();
+
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(95, footerY, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = 'bold 30px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = theme.text;
+      ctx.fillText(reelState.cta, 125, footerY + 10);
+
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillStyle = theme.subtext;
+      ctx.fillText((slideIdx + 1) + ' / ' + totalSlides, W - 80, footerY + 10);
+    }
+
+    // Canvas roundRect helper
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    // Canvas wrapText helper
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, y);
+          line = words[n] + ' ';
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, y);
+    }
+
+    // 2. Download Multi-Page Vector PDF
+    async function downloadReelPdf() {
+      const btn = document.getElementById('btn-download-pdf');
+      btn.disabled = true;
+      btn.textContent = 'Generating PDF...';
+
+      try {
+        const res = await fetch('/v1/tools/reel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reelState)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Error generating PDF');
+        if (data.pdfUrl) {
+          window.open(data.pdfUrl, '_blank');
+        }
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>📥 Story PDF</span>';
+      }
+    }
+
+    // 3. Save Current Frame as PNG
+    function saveCurrentSlidePng() {
+      const canvas = document.getElementById('export-canvas');
+      const ctx = canvas.getContext('2d');
+      const theme = themeMaps[reelState.theme] || themeMaps.gradient;
+      const slide = reelState.slides[currentSlideIdx];
+
+      drawReelFrame(ctx, slide, currentSlideIdx, reelState.slides.length, 1.0, theme);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'reel-slide-' + (currentSlideIdx + 1) + '.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    }
+  </script>
+</body>
+</html>`;
+
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
+  };
+
+  fastify.get('/tools/reel', { schema: { hide: true } }, reelHandler);
+  fastify.get('/reel', { schema: { hide: true } }, reelHandler);
+
+  // ==========================================
   // FREE API ENDPOINTS (IP Rate-limited)
   // ==========================================
 
@@ -1511,6 +2562,121 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         mockupUrl: stored.hostedUrl,
         width: 1600,
         height: 1000,
+      });
+    }
+  );
+
+  // 5. POST /v1/tools/reel/script
+  fastify.post(
+    '/v1/tools/reel/script',
+    {
+      schema: {
+        tags: ['Tools'],
+        summary: 'Generate 9:16 Social Reel Script from any URL',
+        description: 'Scrapes a given URL and synthesizes a punchy 4-5 slide script with tags, headlines, body insights, and stats ready for video rendering.',
+        body: z.object({
+          url: z.string().url().describe('Public web URL to extract insights from'),
+        }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            script: z.object({
+              title: z.string(),
+              brand: z.string(),
+              handle: z.string().optional(),
+              theme: z.string(),
+              slides: z.array(
+                z.object({
+                  tag: z.string().optional(),
+                  headline: z.string(),
+                  body: z.string(),
+                  stat: z.string().optional(),
+                  statLabel: z.string().optional(),
+                })
+              ),
+              cta: z.string(),
+              sourceUrl: z.string().optional(),
+            }),
+          }),
+          429: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const clientIp = request.ip || 'anonymous';
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+        });
+      }
+
+      const body = request.body as any;
+      const script = await reelService.generateScriptFromUrl(body.url);
+      return reply.code(200).send({
+        success: true,
+        script,
+      });
+    }
+  );
+
+  // 6. POST /v1/tools/reel
+  fastify.post(
+    '/v1/tools/reel',
+    {
+      schema: {
+        tags: ['Tools'],
+        summary: 'Render 9:16 Vertical Reel PDF & Preview PNG',
+        description: 'Generates a 9:16 full-bleed vector PDF story deck and cover PNG from structured slide data.',
+        body: z.object({
+          title: z.string().default('Social Reel Deck'),
+          brand: z.string().default('Brand'),
+          handle: z.string().optional().default('@brand'),
+          theme: z.enum(['cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).default('gradient'),
+          slides: z
+            .array(
+              z.object({
+                tag: z.string().optional(),
+                headline: z.string(),
+                body: z.string(),
+                stat: z.string().optional(),
+                statLabel: z.string().optional(),
+              })
+            )
+            .min(1),
+          cta: z.string().default('Follow for more • Link in bio'),
+        }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            pdfUrl: z.string().optional().describe('Hosted URL of the multi-page 9:16 PDF story deck'),
+            previewUrl: z.string().optional().describe('Hosted URL of the cover PNG preview'),
+            slideCount: z.number().describe('Total slides generated'),
+          }),
+          429: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const clientIp = request.ip || 'anonymous';
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+        });
+      }
+
+      const body = request.body as any;
+      const result = await reelService.renderReelDeck(body);
+      return reply.code(200).send({
+        success: true,
+        pdfUrl: result.pdfStored?.hostedUrl,
+        previewUrl: result.previewStored?.hostedUrl,
+        slideCount: result.script.slides.length,
       });
     }
   );

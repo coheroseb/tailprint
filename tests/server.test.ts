@@ -202,6 +202,53 @@ describe('Tailprint Test Suite', () => {
       expect(res.body).toContain('Visual Regression Diff Heatmap');
     });
 
+    it('GET /tools/reel and /reel render the AI Social Reel Maker page', async () => {
+      const res1 = await app.inject({ method: 'GET', url: '/tools/reel' });
+      expect(res1.statusCode).toBe(200);
+      expect(res1.body).toContain('Social Reel &amp; Short Video Maker');
+      expect(res1.body).toContain('export-canvas');
+
+      const res2 = await app.inject({ method: 'GET', url: '/reel' });
+      expect(res2.statusCode).toBe(200);
+      expect(res2.body).toContain('Social Reel &amp; Short Video Maker');
+    });
+
+    it('POST /v1/tools/reel renders a 9:16 vertical Reel PDF and cover PNG', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/tools/reel',
+        remoteAddress: `10.42.1.${Math.floor(Math.random() * 200) + 1}`,
+        payload: {
+          title: 'Growth Secrets',
+          brand: 'Acme',
+          handle: '@acme',
+          theme: 'gradient',
+          slides: [
+            {
+              tag: 'REVELATION',
+              headline: 'How we scaled to 10k users',
+              body: 'Automate rendering with Tailprint Cloud engine.',
+              stat: '10x',
+              statLabel: 'Speedup',
+            },
+            {
+              tag: 'ACTION',
+              headline: 'Stop writing custom Puppeteer',
+              body: 'Use our single API endpoint for instant vector PDFs.',
+            },
+          ],
+          cta: 'Link in bio',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.slideCount).toBe(2);
+      expect(data.pdfUrl).toBeDefined();
+      expect(data.previewUrl).toBeDefined();
+    }, 25000);
+
     it('POST /v1/tools/carousel renders a multi-slide carousel without API key (rate-limited)', async () => {
       const response = await app.inject({
         method: 'POST',
