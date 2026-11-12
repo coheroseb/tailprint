@@ -158,6 +158,15 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <meta name="robots" content="noindex, nofollow">
   <title>Founder Analytics & Live Telemetry — Tailprint</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none'%3E%3Crect width='64' height='64' rx='16' fill='%23050814'/%3E%3Cpath d='M22 20L10 32L22 44' stroke='%2338bdf8' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M36 16L26 48' stroke='%23a855f7' stroke-width='4.5' stroke-linecap='round'/%3E%3Cpath d='M42 20L54 32L42 44' stroke='%23f43f5e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <script>
+    (function() {
+      const origWarn = console.warn;
+      console.warn = function(...args) {
+        if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+        origWarn.apply(console, args);
+      };
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -844,11 +853,11 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
           const actionBtns = [];
           if (!l.customDemoPdfUrl) {
-            actionBtns.push('<button onclick="generateDemoForLead(\'' + l.id + '\')" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px]">Generate Demo</button>');
+            actionBtns.push('<button onclick="generateDemoForLead(&apos;' + l.id + '&apos;)" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px]">Generate Demo</button>');
           } else {
-            actionBtns.push('<button onclick="openPitchModal(\'' + l.id + '\')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px]">👁️ View Pitch</button>');
+            actionBtns.push('<button onclick="openPitchModal(&apos;' + l.id + '&apos;)" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px]">👁️ View Pitch</button>');
             if (l.status !== 'sent') {
-              actionBtns.push('<button onclick="dispatchLeadPitch(\'' + l.id + '\')" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px]">Send Email</button>');
+              actionBtns.push('<button onclick="dispatchLeadPitch(&apos;' + l.id + '&apos;)" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px]">Send Email</button>');
             }
           }
 
@@ -900,8 +909,6 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
             statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-900 text-slate-600 text-[10px]">Dismissed</span>';
           }
 
-          const replyEscaped = JSON.stringify(s.suggestedReplyMarkdown);
-
           return '<div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-3">' +
             '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
               '<div class="flex items-center space-x-2">' +
@@ -927,9 +934,9 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
               '<div class="text-[11px] text-slate-500">Author: ' + (s.author || 'User') + '</div>' +
               '<div class="flex items-center space-x-2">' +
                 (s.status === 'pending'
-                  ? '<button onclick="dismissSocialThread(\'' + s.id + '\')" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs">Dismiss</button>'
+                  ? '<button onclick="dismissSocialThread(&apos;' + s.id + '&apos;)" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs">Dismiss</button>'
                   : '') +
-                '<button onclick="copyAndOpenSocialThread(\'' + s.id + '\', ' + replyEscaped + ', \'' + s.url + '\')" class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs transition flex items-center space-x-1.5 shadow-md shadow-orange-600/20">' +
+                '<button onclick="copySocialThreadById(&apos;' + s.id + '&apos;)" class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs transition flex items-center space-x-1.5 shadow-md shadow-orange-600/20">' +
                   '<span>📋 Copy Answer & Open Thread ↗</span>' +
                 '</button>' +
               '</div>' +
@@ -952,13 +959,13 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
                 '<span>' + new Date(c.createdAt).toLocaleDateString() + '</span>' +
               '</div>' +
               '<h4 class="font-bold text-white text-sm">' + c.title + '</h4>' +
-              '<p class="text-xs text-slate-400 mt-1 line-clamp-2">' + c.contentMarkdown.replace(/[#\-\n]/g, ' ') + '</p>' +
+              '<p class="text-xs text-slate-400 mt-1 line-clamp-2">' + c.contentMarkdown.replace(/[#\\-\\r\\n]/g, ' ') + '</p>' +
             '</div>' +
             '<div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">' +
               '<a href="' + (c.pdfUrl || '#') + '" target="_blank" class="px-3 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/50 text-xs font-bold transition flex items-center space-x-1">' +
                 '<span>📄 Download PDF Slides</span>' +
               '</a>' +
-              '<button onclick="navigator.clipboard.writeText(' + JSON.stringify(c.contentMarkdown) + '); alert(\'Markdown copy ready to post on LinkedIn/X!\');" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">' +
+              '<button onclick="copyCarouselTextById(&apos;' + c.id + '&apos;)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">' +
                 '📋 Copy Text' +
               '</button>' +
             '</div>' +
@@ -998,10 +1005,13 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       }
     }
 
-    async function copyAndOpenSocialThread(id, replyText, url) {
+    async function copySocialThreadById(id) {
+      if (!growthDataCache || !growthDataCache.social) return;
+      const item = growthDataCache.social.find(s => s.id === id);
+      if (!item) return;
       try {
-        await navigator.clipboard.writeText(replyText);
-        window.open(url, '_blank');
+        await navigator.clipboard.writeText(item.suggestedReplyMarkdown);
+        window.open(item.url, '_blank');
         await fetch('/v1/admin/growth/social/' + id + '/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
@@ -1009,9 +1019,17 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
         fetchGrowthData();
       } catch (err) {
-        alert('Copied, opening thread now: ' + url);
-        window.open(url, '_blank');
+        alert('Answer copied! Opening thread: ' + item.url);
+        window.open(item.url, '_blank');
       }
+    }
+
+    function copyCarouselTextById(id) {
+      if (!growthDataCache || !growthDataCache.content) return;
+      const item = growthDataCache.content.find(c => c.id === id);
+      if (!item) return;
+      navigator.clipboard.writeText(item.contentMarkdown);
+      alert('Markdown copied! Ready to post on LinkedIn / X.');
     }
 
     async function dismissSocialThread(id) {
