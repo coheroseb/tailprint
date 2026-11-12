@@ -496,6 +496,10 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
             <span>Templates</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono leading-none">${TEMPLATES.length}</span>
           </a>
+          <a href="/tools" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
+            <span>Free Tools</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase tracking-wider leading-none">New</span>
+          </a>
           <a href="#scraper" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
             Scraper
           </a>

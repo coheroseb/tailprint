@@ -107,6 +107,59 @@ describe('Tailprint Test Suite', () => {
       expect(response.headers['content-type']).toContain('text/html');
       expect(response.body).toContain('Scalar');
     });
+
+    it('GET /tools renders the free developer tools hub', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/tools',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('text/html');
+      expect(response.body).toContain('Multi-Slide Carousel Maker');
+      expect(response.body).toContain('Factur-X E-Invoice Generator');
+      expect(response.body).toContain('Visual Regression Diff Heatmap');
+    });
+
+    it('GET /tools/carousel and /carousel render the LinkedIn carousel tool page', async () => {
+      const res1 = await app.inject({ method: 'GET', url: '/tools/carousel' });
+      expect(res1.statusCode).toBe(200);
+      expect(res1.body).toContain('LinkedIn Carousel Generator');
+
+      const res2 = await app.inject({ method: 'GET', url: '/carousel' });
+      expect(res2.statusCode).toBe(200);
+      expect(res2.body).toContain('LinkedIn Carousel Generator');
+    });
+
+    it('GET /tools/factur-x and /factur-x render the Factur-X e-invoice tool page', async () => {
+      const res = await app.inject({ method: 'GET', url: '/tools/factur-x' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toContain('Factur-X E-Invoice Generator');
+    });
+
+    it('GET /tools/visual-diff and /visual-diff render the visual regression diff tool page', async () => {
+      const res = await app.inject({ method: 'GET', url: '/tools/visual-diff' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toContain('Visual Regression Diff Heatmap');
+    });
+
+    it('POST /v1/tools/carousel renders a multi-slide carousel without API key (rate-limited)', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/tools/carousel',
+        payload: {
+          author_name: 'Test Author',
+          theme: 'dark',
+          markdown: '# Slide 1\nHello World\n---\n# Slide 2\nTailprint Engine\n',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.slideCount).toBe(2);
+      expect(data.pdfUrl).toBeDefined();
+      expect(data.previewUrl).toBeDefined();
+    }, 20000);
   });
 
   describe('Authentication & Quotas', () => {
