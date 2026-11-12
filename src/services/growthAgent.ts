@@ -406,53 +406,75 @@ We spent weeks tuning this behavior for [Tailprint](https://tailprint.com) — y
     return item;
   }
 
-  public async synthesizeCommunityReply(
+  public async evaluateAndSynthesizeReply(
     title: string,
-    snippet: string,
+    content: string,
     platform: string
-  ): Promise<string> {
+  ): Promise<{ isRelevant: boolean; userProblem: string; replyMarkdown: string; reason?: string }> {
     const geminiKey = env.GEMINI_API_KEY;
-    const fallback = `I ran into this exact headache when architecting PDF rendering pipelines.
 
-The root cause in Chromium is how CSS page breaks and fragmentation margins are handled. Adding:
-\`\`\`css
-@page {
-  size: A4 portrait;
-  margin-top: 20mm;
-  margin-bottom: 15mm;
-}
-@page :first {
-  margin-top: 0mm;
-}
-table tr {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-thead {
-  display: table-header-group;
-}
-\`\`\`
-prevents rows from getting chopped across page boundaries.
+    // Hard exclusion of known recurring general threads
+    const lowerTitle = title.toLowerCase();
+    if (
+      lowerTitle.includes('what are you working on') ||
+      lowerTitle.includes('who is hiring') ||
+      lowerTitle.includes('who wants to be hired') ||
+      lowerTitle.includes('freelancer? seeking freelancer') ||
+      lowerTitle.includes('[deleted]') ||
+      lowerTitle.includes('[dead]')
+    ) {
+      return {
+        isRelevant: false,
+        userProblem: '',
+        replyMarkdown: '',
+        reason: 'General recurring thread or deleted',
+      };
+    }
 
-Also make sure Chromium is running with \`--disable-dev-shm-usage\` and that you isolate browser contexts in a persistent worker pool rather than launching new Chrome processes per request, otherwise memory leaks will crash serverless containers under load.
+    if (!geminiKey) {
+      return {
+        isRelevant: true,
+        userProblem: title,
+        replyMarkdown: 'Relevant technical discussion on document and PDF generation.',
+      };
+    }
 
-We solved both issues while building https://tailprint.com (our headless document engine) — you can also test your layout directly in the free studio (tailprint.com/studio) if you want to verify how the vector stream splits.`;
-
-    if (!geminiKey) return fallback;
-
-    const prompt = `You are Sebastian Viste, founder & lead engineer of Tailprint (tailprint.com), a modern HTML/Tailwind-to-PDF rendering infrastructure with Smart Pagination and EU E-Invoicing support.
-A developer posted this question/issue on ${platform}:
+    const evaluationPrompt = `You are a strict technical evaluator for Tailprint (tailprint.com), a modern developer API for PDF generation, HTML rendering, and EU e-invoicing.
+A post was detected on ${platform}:
 Title: "${title}"
-Details: "${snippet}"
+Post Content / Discussion Snippet:
+"""
+${content.slice(0, 3000)}
+"""
 
 TASK:
-Write an authentic, highly technical, and genuinely helpful answer to post in the community thread.
-Rules:
-1. First, provide direct technical solutions and code/CSS snippets (e.g. explain @page CSS rules, break-inside: avoid, Chromium worker pool isolation, or Factur-X e-invoicing XML embedding).
-2. Never sound like a generic sales bot or spammer. Speak engineer-to-engineer.
-3. In the closing, mention naturally that you tackled this exact challenge when building Tailprint (tailprint.com) and invite them to test it in the free studio or check out the API if they don't want to maintain headless Chrome infra.
-4. Output in clean, ready-to-post Markdown with code blocks.
-5. Do not include meta text like "Here is a response:" — just the exact message to paste.`;
+1. Determine if this post is a GENUINE developer question, problem, or technical discussion specifically about:
+   - PDF generation, rendering, or printing from HTML/CSS
+   - Headless browser infrastructure (Puppeteer, Playwright, Chromium memory/OOM)
+   - Dynamic document export (invoices, receipts, quotes, reports)
+   - CSS Paged Media, page breaks, or layout issues in multi-page documents
+   - EU E-Invoicing mandates (Factur-X / ZUGFeRD)
+
+REJECT (isRelevant: false):
+- Generic Ask HN threads (e.g. "What are you working on?", "Who wants to be hired?")
+- General business stories, job search platforms, cleaning services, personal life stories, or non-technical posts
+- Posts where "pdf" or "print" is only mentioned in passing or in a footnote link
+- Threads where someone asks something completely unrelated (e.g. Google Ads, SEO, UI design)
+
+2. If isRelevant is true:
+Write an authentic, technically precise, and directly helpful reply from Sebastian Viste (Founder of Tailprint).
+- Address their EXACT setup, framework, or error message (do NOT give generic advice).
+- Include practical code or CSS snippets where appropriate.
+- Speak developer-to-developer with zero sales fluff.
+- In the closing, mention naturally: "We ran into this exact issue when building Tailprint (tailprint.com) — feel free to test your HTML directly in our free studio if helpful."
+
+Respond ONLY in valid JSON:
+{
+  "isRelevant": boolean,
+  "userProblem": "Summary of their specific technical issue",
+  "reason": "Why this was accepted or rejected",
+  "replyMarkdown": "The full formatted reply ready to post"
+}`;
 
     try {
       const res = await fetch(
@@ -461,27 +483,39 @@ Rules:
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ parts: [{ text: evaluationPrompt }] }],
             generationConfig: {
-              temperature: 0.3,
+              responseMimeType: 'application/json',
+              temperature: 0.2,
             },
           }),
-          signal: AbortSignal.timeout(12000),
+          signal: AbortSignal.timeout(15000),
         }
       );
 
       if (res.ok) {
         const json = await res.json();
         const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text && text.trim().length > 20) {
-          return text.trim();
+        if (text) {
+          const parsed = JSON.parse(text);
+          return {
+            isRelevant: Boolean(parsed.isRelevant),
+            userProblem: parsed.userProblem || '',
+            replyMarkdown: parsed.replyMarkdown || '',
+            reason: parsed.reason,
+          };
         }
       }
     } catch (err) {
-      console.warn('[GrowthAgent] Gemini community reply error:', err);
+      console.warn('[GrowthAgent] Relevance evaluation warning:', err);
     }
 
-    return fallback;
+    return {
+      isRelevant: false,
+      userProblem: '',
+      replyMarkdown: '',
+      reason: 'Evaluation failed or timed out',
+    };
   }
 
   public async scanCommunityRadar(): Promise<{ newOpportunities: number; totalScanned: number }> {
@@ -496,7 +530,7 @@ Rules:
     for (const q of hnQueries) {
       try {
         const res = await fetch(
-          `https://hn.algolia.com/api/v1/search_by_date?tags=(story,comment)&query=${encodeURIComponent(q)}&numericFilters=created_at_i>${sixtyDaysAgo}&hitsPerPage=5`,
+          `https://hn.algolia.com/api/v1/search_by_date?tags=(story,comment)&query=${encodeURIComponent(q)}&numericFilters=created_at_i>${sixtyDaysAgo}&hitsPerPage=8`,
           { signal: AbortSignal.timeout(8000) }
         );
         if (res.ok) {
@@ -504,16 +538,30 @@ Rules:
           for (const hit of (data.hits || [])) {
             scannedCount++;
             const hitTitle = hit.story_title || hit.title || hit.comment_text?.slice(0, 80) || 'Hacker News Discussion';
-            if (hitTitle.toLowerCase().includes('[deleted]') || hitTitle.toLowerCase().includes('[dead]')) continue;
+            const lowerTitle = hitTitle.toLowerCase();
+            if (
+              lowerTitle.includes('what are you working on') ||
+              lowerTitle.includes('who is hiring') ||
+              lowerTitle.includes('who wants to be hired') ||
+              lowerTitle.includes('freelancer')
+            ) {
+              continue;
+            }
 
-            const hnThreadId = hit.story_id || hit.objectID;
-            const hitUrl = `https://news.ycombinator.com/item?id=${hnThreadId}`;
+            const rawContent = (hit.comment_text || hit.story_text || hitTitle).replace(/<[^>]+>/g, '');
+            if (rawContent.includes('[deleted]') || rawContent.length < 25) continue;
+
+            // Run Semantic AI Relevance Gate
+            const evalResult = await this.evaluateAndSynthesizeReply(hitTitle, rawContent, 'Hacker News');
+            if (!evalResult.isRelevant || !evalResult.replyMarkdown) {
+              console.log(`[GrowthAgent] Skipping off-topic HN thread: "${hitTitle}"`);
+              continue;
+            }
+
+            // Always link to the specific comment or story item
+            const hnId = hit.type === 'comment' ? hit.objectID : (hit.story_id || hit.objectID);
+            const hitUrl = `https://news.ycombinator.com/item?id=${hnId}`;
             if (existingUrls.has(hitUrl)) continue;
-
-            const snippet = (hit.comment_text || hit.story_text || hitTitle).replace(/<[^>]+>/g, '').slice(0, 300);
-            if (snippet.includes('[deleted]') || snippet.length < 20) continue;
-
-            const reply = await this.synthesizeCommunityReply(hitTitle, snippet, 'Hacker News');
 
             const opp: GrowthSocialOpportunity = {
               id: `soc_${crypto.randomBytes(6).toString('hex')}`,
@@ -522,9 +570,9 @@ Rules:
               url: hitUrl,
               author: hit.author || 'HN User',
               queryMatched: q,
-              snippet,
+              snippet: evalResult.userProblem || rawContent.slice(0, 250),
               detectedAt: new Date().toISOString(),
-              suggestedReplyMarkdown: reply,
+              suggestedReplyMarkdown: evalResult.replyMarkdown,
               status: 'pending',
             };
 
@@ -540,11 +588,11 @@ Rules:
       if (newCount >= 3) break;
     }
 
-    // 2. StackOverflow via StackExchange API (Active, open questions only)
+    // 2. StackOverflow via StackExchange API (Active, open questions with full body)
     if (newCount < 3) {
       try {
         const res = await fetch(
-          'https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=activity&closed=False&q=puppeteer%20pdf&site=stackoverflow',
+          'https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=activity&closed=False&q=puppeteer%20pdf&filter=withbody&site=stackoverflow',
           { signal: AbortSignal.timeout(8000) }
         );
         if (res.ok) {
@@ -553,7 +601,13 @@ Rules:
             scannedCount++;
             if (!item.link || item.closed_date || existingUrls.has(item.link)) continue;
 
-            const reply = await this.synthesizeCommunityReply(item.title, item.title, 'StackOverflow');
+            const rawBody = (item.body || item.title || '').replace(/<[^>]+>/g, '');
+            const evalResult = await this.evaluateAndSynthesizeReply(item.title, rawBody, 'StackOverflow');
+            if (!evalResult.isRelevant || !evalResult.replyMarkdown) {
+              console.log(`[GrowthAgent] Skipping off-topic SO question: "${item.title}"`);
+              continue;
+            }
+
             const opp: GrowthSocialOpportunity = {
               id: `soc_${crypto.randomBytes(6).toString('hex')}`,
               platform: 'stackoverflow',
@@ -561,9 +615,9 @@ Rules:
               url: item.link,
               author: item.owner?.display_name || 'Developer',
               queryMatched: 'puppeteer pdf',
-              snippet: `Tags: ${(item.tags || []).join(', ')}`,
+              snippet: evalResult.userProblem || `Tags: ${(item.tags || []).join(', ')}`,
               detectedAt: new Date().toISOString(),
-              suggestedReplyMarkdown: reply,
+              suggestedReplyMarkdown: evalResult.replyMarkdown,
               status: 'pending',
             };
 
@@ -601,7 +655,8 @@ Rules:
     }
     inferredTitle = inferredTitle || 'Community Discussion Thread';
 
-    const reply = await this.synthesizeCommunityReply(inferredTitle, snippet || inferredTitle, platform);
+    const evalResult = await this.evaluateAndSynthesizeReply(inferredTitle, snippet || inferredTitle, platform);
+    const reply = evalResult.replyMarkdown || 'Discussion regarding document generation and headless Chrome rendering.';
 
     const opp: GrowthSocialOpportunity = {
       id: `soc_${crypto.randomBytes(6).toString('hex')}`,
@@ -610,7 +665,7 @@ Rules:
       url: cleanUrl,
       author: 'Community Poster',
       queryMatched: 'manual',
-      snippet: snippet || inferredTitle,
+      snippet: evalResult.userProblem || snippet || inferredTitle,
       detectedAt: new Date().toISOString(),
       suggestedReplyMarkdown: reply,
       status: 'pending',
