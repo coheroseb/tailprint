@@ -109,6 +109,19 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     const requestedTemplate = (request.query?.template as string) || 'invoice';
     const categories = Array.from(new Set(TEMPLATES.map((t) => t.category)));
 
+    const templatesJson = JSON.stringify(
+      TEMPLATES.map((t) => ({
+        id: t.id,
+        title: t.title,
+        category: t.category,
+        format: t.format,
+        landscape: t.landscape,
+        html: t.html,
+      }))
+    );
+
+    const tailwindCdnUrl = env.TAILWIND_CDN_URL || 'https://cdn.tailwindcss.com';
+
     const html = `<!DOCTYPE html>
 <html lang="en" class="dark h-full">
 <head>
@@ -131,15 +144,6 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           fontFamily: {
             sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            brand: {
-              50: '#f5f3ff',
-              100: '#ede9fe',
-              500: '#8b5cf6',
-              600: '#7c3aed',
-              700: '#6d28d9',
-            }
           }
         }
       }
@@ -161,50 +165,48 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       transition: all 0.2s ease;
       transform-origin: top center;
     }
-    /* Page Break Guide Overlay */
     .page-break-line {
       position: absolute;
       left: 0;
       right: 0;
       height: 2px;
-      border-top: 2px dashed rgba(168, 85, 247, 0.6);
+      border-top: 2px dashed rgba(168, 85, 247, 0.7);
       pointer-events: none;
       z-index: 30;
     }
     .page-break-tag {
       position: absolute;
-      right: 12px;
+      right: 16px;
       transform: translateY(-50%);
-      background: #581c87;
-      color: #e9d5ff;
+      background: #6b21a8;
+      color: #f3e8ff;
       font-size: 10px;
       font-weight: 700;
       padding: 2px 8px;
       border-radius: 9999px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
-    /* Custom Scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0f172a;
+      background: #090d16;
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
+      background: #1e293b;
       border-radius: 3px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
+      background: #334155;
     }
   </style>
 </head>
-<body class="h-full flex flex-col overflow-hidden bg-slate-950 text-slate-100 select-none">
+<body class="h-full flex flex-col overflow-hidden bg-slate-950 text-slate-100">
 
-  <!-- TOP APP BAR -->
-  <header class="h-14 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md px-4 flex items-center justify-between z-40 shrink-0">
-    <div class="flex items-center space-x-4">
+  <!-- TOP BAR -->
+  <header class="h-14 border-b border-slate-800/80 bg-slate-950 px-4 flex items-center justify-between z-40 shrink-0">
+    <div class="flex items-center space-x-3 sm:space-x-4">
       <a href="/" class="flex items-center space-x-2 group">
         <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white font-black text-xs shadow-md shadow-indigo-500/25 group-hover:scale-105 transition">
           TP
@@ -224,8 +226,8 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
       <!-- Template Selector Dropdown -->
       <div class="flex items-center space-x-2">
-        <label for="templateSelect" class="text-xs font-medium text-slate-400 hidden lg:inline">Template:</label>
-        <select id="templateSelect" class="bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 font-medium max-w-[190px] sm:max-w-[260px] cursor-pointer">
+        <label for="templateSelect" class="text-xs font-medium text-slate-400 hidden xl:inline">Template:</label>
+        <select id="templateSelect" class="bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 font-medium max-w-[180px] sm:max-w-[250px] cursor-pointer">
           <option value="custom">✏️ Custom Blank Canvas</option>
           ${categories
             .map(
@@ -259,14 +261,14 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <div class="flex items-center space-x-2 sm:space-x-3">
       
       <!-- Smart Pagination Shield Toggle -->
-      <button id="paginationShieldBtn" onclick="toggleSmartPagination()" type="button" class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-emerald-950/50 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50 shadow-sm" title="Smart Pagination Shield automatically prevents broken table rows across pages and repeats table headers">
+      <button id="paginationShieldBtn" onclick="toggleSmartPagination()" type="button" class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50 shadow-sm" title="Smart Pagination Shield automatically prevents broken table rows across pages and repeats table headers">
         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
         <span class="hidden md:inline">Smart Pagination Shield</span>
         <span class="md:hidden">Shield</span>
       </button>
 
       <!-- Multi-page Test Insert -->
-      <button onclick="insertMultiPageDemo()" type="button" class="hidden xl:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium transition" title="Inject a sample 25-row invoice table to test page splits">
+      <button onclick="insertMultiPageDemo()" type="button" class="hidden xl:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium transition" title="Inject a sample 24-row invoice table to test page splits">
         <span>⚡ Test Multi-Page</span>
       </button>
 
@@ -283,22 +285,20 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
       <!-- Primary Download PDF Button -->
       <button id="downloadPdfBtn" onclick="downloadPdf()" type="button" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold flex items-center space-x-1.5 transition shadow-lg shadow-indigo-600/30">
-        <svg id="pdfSpinner" class="hidden animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <span>⬇️ Download PDF</span>
+        <span id="pdfBtnText">⬇️ Download PDF</span>
       </button>
 
     </div>
   </header>
 
   <!-- MAIN SPLIT WORKSPACE -->
-  <main class="flex-1 flex overflow-hidden">
+  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
-    <!-- LEFT WORKSPACE: CODE & TEMPLATE EDITOR -->
-    <section class="w-full lg:w-[48%] flex flex-col border-r border-slate-800 bg-slate-950 shrink-0">
+    <!-- LEFT PANE: CODE & TEMPLATE EDITOR -->
+    <section class="w-full lg:w-[48%] flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-950 shrink-0 h-1/2 lg:h-full">
       
-      <!-- Editor Subheader Tabs & Snippets Bar -->
+      <!-- Editor Toolbar -->
       <div class="h-10 border-b border-slate-800/80 bg-slate-900/60 px-3 flex items-center justify-between shrink-0">
-        <!-- Tabs -->
         <div class="flex items-center space-x-1">
           <button id="tabHtmlBtn" onclick="switchTab('html')" class="px-3 py-1 rounded-md text-xs font-bold transition bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
             HTML &amp; Tailwind
@@ -308,9 +308,9 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           </button>
         </div>
 
-        <!-- Quick Snippet Inserters -->
-        <div class="hidden sm:flex items-center space-x-1.5 text-[11px]">
-          <span class="text-slate-500 font-mono text-[10px]">Insert:</span>
+        <!-- Quick Snippet Buttons -->
+        <div class="hidden sm:flex items-center space-x-1 text-[11px]">
+          <span class="text-slate-500 font-mono text-[10px] mr-1">Insert:</span>
           <button onclick="insertSnippet('table')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert Smart Table with thead and no-split rows">+ Table</button>
           <button onclick="insertSnippet('pagebreak')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert explicit page break">+ Page Break</button>
           <button onclick="insertSnippet('signature')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert signature block protected from page break">+ Signature</button>
@@ -318,9 +318,9 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         </div>
       </div>
 
-      <!-- Tab 1: HTML & Tailwind Textarea Editor -->
+      <!-- Tab 1: HTML & Tailwind Editor -->
       <div id="htmlTabContent" class="flex-1 flex flex-col overflow-hidden relative">
-        <textarea id="codeEditor" spellcheck="false" class="code-editor flex-1 w-full p-4 bg-slate-950 font-mono text-xs text-slate-200 resize-none focus:outline-none selection:bg-indigo-600 selection:text-white leading-relaxed select-text border-0" placeholder="Type or paste your HTML with Tailwind CSS here..."></textarea>
+        <textarea id="codeEditor" spellcheck="false" class="code-editor flex-1 w-full h-full p-4 bg-slate-950 font-mono text-xs text-slate-200 resize-none focus:outline-none selection:bg-indigo-600 selection:text-white leading-relaxed border-0 outline-none" placeholder="Type or paste your HTML with Tailwind CSS here..."></textarea>
       </div>
 
       <!-- Tab 2: Variables (JSON) Editor -->
@@ -328,7 +328,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         <p class="text-xs text-slate-400 mb-2 leading-relaxed">
           Define dynamic JSON variables to automatically substitute into your template using <code class="text-purple-400 font-mono">{{variable_name}}</code>:
         </p>
-        <textarea id="varsEditor" spellcheck="false" class="flex-1 w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-indigo-300 resize-none focus:outline-none focus:border-indigo-500 leading-relaxed select-text" placeholder='{\n  "client_name": "Acme Inc.",\n  "total_amount": "€1,250.00"\n}'>{\n  "company_name": "Tailprint Technologies",\n  "client_name": "Acme Global Solutions",\n  "invoice_number": "INV-2026-889",\n  "invoice_date": "November 12, 2026",\n  "total_amount": "€1,450.00"\n}</textarea>
+        <textarea id="varsEditor" spellcheck="false" class="flex-1 w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-indigo-300 resize-none focus:outline-none focus:border-indigo-500 leading-relaxed">{\n  "company_name": "Tailprint Technologies",\n  "client_name": "Acme Global Solutions",\n  "invoice_number": "INV-2026-889",\n  "invoice_date": "November 12, 2026",\n  "total_amount": "€1,450.00"\n}</textarea>
         <div class="mt-3 flex justify-end">
           <button onclick="applyVariables()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition">
             Apply Variables to HTML ➔
@@ -353,10 +353,10 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     </section>
 
-    <!-- RIGHT WORKSPACE: LIVE CANVAS PREVIEW -->
-    <section class="hidden lg:flex flex-1 flex-col bg-slate-900/50 overflow-hidden relative">
+    <!-- RIGHT PANE: LIVE CANVAS PREVIEW -->
+    <section class="flex-1 flex flex-col bg-slate-900/50 overflow-hidden relative h-1/2 lg:h-full">
       
-      <!-- Canvas Controls Subheader -->
+      <!-- Canvas Toolbar -->
       <div class="h-10 border-b border-slate-800/80 bg-slate-950/80 px-4 flex items-center justify-between shrink-0 z-20">
         <div class="flex items-center space-x-3">
           <span class="text-xs font-bold text-slate-300 tracking-wide uppercase">Interactive Canvas</span>
@@ -388,13 +388,13 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         </div>
       </div>
 
-      <!-- Canvas Scroll Viewport -->
-      <div id="canvasViewport" class="flex-1 overflow-auto p-8 flex justify-center items-start bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] bg-slate-950/60">
+      <!-- Canvas Scroll Area -->
+      <div id="canvasViewport" class="flex-1 overflow-auto p-6 sm:p-8 flex justify-center items-start bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] bg-slate-950">
         
-        <!-- Paper Canvas Container -->
+        <!-- Paper Container -->
         <div id="paperCanvas" class="paper-canvas relative bg-white shadow-2xl shadow-black/80 rounded-sm border border-slate-300/30 overflow-hidden text-slate-900" style="width: 794px; min-height: 1123px;">
           
-          <!-- Page Break Guide Overlays (calculated dynamically) -->
+          <!-- Page Break Guide Overlays -->
           <div id="breakGuidesContainer" class="absolute inset-0 pointer-events-none z-30">
             <div class="page-break-line" style="top: 1123px;">
               <span class="page-break-tag">A4 Page 2 Begins</span>
@@ -456,123 +456,107 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
   <!-- EMBEDDED TEMPLATES DATA & CLIENT LOGIC -->
   <script>
-    const TEMPLATES_DATA = ${JSON.stringify(
-      TEMPLATES.map((t) => ({
-        id: t.id,
-        title: t.title,
-        category: t.category,
-        format: t.format,
-        landscape: t.landscape,
-        html: t.html,
-      }))
-    )};
+    var TEMPLATES_DATA = ${templatesJson};
+    var TAILWIND_URL = ${JSON.stringify(tailwindCdnUrl)};
 
-    let currentZoom = 1.0;
-    let smartPaginationEnabled = true;
-    let breakGuidesVisible = true;
-    let activeApiTab = 'curl';
+    var currentZoom = 1.0;
+    var smartPaginationEnabled = true;
+    var breakGuidesVisible = true;
+    var activeApiTab = 'curl';
 
-    const codeEditor = document.getElementById('codeEditor');
-    const previewIframe = document.getElementById('previewIframe');
-    const templateSelect = document.getElementById('templateSelect');
-    const formatSelect = document.getElementById('formatSelect');
-    const paperCanvas = document.getElementById('paperCanvas');
-    const canvasDimensionsPill = document.getElementById('canvasDimensionsPill');
-    const charCount = document.getElementById('charCount');
-    const lineCount = document.getElementById('lineCount');
-    const shieldActiveBadge = document.getElementById('shieldActiveBadge');
-    const paginationShieldBtn = document.getElementById('paginationShieldBtn');
+    var codeEditor = document.getElementById('codeEditor');
+    var previewIframe = document.getElementById('previewIframe');
+    var templateSelect = document.getElementById('templateSelect');
+    var formatSelect = document.getElementById('formatSelect');
+    var paperCanvas = document.getElementById('paperCanvas');
+    var canvasDimensionsPill = document.getElementById('canvasDimensionsPill');
+    var charCount = document.getElementById('charCount');
+    var lineCount = document.getElementById('lineCount');
+    var shieldActiveBadge = document.getElementById('shieldActiveBadge');
+    var paginationShieldBtn = document.getElementById('paginationShieldBtn');
 
-    // Default multi-page table demo
-    const MULTI_PAGE_DEMO = \`<div class="max-w-4xl mx-auto p-12 bg-white text-slate-800 font-sans">
-  <div class="border-b-2 border-indigo-600 pb-6 flex justify-between items-end">
-    <div>
-      <h1 class="text-3xl font-black text-slate-900 tracking-tight">Enterprise Ledger & Statement</h1>
-      <p class="text-sm text-slate-500 mt-1">Demonstrating Smart Pagination Shield: auto-repeating headers & zero-split rows</p>
-    </div>
-    <div class="text-right">
-      <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold font-mono">EN 16931 Verified</span>
-      <p class="text-xs text-slate-400 mt-1 font-mono">Period: 2026-Q4</p>
-    </div>
-  </div>
+    var SMART_PAGINATION_CSS = [
+      '<style id="smart-pagination-shield">',
+      '@media print, screen {',
+      '  thead { display: table-header-group !important; }',
+      '  tfoot { display: table-footer-group !important; }',
+      '  table { border-collapse: collapse !important; }',
+      '  tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }',
+      '  h1, h2, h3, h4, h5, h6 { page-break-after: avoid !important; break-after: avoid !important; break-inside: avoid !important; }',
+      '  img, svg, figure, blockquote, .signature, .signature-block, [data-signature], .avoid-break, .keep-together, .no-break, [data-page-break="avoid"], .card, .panel, .badge, .metric, .pricing-card, .timeline-item { page-break-inside: avoid !important; break-inside: avoid !important; }',
+      '  .page-break, .break-page, .break-before, [data-page-break="before"] { page-break-before: always !important; break-before: page !important; }',
+      '  .break-after, [data-page-break="after"] { page-break-after: always !important; break-after: page !important; }',
+      '}',
+      '</style>'
+    ].join('\\n');
 
-  <div class="mt-8">
-    <table class="w-full text-left border-collapse border border-slate-200">
-      <thead class="bg-indigo-900 text-white font-bold text-xs uppercase tracking-wider">
-        <tr>
-          <th class="p-3 border border-indigo-800">#</th>
-          <th class="p-3 border border-indigo-800">Service Description</th>
-          <th class="p-3 border border-indigo-800">Transaction ID</th>
-          <th class="p-3 border border-indigo-800 text-right">Hours / Units</th>
-          <th class="p-3 border border-indigo-800 text-right">Total (EUR)</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-200 text-xs text-slate-700">
-        \${Array.from({ length: 24 }).map((_, i) => \`
-        <tr class="\${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}">
-          <td class="p-3 font-mono font-bold text-slate-400">\${i + 1}</td>
-          <td class="p-3 font-semibold text-slate-900">Cloud Infrastructure Render Cluster #\${i + 101}</td>
-          <td class="p-3 font-mono text-slate-500">TXN-2026-\${9000 + i}</td>
-          <td class="p-3 text-right font-mono">\${((i + 1) * 3.5).toFixed(1)} hrs</td>
-          <td class="p-3 text-right font-mono font-bold text-slate-900">€\${((i + 1) * 145).toFixed(2)}</td>
-        </tr>
-        \`).join('')}
-      </tbody>
-    </table>
-  </div>
+    function getMultiPageDemoHtml() {
+      var rows = '';
+      for (var i = 0; i < 24; i++) {
+        var isEven = i % 2 === 0;
+        rows += '<tr class="' + (isEven ? 'bg-white' : 'bg-slate-50/70') + '">' +
+          '<td class="p-3 font-mono font-bold text-slate-400">' + (i + 1) + '</td>' +
+          '<td class="p-3 font-semibold text-slate-900">Cloud Infrastructure Render Cluster #' + (i + 101) + '</td>' +
+          '<td class="p-3 font-mono text-slate-500">TXN-2026-' + (9000 + i) + '</td>' +
+          '<td class="p-3 text-right font-mono">' + ((i + 1) * 3.5).toFixed(1) + ' hrs</td>' +
+          '<td class="p-3 text-right font-mono font-bold text-slate-900">€' + ((i + 1) * 145).toFixed(2) + '</td>' +
+        '</tr>';
+      }
 
-  <div class="signature-block mt-12 p-6 rounded-xl bg-slate-50 border border-slate-200 flex justify-between items-center">
-    <div>
-      <p class="text-xs font-bold text-slate-700 uppercase tracking-wider">Authorized Officer Signature</p>
-      <p class="text-sm font-semibold text-slate-900 mt-4 border-b border-slate-400 pb-1 w-64">Sebastian Viste, Lead Architect</p>
-      <p class="text-[11px] text-slate-400 mt-1">Verified with cryptographically signed timestamp</p>
-    </div>
-    <div class="text-right">
-      <span class="text-xs text-slate-400">Total Billed:</span>
-      <p class="text-2xl font-black text-indigo-700 font-mono">€43,500.00</p>
-    </div>
-  </div>
-</div>\`;
+      return '<div class="max-w-4xl mx-auto p-12 bg-white text-slate-800 font-sans">' +
+        '<div class="border-b-2 border-indigo-600 pb-6 flex justify-between items-end">' +
+          '<div>' +
+            '<h1 class="text-3xl font-black text-slate-900 tracking-tight">Enterprise Ledger & Statement</h1>' +
+            '<p class="text-sm text-slate-500 mt-1">Demonstrating Smart Pagination Shield: auto-repeating headers & zero-split rows</p>' +
+          '</div>' +
+          '<div class="text-right">' +
+            '<span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold font-mono">EN 16931 Verified</span>' +
+            '<p class="text-xs text-slate-400 mt-1 font-mono">Period: 2026-Q4</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mt-8">' +
+          '<table class="w-full text-left border-collapse border border-slate-200">' +
+            '<thead class="bg-indigo-900 text-white font-bold text-xs uppercase tracking-wider">' +
+              '<tr>' +
+                '<th class="p-3 border border-indigo-800">#</th>' +
+                '<th class="p-3 border border-indigo-800">Service Description</th>' +
+                '<th class="p-3 border border-indigo-800">Transaction ID</th>' +
+                '<th class="p-3 border border-indigo-800 text-right">Hours / Units</th>' +
+                '<th class="p-3 border border-indigo-800 text-right">Total (EUR)</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody class="divide-y divide-slate-200 text-xs text-slate-700">' +
+              rows +
+            '</tbody>' +
+          '</table>' +
+        '</div>' +
+        '<div class="signature-block mt-12 p-6 rounded-xl bg-slate-50 border border-slate-200 flex justify-between items-center">' +
+          '<div>' +
+            '<p class="text-xs font-bold text-slate-700 uppercase tracking-wider">Authorized Officer Signature</p>' +
+            '<p class="text-sm font-semibold text-slate-900 mt-4 border-b border-slate-400 pb-1 w-64">Sebastian Viste, Lead Architect</p>' +
+            '<p class="text-[11px] text-slate-400 mt-1">Verified with cryptographically signed timestamp</p>' +
+          '</div>' +
+          '<div class="text-right">' +
+            '<span class="text-xs text-slate-400">Total Billed:</span>' +
+            '<p class="text-2xl font-black text-indigo-700 font-mono">€43,500.00</p>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
 
-    // Smart Pagination CSS to inject into iframe
-    const SMART_PAGINATION_CSS = \`
-      <style id="smart-pagination-shield">
-        @media print, screen {
-          thead { display: table-header-group !important; }
-          tfoot { display: table-footer-group !important; }
-          table { border-collapse: collapse !important; }
-          tr, td, th {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          h1, h2, h3, h4, h5, h6 {
-            page-break-after: avoid !important;
-            break-after: avoid !important;
-            break-inside: avoid !important;
-          }
-          img, svg, figure, blockquote,
-          .signature, .signature-block, [data-signature],
-          .avoid-break, .keep-together, .no-break, [data-page-break="avoid"],
-          .card, .panel, .badge, .metric, .pricing-card, .timeline-item {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          .page-break, .break-page, .break-before, [data-page-break="before"] {
-            page-break-before: always !important;
-            break-before: page !important;
-          }
-          .break-after, [data-page-break="after"] {
-            page-break-after: always !important;
-            break-after: page !important;
-          }
-        }
-      </style>
-    \`;
-
-    // Initialize with requested template
     function initStudio() {
-      const initialId = '${requestedTemplate}';
-      const found = TEMPLATES_DATA.find((t) => t.id === initialId) || TEMPLATES_DATA[0];
+      var initialId = '${requestedTemplate}';
+      var found = null;
+      for (var i = 0; i < TEMPLATES_DATA.length; i++) {
+        if (TEMPLATES_DATA[i].id === initialId) {
+          found = TEMPLATES_DATA[i];
+          break;
+        }
+      }
+      if (!found && TEMPLATES_DATA.length > 0) {
+        found = TEMPLATES_DATA[0];
+      }
+
       if (found) {
         codeEditor.value = found.html;
         if (found.landscape) {
@@ -588,8 +572,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       renderLivePreview();
     }
 
-    // Debounced live preview rendering
-    let renderTimeout = null;
+    var renderTimeout = null;
     function scheduleRender() {
       updateEditorStats();
       if (renderTimeout) clearTimeout(renderTimeout);
@@ -597,43 +580,39 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     }
 
     function renderLivePreview() {
-      const rawHtml = codeEditor.value;
-      const shieldStyles = smartPaginationEnabled ? SMART_PAGINATION_CSS : '';
+      var rawHtml = codeEditor.value;
+      var shieldStyles = smartPaginationEnabled ? SMART_PAGINATION_CSS : '';
 
-      const doc = \`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <script src="${env.TAILWIND_CDN_URL}"></script>
-  \${shieldStyles}
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: white;
-      -webkit-font-smoothing: antialiased;
-    }
-  </style>
-</head>
-<body>
-  \${rawHtml}
-</body>
-</html>\`;
+      // CRITICAL: use string concatenation and avoid literal </script> inside script block
+      var doc = '<!DOCTYPE html>' +
+        '<html lang="en">' +
+        '<head>' +
+        '<meta charset="utf-8">' +
+        '<script src="' + TAILWIND_URL + '"><' + '/script>' +
+        shieldStyles +
+        '<style>' +
+        'body { margin: 0; padding: 0; background: white; -webkit-font-smoothing: antialiased; }' +
+        '</style>' +
+        '</head>' +
+        '<body>' +
+        rawHtml +
+        '</body>' +
+        '</html>';
 
       previewIframe.srcdoc = doc;
     }
 
     function updateEditorStats() {
-      const text = codeEditor.value;
+      var text = codeEditor.value || '';
       charCount.textContent = text.length.toLocaleString() + ' chars';
       lineCount.textContent = text.split('\\n').length.toLocaleString() + ' lines';
     }
 
     function updateDimensions() {
-      const fmt = formatSelect.value;
-      let width = 794;
-      let minHeight = 1123;
-      let label = 'A4 Portrait (794 × 1123px)';
+      var fmt = formatSelect.value;
+      var width = 794;
+      var minHeight = 1123;
+      var label = 'A4 Portrait (794 × 1123px)';
 
       if (fmt === 'A4-landscape') {
         width = 1123;
@@ -657,30 +636,30 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       paperCanvas.style.minHeight = minHeight + 'px';
       canvasDimensionsPill.textContent = label;
 
-      // Update guide lines
-      const guides = document.getElementById('breakGuidesContainer');
+      var guides = document.getElementById('breakGuidesContainer');
       if (fmt.startsWith('A4-portrait')) {
-        guides.innerHTML = \`
-          <div class="page-break-line" style="top: 1123px;"><span class="page-break-tag">A4 Page 2 Begins</span></div>
-          <div class="page-break-line" style="top: 2246px;"><span class="page-break-tag">A4 Page 3 Begins</span></div>
-        \`;
+        guides.innerHTML = '<div class="page-break-line" style="top: 1123px;"><span class="page-break-tag">A4 Page 2 Begins</span></div>' +
+          '<div class="page-break-line" style="top: 2246px;"><span class="page-break-tag">A4 Page 3 Begins</span></div>';
       } else if (fmt.startsWith('A4-landscape')) {
-        guides.innerHTML = \`
-          <div class="page-break-line" style="top: 794px;"><span class="page-break-tag">A4 Page 2 Begins</span></div>
-          <div class="page-break-line" style="top: 1588px;"><span class="page-break-tag">A4 Page 3 Begins</span></div>
-        \`;
+        guides.innerHTML = '<div class="page-break-line" style="top: 794px;"><span class="page-break-tag">A4 Page 2 Begins</span></div>' +
+          '<div class="page-break-line" style="top: 1588px;"><span class="page-break-tag">A4 Page 3 Begins</span></div>';
       } else {
         guides.innerHTML = '';
       }
     }
 
-    // Template selection change
-    templateSelect.addEventListener('change', (e) => {
-      const id = e.target.value;
+    templateSelect.addEventListener('change', function(e) {
+      var id = e.target.value;
       if (id === 'custom') {
-        codeEditor.value = \`<div class="max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">\n  <h1 class="text-3xl font-black text-indigo-600">Start Designing with Tailwind</h1>\n  <p class="text-slate-600 mt-2">Edit HTML on the left to see live vector renders on the right.</p>\n</div>\`;
+        codeEditor.value = '<div class="max-w-3xl mx-auto p-12 bg-white text-slate-900 font-sans">\\n  <h1 class="text-3xl font-black text-indigo-600">Start Designing with Tailwind</h1>\\n  <p class="text-slate-600 mt-2">Edit HTML on the left to see live vector renders on the right.</p>\\n</div>';
       } else {
-        const found = TEMPLATES_DATA.find((t) => t.id === id);
+        var found = null;
+        for (var i = 0; i < TEMPLATES_DATA.length; i++) {
+          if (TEMPLATES_DATA[i].id === id) {
+            found = TEMPLATES_DATA[i];
+            break;
+          }
+        }
         if (found) {
           codeEditor.value = found.html;
           if (found.landscape) {
@@ -696,19 +675,18 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       scheduleRender();
     });
 
-    formatSelect.addEventListener('change', () => {
+    formatSelect.addEventListener('change', function() {
       updateDimensions();
       scheduleRender();
     });
 
     codeEditor.addEventListener('input', scheduleRender);
 
-    // Tab handling
     codeEditor.addEventListener('keydown', function(e) {
       if (e.key === 'Tab') {
         e.preventDefault();
-        const start = this.selectionStart;
-        const end = this.selectionEnd;
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
         this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
         this.selectionStart = this.selectionEnd = start + 2;
         scheduleRender();
@@ -716,10 +694,10 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     });
 
     function switchTab(tab) {
-      const htmlBtn = document.getElementById('tabHtmlBtn');
-      const varsBtn = document.getElementById('tabVarsBtn');
-      const htmlContent = document.getElementById('htmlTabContent');
-      const varsContent = document.getElementById('varsTabContent');
+      var htmlBtn = document.getElementById('tabHtmlBtn');
+      var varsBtn = document.getElementById('tabVarsBtn');
+      var htmlContent = document.getElementById('htmlTabContent');
+      var varsContent = document.getElementById('varsTabContent');
 
       if (tab === 'html') {
         htmlBtn.className = 'px-3 py-1 rounded-md text-xs font-bold transition bg-indigo-600/20 text-indigo-400 border border-indigo-500/30';
@@ -736,11 +714,13 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     function applyVariables() {
       try {
-        const json = JSON.parse(document.getElementById('varsEditor').value);
-        let html = codeEditor.value;
-        for (const [key, val] of Object.entries(json)) {
-          const regex = new RegExp('{{' + key + '}}', 'g');
-          html = html.replace(regex, String(val));
+        var json = JSON.parse(document.getElementById('varsEditor').value);
+        var html = codeEditor.value;
+        for (var key in json) {
+          if (Object.prototype.hasOwnProperty.call(json, key)) {
+            var regex = new RegExp('{{' + key + '}}', 'g');
+            html = html.replace(regex, String(json[key]));
+          }
         }
         codeEditor.value = html;
         switchTab('html');
@@ -753,7 +733,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     function toggleSmartPagination() {
       smartPaginationEnabled = !smartPaginationEnabled;
       if (smartPaginationEnabled) {
-        paginationShieldBtn.className = 'px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-emerald-950/50 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50 shadow-sm';
+        paginationShieldBtn.className = 'px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50 shadow-sm';
         shieldActiveBadge.classList.remove('hidden');
       } else {
         paginationShieldBtn.className = 'px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-slate-900 border-slate-700 text-slate-400 hover:text-white';
@@ -764,47 +744,48 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     function toggleBreakGuides() {
       breakGuidesVisible = !breakGuidesVisible;
-      const guides = document.getElementById('breakGuidesContainer');
+      var guides = document.getElementById('breakGuidesContainer');
       guides.style.display = breakGuidesVisible ? 'block' : 'none';
     }
 
     function setZoom(zoom) {
       currentZoom = zoom;
       paperCanvas.style.transform = 'scale(' + zoom + ')';
-      document.querySelectorAll('.zoom-btn').forEach((btn) => {
-        if (parseFloat(btn.getAttribute('data-zoom')) === zoom) {
-          btn.className = 'zoom-btn px-2 py-0.5 rounded text-[11px] bg-slate-800 text-white font-bold';
+      var buttons = document.querySelectorAll('.zoom-btn');
+      for (var i = 0; i < buttons.length; i++) {
+        var b = buttons[i];
+        if (parseFloat(b.getAttribute('data-zoom')) === zoom) {
+          b.className = 'zoom-btn px-2 py-0.5 rounded text-[11px] bg-slate-800 text-white font-bold';
         } else {
-          btn.className = 'zoom-btn px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white';
+          b.className = 'zoom-btn px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white';
         }
-      });
+      }
     }
 
     function insertSnippet(type) {
-      let snippet = '';
+      var snippet = '';
       if (type === 'table') {
-        snippet = \`\n<div class="my-6">\n  <table class="w-full text-left border-collapse border border-slate-200">\n    <thead class="bg-slate-100 font-bold text-xs uppercase text-slate-700">\n      <tr>\n        <th class="p-3 border border-slate-200">Item</th>\n        <th class="p-3 border border-slate-200 text-right">Qty</th>\n        <th class="p-3 border border-slate-200 text-right">Price</th>\n      </tr>\n    </thead>\n    <tbody class="divide-y divide-slate-200 text-xs text-slate-800">\n      <tr><td class="p-3">Enterprise Cloud License</td><td class="p-3 text-right">1</td><td class="p-3 text-right">€499.00</td></tr>\n      <tr><td class="p-3">Professional Support</td><td class="p-3 text-right">12</td><td class="p-3 text-right">€99.00</td></tr>\n    </tbody>\n  </table>\n</div>\n\`;
+        snippet = '\\n<div class="my-6">\\n  <table class="w-full text-left border-collapse border border-slate-200">\\n    <thead class="bg-slate-100 font-bold text-xs uppercase text-slate-700">\\n      <tr>\\n        <th class="p-3 border border-slate-200">Item</th>\\n        <th class="p-3 border border-slate-200 text-right">Qty</th>\\n        <th class="p-3 border border-slate-200 text-right">Price</th>\\n      </tr>\\n    </thead>\\n    <tbody class="divide-y divide-slate-200 text-xs text-slate-800">\\n      <tr><td class="p-3">Enterprise Cloud License</td><td class="p-3 text-right">1</td><td class="p-3 text-right">€499.00</td></tr>\\n      <tr><td class="p-3">Professional Support</td><td class="p-3 text-right">12</td><td class="p-3 text-right">€99.00</td></tr>\\n    </tbody>\\n  </table>\\n</div>\\n';
       } else if (type === 'pagebreak') {
-        snippet = \`\n<div class="page-break my-8 border-t-2 border-dashed border-indigo-400/40 text-center text-xs font-mono text-indigo-400 py-1">[--- Page Break ---]</div>\n\`;
+        snippet = '\\n<div class="page-break my-8 border-t-2 border-dashed border-indigo-400/40 text-center text-xs font-mono text-indigo-400 py-1">[--- Page Break ---]</div>\\n';
       } else if (type === 'signature') {
-        snippet = \`\n<div class="signature-block mt-8 p-4 rounded-xl bg-slate-50 border border-slate-200">\n  <p class="text-xs font-bold text-slate-500 uppercase">Authorized Signature</p>\n  <div class="h-12 border-b border-slate-400 w-64 mt-4"></div>\n  <p class="text-xs text-slate-600 mt-2">Date: \${new Date().toLocaleDateString()}</p>\n</div>\n\`;
+        snippet = '\\n<div class="signature-block mt-8 p-4 rounded-xl bg-slate-50 border border-slate-200">\\n  <p class="text-xs font-bold text-slate-500 uppercase">Authorized Signature</p>\\n  <div class="h-12 border-b border-slate-400 w-64 mt-4"></div>\\n  <p class="text-xs text-slate-600 mt-2">Date: ' + new Date().toLocaleDateString() + '</p>\\n</div>\\n';
       } else if (type === 'metric') {
-        snippet = \`\n<div class="grid grid-cols-3 gap-4 my-6">\n  <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100"><p class="text-xs font-bold text-indigo-600">Total Revenue</p><p class="text-2xl font-black text-indigo-950 mt-1">€124,500</p></div>\n  <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100"><p class="text-xs font-bold text-emerald-600">Active Renders</p><p class="text-2xl font-black text-emerald-950 mt-1">99.98%</p></div>\n  <div class="p-4 rounded-xl bg-purple-50 border border-purple-100"><p class="text-xs font-bold text-purple-600">Net Growth</p><p class="text-2xl font-black text-purple-950 mt-1">+34.2%</p></div>\n</div>\n\`;
+        snippet = '\\n<div class="grid grid-cols-3 gap-4 my-6">\\n  <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100"><p class="text-xs font-bold text-indigo-600">Total Revenue</p><p class="text-2xl font-black text-indigo-950 mt-1">€124,500</p></div>\\n  <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100"><p class="text-xs font-bold text-emerald-600">Active Renders</p><p class="text-2xl font-black text-emerald-950 mt-1">99.98%</p></div>\\n  <div class="p-4 rounded-xl bg-purple-50 border border-purple-100"><p class="text-xs font-bold text-purple-600">Net Growth</p><p class="text-2xl font-black text-purple-950 mt-1">+34.2%</p></div>\\n</div>\\n';
       }
 
-      const curPos = codeEditor.selectionStart;
+      var curPos = codeEditor.selectionStart;
       codeEditor.value = codeEditor.value.substring(0, curPos) + snippet + codeEditor.value.substring(curPos);
       scheduleRender();
     }
 
     function insertMultiPageDemo() {
-      codeEditor.value = MULTI_PAGE_DEMO;
+      codeEditor.value = getMultiPageDemoHtml();
       formatSelect.value = 'A4-portrait';
       updateDimensions();
       scheduleRender();
     }
 
-    // Modal & Code Generation
     function openApiModal() {
       updateApiSnippet();
       document.getElementById('apiModal').classList.remove('hidden');
@@ -816,137 +797,135 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     function setApiTab(tab) {
       activeApiTab = tab;
-      ['curl', 'node', 'python', 'mcp'].forEach((t) => {
-        const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-        if (t === tab) {
-          btn.className = 'px-3 py-1.5 border-b-2 border-indigo-500 text-indigo-400 text-xs font-bold transition';
-        } else {
-          btn.className = 'px-3 py-1.5 border-b-2 border-transparent text-slate-400 hover:text-white text-xs font-medium transition';
+      var tabs = ['curl', 'node', 'python', 'mcp'];
+      for (var i = 0; i < tabs.length; i++) {
+        var t = tabs[i];
+        var btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) {
+          if (t === tab) {
+            btn.className = 'px-3 py-1.5 border-b-2 border-indigo-500 text-indigo-400 text-xs font-bold transition';
+          } else {
+            btn.className = 'px-3 py-1.5 border-b-2 border-transparent text-slate-400 hover:text-white text-xs font-medium transition';
+          }
         }
-      });
+      }
       updateApiSnippet();
     }
 
     function updateApiSnippet() {
-      const html = codeEditor.value;
-      const fmt = formatSelect.value;
-      const isLandscape = fmt.includes('landscape');
-      const isImage = fmt === 'og-card' || fmt === 'slide';
-      const codeBlock = document.getElementById('apiCodeBlock');
+      var html = codeEditor.value;
+      var fmt = formatSelect.value;
+      var isLandscape = fmt.indexOf('landscape') !== -1;
+      var isImage = fmt === 'og-card' || fmt === 'slide';
+      var codeBlock = document.getElementById('apiCodeBlock');
 
       if (activeApiTab === 'curl') {
         if (isImage) {
-          codeBlock.textContent = \`curl -X POST https://tailprint.com/v1/render/image \\\\
-  -H "Authorization: Bearer sec_live_..." \\\\
-  -H "Content-Type: application/json" \\\\
-  -d '{
-    "html": \${JSON.stringify(html)},
-    "width": \${fmt === 'og-card' ? 1200 : 1280},
-    "height": \${fmt === 'og-card' ? 630 : 720},
-    "type": "png"
-  }' \\\\
-  --output render.png\`;
+          codeBlock.textContent = 'curl -X POST https://tailprint.com/v1/render/image \\\n' +
+            '  -H "Authorization: Bearer sec_live_..." \\\n' +
+            '  -H "Content-Type: application/json" \\\n' +
+            '  -d \'{\\n' +
+            '    "html": ' + JSON.stringify(html) + ',\\n' +
+            '    "width": ' + (fmt === 'og-card' ? 1200 : 1280) + ',\\n' +
+            '    "height": ' + (fmt === 'og-card' ? 630 : 720) + ',\\n' +
+            '    "type": "png"\\n' +
+            '  }\' \\\n' +
+            '  --output render.png';
         } else {
-          codeBlock.textContent = \`curl -X POST https://tailprint.com/v1/render/pdf \\\\
-  -H "Authorization: Bearer sec_live_..." \\\\
-  -H "Content-Type: application/json" \\\\
-  -d '{
-    "html": \${JSON.stringify(html)},
-    "format": "A4",
-    "landscape": \${isLandscape},
-    "smart_pagination": \${smartPaginationEnabled}
-  }' \\\\
-  --output document.pdf\`;
+          codeBlock.textContent = 'curl -X POST https://tailprint.com/v1/render/pdf \\\n' +
+            '  -H "Authorization: Bearer sec_live_..." \\\n' +
+            '  -H "Content-Type: application/json" \\\n' +
+            '  -d \'{\\n' +
+            '    "html": ' + JSON.stringify(html) + ',\\n' +
+            '    "format": "A4",\\n' +
+            '    "landscape": ' + isLandscape + ',\\n' +
+            '    "smart_pagination": ' + smartPaginationEnabled + '\\n' +
+            '  }\' \\\n' +
+            '  --output document.pdf';
         }
       } else if (activeApiTab === 'node') {
-        codeBlock.textContent = \`import fs from 'node:fs';
-
-const response = await fetch('https://tailprint.com/v1/render/\${isImage ? 'image' : 'pdf'}', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer sec_live_...',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    html: \${JSON.stringify(html)},
-    format: 'A4',
-    landscape: \${isLandscape},
-    smart_pagination: \${smartPaginationEnabled},
-  }),
-});
-
-const buffer = Buffer.from(await response.arrayBuffer());
-fs.writeFileSync('output.\${isImage ? 'png' : 'pdf'}', buffer);
-console.log('Document rendered successfully!');\`;
+        codeBlock.textContent = 'import fs from "node:fs";\n\n' +
+          'const response = await fetch("https://tailprint.com/v1/render/' + (isImage ? 'image' : 'pdf') + '", {\n' +
+          '  method: "POST",\n' +
+          '  headers: {\n' +
+          '    "Authorization": "Bearer sec_live_...",\n' +
+          '    "Content-Type": "application/json",\n' +
+          '  },\n' +
+          '  body: JSON.stringify({\n' +
+          '    html: ' + JSON.stringify(html) + ',\n' +
+          '    format: "A4",\n' +
+          '    landscape: ' + isLandscape + ',\n' +
+          '    smart_pagination: ' + smartPaginationEnabled + ',\n' +
+          '  }),\n' +
+          '});\n\n' +
+          'const buffer = Buffer.from(await response.arrayBuffer());\n' +
+          'fs.writeFileSync("output.' + (isImage ? 'png' : 'pdf') + '", buffer);\n' +
+          'console.log("Document rendered successfully!");';
       } else if (activeApiTab === 'python') {
-        codeBlock.textContent = \`import requests
-
-url = "https://tailprint.com/v1/render/\${isImage ? 'image' : 'pdf'}"
-headers = {
-    "Authorization": "Bearer sec_live_...",
-    "Content-Type": "application/json"
-}
-payload = {
-    "html": \${JSON.stringify(html)},
-    "format": "A4",
-    "landscape": \${isLandscape ? 'True' : 'False'},
-    "smart_pagination": \${smartPaginationEnabled ? 'True' : 'False'}
-}
-
-response = requests.post(url, json=payload, headers=headers)
-with open("output.\${isImage ? 'png' : 'pdf'}", "wb") as f:
-    f.write(response.content)
-
-print("Document saved successfully!")\`;
+        codeBlock.textContent = 'import requests\n\n' +
+          'url = "https://tailprint.com/v1/render/' + (isImage ? 'image' : 'pdf') + '"\n' +
+          'headers = {\n' +
+          '    "Authorization": "Bearer sec_live_...",\n' +
+          '    "Content-Type": "application/json"\n' +
+          '}\n' +
+          'payload = {\n' +
+          '    "html": ' + JSON.stringify(html) + ',\n' +
+          '    "format": "A4",\n' +
+          '    "landscape": ' + (isLandscape ? 'True' : 'False') + ',\n' +
+          '    "smart_pagination": ' + (smartPaginationEnabled ? 'True' : 'False') + '\n' +
+          '}\n\n' +
+          'response = requests.post(url, json=payload, headers=headers)\n' +
+          'with open("output.' + (isImage ? 'png' : 'pdf') + '", "wb") as f:\n' +
+          '    f.write(response.content)\n\n' +
+          'print("Document saved successfully!")';
       } else if (activeApiTab === 'mcp') {
-        codeBlock.textContent = \`// In Claude Desktop, Cursor, or your AI Agent:
-await call_tool("tailprint", "render_pdf", {
-  "html": \${JSON.stringify(html)},
-  "format": "A4",
-  "landscape": \${isLandscape}
-});\`;
+        codeBlock.textContent = '// In Claude Desktop, Cursor, or your AI Agent:\n' +
+          'await call_tool("tailprint", "render_pdf", {\n' +
+          '  "html": ' + JSON.stringify(html) + ',\n' +
+          '  "format": "A4",\n' +
+          '  "landscape": ' + isLandscape + '\n' +
+          '});';
       }
     }
 
     function copyApiSnippet() {
-      const code = document.getElementById('apiCodeBlock').textContent;
-      navigator.clipboard.writeText(code).then(() => {
-        const btn = document.getElementById('copyCodeBtn');
-        const originalText = btn.innerHTML;
+      var code = document.getElementById('apiCodeBlock').textContent;
+      navigator.clipboard.writeText(code).then(function() {
+        var btn = document.getElementById('copyCodeBtn');
+        var original = btn.innerHTML;
         btn.innerHTML = '<span>✅ Copied!</span>';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
+        setTimeout(function() {
+          btn.innerHTML = original;
         }, 1800);
       });
     }
 
-    // Live Downloads from Playground
     async function downloadPdf() {
-      const btn = document.getElementById('downloadPdfBtn');
-      const spinner = document.getElementById('pdfSpinner');
+      var btn = document.getElementById('downloadPdfBtn');
+      var btnText = document.getElementById('pdfBtnText');
       btn.disabled = true;
-      spinner.classList.remove('hidden');
+      btnText.textContent = '⏳ Rendering PDF...';
 
       try {
-        const res = await fetch('/v1/tools/studio/render-pdf', {
+        var res = await fetch('/v1/tools/studio/render-pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             html: codeEditor.value,
-            format: formatSelect.value.startsWith('Letter') ? 'Letter' : 'A4',
-            landscape: formatSelect.value.includes('landscape'),
+            format: formatSelect.value.indexOf('Letter') !== -1 ? 'Letter' : 'A4',
+            landscape: formatSelect.value.indexOf('landscape') !== -1,
             smart_pagination: smartPaginationEnabled,
           }),
         });
 
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
+          var err = await res.json().catch(function() { return {}; });
           throw new Error(err.message || 'Render failed with status ' + res.status);
         }
 
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        var blob = await res.blob();
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
         a.href = url;
         a.download = (templateSelect.value || 'studio-document') + '.pdf';
         document.body.appendChild(a);
@@ -957,14 +936,14 @@ await call_tool("tailprint", "render_pdf", {
         alert('Download error: ' + err.message);
       } finally {
         btn.disabled = false;
-        spinner.classList.add('hidden');
+        btnText.textContent = '⬇️ Download PDF';
       }
     }
 
     async function downloadImage() {
       try {
-        const isOg = formatSelect.value === 'og-card';
-        const res = await fetch('/v1/tools/studio/render-image', {
+        var isOg = formatSelect.value === 'og-card';
+        var res = await fetch('/v1/tools/studio/render-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -976,13 +955,13 @@ await call_tool("tailprint", "render_pdf", {
         });
 
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
+          var err = await res.json().catch(function() { return {}; });
           throw new Error(err.message || 'Render failed with status ' + res.status);
         }
 
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        var blob = await res.blob();
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
         a.href = url;
         a.download = (templateSelect.value || 'studio-render') + '.png';
         document.body.appendChild(a);
