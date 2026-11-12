@@ -583,7 +583,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       var rawHtml = codeEditor.value;
       var shieldStyles = smartPaginationEnabled ? SMART_PAGINATION_CSS : '';
 
-      // CRITICAL: use string concatenation and avoid literal </script> inside script block
+      // Use safe string concatenation for iframe document
       var doc = '<!DOCTYPE html>' +
         '<html lang="en">' +
         '<head>' +
