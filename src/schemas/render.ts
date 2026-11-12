@@ -23,6 +23,8 @@ export const RenderPdfRequestSchema = z
     wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
     delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
     block_popups: z.boolean().default(false).optional().describe('Automatically suppress cookie consent banners, privacy dialogs, and popup overlays'),
+    smart_pagination: z.boolean().default(true).optional().describe('Smart Pagination Shield: automatically prevents table rows and cards from splitting across page breaks, repeats <thead> across multi-page tables, and prevents orphan headings.'),
+    no_store: z.boolean().default(false).optional().describe('Zero-retention mode. Guarantees no caching or storage of input/output data.'),
     store: z.boolean().default(false).describe('If true, saves the rendered PDF to Tailprint hosted delivery and returns a public hostedUrl link.'),
     expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration for the hosted link (1h, 24h, or 7d). Defaults to 24h.'),
   })
@@ -44,6 +46,7 @@ export const RenderImageRequestSchema = z
     wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
     delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
     block_popups: z.boolean().default(true).optional().describe('Automatically suppress cookie consent banners, privacy dialogs, and popup overlays'),
+    no_store: z.boolean().default(false).optional().describe('Zero-retention mode. Guarantees no caching or storage of input/output data.'),
     store: z.boolean().default(false).describe('If true, saves the rendered image to Tailprint hosted delivery and returns a public hostedUrl link.'),
     expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration for the hosted link (1h, 24h, or 7d). Defaults to 24h.'),
   })

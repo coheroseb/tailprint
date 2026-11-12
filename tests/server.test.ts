@@ -131,6 +131,55 @@ describe('Tailprint Test Suite', () => {
       expect(res2.body).toContain('Website Device Mockup Generator');
     });
 
+    it('GET /studio, /tools/studio, and /editor render the Interactive Template Studio', async () => {
+      const res1 = await app.inject({ method: 'GET', url: '/studio' });
+      expect(res1.statusCode).toBe(200);
+      expect(res1.body).toContain('Live Interactive Template Studio');
+      expect(res1.body).toContain('Smart Pagination Shield');
+
+      const res2 = await app.inject({ method: 'GET', url: '/tools/studio' });
+      expect(res2.statusCode).toBe(200);
+      expect(res2.body).toContain('Live Interactive Template Studio');
+
+      const res3 = await app.inject({ method: 'GET', url: '/editor' });
+      expect(res3.statusCode).toBe(200);
+      expect(res3.body).toContain('Live Interactive Template Studio');
+    });
+
+    it('POST /v1/tools/studio/render-pdf renders vector PDF via playground endpoint', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/v1/tools/studio/render-pdf',
+        payload: {
+          html: '<div class="p-8 bg-white text-slate-900"><h1 class="text-2xl font-bold">Studio PDF</h1></div>',
+          format: 'A4',
+          landscape: false,
+          smart_pagination: true,
+        },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['content-type']).toBe('application/pdf');
+      expect(res.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+    }, 20000);
+
+    it('POST /v1/tools/studio/render-image renders PNG image via playground endpoint', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/v1/tools/studio/render-image',
+        payload: {
+          html: '<div class="w-[600px] h-[300px] bg-indigo-600 text-white p-6 font-bold">Studio PNG</div>',
+          width: 600,
+          height: 300,
+          type: 'png',
+        },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['content-type']).toBe('image/png');
+      expect(res.rawPayload[0]).toBe(0x89);
+    }, 20000);
+
     it('GET /tools/carousel and /carousel render the LinkedIn carousel tool page', async () => {
       const res1 = await app.inject({ method: 'GET', url: '/tools/carousel' });
       expect(res1.statusCode).toBe(200);
@@ -296,6 +345,36 @@ describe('Tailprint Test Suite', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toBe('application/pdf');
+      expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+    }, 20000);
+
+    it('POST /v1/render/pdf supports smart_pagination and no_store zero-retention mode', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: `Bearer ${validDevKey}`,
+        },
+        payload: {
+          html: `
+            <div class="p-8">
+              <h1>Enterprise Report</h1>
+              <table>
+                <tr><th>Description</th><th>Amount</th></tr>
+                <tr><td>Item 1</td><td>$100</td></tr>
+              </table>
+              <div class="signature">Authorized Signature</div>
+            </div>
+          `,
+          smart_pagination: true,
+          no_store: true,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('application/pdf');
+      expect(response.headers['x-tailprint-zero-retention']).toBe('active');
+      expect(response.headers['cache-control']).toContain('no-store');
       expect(response.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
     }, 20000);
 

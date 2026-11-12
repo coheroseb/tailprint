@@ -37,6 +37,19 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
             <div class="absolute left-0 top-full pt-2 w-[340px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
                 
+                <a href="/studio" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'Template Studio' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                    ⚡
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
+                      <span>Interactive Template Studio</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono font-semibold">New</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Real-time Tailwind editor with Smart Pagination Shield</p>
+                  </div>
+                </a>
+
                 <a href="/tools/carousel" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'LinkedIn Carousel' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
                     📱
@@ -164,6 +177,10 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold uppercase">No Login</span>
         </div>
         <div class="space-y-1">
+          <a href="/studio" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Template Studio' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
+            <span>⚡ Interactive Template Studio</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-bold ml-auto">New</span>
+          </a>
           <a href="/tools/carousel" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'LinkedIn Carousel' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
             <span>📱 LinkedIn Carousel Maker</span>
           </a>
@@ -287,9 +304,34 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </p>
     </div>
 
-    <!-- 4 Core Tools Grid -->
+    <!-- 5 Core Tools Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
+      <!-- Tool Card 0: Live Interactive Template Studio (Featured Banner) -->
+      <a href="/studio" class="md:col-span-2 p-8 rounded-3xl bg-gradient-to-r from-purple-950/70 via-slate-900 to-indigo-950/70 border border-purple-500/40 hover:border-purple-400 transition shadow-2xl group flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+        <div class="space-y-4 max-w-xl">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+            <span>Flagship Feature • Zero-Latency Live Preview</span>
+          </div>
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white group-hover:text-purple-300 transition">Interactive Template Studio</h2>
+            <p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+              In-browser visual Tailwind CSS code editor with instant live canvas preview. Features the <strong>Smart Pagination Shield</strong> to eliminate broken table rows, repeat <code>&lt;thead&gt;</code> headers on multi-page PDFs, and export instant vector PDFs, PNGs, and API code.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3 text-xs font-bold text-purple-400 pt-2">
+            <span>Launch Studio Workspace</span>
+            <span class="group-hover:translate-x-1.5 transition">→</span>
+          </div>
+        </div>
+        <div class="mt-6 md:mt-0 px-6 py-5 rounded-2xl bg-slate-950/80 border border-purple-500/30 text-center shrink-0">
+          <span class="text-4xl">⚡</span>
+          <p class="text-sm font-bold text-white mt-2">43 Templates</p>
+          <p class="text-[11px] text-purple-300 font-medium">Smart Pagination Ready</p>
+        </div>
+      </a>
+
       <!-- Tool Card 1: LinkedIn Carousel -->
       <a href="/tools/carousel" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
         <div class="space-y-4">

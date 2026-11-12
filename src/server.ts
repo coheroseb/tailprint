@@ -17,6 +17,7 @@ import { scrapeRoutes } from './routes/scrape.js';
 import { mcpRoutes } from './routes/mcp.js';
 import { usageRoutes } from './routes/usage.js';
 import { toolsRoutes } from './routes/tools.js';
+import { studioRoutes } from './routes/studio.js';
 import { browserService, RenderTimeoutError } from './services/browser.js';
 import { redisService } from './services/redis.js';
 
@@ -165,6 +166,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(mcpRoutes);
   await fastify.register(usageRoutes);
   await fastify.register(toolsRoutes);
+  await fastify.register(studioRoutes);
   await fastify.register(webhookRoutes);
 
   // 6. Centralized Error Handler

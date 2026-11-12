@@ -290,6 +290,85 @@ export class BrowserService {
       .catch(() => {});
   }
 
+  public async applySmartPagination(page: Page): Promise<void> {
+    // 1. Inject Smart Pagination CSS Shield
+    await page
+      .addStyleTag({
+        content: `
+        @media print, screen {
+          /* Repeat table header on every printed page */
+          thead {
+            display: table-header-group !important;
+          }
+          /* Repeat table footer on bottom of pages */
+          tfoot {
+            display: table-footer-group !important;
+          }
+          /* Prevent table rows and cells from splitting in half across page breaks */
+          table {
+            border-collapse: collapse !important;
+          }
+          tr, td, th {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          /* Prevent orphan headings at page bottoms */
+          h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+            break-inside: avoid !important;
+          }
+          /* Keep visual blocks, signatures, cards intact */
+          img, svg, figure, blockquote,
+          .signature, .signature-block, [data-signature],
+          .avoid-break, .keep-together, .no-break, [data-page-break="avoid"],
+          .card, .panel, .badge, .metric, .pricing-card, .timeline-item {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          /* Intentional manual page breaks */
+          .page-break, .break-page, .break-before, [data-page-break="before"] {
+            page-break-before: always !important;
+            break-before: page !important;
+          }
+          .break-after, [data-page-break="after"] {
+            page-break-after: always !important;
+            break-after: page !important;
+          }
+          /* Avoid widows and orphans in paragraphs */
+          p, li {
+            orphans: 3 !important;
+            widows: 3 !important;
+          }
+        }
+      `,
+      })
+      .catch(() => {});
+
+    // 2. Intelligent DOM table analysis: auto-wrap first row in <thead> if table has no <thead>
+    await page
+      .evaluate(() => {
+        try {
+          const tables = Array.from(document.querySelectorAll('table'));
+          for (const table of tables) {
+            if (!table.querySelector('thead')) {
+              const firstRow = table.querySelector('tr');
+              if (firstRow) {
+                const hasTh = firstRow.querySelectorAll('th').length > 0;
+                const totalRows = table.querySelectorAll('tr').length;
+                if (hasTh || totalRows > 2) {
+                  const thead = document.createElement('thead');
+                  firstRow.parentNode?.insertBefore(thead, firstRow);
+                  thead.appendChild(firstRow);
+                }
+              }
+            }
+          }
+        } catch {}
+      })
+      .catch(() => {});
+  }
+
   private prepareHtmlWithTailwind(rawHtml: string): string {
     const hasTailwind =
       rawHtml.includes('cdn.tailwindcss.com') ||
@@ -453,6 +532,10 @@ export class BrowserService {
 
         if (shouldBlockPopups) {
           await this.suppressPopupsAndBanners(page);
+        }
+
+        if (params.smart_pagination !== false) {
+          await this.applySmartPagination(page);
         }
 
         const hasHeaderFooter = Boolean(

@@ -561,6 +561,19 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
             <div class="absolute left-0 top-full pt-2 w-[350px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
                 
+                <a href="/studio" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-purple-500/20">
+                    ⚡
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
+                      <span>Interactive Template Studio</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono font-semibold">New</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Visual Tailwind code editor with Smart Pagination Shield</p>
+                  </div>
+                </a>
+
                 <a href="/tools/carousel" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-blue-500/20">
                     📱
@@ -727,6 +740,10 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
           <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold uppercase">No Login</span>
         </div>
         <div class="space-y-1">
+          <a href="/studio" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-purple-300 hover:bg-slate-900">
+            <span>⚡ Interactive Template Studio</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-bold ml-auto">New</span>
+          </a>
           <a href="/tools/carousel" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
             <span>📱 LinkedIn Carousel Maker</span>
           </a>
@@ -1236,6 +1253,9 @@ This domain is for use in documentation examples without needing permission. Thi
               <p class="text-slate-400 text-xs mt-1.5 leading-relaxed">${t.description}</p>
               
               <div class="mt-6 flex flex-wrap gap-2.5">
+                <a href="/studio?template=${t.id}" class="px-3.5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs transition flex items-center space-x-1.5 shadow-md shadow-purple-600/30">
+                  <span>⚡ Open in Studio</span>
+                </a>
                 <button onclick="copyHtml('${t.id}')" class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition flex items-center space-x-1.5 shadow-md shadow-indigo-600/30">
                   <span>📋 Copy HTML</span>
                 </button>

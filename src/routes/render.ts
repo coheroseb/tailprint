@@ -94,6 +94,19 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
 
+      if (request.body.no_store && request.body.store) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: "Cannot specify 'store: true' when 'no_store: true' is requested.",
+        });
+      }
+
+      if (request.body.no_store) {
+        reply.header('X-Tailprint-Zero-Retention', 'active');
+        reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+      }
+
       const pdfBuffer = await browserService.renderPdf(request.body);
 
       if (request.body.store) {
@@ -139,6 +152,19 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     async (request, reply) => {
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
+
+      if (request.body.no_store && request.body.store) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: "Cannot specify 'store: true' when 'no_store: true' is requested.",
+        });
+      }
+
+      if (request.body.no_store) {
+        reply.header('X-Tailprint-Zero-Retention', 'active');
+        reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+      }
 
       const pdfBuffer = await browserService.renderPdf(request.body);
 
@@ -197,6 +223,19 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
 
+      if (request.body.no_store && request.body.store) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: "Cannot specify 'store: true' when 'no_store: true' is requested.",
+        });
+      }
+
+      if (request.body.no_store) {
+        reply.header('X-Tailprint-Zero-Retention', 'active');
+        reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+      }
+
       const { html, url, width, height, type, wait_for, delay_ms } = request.body;
       const mimeType = type === 'jpeg' ? 'image/jpeg' : 'image/png';
 
@@ -211,43 +250,47 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         delay_ms,
       });
 
-      // 2. Check cache
-      const cached = await redisService.getCachedImage(cacheHash);
-      if (cached) {
-        if (request.body.store) {
-          const stored = await storageService.saveFile(cached, {
-            mimeType,
-            extension: type || 'png',
-            filename: `render.${type || 'png'}`,
-            expiresIn: request.body.expires_in,
-          });
+      // 2. Check cache (only if zero-retention is not requested)
+      if (!request.body.no_store) {
+        const cached = await redisService.getCachedImage(cacheHash);
+        if (cached) {
+          if (request.body.store) {
+            const stored = await storageService.saveFile(cached, {
+              mimeType,
+              extension: type || 'png',
+              filename: `render.${type || 'png'}`,
+              expiresIn: request.body.expires_in,
+            });
+
+            return reply
+              .code(200)
+              .header('X-Cache', 'HIT')
+              .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+              .send({
+                success: true,
+                hostedUrl: stored.hostedUrl,
+                fileId: stored.fileId,
+                filename: stored.filename,
+                mimeType: stored.mimeType,
+                sizeBytes: stored.sizeBytes,
+                expiresAt: stored.expiresAt,
+              });
+          }
 
           return reply
             .code(200)
+            .header('Content-Type', mimeType)
             .header('X-Cache', 'HIT')
-            .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
-            .send({
-              success: true,
-              hostedUrl: stored.hostedUrl,
-              fileId: stored.fileId,
-              filename: stored.filename,
-              mimeType: stored.mimeType,
-              sizeBytes: stored.sizeBytes,
-              expiresAt: stored.expiresAt,
-            });
+            .header('Content-Length', String(cached.length))
+            .send(cached);
         }
-
-        return reply
-          .code(200)
-          .header('Content-Type', mimeType)
-          .header('X-Cache', 'HIT')
-          .header('Content-Length', String(cached.length))
-          .send(cached);
       }
 
       // 3. Render and cache image
       const imageBuffer = await browserService.renderImage(request.body);
-      await redisService.setCachedImage(cacheHash, imageBuffer);
+      if (!request.body.no_store) {
+        await redisService.setCachedImage(cacheHash, imageBuffer);
+      }
 
       if (request.body.store) {
         const stored = await storageService.saveFile(imageBuffer, {
@@ -294,6 +337,19 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
 
+      if (request.body.no_store && request.body.store) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: "Cannot specify 'store: true' when 'no_store: true' is requested.",
+        });
+      }
+
+      if (request.body.no_store) {
+        reply.header('X-Tailprint-Zero-Retention', 'active');
+        reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
+      }
+
       const { html, url, width, height, type, wait_for, delay_ms } = request.body;
       const mimeType = type === 'jpeg' ? 'image/jpeg' : 'image/png';
 
@@ -307,41 +363,45 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         delay_ms,
       });
 
-      const cached = await redisService.getCachedImage(cacheHash);
-      if (cached) {
-        if (request.body.store) {
-          const stored = await storageService.saveFile(cached, {
-            mimeType,
-            extension: type || 'png',
-            filename: `render.${type || 'png'}`,
-            expiresIn: request.body.expires_in,
-          });
+      if (!request.body.no_store) {
+        const cached = await redisService.getCachedImage(cacheHash);
+        if (cached) {
+          if (request.body.store) {
+            const stored = await storageService.saveFile(cached, {
+              mimeType,
+              extension: type || 'png',
+              filename: `render.${type || 'png'}`,
+              expiresIn: request.body.expires_in,
+            });
+
+            return reply
+              .code(200)
+              .header('X-Cache', 'HIT')
+              .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
+              .send({
+                success: true,
+                hostedUrl: stored.hostedUrl,
+                fileId: stored.fileId,
+                filename: stored.filename,
+                mimeType: stored.mimeType,
+                sizeBytes: stored.sizeBytes,
+                expiresAt: stored.expiresAt,
+              });
+          }
 
           return reply
             .code(200)
+            .header('Content-Type', mimeType)
             .header('X-Cache', 'HIT')
-            .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
-            .send({
-              success: true,
-              hostedUrl: stored.hostedUrl,
-              fileId: stored.fileId,
-              filename: stored.filename,
-              mimeType: stored.mimeType,
-              sizeBytes: stored.sizeBytes,
-              expiresAt: stored.expiresAt,
-            });
+            .header('Content-Length', String(cached.length))
+            .send(cached);
         }
-
-        return reply
-          .code(200)
-          .header('Content-Type', mimeType)
-          .header('X-Cache', 'HIT')
-          .header('Content-Length', String(cached.length))
-          .send(cached);
       }
 
       const imageBuffer = await browserService.renderImage(request.body);
-      await redisService.setCachedImage(cacheHash, imageBuffer);
+      if (!request.body.no_store) {
+        await redisService.setCachedImage(cacheHash, imageBuffer);
+      }
 
       if (request.body.store) {
         const stored = await storageService.saveFile(imageBuffer, {
