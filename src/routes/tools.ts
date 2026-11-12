@@ -1513,25 +1513,20 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               </div>
 
               <!-- Brand Bar -->
-              <div class="flex items-center justify-between border-b border-white/10 pb-3 gap-2">
-                <div class="flex items-center space-x-2 min-w-0">
-                  <img id="preview-logo-img" src="" class="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md flex-shrink-0" />
-                  <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md flex-shrink-0">
+              <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <img id="preview-logo-img" src="" class="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md" />
+                  <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md">
                     TP
                   </div>
-                  <div class="truncate">
-                    <div id="preview-brand" class="font-extrabold text-xs text-white leading-none truncate">Tailprint</div>
-                    <div id="preview-handle" class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">@tailprint</div>
+                  <div>
+                    <div id="preview-brand" class="font-extrabold text-xs text-white leading-none">Tailprint</div>
+                    <div id="preview-handle" class="text-[10px] text-slate-400 font-mono mt-0.5">@tailprint</div>
                   </div>
                 </div>
-                <div class="flex items-center space-x-1.5 flex-shrink-0">
-                  <span id="preview-karaoke-badge" class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                    🔥 KARAOKE
-                  </span>
-                  <span id="preview-tag" class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
-                    HOOK
-                  </span>
-                </div>
+                <span id="preview-tag" class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
+                  HOOK
+                </span>
               </div>
             </div>
 
@@ -2018,15 +2013,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       tagEl.style.backgroundColor = theme.tagBg;
       tagEl.style.borderColor = theme.tagBorder;
       tagEl.style.color = theme.tagText;
-
-      const kBadge = document.getElementById('preview-karaoke-badge');
-      if (kBadge) {
-        if (reelState.karaoke) {
-          kBadge.classList.remove('hidden');
-        } else {
-          kBadge.classList.add('hidden');
-        }
-      }
 
       // Headline & Body with Kinetic Karaoke support
       const headlineEl = document.getElementById('preview-headline');
