@@ -405,7 +405,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           </div>
 
           <!-- Rendered Iframe -->
-          <iframe id="previewIframe" class="w-full h-full border-0 block" sandbox="allow-scripts allow-same-origin"></iframe>
+          <iframe id="previewIframe" class="w-full h-full border-0 block" sandbox="allow-scripts allow-same-origin" style="min-height: 1123px;"></iframe>
 
         </div>
 
@@ -600,6 +600,17 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         '</html>';
 
       previewIframe.srcdoc = doc;
+      previewIframe.onload = function() {
+        try {
+          var docEl = previewIframe.contentDocument || previewIframe.contentWindow.document;
+          var minH = parseInt(paperCanvas.style.minHeight || '1123', 10);
+          var h = Math.max(docEl.body.scrollHeight, minH);
+          if (h && h > 100) {
+            paperCanvas.style.height = h + 'px';
+            previewIframe.style.height = h + 'px';
+          }
+        } catch (e) {}
+      };
     }
 
     function updateEditorStats() {
