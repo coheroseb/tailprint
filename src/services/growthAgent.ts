@@ -181,21 +181,30 @@ export class GrowthAgentService {
 
   private initDefaultSeedSocial(): void {
     const existing = this.loadSocial();
-    if (existing.length > 0) return;
+    // Clean out any legacy seed or dummy URLs
+    const filtered = existing.filter((s) => !s.url.includes('1i3b81x') && !s.url.includes('deleted_by_user'));
+    if (filtered.length !== existing.length) {
+      this.saveSocial(filtered);
+    }
+    if (filtered.length > 0) return;
 
     const seedOpportunities: GrowthSocialOpportunity[] = [
       {
         id: `soc_${crypto.randomBytes(6).toString('hex')}`,
         platform: 'reddit',
-        title: 'How do you prevent Puppeteer from cutting table rows in half when generating multi-page PDFs?',
-        url: 'https://www.reddit.com/r/webdev/comments/1i3b81x/how_to_prevent_puppeteer_cutting_table_rows_pdf/',
-        author: 'fullstack_dev24',
-        queryMatched: 'puppeteer page break',
-        snippet: 'We generate customer quotes and invoices in Node using Puppeteer. Every time an invoice has 15+ items, table rows get cut right in half across the page split. CSS break-inside: avoid doesn’t seem to work consistently.',
+        title: 'What is the approach that you may take to generate PDFs?',
+        url: 'https://www.reddit.com/r/webdev/comments/1l7ug9b/what_is_the_approach_that_you_may_take_to/',
+        author: 'u/webdev_builder',
+        queryMatched: 'pdf generation',
+        snippet: 'When generating complex documents, invoices or dynamic dashboards, what architecture works best? Headless Chrome vs serverless microservices vs dedicated rendering APIs?',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `The reason \`break-inside: avoid\` fails in Chromium is often caused by parents having \`display: flex\` or \`overflow: hidden\` (which kills CSS Paged Media pagination fragmentation).
+        suggestedReplyMarkdown: `From architecting high-scale PDF infrastructure, there are essentially 3 tiers depending on your needs:
 
-Here is the exact CSS setup that solves this reliably:
+1. **Client-side \`window.print()\` / jsPDF:** Only viable for basic single-page receipts where you don't care about vector fidelity, exact margins, or background colors.
+2. **Raw Puppeteer / Playwright in Serverless:** Works for low volume, but quickly breaks down under load. Common failure modes: Chromium zombie processes eating all container RAM, font-loading race conditions causing fallback Times New Roman, and tables chopping awkwardly across page breaks.
+3. **Dedicated Headless Engine with Warm Concurrency Pool:** Isolating Chrome contexts in a dedicated pool with persistent fonts and Smart Pagination is what actually scales in production.
+
+If you are dealing with multi-page documents, make sure you configure CSS Paged Media:
 \`\`\`css
 @page {
   size: A4 portrait;
@@ -203,78 +212,96 @@ Here is the exact CSS setup that solves this reliably:
   margin-bottom: 15mm;
 }
 @page :first {
-  margin-top: 0mm; /* Keep full hero branding on page 1 */
+  margin-top: 0mm;
 }
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
 tr {
   break-inside: avoid;
-  page-break-inside: avoid;
 }
-
 thead {
-  display: table-header-group; /* Repeats table headers on page 2+ */
+  display: table-header-group;
 }
 \`\`\`
 
-Also, make sure the wrapping containers do not have \`height: 100%\` or \`overflow: auto\`.
+We solved these exact scaling bottlenecks when building [Tailprint](https://tailprint.com). You can also test your HTML directly in our free live studio (tailprint.com/studio) to inspect page break splits visually.`,
+        status: 'pending',
+      },
+      {
+        id: `soc_${crypto.randomBytes(6).toString('hex')}`,
+        platform: 'reddit',
+        title: 'Generate PDF of fully rendered page',
+        url: 'https://www.reddit.com/r/webdev/comments/1ma5hs7/generate_pdf_of_fully_rendered_page/',
+        author: 'u/frontend_lead',
+        queryMatched: 'html to pdf',
+        snippet: 'Need to capture full client-rendered web pages with modern Tailwind CSS styles and charts into high-resolution vector PDF.',
+        detectedAt: new Date().toISOString(),
+        suggestedReplyMarkdown: `To render modern Tailwind CSS pages into clean vector PDFs without visual artifacts, there are two crucial steps:
 
-We spent weeks fighting this exact headache while building our rendering infrastructure at [Tailprint](https://tailprint.com). If you want to test how your HTML splits live across page boundaries before writing code, feel free to drop it into our free web studio (tailprint.com/studio) to inspect the page break markers visually.`,
+1. **Wait for Webfonts and CSSOM Ready:** In Chromium, wait for \`document.fonts.ready\` before calling \`page.pdf()\`, otherwise vectors will render with fallback system fonts.
+2. **Emulate Screen Media:** Tailwind classes are designed for screen by default. Call:
+\`\`\`javascript
+await page.emulateMediaType('screen');
+\`\`\`
+This ensures colors, gradients, and flexbox layouts don't get stripped by default print stylesheets.
+
+Also set \`printBackground: true\` and define explicit page margins in CSS (\`@page\`).
+
+If you ever want to offload headless Chrome management entirely, feel free to try [Tailprint](https://tailprint.com) — you can pass raw Tailwind HTML or public URLs and get back cached vector PDFs in 500ms.`,
         status: 'pending',
       },
       {
         id: `soc_${crypto.randomBytes(6).toString('hex')}`,
         platform: 'hackernews',
-        title: 'Ask HN: What are you using for serverless PDF generation in 2026? Puppeteer is eating our memory.',
-        url: 'https://news.ycombinator.com/item?id=50469974',
-        author: 'saas_founder_hn',
+        title: 'Show HN: Pixel-exact HTML-to-PDF in the browser, no Puppeteer or server',
+        url: 'https://news.ycombinator.com/item?id=49982189',
+        author: 'silly-tae',
         queryMatched: 'puppeteer pdf',
-        snippet: 'We are generating monthly accounting reports and PDF invoices for thousands of users in AWS Lambda. Chromium instances occasionally hang or crash with OOM errors. Is there a better lightweight alternative?',
+        snippet: 'Interesting discussion on the trade-offs of in-browser WASM rendering versus server-side headless Chrome clusters for PDF generation.',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `Serverless PDF generation with raw Puppeteer in Lambda/Cloud Functions has two major pitfalls:
-1. **Shared memory exhaustion:** Lambda's \`/dev/shm\` is only 64MB by default, which causes Chromium renderer crashes under concurrency. You must launch with \`--disable-dev-shm-usage\` and \`--no-sandbox\`.
-2. **Zombie process leaks:** Puppeteer's \`browser.close()\` can leave orphaned Chromium processes running if a render times out.
+        suggestedReplyMarkdown: `Fascinating approach! In-browser rendering is fantastic for client-only offline documents and privacy-sensitive local exports.
 
-If you want to keep running it yourself, use a persistent browser context worker pool rather than \`launch()\` per request, and set a hard 10s AbortSignal timeout.
+Where server-side engines still shine is:
+1. **Background / Asynchronous dispatch:** Nightly batch invoices, automated email attachments, and webhooks where no human browser is open.
+2. **Format compliance (EU E-Invoicing / Factur-X / PDF/A-3):** Embedding machine-readable CrossIndustryInvoice XML into hybrid PDF vectors requires compliant PDF metadata dictionaries that browser print engines don't support natively.
+3. **Smart Pagination across dynamic tables:** Ensuring repeating headers and preventing rows from splitting across continuation sheets.
 
-Alternatively, if you don't want the DevOps overhead of maintaining headless Chrome clusters and font packages, that's why we built [Tailprint](https://tailprint.com) — it runs on dedicated warm concurrency pools with SHA-256 caching and Factur-X / EN 16931 e-invoicing compliance out of the box.`,
+We built [Tailprint](https://tailprint.com) specifically around these B2B requirements. Great work on pushing browser-side rendering forward!`,
         status: 'pending',
       },
       {
         id: `soc_${crypto.randomBytes(6).toString('hex')}`,
         platform: 'stackoverflow',
-        title: 'What is the default CSS stylesheet PhantomJS uses when rendering PDF/HTML, and how to replicate it in Puppeteer?',
-        url: 'https://stackoverflow.com/questions/79958790/what-is-the-default-css-stylesheet-phantomjs-uses-when-rendering-pdf-html-and-h',
-        author: 'WebKitMigrator',
-        queryMatched: 'puppeteer pdf',
-        snippet: 'Migrating legacy PhantomJS scripts to modern Puppeteer. Noticed font kerning and default margins differ significantly between WebKit and modern Blink rendering.',
+        title: 'Prevent page breaks in puppeteer pdf',
+        url: 'https://stackoverflow.com/questions/75185272/prevent-page-breaks-in-puppeteer-pdf',
+        author: 'node_architect',
+        queryMatched: 'puppeteer page break',
+        snippet: 'How to reliably avoid cutting rows and container cards across page breaks when generating multi-page PDFs using Puppeteer.',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `PhantomJS relied on a very old QtWebKit build with proprietary user-agent default styles. In modern Chromium/Puppeteer, you achieve identical pixel-perfect output by explicitly defining \`@page\`, \`font-smooth\`, and standard box-sizing:
+        suggestedReplyMarkdown: `In Chromium CSS Paged Media Level 3, \`break-inside: avoid\` often gets ignored if an ancestor element has \`display: flex\` or \`overflow: hidden\`.
 
+To fix this reliably:
+
+1. Ensure the parent container of your table or cards is \`display: block\`.
+2. Apply:
 \`\`\`css
-* {
-  box-sizing: border-box;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.card, tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
-
+thead {
+  display: table-header-group;
+}
 @page {
-  margin: 0;
-  size: A4;
+  margin-top: 20mm;
+  margin-bottom: 15mm;
 }
-
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+@page :first {
+  margin-top: 0mm;
 }
 \`\`\`
 
-Also make sure to call \`page.emulateMediaType('screen')\` or \`page.emulateMediaType('print')\` explicitly in Puppeteer depending on whether your CSS relies on \`@media screen\` or \`@media print\`.`,
+The \`@page :first\` rule leaves your top hero branding intact while ensuring page 2+ continuation sheets get proper top breathing margin.
+
+We spent weeks tuning this behavior for [Tailprint](https://tailprint.com) — you can also test your layout live in the free studio if you want to verify the page cut visually.`,
         status: 'pending',
       },
     ];
@@ -464,11 +491,12 @@ Rules:
     let scannedCount = 0;
 
     // 1. Hacker News via Algolia
+    const sixtyDaysAgo = Math.floor(Date.now() / 1000) - (60 * 24 * 3600);
     const hnQueries = ['puppeteer pdf', 'html to pdf', 'factur-x'];
     for (const q of hnQueries) {
       try {
         const res = await fetch(
-          `https://hn.algolia.com/api/v1/search_by_date?tags=(story,comment)&query=${encodeURIComponent(q)}&hitsPerPage=5`,
+          `https://hn.algolia.com/api/v1/search_by_date?tags=(story,comment)&query=${encodeURIComponent(q)}&numericFilters=created_at_i>${sixtyDaysAgo}&hitsPerPage=5`,
           { signal: AbortSignal.timeout(8000) }
         );
         if (res.ok) {
@@ -476,10 +504,15 @@ Rules:
           for (const hit of (data.hits || [])) {
             scannedCount++;
             const hitTitle = hit.story_title || hit.title || hit.comment_text?.slice(0, 80) || 'Hacker News Discussion';
-            const hitUrl = hit.story_url || `https://news.ycombinator.com/item?id=${hit.objectID}`;
+            if (hitTitle.toLowerCase().includes('[deleted]') || hitTitle.toLowerCase().includes('[dead]')) continue;
+
+            const hnThreadId = hit.story_id || hit.objectID;
+            const hitUrl = `https://news.ycombinator.com/item?id=${hnThreadId}`;
             if (existingUrls.has(hitUrl)) continue;
 
             const snippet = (hit.comment_text || hit.story_text || hitTitle).replace(/<[^>]+>/g, '').slice(0, 300);
+            if (snippet.includes('[deleted]') || snippet.length < 20) continue;
+
             const reply = await this.synthesizeCommunityReply(hitTitle, snippet, 'Hacker News');
 
             const opp: GrowthSocialOpportunity = {
@@ -507,18 +540,18 @@ Rules:
       if (newCount >= 3) break;
     }
 
-    // 2. StackOverflow via StackExchange API
+    // 2. StackOverflow via StackExchange API (Active, open questions only)
     if (newCount < 3) {
       try {
         const res = await fetch(
-          'https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=creation&q=puppeteer%20pdf&site=stackoverflow',
+          'https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=activity&closed=False&q=puppeteer%20pdf&site=stackoverflow',
           { signal: AbortSignal.timeout(8000) }
         );
         if (res.ok) {
           const data: any = await res.json();
-          for (const item of (data.items || []).slice(0, 3)) {
+          for (const item of (data.items || []).slice(0, 5)) {
             scannedCount++;
-            if (existingUrls.has(item.link)) continue;
+            if (!item.link || item.closed_date || existingUrls.has(item.link)) continue;
 
             const reply = await this.synthesizeCommunityReply(item.title, item.title, 'StackOverflow');
             const opp: GrowthSocialOpportunity = {
