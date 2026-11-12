@@ -3041,7 +3041,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3124,7 +3134,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3183,7 +3203,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3244,7 +3274,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3330,7 +3370,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3378,7 +3428,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3457,7 +3517,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3485,7 +3555,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -3554,7 +3634,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
@@ -4408,7 +4498,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
-      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
       const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
