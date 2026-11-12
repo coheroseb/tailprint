@@ -1,5 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import crypto from 'node:crypto';
 import { carouselService } from '../services/carousel.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { visualDiffService } from '../services/visualDiff.js';
@@ -7,6 +8,8 @@ import { mockupService } from '../services/mockup.js';
 import { reelService } from '../services/reel.js';
 import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
+import { qrService } from '../services/qr.js';
+import { env } from '../config/env.js';
 
 export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // Shared Header & Navigation Component
@@ -1590,6 +1593,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
         <!-- Action Export Buttons -->
         <div class="w-full max-w-[360px] space-y-2">
+          <!-- Mobile QR Preview Button -->
+          <button
+            id="btn-open-qr-modal"
+            onclick="openMobilePreviewModal()"
+            class="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-rose-600 hover:from-violet-500 hover:to-rose-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 border border-white/20"
+          >
+            <span class="text-sm">📱</span>
+            <span>Live Preview på Telefon (Scan QR)</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/25 font-black uppercase tracking-wider">Live</span>
+          </button>
+
           <!-- Video Export (Canvas MediaRecorder) -->
           <button
             id="btn-export-video"
@@ -1651,6 +1665,39 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         '  }\' \\\n' +
         '  --output reel-story.pdf'
     )}
+
+    <!-- Mobile QR Preview Modal -->
+    <div id="qr-preview-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative space-y-4 text-center animate-in fade-in zoom-in-95 duration-200">
+        <button onclick="closeMobilePreviewModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">✕</button>
+        
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl mx-auto shadow-inner">
+          📱
+        </div>
+
+        <div class="space-y-1">
+          <h3 class="text-lg font-black text-white">Live Preview på Mobil</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Scan QR-koden med dit mobilkamera for at se videoen i fuld skærm på din telefon med live touch og kinetic karaoke.</p>
+        </div>
+
+        <!-- QR Code Container -->
+        <div id="qr-code-display" class="bg-white p-3 rounded-2xl mx-auto w-60 h-60 flex items-center justify-center shadow-xl border border-slate-700 overflow-hidden">
+          <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+
+        <!-- Share URL input + copy -->
+        <div class="flex items-center space-x-2 pt-1">
+          <input id="qr-share-url-input" type="text" readonly class="w-full bg-slate-950 text-slate-300 border border-slate-800 rounded-xl px-3 py-2 text-[11px] font-mono focus:outline-none truncate" />
+          <button id="btn-copy-share-url" onclick="copyShareUrl()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition flex-shrink-0">
+            Kopier
+          </button>
+        </div>
+
+        <p class="text-[10px] text-slate-500 leading-tight">
+          💡 Tryk og hold fingeren på mobilskærmen for at pause, eller tryk i siderne for at skifte slide.
+        </p>
+      </div>
+    </div>
   </main>
 
   <footer class="py-8 border-t border-slate-900 text-center text-xs text-slate-500">
@@ -2893,6 +2940,49 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         URL.revokeObjectURL(url);
       }, 'image/png');
     }
+
+    // 4. Mobile QR Preview Modal
+    async function openMobilePreviewModal() {
+      const modal = document.getElementById('qr-preview-modal');
+      modal.classList.remove('hidden');
+      const display = document.getElementById('qr-code-display');
+      const urlInput = document.getElementById('qr-share-url-input');
+      display.innerHTML = '<div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>';
+
+      try {
+        const res = await fetch('/v1/tools/reel/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reelState)
+        });
+        const data = await res.json();
+        if (data.qrSvg && data.previewUrl) {
+          display.innerHTML = data.qrSvg;
+          urlInput.value = data.previewUrl;
+        } else {
+          throw new Error('Failed to generate QR code');
+        }
+      } catch (err) {
+        display.innerHTML = '<div class="text-xs text-rose-500 font-bold p-4">Kunne ikke generere QR: ' + err.message + '</div>';
+      }
+    }
+
+    function closeMobilePreviewModal() {
+      document.getElementById('qr-preview-modal').classList.add('hidden');
+    }
+
+    function copyShareUrl() {
+      const urlInput = document.getElementById('qr-share-url-input');
+      if (!urlInput || !urlInput.value) return;
+      navigator.clipboard.writeText(urlInput.value);
+      const btn = document.getElementById('btn-copy-share-url');
+      btn.textContent = 'Kopieret! ✓';
+      btn.classList.add('bg-emerald-600');
+      setTimeout(() => {
+        btn.textContent = 'Kopier';
+        btn.classList.remove('bg-emerald-600');
+      }, 2000);
+    }
   </script>
 </body>
 </html>`;
@@ -3357,4 +3447,579 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       });
     }
   );
+
+  // 7. POST /v1/tools/reel/share (Generates Mobile QR & Shareable Preview Link)
+  fastify.post(
+    '/v1/tools/reel/share',
+    async (request: any, reply: any) => {
+      const state = request.body || {};
+      const slug = crypto.randomBytes(4).toString('hex');
+      const baseUrl = env.APP_URL || 'https://tailprint.com';
+      const previewUrl = `${baseUrl}/tools/reel/p/${slug}`;
+
+      // Save to Redis with 24-hour expiration (86400s)
+      await redisService.setJson(`reel_preview:${slug}`, state, 86400);
+
+      // Generate SVG QR Code (high-DPI, dark on white for crisp phone camera scanning)
+      const qrSvg = await qrService.generateSvg({
+        text: previewUrl,
+        size: 320,
+        darkColor: '#030712',
+        lightColor: '#ffffff',
+        errorCorrection: 'M',
+      });
+
+      return reply.code(200).send({
+        success: true,
+        slug,
+        previewUrl,
+        qrSvg,
+      });
+    }
+  );
+
+  // 8. GET /tools/reel/p/:slug (Standalone Mobile Fullscreen Reel Player)
+  const mobilePlayerHandler = async (request: any, reply: any) => {
+    const slug = (request.params as any)?.slug || '';
+    const session = slug ? await redisService.getJson(`reel_preview:${slug}`) : null;
+
+    const defaultReel = {
+      title: 'Vector PDF Generation for Developers',
+      brand: 'Tailprint',
+      handle: '@tailprint',
+      theme: 'brand',
+      aspectRatio: '9:16',
+      karaoke: true,
+      duration: 3500,
+      brandColors: {
+        primary: '#4f46e5',
+        secondary: '#090d16',
+        accent: '#38bdf8',
+      },
+      slides: [
+        {
+          tag: 'THE BREAKTHROUGH',
+          headline: 'Sub-500ms Vector PDF Generation',
+          body: 'Stop wrestling with fragile Puppeteer instances and slow local compilers.',
+          stat: '380ms',
+          statLabel: 'Average Render Time',
+        },
+        {
+          tag: 'THE PROBLEM',
+          headline: 'Why PDF Generation Sucks',
+          body: 'Table headers disappear on page 2. Rows get sliced in half. Memory leaks crash your servers.',
+          stat: '99.9%',
+          statLabel: 'Headache Elimination',
+        },
+        {
+          tag: 'HOW TO SCALE',
+          headline: 'Built for Modern Developers & AI',
+          body: 'Connect Claude Desktop, Cursor or your API in seconds with 22 native MCP tools.',
+          stat: '100 Free',
+          statLabel: 'Monthly Renders',
+        },
+      ],
+      cta: 'Follow for more • Link in bio',
+      sourceUrl: 'https://tailprint.com',
+    };
+
+    const initialData = session || defaultReel;
+    const initialJson = JSON.stringify(initialData).replace(/</g, '\\u003c');
+
+    const html = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#030712" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>${String(initialData.brand || 'Tailprint').replace(/</g, '&lt;').replace(/>/g, '&gt;')} - Live Reel Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
+    body, html {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #030712;
+      color: #ffffff;
+      font-family: system-ui, -apple-system, sans-serif;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    @keyframes ambientPulse {
+      0%, 100% { transform: scale(1); opacity: 0.35; }
+      50% { transform: scale(1.15); opacity: 0.55; }
+    }
+    .ambient-glow {
+      animation: ambientPulse 8s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body id="mobile-player-body" class="h-full w-full flex flex-col justify-between relative overflow-hidden bg-slate-950 text-white">
+
+  <!-- Ambient Video Backdrop (if backdrop mode) -->
+  <video id="mobile-backdrop-video" src="" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none hidden transition-opacity duration-300"></video>
+
+  <!-- Ambient Glow -->
+  <div id="mobile-screen-glow" class="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-indigo-500/30 blur-3xl ambient-glow pointer-events-none"></div>
+
+  <!-- Top Area: Instagram Story Progress Bars & Brand Header -->
+  <header class="w-full z-40 space-y-3 pt-[calc(env(safe-area-inset-top,0px)+12px)] px-5">
+    <!-- Progress Bars Row -->
+    <div id="mobile-progress-bars" class="flex items-center space-x-1.5 w-full">
+      <!-- Injected via JS -->
+    </div>
+
+    <!-- Brand Header Row -->
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <div class="flex items-center space-x-2.5 min-w-0">
+        <img id="mobile-logo-img" src="" class="w-9 h-9 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md flex-shrink-0" />
+        <div id="mobile-avatar" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md flex-shrink-0">
+          TP
+        </div>
+        <div class="truncate">
+          <div id="mobile-brand" class="font-extrabold text-sm text-white leading-none truncate">Tailprint</div>
+          <div id="mobile-handle" class="text-[11px] text-slate-300 font-mono mt-0.5 truncate">@tailprint</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 flex-shrink-0">
+        <span id="mobile-tag" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
+          HOOK
+        </span>
+        <button onclick="shareReel(event)" class="w-9 h-9 rounded-full bg-white/10 active:bg-white/25 border border-white/20 flex items-center justify-center text-white text-xs transition" title="Del Reel">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Center Area: Slide Content -->
+  <main id="mobile-content-container" class="my-auto px-6 py-4 z-30 space-y-4 max-w-lg mx-auto w-full">
+    <h1 id="mobile-headline" class="text-2xl sm:text-3xl font-black tracking-tight leading-snug drop-shadow-xl text-white"></h1>
+
+    <!-- Stat Card -->
+    <div id="mobile-stat-card" class="hidden p-3.5 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl flex items-center space-x-3.5 shadow-xl">
+      <span id="mobile-stat" class="text-3xl font-black text-cyan-400"></span>
+      <span id="mobile-stat-label" class="text-[11px] font-bold uppercase text-white/90 tracking-wide"></span>
+    </div>
+
+    <!-- Floating Live Screenrecord Card (inset mode) -->
+    <div id="mobile-screenrecord-card" class="hidden rounded-2xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md">
+      <div class="px-3 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[9px]">
+        <div class="flex items-center space-x-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        </div>
+        <span id="mobile-browser-url" class="font-mono text-slate-400 truncate max-w-[160px]">tailprint.com</span>
+      </div>
+      <video id="mobile-screenrecord-video" src="" autoplay loop muted playsinline class="w-full h-36 object-cover object-top"></video>
+    </div>
+
+    <!-- Body with Kinetic Karaoke Spans -->
+    <p id="mobile-body" class="text-base sm:text-lg leading-relaxed text-slate-200 font-medium"></p>
+  </main>
+
+  <!-- Bottom Navigation & CTA Bar -->
+  <footer class="pb-[calc(env(safe-area-inset-bottom,0px)+16px)] px-5 z-40 space-y-2.5 max-w-lg mx-auto w-full">
+    <!-- Interactive CTA Link -->
+    <a id="mobile-cta-btn" href="#" target="_blank" class="w-full py-3.5 px-5 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-[0.98] border border-white/30 backdrop-blur-xl flex items-center justify-between text-white font-extrabold text-xs shadow-2xl transition">
+      <div class="flex items-center space-x-2 truncate">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+        <span id="mobile-cta-text" class="truncate">Link i bio</span>
+      </div>
+      <span class="text-slate-300 font-black ml-2">→</span>
+    </a>
+
+    <!-- Slide Indicator & Tips -->
+    <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+      <span id="mobile-slide-indicator" class="font-mono font-bold text-white/80">1 / 4</span>
+      <span class="text-white/40">• Tryk i siderne for at skifte</span>
+      <a href="/tools/reel" class="text-indigo-400 font-bold hover:underline">Lav din egen ⚡</a>
+    </div>
+  </footer>
+
+  <!-- Embedded Server State -->
+  <script id="server-reel-state" type="application/json">${initialJson}</script>
+
+  <script>
+    let reelState = JSON.parse(document.getElementById('server-reel-state').textContent);
+
+    if (window.location.hash && window.location.hash.startsWith('#data=')) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.slice(6)))));
+        if (decoded && decoded.slides) reelState = decoded;
+      } catch (e) {}
+    }
+
+    let currentSlideIdx = 0;
+    let isPlaying = true;
+    let slideTimer = null;
+    let progressStartTime = 0;
+    let progressAnimFrame = null;
+    let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const themeMaps = {
+      brand: {
+        bg: "linear-gradient(135deg, #4f46e5 0%, #090d16 100%)",
+        text: "#ffffff",
+        subtext: "rgba(226, 232, 240, 0.88)",
+        tagBg: "rgba(255, 255, 255, 0.12)",
+        tagBorder: "rgba(255, 255, 255, 0.25)",
+        tagText: "#ffffff",
+        statBg: "rgba(255, 255, 255, 0.10)",
+        statBorder: "rgba(255, 255, 255, 0.20)",
+        statColor: "#38bdf8"
+      },
+      gradient: {
+        bg: "linear-gradient(135deg, #1e1b4b 0%, #2e1065 50%, #020617 100%)",
+        text: "#ffffff",
+        subtext: "rgba(233, 213, 255, 0.85)",
+        tagBg: "rgba(99, 102, 241, 0.2)",
+        tagBorder: "rgba(99, 102, 241, 0.4)",
+        tagText: "#a5b4fc",
+        statBg: "rgba(99, 102, 241, 0.15)",
+        statBorder: "rgba(99, 102, 241, 0.3)",
+        statColor: "#38bdf8"
+      },
+      cyberpunk: {
+        bg: "linear-gradient(135deg, #09090b 0%, #18181b 100%)",
+        text: "#facc15",
+        subtext: "#d4d4d8",
+        tagBg: "rgba(250, 204, 21, 0.15)",
+        tagBorder: "rgba(250, 204, 21, 0.4)",
+        tagText: "#fef08a",
+        statBg: "rgba(24, 24, 27, 0.8)",
+        statBorder: "rgba(250, 204, 21, 0.3)",
+        statColor: "#ec4899"
+      },
+      midnight: {
+        bg: "linear-gradient(135deg, #022c22 0%, #000000 100%)",
+        text: "#f0fdf4",
+        subtext: "#86efac",
+        tagBg: "rgba(16, 185, 129, 0.15)",
+        tagBorder: "rgba(16, 185, 129, 0.3)",
+        tagText: "#6ee7b7",
+        statBg: "rgba(0, 0, 0, 0.6)",
+        statBorder: "rgba(16, 185, 129, 0.3)",
+        statColor: "#34d399"
+      },
+      sunset: {
+        bg: "linear-gradient(135deg, #4c0519 0%, #030712 50%, #451a03 100%)",
+        text: "#fff1f2",
+        subtext: "#fecdd3",
+        tagBg: "rgba(244, 63, 94, 0.2)",
+        tagBorder: "rgba(244, 63, 94, 0.4)",
+        tagText: "#fda4af",
+        statBg: "rgba(244, 63, 94, 0.15)",
+        statBorder: "rgba(244, 63, 94, 0.3)",
+        statColor: "#fbbf24"
+      },
+      clean: {
+        bg: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+        text: "#0f172a",
+        subtext: "#475569",
+        tagBg: "#dbeafe",
+        tagBorder: "#bfdbfe",
+        tagText: "#1d4ed8",
+        statBg: "#ffffff",
+        statBorder: "#cbd5e1",
+        statColor: "#2563eb"
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Touch & Tap Gestures (Like Instagram Stories)
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('a') || e.target.closest('button')) return;
+      touchStartTime = performance.now();
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+      pausePlayback();
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (e.target.closest('a') || e.target.closest('button')) return;
+      const duration = performance.now() - touchStartTime;
+      const diffX = Math.abs(e.clientX - touchStartX);
+      const diffY = Math.abs(e.clientY - touchStartY);
+
+      if (duration < 280 && diffX < 24 && diffY < 24) {
+        if (e.clientX < window.innerWidth * 0.35) {
+          prevSlide();
+        } else {
+          nextSlide();
+        }
+        if (navigator.vibrate) navigator.vibrate(10);
+      } else {
+        startPlayback();
+      }
+    });
+
+    window.addEventListener('pointercancel', () => {
+      startPlayback();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+
+    function renderProgressBars() {
+      const row = document.getElementById('mobile-progress-bars');
+      row.innerHTML = reelState.slides.map((_, i) => {
+        let fillWidth = '0%';
+        if (i < currentSlideIdx) fillWidth = '100%';
+        return '<div class="h-1 flex-1 rounded-full overflow-hidden bg-white/20 relative">' +
+          '<div id="progress-fill-' + i + '" class="h-full bg-white transition-none" style="width: ' + fillWidth + '"></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function startPlayback() {
+      isPlaying = true;
+      restartCurrentSlide();
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      if (slideTimer) clearTimeout(slideTimer);
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+      applyKaraokeHighlight(1.0, 1);
+    }
+
+    function restartCurrentSlide() {
+      if (slideTimer) clearTimeout(slideTimer);
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+
+      progressStartTime = performance.now();
+      const duration = reelState.duration || 3500;
+
+      function updateBar(now) {
+        if (!isPlaying) return;
+        const elapsed = now - progressStartTime;
+        const progress = Math.min(1.0, elapsed / duration);
+        const pct = Math.min(100, progress * 100);
+        const fillEl = document.getElementById('progress-fill-' + currentSlideIdx);
+        if (fillEl) {
+          fillEl.style.width = pct + '%';
+        }
+
+        if (reelState.karaoke) {
+          const slide = reelState.slides[currentSlideIdx];
+          if (slide) {
+            const hCount = (slide.headline || '').split(' ').filter(Boolean).length;
+            const bCount = (slide.body || '').split(' ').filter(Boolean).length;
+            applyKaraokeHighlight(progress, hCount + bCount);
+          }
+        }
+
+        if (elapsed < duration) {
+          progressAnimFrame = requestAnimationFrame(updateBar);
+        }
+      }
+      progressAnimFrame = requestAnimationFrame(updateBar);
+
+      slideTimer = setTimeout(() => {
+        if (isPlaying) nextSlide();
+      }, duration);
+    }
+
+    function nextSlide() {
+      currentSlideIdx = (currentSlideIdx + 1) % reelState.slides.length;
+      updateDisplay();
+      if (isPlaying) restartCurrentSlide();
+    }
+
+    function prevSlide() {
+      currentSlideIdx = (currentSlideIdx - 1 + reelState.slides.length) % reelState.slides.length;
+      updateDisplay();
+      if (isPlaying) restartCurrentSlide();
+    }
+
+    function applyKaraokeHighlight(progress, totalWords) {
+      if (!reelState.karaoke || totalWords <= 0) return;
+      const isPaused = !isPlaying;
+      const activeWordIdx = isPaused ? -1 : Math.min(totalWords - 1, Math.floor(progress * totalWords));
+      const hlColor = (reelState.brandColors && reelState.brandColors.accent) || '#facc15';
+
+      const words = document.querySelectorAll('#mobile-content-container .karaoke-word');
+      words.forEach((el) => {
+        const idx = parseInt(el.getAttribute('data-word-idx') || '0', 10);
+        if (isPaused) {
+          el.style.backgroundColor = 'transparent';
+          el.style.color = '#ffffff';
+          el.style.transform = 'none';
+          el.style.padding = '0';
+          el.style.boxShadow = 'none';
+          el.style.fontWeight = '800';
+        } else if (idx === activeWordIdx) {
+          el.style.backgroundColor = hlColor;
+          el.style.color = '#030712';
+          el.style.transform = 'scale(1.12) translateY(-2px)';
+          el.style.padding = '1px 6px';
+          el.style.borderRadius = '6px';
+          el.style.boxShadow = '0 0 16px ' + hlColor + '88';
+          el.style.fontWeight = '900';
+        } else if (idx < activeWordIdx) {
+          el.style.backgroundColor = 'transparent';
+          el.style.color = '#ffffff';
+          el.style.transform = 'none';
+          el.style.padding = '0';
+          el.style.boxShadow = 'none';
+          el.style.fontWeight = '800';
+        } else {
+          el.style.backgroundColor = 'transparent';
+          el.style.color = 'rgba(255, 255, 255, 0.36)';
+          el.style.transform = 'none';
+          el.style.padding = '0';
+          el.style.boxShadow = 'none';
+          el.style.fontWeight = '600';
+        }
+      });
+    }
+
+    function updateDisplay() {
+      const slide = reelState.slides[currentSlideIdx] || reelState.slides[0];
+      if (reelState.brandColors) {
+        themeMaps.brand.bg = "linear-gradient(135deg, " + reelState.brandColors.primary + " 0%, " + reelState.brandColors.secondary + " 100%)";
+        themeMaps.brand.statColor = reelState.brandColors.accent;
+      }
+      const theme = themeMaps[reelState.theme] || themeMaps.brand || themeMaps.gradient;
+      const body = document.getElementById('mobile-player-body');
+      body.style.background = theme.bg;
+
+      document.getElementById('mobile-brand').textContent = reelState.brand;
+      document.getElementById('mobile-handle').textContent = reelState.handle || '@' + reelState.brand.toLowerCase();
+
+      const logoImg = document.getElementById('mobile-logo-img');
+      const avatarDiv = document.getElementById('mobile-avatar');
+      if (reelState.logoUrl) {
+        logoImg.src = reelState.logoUrl;
+        logoImg.classList.remove('hidden');
+        avatarDiv.classList.add('hidden');
+      } else {
+        logoImg.classList.add('hidden');
+        avatarDiv.classList.remove('hidden');
+        avatarDiv.textContent = (reelState.brand || 'TP').slice(0, 2).toUpperCase();
+      }
+
+      const tagEl = document.getElementById('mobile-tag');
+      tagEl.textContent = slide.tag || 'SLIDE ' + (currentSlideIdx + 1);
+      tagEl.style.backgroundColor = theme.tagBg;
+      tagEl.style.borderColor = theme.tagBorder;
+      tagEl.style.color = theme.tagText;
+
+      const headlineEl = document.getElementById('mobile-headline');
+      const bodyEl = document.getElementById('mobile-body');
+
+      if (reelState.karaoke) {
+        const hWords = (slide.headline || '').split(' ').filter(Boolean);
+        const bWords = (slide.body || '').split(' ').filter(Boolean);
+        headlineEl.innerHTML = hWords.map((w, i) => '<span class="karaoke-word transition-all duration-100 inline-block mr-1.5" data-word-idx="' + i + '">' + escapeHtml(w) + '</span>').join('');
+        bodyEl.innerHTML = bWords.map((w, i) => '<span class="karaoke-word transition-all duration-100 inline-block mr-1" data-word-idx="' + (hWords.length + i) + '">' + escapeHtml(w) + '</span>').join('');
+        applyKaraokeHighlight(isPlaying ? 0 : 1.0, hWords.length + bWords.length);
+      } else {
+        headlineEl.textContent = slide.headline;
+        headlineEl.style.color = theme.text;
+        bodyEl.textContent = slide.body;
+        bodyEl.style.color = theme.subtext;
+      }
+
+      const statCard = document.getElementById('mobile-stat-card');
+      const statVal = document.getElementById('mobile-stat');
+      const statLabel = document.getElementById('mobile-stat-label');
+      if (slide.stat) {
+        statCard.classList.remove('hidden');
+        statCard.style.backgroundColor = theme.statBg;
+        statCard.style.borderColor = theme.statBorder;
+        statVal.textContent = slide.stat;
+        statVal.style.color = theme.statColor;
+        statLabel.textContent = slide.statLabel || 'METRIC';
+      } else {
+        statCard.classList.add('hidden');
+      }
+
+      // Screenrecord
+      const recordCard = document.getElementById('mobile-screenrecord-card');
+      const recordVideo = document.getElementById('mobile-screenrecord-video');
+      const backdropVideo = document.getElementById('mobile-backdrop-video');
+      const urlLabel = document.getElementById('mobile-browser-url');
+
+      if (reelState.screenrecordUrl && reelState.screenrecordMode === 'backdrop') {
+        if (recordCard) recordCard.classList.add('hidden');
+        if (backdropVideo) {
+          backdropVideo.src = reelState.screenrecordUrl;
+          backdropVideo.classList.remove('hidden');
+        }
+      } else if (reelState.screenrecordUrl && reelState.screenrecordMode === 'inset') {
+        if (backdropVideo) backdropVideo.classList.add('hidden');
+        if (recordCard && recordVideo) {
+          recordCard.classList.remove('hidden');
+          recordVideo.src = reelState.screenrecordUrl;
+          if (urlLabel && reelState.sourceUrl) {
+            try { urlLabel.textContent = new URL(reelState.sourceUrl).hostname.replace(/^www\\./, ''); } catch {}
+          }
+        }
+      } else {
+        if (recordCard) recordCard.classList.add('hidden');
+        if (backdropVideo) backdropVideo.classList.add('hidden');
+      }
+
+      // CTA Button
+      const ctaBtn = document.getElementById('mobile-cta-btn');
+      const ctaText = document.getElementById('mobile-cta-text');
+      ctaText.textContent = reelState.cta || 'Link i bio';
+      ctaBtn.href = reelState.sourceUrl || '#';
+
+      document.getElementById('mobile-slide-indicator').textContent = (currentSlideIdx + 1) + ' / ' + reelState.slides.length;
+      renderProgressBars();
+    }
+
+    async function shareReel(e) {
+      if (e) e.stopPropagation();
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: reelState.title || reelState.brand,
+            text: reelState.title || reelState.brand + ' Reel',
+            url: window.location.href,
+          });
+        } catch (err) {}
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Link kopieret!');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateDisplay();
+      startPlayback();
+    });
+  </script>
+</body>
+</html>`;
+
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
+  };
+
+  fastify.get('/tools/reel/p/:slug', { schema: { hide: true } }, mobilePlayerHandler);
+  fastify.get('/tools/reel/view', { schema: { hide: true } }, mobilePlayerHandler);
 };

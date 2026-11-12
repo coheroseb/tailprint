@@ -380,6 +380,27 @@ export class RedisService {
       remaining: Math.max(0, maxPerHour - count),
     };
   }
+
+  public async setJson(key: string, value: any, ttlSeconds?: number): Promise<void> {
+    if (ttlSeconds) {
+      await this.client.set(key, value, { ex: ttlSeconds });
+    } else {
+      await this.client.set(key, value);
+    }
+  }
+
+  public async getJson<T = any>(key: string): Promise<T | null> {
+    const val = await this.client.get<T>(key);
+    if (!val) return null;
+    if (typeof val === 'string') {
+      try {
+        return JSON.parse(val) as T;
+      } catch {
+        return val as any;
+      }
+    }
+    return val as T;
+  }
 }
 
 export const redisService = RedisService.getInstance();
