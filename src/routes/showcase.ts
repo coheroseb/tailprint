@@ -1402,7 +1402,7 @@ const { pdfUrl } = await carouselRes.json();
     let currentBlueprint = null;
     let currentBlueprintTab = 'curl';
 
-    const BLUEPRINTS = \${JSON.stringify(BLUEPRINTS)};
+    const BLUEPRINTS = ${JSON.stringify(BLUEPRINTS)};
 
     function openBlueprintModal(caseId) {
       const bp = BLUEPRINTS[caseId];
