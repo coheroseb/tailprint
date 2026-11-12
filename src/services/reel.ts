@@ -1,14 +1,11 @@
-import { spawn, execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import { writeFile, readFile, unlink } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { readFile, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { scraperService } from './scraper.js';
 import { browserService } from './browser.js';
 import { storageService } from './storage.js';
 import { detectPageLanguage, LANGUAGE_PROFILES } from './language.js';
 import { env } from '../config/env.js';
-
-const execFileAsync = promisify(execFile);
 
 export interface ReelSlide {
   tag?: string;
@@ -30,7 +27,6 @@ export interface ReelScript {
   };
   theme: 'brand' | 'cyberpunk' | 'midnight' | 'gradient' | 'sunset' | 'clean';
   layout?: 'classic' | 'split' | 'iphone' | 'editorial';
-  audioMode?: 'voice_beat' | 'beat_only' | 'voice_only' | 'none';
   karaoke?: boolean;
   duration?: number;
   aspectRatio?: '9:16' | '1:1' | '16:9' | '4:5';
@@ -782,74 +778,12 @@ Respond ONLY with valid JSON in this exact structure:
   }
 
   /**
-   * Synthesizes natural spoken TTS MP3 audio in the target language (da, en, de, sv, no, es, fr, nl).
-   */
-  public async generateTtsMp3(text: string, lang = 'da'): Promise<Buffer> {
-    const cleanText = (text || '')
-      .replace(/https?:\/\/\S+/g, '')
-      .replace(/[*_#`~>|]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (!cleanText) {
-      return Buffer.alloc(0);
-    }
-
-    const langMap: Record<string, string> = {
-      da: 'da',
-      en: 'en',
-      de: 'de',
-      sv: 'sv',
-      no: 'no',
-      nb: 'no',
-      es: 'es',
-      fr: 'fr',
-      nl: 'nl',
-    };
-    const tl = langMap[(lang || 'da').toLowerCase().slice(0, 2)] || 'da';
-
-    // Split text into chunks <= 175 chars along sentence or word boundaries
-    const chunks: string[] = [];
-    const words = cleanText.split(' ');
-    let current = '';
-    for (const word of words) {
-      if ((current + ' ' + word).trim().length <= 175) {
-        current = (current + ' ' + word).trim();
-      } else {
-        if (current) chunks.push(current);
-        current = word.slice(0, 175);
-      }
-    }
-    if (current) chunks.push(current);
-
-    const buffers: Buffer[] = [];
-    for (const chunk of chunks) {
-      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(chunk)}`;
-      const res = await fetch(ttsUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (res.ok) {
-        const arr = await res.arrayBuffer();
-        if (arr.byteLength > 0) {
-          buffers.push(Buffer.from(arr));
-        }
-      }
-    }
-
-    return Buffer.concat(buffers);
-  }
-
-  /**
-   * Renders a full H.264 + AAC .MP4 video server-side with AI Voiceover (TTS),
-   * ambient synth chord beat, live screenrecording, Kinetic Karaoke, and 4 layout templates.
+   * Renders a full H.264 .MP4 video server-side with live screenrecording,
+   * Kinetic Karaoke, and 4 layout templates.
    */
   public async renderReelVideoMp4(script: ReelScript): Promise<{
     videoStored: { hostedUrl: string; downloadUrl: string; fileId: string };
     durationSec: number;
-    hasAudio: boolean;
   }> {
     const jobId = randomUUID().replace(/-/g, '').slice(0, 12);
     const tmpFiles: string[] = [];
@@ -857,134 +791,14 @@ Respond ONLY with valid JSON in this exact structure:
       ? script.slides
       : [{ tag: '01', headline: script.title || 'Highlights', body: script.cta || '' }];
 
-    const audioMode = script.audioMode || 'voice_beat';
-    const lang = script.language || 'da';
     const baseSlideDur = Math.max(2, Math.min(10, Number(script.duration) || 3.2));
     const slideDurations: number[] = slides.map(() => baseSlideDur);
 
-    const audioOutPath = `/tmp/reel_${jobId}_audio.m4a`;
     const videoOutPath = `/tmp/reel_${jobId}_out.mp4`;
-    tmpFiles.push(audioOutPath, videoOutPath);
-
-    let hasAudio = false;
+    tmpFiles.push(videoOutPath);
 
     try {
-      // 1. Build Audio Track (AI Voiceover + Ambient Synth Beat)
-      if (audioMode === 'voice_beat' || audioMode === 'voice_only') {
-        const padPaths: string[] = [];
-        let voiceSuccess = true;
-
-        for (let i = 0; i < slides.length; i++) {
-          const s = slides[i];
-          const spokenParts = [
-            s.headline,
-            s.stat ? `${s.stat} ${s.statLabel || ''}`.trim() : '',
-            s.body,
-          ].filter(Boolean);
-          const spokenText = spokenParts.join('. ');
-
-          try {
-            const mp3Buf = await this.generateTtsMp3(spokenText, lang);
-            if (mp3Buf.length < 200) {
-              voiceSuccess = false;
-              break;
-            }
-            const rawMp3Path = `/tmp/reel_${jobId}_s${i}.mp3`;
-            const padWavPath = `/tmp/reel_${jobId}_s${i}_pad.wav`;
-            tmpFiles.push(rawMp3Path, padWavPath);
-            await writeFile(rawMp3Path, mp3Buf);
-
-            // Probe spoken duration via ffprobe
-            const { stdout } = await execFileAsync('ffprobe', [
-              '-v', 'error',
-              '-show_entries', 'format=duration',
-              '-of', 'default=noprint_wrappers=1:nokey=1',
-              rawMp3Path,
-            ]);
-            const probedDur = parseFloat(stdout.trim());
-            const slideDur = !isNaN(probedDur) && probedDur > 0.8
-              ? Math.max(2.6, Math.min(11.0, probedDur + 0.45))
-              : baseSlideDur;
-            slideDurations[i] = slideDur;
-
-            await execFileAsync('ffmpeg', [
-              '-y',
-              '-i', rawMp3Path,
-              '-af', `apad=whole_dur=${slideDur.toFixed(3)}`,
-              '-ar', '44100',
-              '-ac', '2',
-              padWavPath,
-            ]);
-            padPaths.push(padWavPath);
-          } catch (ttsErr) {
-            console.warn('[ReelService] TTS slide generation fallback:', ttsErr);
-            voiceSuccess = false;
-            break;
-          }
-        }
-
-        const totalDur = slideDurations.reduce((acc, d) => acc + d, 0);
-
-        if (voiceSuccess && padPaths.length === slides.length) {
-          const inputs: string[] = [];
-          for (const p of padPaths) {
-            inputs.push('-i', p);
-          }
-          const concatInputs = padPaths.map((_, idx) => `[${idx}:a]`).join('');
-
-          if (audioMode === 'voice_beat') {
-            const beatIdx = padPaths.length;
-            const fadeStart = Math.max(0.5, totalDur - 0.8).toFixed(2);
-            const filterComplex = `${concatInputs}concat=n=${padPaths.length}:v=0:a=1,volume=1.35[voice];[${beatIdx}:a]afade=t=in:st=0:d=0.4,afade=t=out:st=${fadeStart}:d=0.8,volume=0.28[beat];[voice][beat]amix=inputs=2:duration=first:dropout_transition=2[aout]`;
-            await execFileAsync('ffmpeg', [
-              '-y',
-              ...inputs,
-              '-f', 'lavfi',
-              '-i', `aevalsrc=0.12*sin(2*PI*110*t)+0.09*sin(2*PI*164.81*t)+0.07*sin(2*PI*220*t)+0.05*sin(2*PI*277.18*t)*(0.6+0.4*sin(2*PI*2*t)):s=44100:d=${totalDur.toFixed(3)}`,
-              '-filter_complex', filterComplex,
-              '-map', '[aout]',
-              '-c:a', 'aac',
-              '-b:a', '128k',
-              audioOutPath,
-            ]);
-            hasAudio = true;
-          } else {
-            const filterComplex = `${concatInputs}concat=n=${padPaths.length}:v=0:a=1,volume=1.35[aout]`;
-            await execFileAsync('ffmpeg', [
-              '-y',
-              ...inputs,
-              '-filter_complex', filterComplex,
-              '-map', '[aout]',
-              '-c:a', 'aac',
-              '-b:a', '128k',
-              audioOutPath,
-            ]);
-            hasAudio = true;
-          }
-        }
-      }
-
-      // Fallback or 'beat_only': synthesize warm ambient synth chord beat
-      if (!hasAudio && audioMode !== 'none') {
-        const totalDur = slideDurations.reduce((acc, d) => acc + d, 0);
-        const fadeStart = Math.max(0.5, totalDur - 0.8).toFixed(2);
-        try {
-          await execFileAsync('ffmpeg', [
-            '-y',
-            '-f', 'lavfi',
-            '-i', `aevalsrc=0.14*sin(2*PI*110*t)+0.11*sin(2*PI*164.81*t)+0.09*sin(2*PI*220*t)+0.06*sin(2*PI*277.18*t)*(0.55+0.45*sin(2*PI*2.2*t)):s=44100:d=${totalDur.toFixed(3)}`,
-            '-af', `afade=t=in:st=0:d=0.4,afade=t=out:st=${fadeStart}:d=0.8`,
-            '-c:a', 'aac',
-            '-b:a', '128k',
-            audioOutPath,
-          ]);
-          hasAudio = true;
-        } catch (beatErr) {
-          console.warn('[ReelService] Beat synthesis warning:', beatErr);
-        }
-      }
-
-      // 2. Resolve screenrecordUrl to in-memory data URI if hosted locally in storageService
+      // 1. Resolve screenrecordUrl to in-memory data URI if hosted locally in storageService
       let resolvedScreenrecordUrl = script.screenrecordUrl || '';
       if (resolvedScreenrecordUrl) {
         const match = resolvedScreenrecordUrl.match(/\/d\/(f_[a-zA-Z0-9_.-]+)/);
@@ -996,7 +810,7 @@ Respond ONLY with valid JSON in this exact structure:
         }
       }
 
-      // 3. Determine virtual & physical canvas dimensions (2/3 scale for fast HD 720p H.264 encoding)
+      // 2. Determine virtual & physical canvas dimensions (2/3 scale for fast HD 720p H.264 encoding)
       const aspect = script.aspectRatio || '9:16';
       const virtualDims: Record<string, { w: number; h: number; outW: number; outH: number }> = {
         '9:16': { w: 1080, h: 1920, outW: 720, outH: 1280 },
@@ -1007,7 +821,7 @@ Respond ONLY with valid JSON in this exact structure:
       const dim = virtualDims[aspect] || virtualDims['9:16'];
       const totalDurationSec = slideDurations.reduce((a, b) => a + b, 0);
 
-      // 4. Spawn FFmpeg H.264 + AAC encoder receiving piped JPEG frames at 15fps (interpolated to 30fps)
+      // 3. Spawn FFmpeg H.264 encoder receiving piped JPEG frames at 15fps (interpolated to 30fps)
       const renderFps = 15;
       const ffmpegArgs: string[] = [
         '-y',
@@ -1015,21 +829,14 @@ Respond ONLY with valid JSON in this exact structure:
         '-vcodec', 'mjpeg',
         '-framerate', String(renderFps),
         '-i', '-',
-      ];
-      if (hasAudio) {
-        ffmpegArgs.push('-i', audioOutPath);
-      }
-      ffmpegArgs.push(
         '-vf', 'fps=30,format=yuv420p',
         '-c:v', 'libx264',
         '-preset', 'ultrafast',
         '-crf', '21',
-        '-pix_fmt', 'yuv420p'
-      );
-      if (hasAudio) {
-        ffmpegArgs.push('-c:a', 'copy', '-shortest');
-      }
-      ffmpegArgs.push('-movflags', '+faststart', videoOutPath);
+        '-pix_fmt', 'yuv420p',
+        '-movflags', '+faststart',
+        videoOutPath,
+      ];
 
       await browserService.executeTask(async (context) => {
         const page = await context.newPage();
@@ -1677,7 +1484,6 @@ Respond ONLY with valid JSON in this exact structure:
           fileId: stored.fileId,
         },
         durationSec: Number(totalDurationSec.toFixed(1)),
-        hasAudio,
       };
     } finally {
       for (const f of tmpFiles) {

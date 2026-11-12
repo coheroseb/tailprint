@@ -1441,26 +1441,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </div>
           </div>
 
-          <!-- AI Voiceover & Background Beat -->
-          <div class="pt-2 border-t border-slate-800 space-y-2">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="block text-[11px] text-slate-200 font-bold">🎙️ AI Voiceover &amp; Baggrunds-Beat (MP4 Lyd)</label>
-                <p class="text-[10px] text-slate-500">Automatisk dansk/engelsk AI-speak synkroniseret med hvert slide + synth beat</p>
-              </div>
-              <button id="btn-live-preview-audio" onclick="toggleLivePreviewAudio()" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-slate-950 text-slate-300 border border-slate-700 hover:border-rose-500 hover:text-white">
-                <span id="live-audio-icon">🔇</span>
-                <span id="live-audio-label">Hør Live Lyd</span>
-              </button>
-            </div>
-            <div class="flex flex-wrap gap-2 text-xs">
-              <button onclick="setAudioMode('voice_beat')" id="audio-btn-voice_beat" class="px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white border border-rose-400/40">🎙️ AI Voiceover + Beat</button>
-              <button onclick="setAudioMode('beat_only')" id="audio-btn-beat_only" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">🎵 Kun Synth Beat</button>
-              <button onclick="setAudioMode('voice_only')" id="audio-btn-voice_only" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">🗣️ Kun AI Voiceover</button>
-              <button onclick="setAudioMode('none')" id="audio-btn-none" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">🔇 Uden Lyd</button>
-            </div>
-          </div>
-
           <!-- Screenrecord Display Mode -->
           <div class="pt-2 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between">
@@ -1669,13 +1649,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <span id="btn-mobile-live-badge" class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/25 font-black uppercase tracking-wider">Live</span>
           </button>
 
-          <!-- Server-Side H.264 MP4 + AAC AI Voiceover Export -->
+          <!-- Server-Side H.264 MP4 Export -->
           <button
             id="btn-export-video"
             onclick="exportReelVideo()"
             class="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-2"
           >
-            <span id="btn-export-label">🎥 Download 9:16 MP4 Video (H.264 + AI Lyd)</span>
+            <span id="btn-export-label">🎥 Download 9:16 MP4 Video</span>
           </button>
 
           <div class="grid grid-cols-2 gap-2">
@@ -1788,7 +1768,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       },
       theme: "brand",
       layout: "classic",
-      audioMode: "voice_beat",
       language: "en",
       aspectRatio: "9:16",
       screenrecordUrl: null,
@@ -2079,107 +2058,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       });
       updatePreviewDisplay();
       debouncedSyncToMobile();
-    }
-
-    let liveAudioEnabled = false;
-    let currentTtsAudio = null;
-    let webAudioCtx = null;
-    let webAudioGain = null;
-
-    function setAudioMode(mode) {
-      reelState.audioMode = mode;
-      ['voice_beat', 'beat_only', 'voice_only', 'none'].forEach(m => {
-        const btn = document.getElementById('audio-btn-' + m);
-        if (btn) {
-          if (m === mode) {
-            btn.className = 'px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white border border-rose-400/40';
-          } else {
-            btn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800';
-          }
-        }
-      });
-      if (liveAudioEnabled) {
-        playSlideLiveAudio(currentSlideIdx);
-      }
-      debouncedSyncToMobile();
-    }
-
-    function startWebAudioAmbientPad() {
-      try {
-        if (!webAudioCtx) {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          webAudioCtx = new AudioCtx();
-          webAudioGain = webAudioCtx.createGain();
-          webAudioGain.gain.value = 0.04;
-          webAudioGain.connect(webAudioCtx.destination);
-          [110, 164.81, 220, 277.18].forEach((freq) => {
-            const osc = webAudioCtx.createOscillator();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            osc.connect(webAudioGain);
-            osc.start();
-          });
-        }
-        if (webAudioCtx.state === 'suspended') {
-          webAudioCtx.resume();
-        }
-        webAudioGain.gain.setTargetAtTime(0.04, webAudioCtx.currentTime, 0.2);
-      } catch (e) {}
-    }
-
-    function stopWebAudioAmbientPad() {
-      try {
-        if (webAudioGain && webAudioCtx) {
-          webAudioGain.gain.setTargetAtTime(0.0001, webAudioCtx.currentTime, 0.15);
-        }
-      } catch (e) {}
-    }
-
-    function toggleLivePreviewAudio() {
-      liveAudioEnabled = !liveAudioEnabled;
-      const btn = document.getElementById('btn-live-preview-audio');
-      const icon = document.getElementById('live-audio-icon');
-      const label = document.getElementById('live-audio-label');
-      if (liveAudioEnabled) {
-        if (btn) btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-        if (icon) icon.textContent = '🔊';
-        if (label) label.textContent = 'Live Lyd Aktiv';
-        playSlideLiveAudio(currentSlideIdx);
-      } else {
-        if (btn) btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-slate-950 text-slate-300 border border-slate-700 hover:border-rose-500 hover:text-white';
-        if (icon) icon.textContent = '🔇';
-        if (label) label.textContent = 'Hør Live Lyd';
-        if (currentTtsAudio) {
-          try { currentTtsAudio.pause(); } catch (e) {}
-        }
-        stopWebAudioAmbientPad();
-      }
-    }
-
-    function playSlideLiveAudio(slideIdx) {
-      if (!liveAudioEnabled) return;
-      const mode = reelState.audioMode || 'voice_beat';
-      if (mode === 'none') {
-        if (currentTtsAudio) { try { currentTtsAudio.pause(); } catch (e) {} }
-        stopWebAudioAmbientPad();
-        return;
-      }
-      if (mode === 'voice_beat' || mode === 'beat_only') {
-        startWebAudioAmbientPad();
-      } else {
-        stopWebAudioAmbientPad();
-      }
-      if (mode === 'voice_beat' || mode === 'voice_only') {
-        const slide = reelState.slides[slideIdx];
-        if (!slide) return;
-        const text = [slide.headline, slide.stat ? (slide.stat + ' ' + (slide.statLabel || '')) : '', slide.body].filter(Boolean).join('. ');
-        const lang = reelState.language || 'da';
-        if (currentTtsAudio) {
-          try { currentTtsAudio.pause(); } catch (e) {}
-        }
-        currentTtsAudio = new Audio('/v1/tools/reel/tts?lang=' + encodeURIComponent(lang) + '&text=' + encodeURIComponent(text));
-        currentTtsAudio.play().catch(() => {});
-      }
     }
 
     function renderSlidesEditor() {
@@ -2482,8 +2360,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       document.getElementById('icon-play').classList.remove('hidden');
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
-      if (currentTtsAudio) { try { currentTtsAudio.pause(); } catch (e) {} }
-      stopWebAudioAmbientPad();
       if (reelState.karaoke) {
         applyKaraokeHighlight(1.0, 1);
       }
@@ -2500,10 +2376,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     function restartCurrentSlide() {
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
-
-      if (liveAudioEnabled && isPlaying) {
-        playSlideLiveAudio(currentSlideIdx);
-      }
 
       progressStartTime = performance.now();
       const duration = reelState.duration;
@@ -2716,7 +2588,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
 
       const btnExportLabel = document.getElementById('btn-export-label');
-      if (btnExportLabel) btnExportLabel.textContent = '🎥 Download ' + ratio + ' MP4 Video (H.264 + AI Lyd)';
+      if (btnExportLabel) btnExportLabel.textContent = '🎥 Download ' + ratio + ' MP4 Video';
       const btnPdfLabel = document.getElementById('btn-pdf-label');
       if (btnPdfLabel) btnPdfLabel.textContent = '📥 ' + ratio + ' Story PDF';
       const btnPngText = document.getElementById('btn-png-text');
@@ -3964,7 +3836,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         brandColors: body.brandColors || undefined,
         theme: body.theme || 'brand',
         layout: body.layout || 'classic',
-        audioMode: body.audioMode || 'voice_beat',
         karaoke: body.karaoke !== false,
         duration: durationSec,
         aspectRatio: body.aspectRatio || '9:16',
@@ -3984,28 +3855,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         videoUrl: result.videoStored.hostedUrl,
         downloadUrl: result.videoStored.downloadUrl,
         durationSec: result.durationSec,
-        hasAudio: result.hasAudio,
       });
-    }
-  );
-
-  // 6.6 GET /v1/tools/reel/tts (Live Preview AI Voiceover Stream)
-  fastify.get(
-    '/v1/tools/reel/tts',
-    { schema: { hide: true } },
-    async (request: any, reply: any) => {
-      const q = (request.query || {}) as { text?: string; lang?: string };
-      const text = (q.text || '').trim().slice(0, 450);
-      const lang = (q.lang || 'da').trim().slice(0, 5);
-      if (!text) {
-        return reply.code(400).send({ error: 'Missing text' });
-      }
-      const mp3Buffer = await reelService.generateTtsMp3(text, lang);
-      return reply
-        .code(200)
-        .header('Content-Type', 'audio/mpeg')
-        .header('Cache-Control', 'public, max-age=3600')
-        .send(mp3Buffer);
     }
   );
 
@@ -4232,14 +4082,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         </div>
       </div>
 
-      <div class="flex items-center space-x-1.5 flex-shrink-0">
+      <div class="flex items-center space-x-2 flex-shrink-0">
         <span id="mobile-tag" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
           HOOK
         </span>
-        <button id="btn-mobile-audio" onclick="toggleMobileAudio(event)" class="px-2.5 h-9 rounded-full bg-white/10 active:bg-white/25 border border-white/20 flex items-center space-x-1 text-white text-[11px] font-bold transition" title="Slå AI Voiceover & Lyd til/fra">
-          <span id="mobile-audio-icon">🔇</span>
-          <span id="mobile-audio-text">Lyd</span>
-        </button>
         <button onclick="shareReel(event)" class="w-9 h-9 rounded-full bg-white/10 active:bg-white/25 border border-white/20 flex items-center justify-center text-white text-xs transition" title="Del Reel">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
         </button>
@@ -4322,84 +4168,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     let touchStartTime = 0;
     let touchStartX = 0;
     let touchStartY = 0;
-    let mobileAudioEnabled = false;
-    let mobileTtsAudio = null;
-    let mobileAudioCtx = null;
-    let mobileAudioGain = null;
-
-    function startMobileAmbientBeat() {
-      try {
-        if (!mobileAudioCtx) {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          mobileAudioCtx = new AudioCtx();
-          mobileAudioGain = mobileAudioCtx.createGain();
-          mobileAudioGain.gain.value = 0.04;
-          mobileAudioGain.connect(mobileAudioCtx.destination);
-          [110, 164.81, 220, 277.18].forEach((freq) => {
-            const osc = mobileAudioCtx.createOscillator();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            osc.connect(mobileAudioGain);
-            osc.start();
-          });
-        }
-        if (mobileAudioCtx.state === 'suspended') {
-          mobileAudioCtx.resume();
-        }
-        mobileAudioGain.gain.setTargetAtTime(0.04, mobileAudioCtx.currentTime, 0.2);
-      } catch (e) {}
-    }
-
-    function stopMobileAmbientBeat() {
-      try {
-        if (mobileAudioGain && mobileAudioCtx) {
-          mobileAudioGain.gain.setTargetAtTime(0.0001, mobileAudioCtx.currentTime, 0.15);
-        }
-      } catch (e) {}
-    }
-
-    function playMobileSlideAudio(idx) {
-      if (!mobileAudioEnabled) return;
-      const mode = reelState.audioMode || 'voice_beat';
-      if (mode === 'none') {
-        if (mobileTtsAudio) { try { mobileTtsAudio.pause(); } catch (e) {} }
-        stopMobileAmbientBeat();
-        return;
-      }
-      if (mode === 'voice_beat' || mode === 'beat_only') {
-        startMobileAmbientBeat();
-      } else {
-        stopMobileAmbientBeat();
-      }
-      if (mode === 'voice_beat' || mode === 'voice_only') {
-        const s = reelState.slides[idx];
-        if (!s) return;
-        const text = [s.headline, s.stat ? (s.stat + ' ' + (s.statLabel || '')) : '', s.body].filter(Boolean).join('. ');
-        const lang = reelState.language || 'da';
-        if (mobileTtsAudio) {
-          try { mobileTtsAudio.pause(); } catch (e) {}
-        }
-        mobileTtsAudio = new Audio('/v1/tools/reel/tts?lang=' + encodeURIComponent(lang) + '&text=' + encodeURIComponent(text));
-        mobileTtsAudio.play().catch(() => {});
-      }
-    }
-
-    function toggleMobileAudio(e) {
-      if (e) e.stopPropagation();
-      mobileAudioEnabled = !mobileAudioEnabled;
-      const icon = document.getElementById('mobile-audio-icon');
-      const btn = document.getElementById('btn-mobile-audio');
-      if (mobileAudioEnabled) {
-        if (icon) icon.textContent = '🔊';
-        if (btn) btn.classList.add('bg-emerald-500/30', 'border-emerald-400/50');
-        playMobileSlideAudio(currentSlideIdx);
-      } else {
-        if (icon) icon.textContent = '🔇';
-        if (btn) btn.classList.remove('bg-emerald-500/30', 'border-emerald-400/50');
-        if (mobileTtsAudio) { try { mobileTtsAudio.pause(); } catch (e) {} }
-        stopMobileAmbientBeat();
-      }
-    }
 
     async function downloadMobileMp4(e) {
       if (e) e.stopPropagation();
@@ -4652,18 +4420,12 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       isPlaying = false;
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
-      if (mobileTtsAudio) { try { mobileTtsAudio.pause(); } catch (e) {} }
-      stopMobileAmbientBeat();
       applyKaraokeHighlight(1.0, 1);
     }
 
     function restartCurrentSlide() {
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
-
-      if (mobileAudioEnabled && isPlaying) {
-        playMobileSlideAudio(currentSlideIdx);
-      }
 
       progressStartTime = performance.now();
       const duration = reelState.duration || 3500;
