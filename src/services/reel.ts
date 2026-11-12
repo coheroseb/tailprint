@@ -27,7 +27,6 @@ export interface ReelScript {
   };
   theme: 'brand' | 'cyberpunk' | 'midnight' | 'gradient' | 'sunset' | 'clean';
   layout?: 'classic' | 'split' | 'iphone' | 'editorial';
-  karaoke?: boolean;
   duration?: number;
   aspectRatio?: '9:16' | '1:1' | '16:9' | '4:5';
   screenrecordUrl?: string;
@@ -861,7 +860,6 @@ Respond ONLY with valid JSON in this exact structure:
             slides,
             layout: script.layout || 'classic',
             cleanExport: script.cleanExport !== false,
-            karaoke: script.karaoke !== false,
             screenrecordUrl: resolvedScreenrecordUrl,
             screenrecordMode: script.screenrecordMode || (resolvedScreenrecordUrl ? 'inset' : 'none'),
             brandColors: script.brandColors || deriveBrandPalette(),
@@ -969,56 +967,11 @@ Respond ONLY with valid JSON in this exact structure:
             }
 
             function drawKaraokeText(text: string, x: number, startY: number, maxWidth: number, lineHeight: number) {
-              const words = (text || '').trim().split(/\s+/).filter(Boolean);
-              if (words.length === 0) return startY;
-              const activeWordIdx = st.karaoke !== false
-                ? Math.min(words.length - 1, Math.floor(slideProgress * words.length * 1.12))
-                : words.length;
-              const spaceW = ctx.measureText(' ').width;
-              const lines: { word: string; index: number; width: number }[][] = [];
-              let currentLine: { word: string; index: number; width: number }[] = [];
-              let currentW = 0;
-
-              words.forEach((w, idx) => {
-                const wWidth = ctx.measureText(w).width;
-                if (currentLine.length > 0 && currentW + spaceW + wWidth > maxWidth) {
-                  lines.push(currentLine);
-                  currentLine = [{ word: w, index: idx, width: wWidth }];
-                  currentW = wWidth;
-                } else {
-                  if (currentLine.length > 0) currentW += spaceW;
-                  currentLine.push({ word: w, index: idx, width: wWidth });
-                  currentW += wWidth;
-                }
-              });
-              if (currentLine.length > 0) lines.push(currentLine);
-
+              const lines = wrapLines(text || '', maxWidth);
+              ctx.fillStyle = t.sub;
               let curY = startY;
               lines.forEach((line) => {
-                let curX = x;
-                line.forEach((item) => {
-                  const isCurrent = st.karaoke !== false && item.index === activeWordIdx;
-                  const isPast = st.karaoke === false || item.index < activeWordIdx;
-                  if (isCurrent) {
-                    ctx.save();
-                    ctx.fillStyle = t.accent;
-                    roundRect(curX - 8, curY - lineHeight * 0.72, item.width + 16, lineHeight * 0.92, 12);
-                    ctx.fill();
-                    ctx.fillStyle = '#090d16';
-                    ctx.fillText(item.word, curX, curY);
-                    ctx.restore();
-                  } else if (isPast) {
-                    ctx.fillStyle = t.text;
-                    ctx.fillText(item.word, curX, curY);
-                  } else {
-                    ctx.save();
-                    ctx.globalAlpha = 0.45;
-                    ctx.fillStyle = t.sub;
-                    ctx.fillText(item.word, curX, curY);
-                    ctx.restore();
-                  }
-                  curX += item.width + spaceW;
-                });
+                ctx.fillText(line, x, curY);
                 curY += lineHeight;
               });
               return curY;
