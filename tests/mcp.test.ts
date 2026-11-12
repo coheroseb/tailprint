@@ -52,7 +52,8 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('generate_social_card');
     expect(toolNames).toContain('extract_tables_from_url');
     expect(toolNames).toContain('audit_webpage');
-    expect(toolNames.length).toBe(22);
+    expect(toolNames).toContain('convert_logo_for_canva');
+    expect(toolNames.length).toBe(23);
 
     await client.close();
     await server.close();

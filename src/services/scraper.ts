@@ -49,7 +49,7 @@ export class ScraperService {
   }
 
   public async scrapeUrl(params: ScrapeMarkdownRequest): Promise<Omit<ScrapeMarkdownResponse, 'cached'>> {
-    const timeout = params.timeout_ms || env.RENDER_TIMEOUT_MS;
+    const timeout = params.timeout_ms || 20000;
 
     // Use browserService concurrency pool and singleton browser
     const rawData = await (browserService as any).executeWithTimeout(
@@ -82,7 +82,9 @@ export class ScraperService {
 
         return { finalUrl, html, statusCode };
       },
-      { width: 1280, height: 800 }
+      { width: 1280, height: 800 },
+      false,
+      timeout
     );
 
     return this.cleanHtmlToMarkdown({
