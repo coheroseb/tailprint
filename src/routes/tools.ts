@@ -1430,6 +1430,21 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <span>Slide Duration: <strong id="duration-label" class="text-white">3.0s</strong></span>
             <input id="slide-duration" type="range" min="2000" max="6000" step="500" value="3000" class="w-48 accent-rose-500" oninput="updateDuration(this.value)" />
           </div>
+
+          <!-- Kinetic Karaoke Captions Toggle -->
+          <div class="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800">
+            <div class="flex items-center space-x-2">
+              <span class="text-base">🔥</span>
+              <div>
+                <span class="font-bold text-slate-200">Kinetic Karaoke Captions</span>
+                <p class="text-[10px] text-slate-500">Word-by-word bouncing highlight for viral video retention</p>
+              </div>
+            </div>
+            <button id="karaoke-toggle-btn" onclick="toggleKaraoke()" class="px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30">
+              <span id="karaoke-toggle-icon">●</span>
+              <span id="karaoke-toggle-status">Active 🔥</span>
+            </button>
+          </div>
         </div>
 
         <!-- Slides List Editor -->
@@ -1509,9 +1524,14 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                     <div id="preview-handle" class="text-[10px] text-slate-400 font-mono mt-0.5">@tailprint</div>
                   </div>
                 </div>
-                <span id="preview-tag" class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
-                  HOOK
-                </span>
+                <div class="flex items-center space-x-1.5">
+                  <span id="preview-karaoke-badge" class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                    🔥 KARAOKE
+                  </span>
+                  <span id="preview-tag" class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
+                    HOOK
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1658,6 +1678,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       aspectRatio: "9:16",
       screenrecordUrl: null,
       screenrecordMode: "inset",
+      karaoke: true,
       sourceUrl: "https://tailprint.com",
       cta: "Follow for daily insights • Link in bio",
       duration: 3000,
@@ -1789,6 +1810,73 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     function updateScriptCta() {
       reelState.cta = document.getElementById('reel-cta').value || 'Link in bio';
       updatePreviewDisplay();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function toggleKaraoke() {
+      reelState.karaoke = !reelState.karaoke;
+      const btn = document.getElementById('karaoke-toggle-btn');
+      const status = document.getElementById('karaoke-toggle-status');
+      if (btn && status) {
+        if (reelState.karaoke) {
+          btn.className = 'px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30';
+          status.textContent = 'Active 🔥';
+        } else {
+          btn.className = 'px-3 py-1 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 bg-slate-950 text-slate-400 border border-slate-800 hover:text-white';
+          status.textContent = 'Off';
+        }
+      }
+      updatePreviewDisplay();
+    }
+
+    function applyKaraokeHighlight(progress, totalWords) {
+      if (!reelState.karaoke || totalWords <= 0) return;
+      const isPaused = !isPlaying;
+      const activeWordIdx = isPaused ? -1 : Math.min(totalWords - 1, Math.floor(progress * totalWords));
+      const hlColor = (reelState.brandColors && reelState.brandColors.accent) || '#facc15';
+
+      const words = document.querySelectorAll('#preview-content-container .karaoke-word');
+      words.forEach((el) => {
+        const idx = parseInt(el.getAttribute('data-word-idx') || '0', 10);
+        if (isPaused) {
+          el.style.backgroundColor = 'transparent';
+          el.style.color = '#ffffff';
+          el.style.transform = 'none';
+          el.style.padding = '0';
+          el.style.boxShadow = 'none';
+          el.style.fontWeight = '800';
+        } else if (idx === activeWordIdx) {
+          el.style.backgroundColor = hlColor;
+          el.style.color = '#030712';
+          el.style.transform = 'scale(1.12) translateY(-2px)';
+          el.style.padding = '1px 6px';
+          el.style.borderRadius = '6px';
+          el.style.boxShadow = '0 0 16px ' + hlColor + '88';
+          el.style.fontWeight = '900';
+        } else if (idx < activeWordIdx) {
+          el.style.backgroundColor = 'transparent';
+          el.style.color = '#ffffff';
+          el.style.transform = 'none';
+          el.style.padding = '0';
+          el.style.boxShadow = 'none';
+          el.style.fontWeight = '800';
+        } else {
+          el.style.backgroundColor = 'transparent';
+          el.style.color = 'rgba(255, 255, 255, 0.36)';
+          el.style.transform = 'none';
+          el.style.padding = '0';
+          el.style.boxShadow = 'none';
+          el.style.fontWeight = '600';
+        }
+      });
     }
 
     function updateDuration(val) {
@@ -1924,21 +2012,38 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
       }
 
-      // Tag
+      // Tag & Karaoke Badge
       const tagEl = document.getElementById('preview-tag');
       tagEl.textContent = slide.tag || 'SLIDE ' + (currentSlideIdx + 1);
       tagEl.style.backgroundColor = theme.tagBg;
       tagEl.style.borderColor = theme.tagBorder;
       tagEl.style.color = theme.tagText;
 
-      // Headline & Body
-      const headlineEl = document.getElementById('preview-headline');
-      headlineEl.textContent = slide.headline;
-      headlineEl.style.color = theme.text;
+      const kBadge = document.getElementById('preview-karaoke-badge');
+      if (kBadge) {
+        if (reelState.karaoke) {
+          kBadge.classList.remove('hidden');
+        } else {
+          kBadge.classList.add('hidden');
+        }
+      }
 
+      // Headline & Body with Kinetic Karaoke support
+      const headlineEl = document.getElementById('preview-headline');
       const bodyEl = document.getElementById('preview-body');
-      bodyEl.textContent = slide.body;
-      bodyEl.style.color = theme.subtext;
+
+      if (reelState.karaoke) {
+        const hWords = (slide.headline || '').split(/\s+/).filter(Boolean);
+        const bWords = (slide.body || '').split(/\s+/).filter(Boolean);
+        headlineEl.innerHTML = hWords.map((w, i) => '<span class="karaoke-word transition-all duration-100 inline-block mr-1.5" data-word-idx="' + i + '">' + escapeHtml(w) + '</span>').join('');
+        bodyEl.innerHTML = bWords.map((w, i) => '<span class="karaoke-word transition-all duration-100 inline-block mr-1" data-word-idx="' + (hWords.length + i) + '">' + escapeHtml(w) + '</span>').join('');
+        applyKaraokeHighlight(isPlaying ? 0 : 1.0, hWords.length + bWords.length);
+      } else {
+        headlineEl.textContent = slide.headline;
+        headlineEl.style.color = theme.text;
+        bodyEl.textContent = slide.body;
+        bodyEl.style.color = theme.subtext;
+      }
 
       // Stat card
       const statCard = document.getElementById('preview-stat-card');
@@ -2056,6 +2161,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       document.getElementById('icon-play').classList.remove('hidden');
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+      if (reelState.karaoke) {
+        applyKaraokeHighlight(1.0, 1);
+      }
     }
 
     function togglePlayPause() {
@@ -2076,11 +2184,23 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       function updateBar(now) {
         if (!isPlaying) return;
         const elapsed = now - progressStartTime;
-        const pct = Math.min(100, (elapsed / duration) * 100);
+        const progress = Math.min(1.0, elapsed / duration);
+        const pct = Math.min(100, progress * 100);
         const fillEl = document.getElementById('progress-fill-' + currentSlideIdx);
         if (fillEl) {
           fillEl.style.width = pct + '%';
         }
+
+        // Kinetic karaoke word highlight in phone player
+        if (reelState.karaoke) {
+          const slide = reelState.slides[currentSlideIdx];
+          if (slide) {
+            const hCount = (slide.headline || '').split(/\s+/).filter(Boolean).length;
+            const bCount = (slide.body || '').split(/\s+/).filter(Boolean).length;
+            applyKaraokeHighlight(progress, hCount + bCount);
+          }
+        }
+
         if (elapsed < duration) {
           progressAnimFrame = requestAnimationFrame(updateBar);
         }
@@ -2506,12 +2626,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       ctx.fillText(tagText, W - barMargin - tagWidth / 2, headerY + 43);
 
       // 4. Content Area adapted to Aspect Ratio
+      const hWords = (slide.headline || '').split(/\s+/).filter(Boolean).length;
+      const bWords = (slide.body || '').split(/\s+/).filter(Boolean).length;
+      const totalW = hWords + bWords;
+
       if (aspect === '16:9') {
         // 2-Column Wide Cinematic Layout
         ctx.textAlign = 'left';
         ctx.font = '900 58px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.text;
-        wrapText(ctx, slide.headline, barMargin, 290, 820, 74);
+        drawKaraokeText(ctx, slide.headline, barMargin, 290, 820, 74, 0, totalW, slideProgress, theme, reelState.karaoke);
 
         if (slide.stat) {
           ctx.fillStyle = theme.statBg;
@@ -2528,15 +2651,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
         // Right Column Body Text
         ctx.font = '500 36px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.subtext;
-        wrapText(ctx, slide.body, W / 2 + 30, 310, W / 2 - barMargin - 40, 58);
+        drawKaraokeText(ctx, slide.body, W / 2 + 30, 310, W / 2 - barMargin - 40, 58, hWords, totalW, slideProgress, theme, reelState.karaoke);
 
       } else if (aspect === '1:1') {
         // Square Post Layout
         ctx.textAlign = 'left';
         ctx.font = '900 52px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.text;
-        wrapText(ctx, slide.headline, barMargin, 270, W - (barMargin * 2), 68);
+        drawKaraokeText(ctx, slide.headline, barMargin, 270, W - (barMargin * 2), 68, 0, totalW, slideProgress, theme, reelState.karaoke);
 
         let bodyY = 460;
         if (slide.stat) {
@@ -2555,15 +2676,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
 
         ctx.font = '500 32px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.subtext;
-        wrapText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 50);
+        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 50, hWords, totalW, slideProgress, theme, reelState.karaoke);
 
       } else if (aspect === '4:5') {
         // 4:5 Feed Portrait Layout
         ctx.textAlign = 'left';
         ctx.font = '900 58px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.text;
-        wrapText(ctx, slide.headline, barMargin, 320, W - (barMargin * 2), 76);
+        drawKaraokeText(ctx, slide.headline, barMargin, 320, W - (barMargin * 2), 76, 0, totalW, slideProgress, theme, reelState.karaoke);
 
         let bodyY = 540;
         if (slide.stat) {
@@ -2582,15 +2701,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
 
         ctx.font = '500 34px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.subtext;
-        wrapText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 54);
+        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 54, hWords, totalW, slideProgress, theme, reelState.karaoke);
 
       } else {
         // 9:16 Full Vertical Reel
         ctx.textAlign = 'left';
         ctx.font = '900 68px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.text;
-        wrapText(ctx, slide.headline, barMargin, 480, W - (barMargin * 2), 88);
+        drawKaraokeText(ctx, slide.headline, barMargin, 480, W - (barMargin * 2), 88, 0, totalW, slideProgress, theme, reelState.karaoke);
 
         let bodyY = 820;
         if (slide.stat) {
@@ -2609,8 +2726,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
 
         ctx.font = '500 38px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.subtext;
-        wrapText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 60);
+        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 60, hWords, totalW, slideProgress, theme, reelState.karaoke);
       }
 
       // 5. Footer CTA
@@ -2636,6 +2752,74 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       ctx.font = 'bold 26px monospace';
       ctx.fillStyle = theme.subtext;
       ctx.fillText((slideIdx + 1) + ' / ' + totalSlides, W - barMargin, footerY + 10);
+    }
+
+    // Canvas drawKaraokeText helper with word-by-word kinetic highlight pill
+    function drawKaraokeText(ctx, text, startX, startY, maxWidth, lineHeight, wordOffset, totalWords, slideProgress, theme, enabled) {
+      if (!text) return { endY: startY, wordCount: 0 };
+      const words = text.split(/\s+/).filter(Boolean);
+      if (words.length === 0) return { endY: startY, wordCount: 0 };
+
+      const fontMatch = ctx.font.match(/(\d+)px/);
+      const fontSize = fontMatch ? parseInt(fontMatch[1], 10) : 40;
+      const isKaraokeActive = !!enabled && totalWords > 0 && slideProgress < 1.0;
+      const activeGlobalIdx = isKaraokeActive ? Math.min(totalWords - 1, Math.floor(slideProgress * totalWords)) : -1;
+      const hlColor = (reelState.brandColors && reelState.brandColors.accent) || theme.statColor || '#facc15';
+
+      let curX = startX;
+      let curY = startY;
+      const spaceWidth = ctx.measureText(' ').width;
+
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const wordWidth = ctx.measureText(word).width;
+        const globalIdx = wordOffset + i;
+
+        // Line wrap check
+        if (curX + wordWidth > startX + maxWidth && curX > startX) {
+          curX = startX;
+          curY += lineHeight;
+        }
+
+        if (!isKaraokeActive) {
+          ctx.fillStyle = theme.text || '#ffffff';
+          ctx.fillText(word, curX, curY);
+        } else if (globalIdx === activeGlobalIdx) {
+          // Bouncing Highlight Pill behind the active word!
+          ctx.save();
+          const padX = Math.round(fontSize * 0.16);
+          const padY = Math.round(fontSize * 0.12);
+          const pillH = fontSize + padY * 2;
+          const bounceOffset = 4; // 4px upward kinetic bounce
+          const pillY = curY - fontSize + Math.round(fontSize * 0.14) - bounceOffset;
+
+          // Glowing shadow
+          ctx.shadowColor = hlColor;
+          ctx.shadowBlur = 18;
+          ctx.fillStyle = hlColor;
+          roundRect(ctx, curX - padX, pillY, wordWidth + padX * 2, pillH, Math.round(pillH * 0.28), true, false);
+          ctx.restore();
+
+          // High-contrast dark ink on top of the glowing pill
+          ctx.save();
+          ctx.fillStyle = '#030712';
+          ctx.font = '900 ' + fontSize + 'px system-ui, -apple-system, sans-serif';
+          ctx.fillText(word, curX, curY - bounceOffset);
+          ctx.restore();
+        } else if (globalIdx < activeGlobalIdx) {
+          // Past words: high-contrast white / theme text
+          ctx.fillStyle = theme.text || '#ffffff';
+          ctx.fillText(word, curX, curY);
+        } else {
+          // Future words: soft translucent for kinetic rhythm
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
+          ctx.fillText(word, curX, curY);
+        }
+
+        curX += wordWidth + spaceWidth;
+      }
+
+      return { endY: curY + lineHeight, wordCount: words.length };
     }
 
     // Canvas roundRect helper
