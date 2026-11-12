@@ -2547,6 +2547,12 @@ This domain is for use in documentation examples without needing permission. Thi
     };
 
     window.startCheckout = async function(planId) {
+      if (planId === 'free') {
+        if (typeof window.openFreeKeyModal === 'function') {
+          window.openFreeKeyModal();
+        }
+        return;
+      }
       try {
         const res = await fetch('/v1/billing/checkout', {
           method: 'POST',

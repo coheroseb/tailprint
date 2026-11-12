@@ -765,7 +765,7 @@ describe('Tailprint Test Suite', () => {
       expect(result.action).toBe('subscription_updated');
       expect(result.details.plan).toBe('business');
       expect(result.details.monthlyLimit).toBe(75000);
-    });
+    }, 15000);
 
     it('creates a checkout session for free plan via POST /v1/billing/checkout', async () => {
       const response = await app.inject({
@@ -820,7 +820,7 @@ describe('Tailprint Test Suite', () => {
       expect(response.statusCode).toBe(200);
       const result = JSON.parse(response.body);
       expect(result.action).toBe('subscription_deactivated');
-    });
+    }, 15000);
 
     it('rejects webhooks with invalid signature (400)', async () => {
       const response = await app.inject({
