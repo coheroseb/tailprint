@@ -8,6 +8,7 @@ import { browserService } from '../services/browser.js';
 import { stripeService } from '../services/stripe.js';
 import { env } from '../config/env.js';
 import { renderGlobalNavbar } from '../components/navbar.js';
+import { GUIDE_ARTICLES } from './guides.js';
 
 export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // GET /templates - Return JSON catalog of templates
@@ -339,6 +340,60 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
       .header('Cache-Control', 'public, max-age=3600')
       .send(sitemap);
   });
+
+  // GET /rss.xml & /feed.xml - RSS 2.0 Feed for Automations (Make.com, Zapier, Feedly)
+  const serveRssFeed = async (_request: any, reply: any) => {
+    const articles = Object.values(GUIDE_ARTICLES).sort(
+      (a, b) => new Date(b.datePublished).getTime() - new Date(a.datePublished).getTime()
+    );
+
+    const escapeXml = (unsafe: string) =>
+      unsafe.replace(/[<>&'"]/g, (c) => {
+        switch (c) {
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '&': return '&amp;';
+          case '\'': return '&apos;';
+          case '"': return '&quot;';
+          default: return c;
+        }
+      });
+
+    const itemsXml = articles
+      .map(
+        (article) => `    <item>
+      <title>${escapeXml(article.title)}</title>
+      <link>https://tailprint.com/guides/${article.slug}</link>
+      <guid isPermaLink="true">https://tailprint.com/guides/${article.slug}</guid>
+      <pubDate>${new Date(article.datePublished).toUTCString()}</pubDate>
+      <description><![CDATA[${article.description}]]></description>
+      <category>${escapeXml(article.category)}</category>
+    </item>`
+      )
+      .join('\n');
+
+    const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tailprint Technical Guides &amp; Articles</title>
+    <link>https://tailprint.com/guides</link>
+    <description>In-depth technical guides on converting Tailwind HTML to PDF, EU Factur-X e-invoicing, AI social reels, and Model Context Protocol (MCP).</description>
+    <language>en</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="https://tailprint.com/rss.xml" rel="self" type="application/rss+xml"/>
+${itemsXml}
+  </channel>
+</rss>`;
+
+    return reply
+      .header('Content-Type', 'application/rss+xml; charset=utf-8')
+      .header('Cache-Control', 'public, max-age=1800, stale-while-revalidate=86400')
+      .send(rssXml);
+  };
+
+  fastify.get('/rss.xml', { schema: { hide: true } }, serveRssFeed);
+  fastify.get('/feed.xml', { schema: { hide: true } }, serveRssFeed);
+  fastify.get('/guides/rss.xml', { schema: { hide: true } }, serveRssFeed);
 
   // GET /llms.txt - Generative Engine Optimization standard for AI (llmstxt.org)
   fastify.get('/llms.txt', { schema: { hide: true } }, async (_request, reply) => {

@@ -367,6 +367,20 @@ describe('Tailprint Test Suite', () => {
       expect(data.previewUrl).toBeDefined();
     }, 20000);
 
+    it('GET /rss.xml serves valid RSS 2.0 feed with guide articles for Make.com', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/rss.xml',
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('application/rss+xml');
+      expect(response.body).toContain('<rss version="2.0"');
+      expect(response.body).toContain('<channel>');
+      expect(response.body).toContain('https://tailprint.com/guides/tailwind-html-to-pdf-nextjs');
+      expect(response.body).toContain('https://tailprint.com/guides/factur-x-zugferd-pdf-api');
+    });
+
     it('GET /guides renders the developer guides knowledge hub', async () => {
       const response = await app.inject({
         method: 'GET',

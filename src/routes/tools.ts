@@ -3529,6 +3529,103 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     }
   );
 
+  // 6.6 POST /v1/tools/reel/from-url (All-in-One Automation Endpoint for Make.com, Zapier & Instagram Reels)
+  fastify.post(
+    '/v1/tools/reel/from-url',
+    {
+      schema: {
+        tags: ['Tools'],
+        summary: 'Generate 9:16 Video Reel & Instagram Caption Directly from Article URL',
+        description:
+          'Scrapes the given URL, extracts key insights, captures live screen recording, renders a high-res 1080x1920 MP4 video, and formats an Instagram-ready caption.',
+        body: z.object({
+          url: z.string().url().describe('Article or page URL to transform into an Instagram Reel'),
+          theme: z.enum(['brand', 'cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).optional().default('brand'),
+          layout: z.enum(['classic', 'split', 'iphone', 'editorial']).optional().default('classic'),
+          aspectRatio: z.enum(['9:16', '1:1', '16:9', '4:5']).optional().default('9:16'),
+          duration: z.coerce.number().optional().default(15),
+          record_video: z.boolean().optional().default(true),
+          brand: z.string().optional(),
+          handle: z.string().optional(),
+        }),
+      },
+    },
+    async (request: any, reply: any) => {
+      const clientIp = request.ip || 'anonymous';
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'AI video generation limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
+        });
+      }
+
+      const body = (request.body || {}) as any;
+      const targetUrl = body.url;
+
+      // 1. Synthesize script and live screen recording from URL
+      const script = await reelService.generateScriptFromUrl(targetUrl, body.record_video !== false);
+
+      // 2. Apply any custom overrides
+      if (body.theme) script.theme = body.theme;
+      if (body.layout) script.layout = body.layout;
+      if (body.aspectRatio) script.aspectRatio = body.aspectRatio;
+      if (body.brand) script.brand = body.brand;
+      if (body.handle) script.handle = body.handle;
+
+      const rawDur = Number(body.duration) || 15;
+      const durationSec = rawDur > 50 ? rawDur / 1000 : rawDur;
+      script.duration = durationSec;
+
+      // 3. Render video MP4 & PDF story deck in parallel
+      const [videoResult, deckResult] = await Promise.all([
+        reelService.renderReelVideoMp4(script),
+        reelService.renderReelDeck(script).catch(() => null),
+      ]);
+
+      // 4. Construct Instagram-ready formatted caption with hashtags
+      const captionLines: string[] = [
+        `🚀 ${script.title}`,
+        '',
+      ];
+
+      if (Array.isArray(script.slides)) {
+        script.slides.slice(0, 4).forEach((s, idx) => {
+          const tag = s.tag ? `[${s.tag}] ` : '';
+          captionLines.push(`${idx + 1}. ${tag}${s.headline}`);
+          if (s.body) captionLines.push(`   ${s.body}`);
+        });
+        captionLines.push('');
+      }
+
+      captionLines.push(`👉 ${script.cta || 'Link in bio for full article & code!'}`);
+      captionLines.push('');
+      captionLines.push(`🔗 ${targetUrl}`);
+      captionLines.push('');
+      captionLines.push('#webdev #tailwindcss #programming #fullstack #saas #automation #coding #frontend #reels');
+
+      const caption = captionLines.join('\n');
+
+      return reply.code(200).send({
+        success: true,
+        videoUrl: videoResult.videoStored.hostedUrl,
+        downloadUrl: videoResult.videoStored.downloadUrl,
+        durationSec: videoResult.durationSec,
+        caption,
+        title: script.title,
+        brand: script.brand,
+        pdfUrl: deckResult?.pdfStored?.hostedUrl,
+        previewUrl: deckResult?.previewStored?.hostedUrl,
+        slidesCount: script.slides?.length || 0,
+        script,
+      });
+    }
+  );
+
   // 7. POST /v1/tools/reel/share (Generates Mobile QR & Shareable Preview Link)
   fastify.post(
     '/v1/tools/reel/share',
