@@ -1060,7 +1060,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     </div>
 
     <!-- Controls -->
-    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-6">
+    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
         <div class="sm:col-span-6">
           <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Website URL</label>
@@ -1074,6 +1074,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           <button id="btn-gen-mockup" onclick="generateMockup()" class="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition shadow-lg shadow-amber-600/30 flex items-center justify-center space-x-1.5">
             <span>⚡ Generate Mockup</span>
           </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs border-t border-slate-800/60 pt-3 text-slate-400">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="font-semibold text-slate-300">Clean Capture:</span>
+          <span>Automatic Cookie Banner &amp; GDPR Popup Removal Enabled</span>
+        </div>
+        <div class="text-[11px] font-mono text-slate-500">
+          Desktop (1280×800) + iPhone (390×844)
         </div>
       </div>
     </div>

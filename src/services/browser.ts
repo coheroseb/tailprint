@@ -117,7 +117,36 @@ export class BrowserService {
     }
   }
 
-  private setupSsrfProtection(page: Page): void {
+  private isConsentOrTrackerUrl(url: string): boolean {
+    const lower = url.toLowerCase();
+    const blockedPatterns = [
+      'cookiebot.com',
+      'onetrust.com',
+      'optanon.com',
+      'cookieyes.com',
+      'termly.io',
+      'usercentrics.eu',
+      'trustarc.com',
+      'complianz.io',
+      'iubenda.com',
+      'quantcast.mgr.consensu.org',
+      'consentmanager.net',
+      'osano.com',
+      'klaro.org',
+      'axeptio.eu',
+      'didomi.io',
+      'intercom.io',
+      'client.crisp.chat',
+      'drift.com',
+      'js.hs-scripts.com',
+      'widget.intercom.io',
+      'freshchat.com',
+      'embed.tawk.to',
+    ];
+    return blockedPatterns.some((pattern) => lower.includes(pattern));
+  }
+
+  private setupSsrfProtection(page: Page, blockPopups = false): void {
     page.route('**/*', async (route) => {
       const request = route.request();
       const url = request.url();
@@ -127,8 +156,138 @@ export class BrowserService {
         return;
       }
 
+      if (blockPopups && this.isConsentOrTrackerUrl(url)) {
+        await route.abort('blockedbyclient');
+        return;
+      }
+
       await route.continue();
     });
+  }
+
+  public async suppressPopupsAndBanners(page: Page): Promise<void> {
+    // 1. Hide known cookie & popup selectors via aggressive CSS
+    await page
+      .addStyleTag({
+        content: `
+        #CybotCookiebotDialog,
+        #CybotCookiebotDialogBodyUnderlay,
+        #onetrust-consent-sdk,
+        .onetrust-pc-dark-filter,
+        #onetrust-banner-sdk,
+        #sp-message-container,
+        .qc-cmp2-container,
+        .cky-consent-container,
+        .cky-overlay,
+        #usercentrics-root,
+        #iubenda-cs-banner,
+        .osano-cm-window,
+        .osano-cm-dialog,
+        .termly-cookie-dialog,
+        .klaro,
+        #complianz,
+        .cookie-banner,
+        .cookie-notice,
+        .cookie-alert,
+        .cookie-consent,
+        .cookie-popup,
+        .cookies-eu,
+        .gdpr-banner,
+        .gdpr-modal,
+        [id*="cookie" i],
+        [class*="cookie" i]:not(body):not(html):not(main):not(#root):not(#app),
+        [id*="consent" i],
+        [class*="consent" i]:not(body):not(html):not(main):not(#root):not(#app),
+        [aria-label*="cookie" i],
+        [aria-label*="consent" i],
+        [aria-label*="samtykke" i],
+        [aria-label*="privatliv" i],
+        iframe[title*="chat" i],
+        iframe[id*="crisp" i],
+        #crisp-chatbox,
+        #hubspot-messages-iframe-container,
+        #intercom-container {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          height: 0 !important;
+          width: 0 !important;
+          clip: rect(0, 0, 0, 0) !important;
+        }
+
+        html, body {
+          overflow: auto !important;
+          position: static !important;
+        }
+      `,
+      })
+      .catch(() => {});
+
+    // 2. Intelligent DOM traversal & removal of fixed/sticky overlays with consent text
+    await page
+      .evaluate(() => {
+        try {
+          const keywords = [
+            'cookie',
+            'cookies',
+            'samtykke',
+            'sporing',
+            'privatliv',
+            'gdpr',
+            'consent',
+            'privacy',
+            'akzeptieren',
+            'accepter',
+            'forstået',
+            'nødvendige',
+            'we use cookies',
+            'denne side bruger cookies',
+            'tilpas cookies',
+            'kun det nødvendige',
+          ];
+
+          const all = Array.from(document.querySelectorAll('body *'));
+          for (const el of all) {
+            if (!el || !el.isConnected) continue;
+
+            const role = el.getAttribute('role');
+            const isDialog = role === 'dialog' || el.getAttribute('aria-modal') === 'true';
+
+            const style = window.getComputedStyle(el);
+            const isFixed = style.position === 'fixed' || style.position === 'sticky';
+            const zIndex = parseInt(style.zIndex, 10);
+            const hasHighZ = !isNaN(zIndex) && zIndex >= 10;
+
+            if (isFixed || isDialog || hasHighZ) {
+              const text = (el.textContent || '').toLowerCase();
+              const hasKeyword = keywords.some((k) => text.includes(k));
+              const rect = el.getBoundingClientRect();
+
+              // Element has consent keywords and takes up space
+              if (hasKeyword && rect.height > 20 && rect.width > 80) {
+                el.remove();
+                continue;
+              }
+
+              // Modal backdrop overlay (covers viewport with semi-transparent background)
+              if (
+                isFixed &&
+                rect.width >= window.innerWidth * 0.8 &&
+                rect.height >= window.innerHeight * 0.8 &&
+                (style.backgroundColor.includes('rgba') || parseFloat(style.opacity) < 1)
+              ) {
+                el.remove();
+              }
+            }
+          }
+
+          // Restore scrollability on body & documentElement
+          document.body.style.overflow = 'auto';
+          document.documentElement.style.overflow = 'auto';
+        } catch {}
+      })
+      .catch(() => {});
   }
 
   private prepareHtmlWithTailwind(rawHtml: string): string {
@@ -167,7 +326,8 @@ export class BrowserService {
 
   private async executeWithTimeout<T>(
     task: (context: BrowserContext, page: Page) => Promise<T>,
-    viewport = { width: 1200, height: 630 }
+    viewport = { width: 1200, height: 630 },
+    blockPopups = false
   ): Promise<T> {
     await this.init();
     if (!this.browser) {
@@ -196,7 +356,35 @@ export class BrowserService {
           page.setDefaultTimeout(env.RENDER_TIMEOUT_MS);
           page.setDefaultNavigationTimeout(env.RENDER_TIMEOUT_MS);
 
-          this.setupSsrfProtection(page);
+          this.setupSsrfProtection(page, blockPopups);
+
+          if (blockPopups) {
+            await page
+              .addInitScript(() => {
+                try {
+                  const acceptedKeys = [
+                    'cookieconsent_status',
+                    'cookie-consent',
+                    'CookieConsent',
+                    'cookies_accepted',
+                    'consent',
+                    'gdpr_consent',
+                    'cookies-accepted',
+                    'cookie_consent_level',
+                    'has_consented',
+                  ];
+                  for (const k of acceptedKeys) {
+                    localStorage.setItem(k, 'dismiss');
+                    localStorage.setItem(k, 'true');
+                    localStorage.setItem(k, 'accepted');
+                    sessionStorage.setItem(k, 'dismiss');
+                    sessionStorage.setItem(k, 'true');
+                    sessionStorage.setItem(k, 'accepted');
+                  }
+                } catch {}
+              })
+              .catch(() => {});
+          }
 
           return await task(context, page);
         } finally {
@@ -225,6 +413,7 @@ export class BrowserService {
   }
 
   public async renderPdf(params: RenderPdfRequest): Promise<Buffer> {
+    const shouldBlockPopups = Boolean(params.block_popups && params.url);
     return this.executeWithTimeout(
       async (_context, page) => {
         if (params.url) {
@@ -232,6 +421,9 @@ export class BrowserService {
             waitUntil: 'load',
             timeout: env.RENDER_TIMEOUT_MS,
           });
+          if (shouldBlockPopups) {
+            await this.suppressPopupsAndBanners(page);
+          }
         } else if (params.html) {
           const fullHtml = this.prepareHtmlWithTailwind(params.html);
           await page.setContent(fullHtml, {
@@ -257,6 +449,10 @@ export class BrowserService {
         if (params.delay_ms && params.delay_ms > 0) {
           const cappedDelay = Math.min(params.delay_ms, 5000);
           await new Promise((r) => setTimeout(r, cappedDelay));
+        }
+
+        if (shouldBlockPopups) {
+          await this.suppressPopupsAndBanners(page);
         }
 
         const hasHeaderFooter = Boolean(
@@ -299,11 +495,13 @@ export class BrowserService {
 
         return pdfBuffer;
       },
-      { width: 1200, height: 800 }
+      { width: 1200, height: 800 },
+      shouldBlockPopups
     );
   }
 
   public async renderImage(params: RenderImageRequest): Promise<Buffer> {
+    const shouldBlockPopups = Boolean(params.block_popups !== false && params.url);
     return this.executeWithTimeout(
       async (_context, page) => {
         if (params.url) {
@@ -311,6 +509,9 @@ export class BrowserService {
             waitUntil: 'load',
             timeout: env.RENDER_TIMEOUT_MS,
           });
+          if (shouldBlockPopups) {
+            await this.suppressPopupsAndBanners(page);
+          }
         } else if (params.html) {
           const fullHtml = this.prepareHtmlWithTailwind(params.html);
           await page.setContent(fullHtml, {
@@ -338,6 +539,10 @@ export class BrowserService {
           await new Promise((r) => setTimeout(r, cappedDelay));
         }
 
+        if (shouldBlockPopups) {
+          await this.suppressPopupsAndBanners(page);
+        }
+
         const imageBuffer = await page.screenshot({
           type: params.type,
           fullPage: false,
@@ -345,7 +550,8 @@ export class BrowserService {
 
         return imageBuffer;
       },
-      { width: params.width || 1200, height: params.height || 630 }
+      { width: params.width || 1200, height: params.height || 630 },
+      shouldBlockPopups
     );
   }
 }

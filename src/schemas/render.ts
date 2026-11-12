@@ -22,6 +22,7 @@ export const RenderPdfRequestSchema = z
     owner_password: z.string().min(1).max(128).optional().describe('Optional owner password for PDF permission controls.'),
     wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
     delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
+    block_popups: z.boolean().default(false).optional().describe('Automatically suppress cookie consent banners, privacy dialogs, and popup overlays'),
     store: z.boolean().default(false).describe('If true, saves the rendered PDF to Tailprint hosted delivery and returns a public hostedUrl link.'),
     expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration for the hosted link (1h, 24h, or 7d). Defaults to 24h.'),
   })
@@ -42,6 +43,7 @@ export const RenderImageRequestSchema = z
     type: z.enum(['png', 'jpeg']).default('png').describe('Output image format'),
     wait_for: z.string().max(256).optional().describe('CSS selector to wait for before rendering (e.g. "#chart-loaded", ".ready"). Maximum wait 5s.'),
     delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Additional delay in milliseconds before capturing (e.g. 500 for animations/charts to settle). Maximum 5000ms.'),
+    block_popups: z.boolean().default(true).optional().describe('Automatically suppress cookie consent banners, privacy dialogs, and popup overlays'),
     store: z.boolean().default(false).describe('If true, saves the rendered image to Tailprint hosted delivery and returns a public hostedUrl link.'),
     expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration for the hosted link (1h, 24h, or 7d). Defaults to 24h.'),
   })

@@ -20,24 +20,27 @@ export class MockupService {
    * Captures a website and composites it into a realistic Laptop + Phone device mockup.
    */
   public async renderDeviceMockup(options: DeviceMockupOptions): Promise<Buffer> {
-    const { url, title, delay_ms = 500 } = options;
+    const { url, title, delay_ms = 600 } = options;
+    const effectiveDelay = Math.max(delay_ms, 600);
 
-    // 1. Capture Desktop Viewport (1280x800)
+    // 1. Capture Desktop Viewport (1280x800) with automatic popup/cookie suppression
     const desktopBuffer = await browserService.renderImage({
       url,
       width: 1280,
       height: 800,
       type: 'png',
-      delay_ms,
+      delay_ms: effectiveDelay,
+      block_popups: true,
     });
 
-    // 2. Capture Mobile Viewport (390x844)
+    // 2. Capture Mobile Viewport (390x844) with automatic popup/cookie suppression
     const mobileBuffer = await browserService.renderImage({
       url,
       width: 390,
       height: 844,
       type: 'png',
-      delay_ms,
+      delay_ms: effectiveDelay,
+      block_popups: true,
     });
 
     const desktopDataUri = `data:image/png;base64,${desktopBuffer.toString('base64')}`;
