@@ -2,6 +2,7 @@ import { scraperService } from './scraper.js';
 import { browserService } from './browser.js';
 import { storageService } from './storage.js';
 import { detectPageLanguage, LANGUAGE_PROFILES } from './language.js';
+import { env } from '../config/env.js';
 
 export interface ReelSlide {
   tag?: string;
@@ -162,7 +163,7 @@ export class ReelService {
     scraped: any,
     detected: { code: string; label: string; profile: any }
   ): Promise<ReelScript | null> {
-    const geminiKey = process.env.GEMINI_API_KEY;
+    const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
 
     if (!geminiKey && !openaiKey) return null;
@@ -211,14 +212,14 @@ Respond ONLY with valid JSON in this exact structure:
 }`;
 
     if (geminiKey) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
         }),
-        signal: AbortSignal.timeout(4500),
+        signal: AbortSignal.timeout(6000),
       });
 
       if (res.ok) {

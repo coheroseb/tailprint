@@ -34,6 +34,9 @@ const envSchema = z.object({
   // Tailwind CDN
   TAILWIND_CDN_URL: z.string().url().default('https://cdn.tailwindcss.com'),
 
+  // Gemini AI Engine
+  GEMINI_API_KEY: z.string().optional(),
+
   // Dev bypass (for quick local testing without Redis if needed)
   DEV_DEFAULT_API_KEY: z.string().optional().default('sec_live_dev_test_key_12345'),
 
