@@ -212,39 +212,49 @@ Respond ONLY with valid JSON in this exact structure:
 }`;
 
     if (geminiKey) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-        }),
-        signal: AbortSignal.timeout(6000),
-      });
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.2,
+              thinkingConfig: { thinkingBudget: 0 },
+            },
+          }),
+          signal: AbortSignal.timeout(12000),
+        });
 
-      if (res.ok) {
-        const json = await res.json();
-        const raw = json.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.slides && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
-            const brandColors = deriveBrandPalette(scraped.theme_color);
-            return {
-              title: parsed.title || scraped.title || 'Highlights',
-              brand: parsed.brand || detected.profile.defaultBrand,
-              handle: `@${(parsed.brand || 'brand').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
-              logoUrl: scraped.logo_url || undefined,
-              brandColors,
-              theme: 'brand',
-              aspectRatio: '9:16',
-              language: detected.code,
-              languageLabel: detected.label,
-              slides: parsed.slides,
-              cta: parsed.cta || detected.profile.cta,
-              sourceUrl: url,
-            };
+        if (res.ok) {
+          const json = await res.json();
+          const raw = json.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.slides && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+              const brandColors = deriveBrandPalette(scraped.theme_color);
+              return {
+                title: parsed.title || scraped.title || 'Highlights',
+                brand: parsed.brand || detected.profile.defaultBrand,
+                handle: `@${(parsed.brand || 'brand').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
+                logoUrl: scraped.logo_url || undefined,
+                brandColors,
+                theme: 'brand',
+                aspectRatio: '9:16',
+                language: detected.code,
+                languageLabel: detected.label,
+                slides: parsed.slides,
+                cta: parsed.cta || detected.profile.cta,
+                sourceUrl: url,
+              };
+            }
           }
+        } else {
+          console.warn('[ReelService] Gemini API returned error:', res.status, await res.text().catch(() => ''));
         }
+      } catch (err) {
+        console.warn('[ReelService] Gemini synthesis error:', err);
       }
     }
 
