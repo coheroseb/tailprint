@@ -1,6 +1,7 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { env } from '../config/env.js';
 import { analyticsService } from '../services/analytics.js';
+import { growthAgentService } from '../services/growthAgent.js';
 
 export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // JSON API Endpoint for Founder Analytics Dashboard
@@ -55,6 +56,65 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       return reply.code(200).send(snapshot);
     }
   );
+
+  const checkAdminAuth = (request: any, reply: any): boolean => {
+    const headerKey = request.headers['x-admin-key'];
+    const queryKey = (request.query as any)?.key;
+    const providedKey = (typeof headerKey === 'string' ? headerKey : queryKey) || '';
+    if (providedKey !== env.ADMIN_SECRET) {
+      reply.code(401).send({ statusCode: 401, error: 'Unauthorized' });
+      return false;
+    }
+    return true;
+  };
+
+  // Autonomous Growth Engine API Endpoints
+  fastify.get('/v1/admin/growth', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    return reply.code(200).send(growthAgentService.getDashboardSnapshot());
+  });
+
+  fastify.post('/v1/admin/growth/run', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const result = await growthAgentService.runAutopilotCycle();
+    return reply.code(200).send({ result, data: growthAgentService.getDashboardSnapshot() });
+  });
+
+  fastify.post('/v1/admin/growth/lead', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const { domain, category, email } = (request.body as any) || {};
+    if (!domain) return reply.code(400).send({ error: 'Domain is required' });
+    const lead = growthAgentService.addLead(domain, category || 'saas', email);
+    return reply.code(200).send({ lead, data: growthAgentService.getDashboardSnapshot() });
+  });
+
+  fastify.post('/v1/admin/growth/lead/:id/generate', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const { id } = request.params as { id: string };
+    const lead = await growthAgentService.generateDemoForLead(id);
+    return reply.code(200).send({ lead, data: growthAgentService.getDashboardSnapshot() });
+  });
+
+  fastify.post('/v1/admin/growth/lead/:id/dispatch', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const { id } = request.params as { id: string };
+    const lead = await growthAgentService.dispatchLeadEmail(id);
+    return reply.code(200).send({ lead, data: growthAgentService.getDashboardSnapshot() });
+  });
+
+  fastify.post('/v1/admin/growth/toggle-autodispatch', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const { enabled } = (request.body as any) || {};
+    const settings = growthAgentService.toggleAutoDispatch(Boolean(enabled));
+    return reply.code(200).send({ settings, data: growthAgentService.getDashboardSnapshot() });
+  });
+
+  fastify.post('/v1/admin/growth/carousel', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const { topic } = (request.body as any) || {};
+    const item = await growthAgentService.generateLinkedInCarousel(topic);
+    return reply.code(200).send({ item, data: growthAgentService.getDashboardSnapshot() });
+  });
 
   // Founder Live Analytics & Telemetry Dashboard UI
   fastify.get(
@@ -194,6 +254,110 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         <div class="text-3xl font-black text-emerald-400 mt-2">$<span id="kpi-mrr">0</span></div>
         <div class="text-xs text-slate-400 mt-1">Monthly recurring</div>
       </div>
+    </div>
+
+    <!-- 1.5. AUTONOMOUS GROWTH & OUTBOUND ENGINE -->
+    <div class="p-6 rounded-2xl bg-slate-900/80 border border-indigo-500/30 shadow-2xl relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <!-- Growth Header -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[10px] font-bold font-mono">AUTONOMOUS AGENT</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <h2 class="text-lg font-black text-white">Autonomous Growth Engine</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Self-running B2B lead hunting, customized branded vector demos, and automated LinkedIn carousels</p>
+        </div>
+
+        <!-- Controls: Add Lead + Run Autopilot + Auto-Dispatch Toggle -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Add Lead Form -->
+          <form onsubmit="addGrowthLead(event)" class="flex items-center space-x-2 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1">
+            <input id="input-lead-domain" type="text" placeholder="domain.com (e.g. pleo.io)" required class="bg-transparent text-xs text-white placeholder-slate-500 font-mono focus:outline-none w-44" />
+            <button type="submit" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition flex items-center space-x-1 shadow-sm">
+              <span>+ Add</span>
+            </button>
+          </form>
+
+          <!-- Run Autopilot Now Button -->
+          <button id="btn-run-autopilot" onclick="triggerAutopilotNow()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition shadow-md shadow-indigo-600/20 flex items-center space-x-1.5">
+            <span id="spinner-autopilot" class="hidden animate-spin">⏳</span>
+            <span>⚡ Run Autopilot Now</span>
+          </button>
+
+          <!-- Auto-Dispatch Toggle -->
+          <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-[11px] text-slate-400 font-medium">Auto-Send:</span>
+            <button id="btn-toggle-autodispatch" onclick="toggleAutoDispatch()" class="px-2 py-0.5 rounded text-[10px] font-bold transition bg-slate-800 text-slate-400 hover:text-white">
+              OFF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Growth KPI Micro-cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
+        <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span class="text-[11px] font-semibold text-slate-400">Target Leads</span>
+          <div id="growth-kpi-leads" class="text-2xl font-black text-white mt-1">0</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span class="text-[11px] font-semibold text-slate-400">Branded Demos Ready</span>
+          <div id="growth-kpi-demos" class="text-2xl font-black text-indigo-400 mt-1">0</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span class="text-[11px] font-semibold text-slate-400">Pitches Sent</span>
+          <div id="growth-kpi-sent" class="text-2xl font-black text-emerald-400 mt-1">0</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span class="text-[11px] font-semibold text-slate-400">Social Carousels Ready</span>
+          <div id="growth-kpi-content" class="text-2xl font-black text-purple-400 mt-1">0</div>
+        </div>
+      </div>
+
+      <!-- Leads & Content Tabs -->
+      <div class="border-b border-slate-800 flex items-center space-x-4 mb-4">
+        <button id="growth-tab-leads-btn" onclick="setGrowthTab('leads')" class="pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition">
+          🎯 B2B Target Leads & Demos
+        </button>
+        <button id="growth-tab-content-btn" onclick="setGrowthTab('content')" class="pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition">
+          📄 Generated LinkedIn Carousels
+        </button>
+      </div>
+
+      <!-- Content 1: Leads Table -->
+      <div id="growth-tab-leads" class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800 bg-slate-950/40">
+            <tr>
+              <th class="py-2.5 px-3">Company & Domain</th>
+              <th class="py-2.5 px-3">Category</th>
+              <th class="py-2.5 px-3">Status</th>
+              <th class="py-2.5 px-3">Personalized Demo PDF</th>
+              <th class="py-2.5 px-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="growth-leads-tbody" class="divide-y divide-slate-800/60">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Content 2: LinkedIn Carousels -->
+      <div id="growth-tab-content" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-xs text-slate-400">Auto-generated multi-slide PDF carousels built with Tailprint's own Carousel Engine.</p>
+          <button onclick="generateNewCarousel()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center space-x-1">
+            <span>✨ Generate New Carousel</span>
+          </button>
+        </div>
+        <div id="growth-carousels-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
     </div>
 
     <!-- 2. 14-Day Traffic Chart & Feature Usage Breakdown -->
@@ -555,6 +719,257 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
           \`;
         }).join('');
       }
+
+      // Load Growth Engine Data
+      fetchGrowthData();
+    }
+
+    // ----------------------------------------------------
+    // AUTONOMOUS GROWTH ENGINE CLIENT LOGIC
+    // ----------------------------------------------------
+    var growthDataCache = null;
+    var activeModalLeadId = null;
+
+    async function fetchGrowthData() {
+      const adminKey = getAdminKey();
+      if (!adminKey) return;
+      try {
+        const res = await fetch('/v1/admin/growth', {
+          headers: { 'X-Admin-Key': adminKey }
+        });
+        if (res.ok) {
+          growthDataCache = await res.json();
+          renderGrowthUI(growthDataCache);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch growth data:', err);
+      }
+    }
+
+    function renderGrowthUI(data) {
+      if (!data) return;
+      const stats = data.stats || {};
+      document.getElementById('growth-kpi-leads').textContent = stats.totalLeads || 0;
+      document.getElementById('growth-kpi-demos').textContent = stats.demosGenerated || 0;
+      document.getElementById('growth-kpi-sent').textContent = stats.sentEmails || 0;
+      document.getElementById('growth-kpi-content').textContent = stats.publishedPosts || 0;
+
+      // Autodispatch toggle button
+      const autoBtn = document.getElementById('btn-toggle-autodispatch');
+      const isAuto = data.settings && data.settings.autoDispatchEnabled;
+      if (isAuto) {
+        autoBtn.textContent = 'ON';
+        autoBtn.className = 'px-2 py-0.5 rounded text-[10px] font-bold transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+      } else {
+        autoBtn.textContent = 'OFF';
+        autoBtn.className = 'px-2 py-0.5 rounded text-[10px] font-bold transition bg-slate-800 text-slate-400 hover:text-white';
+      }
+
+      // Render Leads Table
+      const tbody = document.getElementById('growth-leads-tbody');
+      const leads = data.leads || [];
+      if (!leads.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">No leads discovered yet.</td></tr>';
+      } else {
+        tbody.innerHTML = leads.map(l => {
+          let statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono text-[10px]">Discovered</span>';
+          if (l.status === 'demo_generated') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono text-[10px]">⚡ Demo Ready</span>';
+          } else if (l.status === 'sent') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px]">✉️ Pitch Sent</span>';
+          }
+
+          const demoLink = l.customDemoPdfUrl
+            ? '<a href="' + l.customDemoPdfUrl + '" target="_blank" class="text-indigo-400 hover:underline font-mono flex items-center space-x-1"><span>📄 View PDF</span><span>↗</span></a>'
+            : '<span class="text-slate-600 italic">Not generated yet</span>';
+
+          const actionBtns = [];
+          if (!l.customDemoPdfUrl) {
+            actionBtns.push('<button onclick="generateDemoForLead(\'' + l.id + '\')" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px]">Generate Demo</button>');
+          } else {
+            actionBtns.push('<button onclick="openPitchModal(\'' + l.id + '\')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px]">👁️ View Pitch</button>');
+            if (l.status !== 'sent') {
+              actionBtns.push('<button onclick="dispatchLeadPitch(\'' + l.id + '\')" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px]">Send Email</button>');
+            }
+          }
+
+          return '<tr class="hover:bg-slate-900/40">' +
+            '<td class="py-3 px-3">' +
+              '<div class="font-bold text-white flex items-center space-x-2"><span>' + l.companyName + '</span></div>' +
+              '<a href="' + l.websiteUrl + '" target="_blank" class="text-[11px] text-slate-400 font-mono hover:text-indigo-400">' + l.domain + ' ↗</a>' +
+            '</td>' +
+            '<td class="py-3 px-3 font-mono text-slate-400 uppercase text-[10px]">' + l.category + '</td>' +
+            '<td class="py-3 px-3">' + statusBadge + '</td>' +
+            '<td class="py-3 px-3">' + demoLink + '</td>' +
+            '<td class="py-3 px-3 text-right"><div class="flex items-center justify-end space-x-2">' + actionBtns.join('') + '</div></td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      // Render LinkedIn Content Grid
+      const contentGrid = document.getElementById('growth-carousels-grid');
+      const content = data.content || [];
+      if (!content.length) {
+        contentGrid.innerHTML = '<div class="col-span-2 py-8 text-center text-slate-500">No carousels generated yet. Click "Generate New Carousel" to create one!</div>';
+      } else {
+        contentGrid.innerHTML = content.map(c => 
+          '<div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between space-y-3">' +
+            '<div>' +
+              '<div class="flex items-center justify-between text-[11px] text-purple-400 font-mono mb-1">' +
+                '<span>LINKEDIN CAROUSEL PDF</span>' +
+                '<span>' + new Date(c.createdAt).toLocaleDateString() + '</span>' +
+              '</div>' +
+              '<h4 class="font-bold text-white text-sm">' + c.title + '</h4>' +
+              '<p class="text-xs text-slate-400 mt-1 line-clamp-2">' + c.contentMarkdown.replace(/[#\-\n]/g, ' ') + '</p>' +
+            '</div>' +
+            '<div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">' +
+              '<a href="' + (c.pdfUrl || '#') + '" target="_blank" class="px-3 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/50 text-xs font-bold transition flex items-center space-x-1">' +
+                '<span>📄 Download PDF Slides</span>' +
+              '</a>' +
+              '<button onclick="navigator.clipboard.writeText(' + JSON.stringify(c.contentMarkdown) + '); alert(\'Markdown copy ready to post on LinkedIn/X!\');" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">' +
+                '📋 Copy Text' +
+              '</button>' +
+            '</div>' +
+          '</div>'
+        ).join('');
+      }
+    }
+
+    function setGrowthTab(tab) {
+      const leadsBtn = document.getElementById('growth-tab-leads-btn');
+      const contentBtn = document.getElementById('growth-tab-content-btn');
+      const leadsDiv = document.getElementById('growth-tab-leads');
+      const contentDiv = document.getElementById('growth-tab-content');
+
+      if (tab === 'leads') {
+        leadsBtn.className = 'pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition';
+        contentBtn.className = 'pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition';
+        leadsDiv.classList.remove('hidden');
+        contentDiv.classList.add('hidden');
+      } else {
+        contentBtn.className = 'pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition';
+        leadsBtn.className = 'pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition';
+        contentDiv.classList.remove('hidden');
+        leadsDiv.classList.add('hidden');
+      }
+    }
+
+    async function triggerAutopilotNow() {
+      const spinner = document.getElementById('spinner-autopilot');
+      spinner.classList.remove('hidden');
+      try {
+        const res = await fetch('/v1/admin/growth/run', {
+          method: 'POST',
+          headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+      } catch (err) {
+        alert('Autopilot cycle error: ' + err.message);
+      } finally {
+        spinner.classList.add('hidden');
+      }
+    }
+
+    async function addGrowthLead(e) {
+      e.preventDefault();
+      const input = document.getElementById('input-lead-domain');
+      const domain = input.value.trim();
+      if (!domain) return;
+      try {
+        const res = await fetch('/v1/admin/growth/lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
+          body: JSON.stringify({ domain })
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+        input.value = '';
+      } catch (err) {
+        alert('Error adding lead: ' + err.message);
+      }
+    }
+
+    async function generateDemoForLead(id) {
+      try {
+        const res = await fetch('/v1/admin/growth/lead/' + id + '/generate', {
+          method: 'POST',
+          headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+      } catch (err) {
+        alert('Generate error: ' + err.message);
+      }
+    }
+
+    async function dispatchLeadPitch(id) {
+      if (!confirm('Are you sure you want to dispatch this email pitch to the lead via noreply@tailprint.com?')) return;
+      try {
+        const res = await fetch('/v1/admin/growth/lead/' + id + '/dispatch', {
+          method: 'POST',
+          headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+        alert('Email pitch dispatched successfully!');
+      } catch (err) {
+        alert('Dispatch error: ' + err.message);
+      }
+    }
+
+    async function toggleAutoDispatch() {
+      const isCurrentlyAuto = growthDataCache && growthDataCache.settings && growthDataCache.settings.autoDispatchEnabled;
+      try {
+        const res = await fetch('/v1/admin/growth/toggle-autodispatch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
+          body: JSON.stringify({ enabled: !isCurrentlyAuto })
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+      } catch (err) {
+        alert('Toggle error: ' + err.message);
+      }
+    }
+
+    async function generateNewCarousel() {
+      try {
+        const res = await fetch('/v1/admin/growth/carousel', {
+          method: 'POST',
+          headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+        alert('New LinkedIn Carousel created!');
+      } catch (err) {
+        alert('Carousel error: ' + err.message);
+      }
+    }
+
+    function openPitchModal(id) {
+      if (!growthDataCache || !growthDataCache.leads) return;
+      const lead = growthDataCache.leads.find(l => l.id === id);
+      if (!lead) return;
+
+      activeModalLeadId = id;
+      document.getElementById('modalPitchCompany').textContent = lead.companyName + ' (' + lead.domain + ')';
+      document.getElementById('modalPitchSubject').textContent = lead.emailSubject || 'No subject generated yet';
+      document.getElementById('modalPitchBody').innerHTML = lead.emailBodyHtml || '<p class="text-slate-500 italic">No pitch copy generated yet.</p>';
+      document.getElementById('modalPitchPdfLink').href = lead.customDemoPdfUrl || '#';
+      document.getElementById('pitchModal').classList.remove('hidden');
+    }
+
+    function closePitchModal() {
+      document.getElementById('pitchModal').classList.add('hidden');
+      activeModalLeadId = null;
+    }
+
+    function sendPitchFromModal() {
+      if (activeModalLeadId) {
+        dispatchLeadPitch(activeModalLeadId);
+        closePitchModal();
+      }
     }
 
     // Initial load & interval
@@ -563,6 +978,27 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       if (autoRefresh) fetchStats();
     }, 10000);
   </script>
+
+  <!-- Pitch Modal -->
+  <div id="pitchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div>
+          <h3 id="modalPitchCompany" class="font-bold text-white text-sm">Lead Pitch Preview</h3>
+          <p id="modalPitchSubject" class="text-xs text-indigo-400 font-mono mt-0.5"></p>
+        </div>
+        <button onclick="closePitchModal()" class="text-slate-400 hover:text-white transition">✕</button>
+      </div>
+      <div class="p-6 bg-slate-950/70 overflow-auto max-h-[380px] text-xs text-slate-300 leading-relaxed space-y-3" id="modalPitchBody">
+      </div>
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
+        <a id="modalPitchPdfLink" href="#" target="_blank" class="text-xs text-indigo-400 hover:underline">📄 Open Demo PDF ↗</a>
+        <button id="modalPitchSendBtn" onclick="sendPitchFromModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-md">
+          <span>✉️ Dispatch Email Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>`;
 

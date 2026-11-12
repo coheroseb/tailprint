@@ -192,6 +192,62 @@ export class EmailService {
       return false;
     }
   }
+
+  /**
+   * Dispatches a personalized outbound pitch email to a prospective B2B lead.
+   */
+  public async sendOutboundPitchEmail(params: {
+    to: string;
+    recipientName?: string;
+    companyName: string;
+    subject: string;
+    bodyHtml: string;
+    demoPdfUrl: string;
+  }): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    if (!this.transporter) {
+      return { success: false, error: 'SMTP transporter not configured' };
+    }
+
+    const { to, subject, bodyHtml, demoPdfUrl } = params;
+
+    const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 20px; font-size: 14px; line-height: 1.6; }
+    .card { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .btn { display: inline-block; background-color: #4f46e5; color: #ffffff !important; font-weight: 700; font-size: 13px; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin: 16px 0; }
+    .footer { margin-top: 28px; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    ${bodyHtml}
+    <div style="margin: 20px 0;">
+      <a href="${demoPdfUrl}" class="btn" target="_blank">📄 View Your Generated Live Demo PDF →</a>
+    </div>
+    <div class="footer">
+      Sent with precision by <a href="https://tailprint.com" style="color: #6366f1; text-decoration: none;">Tailprint</a> — Document Infrastructure & EU E-Invoicing.<br>
+      To opt out or reply directly to the founder, simply reply to this email.
+    </div>
+  </div>
+</body>
+</html>`;
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: env.SMTP_FROM,
+        to,
+        subject,
+        html: fullHtml,
+      });
+
+      return { success: true, messageId: info.messageId };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  }
 }
 
 export const emailService = EmailService.getInstance();

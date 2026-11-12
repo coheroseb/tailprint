@@ -24,6 +24,7 @@ import { adminRoutes } from './routes/admin.js';
 import { browserService, RenderTimeoutError } from './services/browser.js';
 import { redisService } from './services/redis.js';
 import { analyticsService } from './services/analytics.js';
+import { growthAgentService } from './services/growthAgent.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -548,6 +549,19 @@ if (process.env.NODE_ENV !== 'test') {
       browserService.init().catch((err) => {
         app.log.warn({ err }, 'Failed to pre-warm Chromium browser during boot');
       });
+
+      // Start autonomous Growth Agent background loop (initial run after 30s, then every 3 hours)
+      setTimeout(() => {
+        growthAgentService.runAutopilotCycle().catch((err) => {
+          app.log.warn({ err }, '[GrowthAgent] Autonomous background cycle error');
+        });
+      }, 30000);
+
+      setInterval(() => {
+        growthAgentService.runAutopilotCycle().catch((err) => {
+          app.log.warn({ err }, '[GrowthAgent] Periodic autonomous cycle error');
+        });
+      }, 3 * 60 * 60 * 1000);
 
       await app.listen({ port: env.PORT, host: env.HOST });
       app.log.info(`🚀 Tailprint running on http://${env.HOST}:${env.PORT}`);
