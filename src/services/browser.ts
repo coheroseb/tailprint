@@ -528,8 +528,7 @@ export class BrowserService {
 
     const width = options.width ?? 720;
     const height = options.height ?? 1280;
-    const durationMs = options.durationMs ?? 3500;
-    const scrollDistance = options.scrollDistance ?? 900;
+    const durationMs = options.durationMs ?? 5400;
 
     const tmpDir = path.join(os.tmpdir(), `screenrecord-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await fs.mkdir(tmpDir, { recursive: true });
@@ -557,33 +556,113 @@ export class BrowserService {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
         // Let page settle & dismiss any dynamic banner overlays
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(350);
         await this.suppressPopupsAndBanners(page);
 
-        // Smoothly scroll down the page
+        // Pre-warm lazy images & scroll-reveal IntersectionObservers across the page,
+        // then record 4 distinct, spread-out camera shots down the webpage (one per Reel slide)
         await page.evaluate(
-          async ({ duration, distance }: { duration: number; distance: number }) => {
-            const start = performance.now();
-            await new Promise<void>((resolve) => {
-              function step(now: number) {
-                const elapsed = now - start;
-                const progress = Math.min(1, elapsed / duration);
-                const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-                window.scrollTo(0, ease * distance);
-                if (progress < 1) {
-                  requestAnimationFrame(step);
-                } else {
-                  resolve();
+          async ({ totalDuration }: { totalDuration: number }) => {
+            // 1. Force eager loading on lazy images & reveal hidden scroll-animated blocks
+            try {
+              document.querySelectorAll('img[loading="lazy"]').forEach((img) => {
+                img.setAttribute('loading', 'eager');
+              });
+            } catch {}
+
+            const getMaxScroll = () =>
+              Math.max(
+                0,
+                Math.max(
+                  document.body?.scrollHeight || 0,
+                  document.documentElement?.scrollHeight || 0
+                ) - window.innerHeight
+              );
+
+            // Quick 140ms pre-warm pass to trigger IntersectionObservers on long pages
+            const initialMax = getMaxScroll();
+            if (initialMax > 400) {
+              for (const frac of [0.3, 0.6, 0.88, 0]) {
+                window.scrollTo(0, Math.round(initialMax * frac));
+                await new Promise((r) => setTimeout(r, 30));
+              }
+            }
+
+            const maxScroll = getMaxScroll();
+
+            // 2. Discover meaningful visual section landmarks (or spread evenly across page height)
+            const candidates: number[] = [];
+            const els = Array.from(
+              document.querySelectorAll('section, main > div, article, [class*="feature" i], [class*="bento" i], [class*="pricing" i], h2')
+            );
+            for (const el of els) {
+              const rect = el.getBoundingClientRect();
+              const absTop = rect.top + window.scrollY;
+              if (rect.height >= 160 && absTop > 180 && absTop < maxScroll - 100) {
+                candidates.push(Math.max(0, absTop - 90));
+              }
+            }
+            candidates.sort((a, b) => a - b);
+
+            const pickLandmarkNear = (targetFrac: number): number => {
+              const ideal = maxScroll * targetFrac;
+              let best = ideal;
+              let bestDist = Infinity;
+              for (const c of candidates) {
+                const dist = Math.abs(c - ideal);
+                if (dist < bestDist && dist < maxScroll * 0.16) {
+                  best = c;
+                  bestDist = dist;
                 }
               }
-              requestAnimationFrame(step);
-            });
+              return Math.max(0, Math.min(maxScroll, Math.round(best)));
+            };
+
+            // 4 spread-out camera shot starting Y positions across the webpage
+            const shotStarts = maxScroll > 600
+              ? [
+                  0,
+                  pickLandmarkNear(0.30),
+                  pickLandmarkNear(0.60),
+                  pickLandmarkNear(0.84),
+                ]
+              : [0, Math.round(maxScroll * 0.25), Math.round(maxScroll * 0.5), Math.round(maxScroll * 0.75)];
+
+            const shotCount = 4;
+            const shotDuration = Math.max(950, Math.floor(totalDuration / shotCount));
+            const panDistance = Math.min(340, Math.max(140, Math.round(maxScroll * 0.12)));
+
+            for (let s = 0; s < shotCount; s++) {
+              const startY = shotStarts[s];
+              const endY = Math.min(maxScroll, startY + panDistance);
+              window.scrollTo(0, startY);
+
+              const shotStartTs = performance.now();
+              await new Promise<void>((resolve) => {
+                function step(now: number) {
+                  const elapsed = now - shotStartTs;
+                  const progress = Math.min(1, elapsed / shotDuration);
+                  // Smooth cubic ease-in-out pan within this shot
+                  const ease =
+                    progress < 0.5
+                      ? 4 * progress * progress * progress
+                      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                  window.scrollTo(0, startY + ease * (endY - startY));
+                  if (progress < 1) {
+                    requestAnimationFrame(step);
+                  } else {
+                    resolve();
+                  }
+                }
+                requestAnimationFrame(step);
+              });
+            }
           },
-          { duration: durationMs, distance: scrollDistance }
+          { totalDuration: durationMs }
         );
 
-        // Small pause at bottom
-        await page.waitForTimeout(300);
+        // Small pause at final shot
+        await page.waitForTimeout(200);
 
         // Close page and context so Playwright finalizes the video file
         const video = page.video();

@@ -284,7 +284,7 @@ export class ReelService {
     const buffer = await browserService.recordWebpageScroll(url, {
       width,
       height,
-      durationMs: options?.durationMs ?? 3500,
+      durationMs: options?.durationMs ?? 5400,
       scrollDistance: options?.scrollDistance ?? 900,
     });
 
@@ -2376,8 +2376,30 @@ Respond ONLY with valid JSON in this exact structure:
           for (let f = 0; f < frameCount; f++) {
             const progress = f / frameCount;
             const dataUrl = await page.evaluate(
-              ({ idx, prog }) => (window as any).__renderFrame(idx, prog),
-              { idx: sIdx, prog: progress }
+              async ({ idx, prog, total }) => {
+                const bgVid = (window as any).__bgVideo as HTMLVideoElement | undefined;
+                if (bgVid && bgVid.readyState >= 1 && Number.isFinite(bgVid.duration) && bgVid.duration > 0) {
+                  bgVid.pause();
+                  const targetFrac = 0.12 + ((idx + prog * 0.9) / Math.max(1, total)) * 0.86;
+                  const targetTime = Math.min(bgVid.duration - 0.05, Math.max(0, bgVid.duration * targetFrac));
+                  if (Math.abs(bgVid.currentTime - targetTime) > 0.04) {
+                    await new Promise<void>((res) => {
+                      const onSeek = () => {
+                        bgVid.removeEventListener('seeked', onSeek);
+                        res();
+                      };
+                      bgVid.addEventListener('seeked', onSeek);
+                      bgVid.currentTime = targetTime;
+                      setTimeout(() => {
+                        bgVid.removeEventListener('seeked', onSeek);
+                        res();
+                      }, 35);
+                    });
+                  }
+                }
+                return (window as any).__renderFrame(idx, prog);
+              },
+              { idx: sIdx, prog: progress, total: slides.length }
             );
             const base64Data = dataUrl.replace(/^data:image\/jpeg;base64,/, '');
             const frameBuf = Buffer.from(base64Data, 'base64');

@@ -2334,6 +2334,29 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       debouncedSyncToMobile();
     }
 
+    function syncPreviewVideoToSlide(vid) {
+      if (!vid) return;
+      const total = Math.max(1, (reelState.slides && reelState.slides.length) ? reelState.slides.length : 4);
+      const startFrac = 0.12 + (currentSlideIdx / total) * 0.86;
+      const applySeek = () => {
+        if (Number.isFinite(vid.duration) && vid.duration > 0.5) {
+          const targetTime = Math.min(vid.duration - 0.1, Math.max(0, vid.duration * startFrac));
+          if (vid.dataset.lastSlideIdx !== String(currentSlideIdx) || Math.abs(vid.currentTime - targetTime) > (vid.duration / total) * 1.15) {
+            vid.dataset.lastSlideIdx = String(currentSlideIdx);
+            try { vid.currentTime = targetTime; } catch (e) {}
+          }
+          const shotDur = (vid.duration * 0.86) / total;
+          const slideSec = Math.max(1.5, (reelState.duration || 3500) / 1000);
+          try { vid.playbackRate = Math.max(0.35, Math.min(1.75, shotDur / slideSec)); } catch (e) {}
+        }
+      };
+      if (vid.readyState >= 1 && Number.isFinite(vid.duration) && vid.duration > 0) {
+        applySeek();
+      } else {
+        vid.onloadedmetadata = applySeek;
+      }
+    }
+
     function updateScreenrecordDisplay() {
       const badge = document.getElementById('screenrecord-status-badge');
       const card = document.getElementById('preview-screenrecord-card');
@@ -2352,16 +2375,21 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       if (badge) badge.classList.remove('hidden');
 
       if (video && video.src !== reelState.screenrecordUrl) {
+        video.dataset.lastSlideIdx = '';
         video.src = reelState.screenrecordUrl;
         video.play().catch(() => {});
       }
       if (backdrop && backdrop.src !== reelState.screenrecordUrl) {
+        backdrop.dataset.lastSlideIdx = '';
         backdrop.src = reelState.screenrecordUrl;
         backdrop.play().catch(() => {});
       }
       if (exportVid && exportVid.src !== reelState.screenrecordUrl) {
         exportVid.src = reelState.screenrecordUrl;
       }
+
+      syncPreviewVideoToSlide(video);
+      syncPreviewVideoToSlide(backdrop);
 
       if (urlLabel && reelState.sourceUrl) {
         try {
@@ -2759,6 +2787,18 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       for (let sIdx = 0; sIdx < totalSlides; sIdx++) {
         const slide = reelState.slides[sIdx];
         const theme = themeMaps[reelState.theme] || themeMaps.gradient;
+
+        if (hasVideo && exportVid && Number.isFinite(exportVid.duration) && exportVid.duration > 0.5) {
+          const startFrac = 0.12 + (sIdx / Math.max(1, totalSlides)) * 0.86;
+          const targetTime = Math.min(exportVid.duration - 0.1, Math.max(0, exportVid.duration * startFrac));
+          try {
+            exportVid.currentTime = targetTime;
+            const shotDur = (exportVid.duration * 0.86) / Math.max(1, totalSlides);
+            exportVid.playbackRate = Math.max(0.35, Math.min(1.75, shotDur / Math.max(1.5, slideDurationMs / 1000)));
+            exportVid.play().catch(() => {});
+          } catch (e) {}
+          await new Promise((r) => setTimeout(r, 45));
+        }
 
         for (let f = 0; f < framesPerSlide; f++) {
           frameCount++;
@@ -5064,17 +5104,47 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const backdropVideo = document.getElementById('mobile-backdrop-video');
       const urlLabel = document.getElementById('mobile-browser-url');
 
+      function syncMobileVideoShot(vid) {
+        if (!vid) return;
+        const total = Math.max(1, (reelState.slides && reelState.slides.length) ? reelState.slides.length : 4);
+        const startFrac = 0.12 + (currentSlideIdx / total) * 0.86;
+        const applySeek = () => {
+          if (Number.isFinite(vid.duration) && vid.duration > 0.5) {
+            const targetTime = Math.min(vid.duration - 0.1, Math.max(0, vid.duration * startFrac));
+            if (vid.dataset.lastSlideIdx !== String(currentSlideIdx) || Math.abs(vid.currentTime - targetTime) > (vid.duration / total) * 1.15) {
+              vid.dataset.lastSlideIdx = String(currentSlideIdx);
+              try { vid.currentTime = targetTime; } catch (e) {}
+            }
+          }
+        };
+        if (vid.readyState >= 1 && Number.isFinite(vid.duration) && vid.duration > 0) {
+          applySeek();
+        } else {
+          vid.onloadedmetadata = applySeek;
+        }
+      }
+
       if (reelState.screenrecordUrl && reelState.screenrecordMode === 'backdrop') {
         if (recordCard) recordCard.classList.add('hidden');
         if (backdropVideo) {
-          backdropVideo.src = reelState.screenrecordUrl;
+          if (backdropVideo.src !== reelState.screenrecordUrl) {
+            backdropVideo.dataset.lastSlideIdx = '';
+            backdropVideo.src = reelState.screenrecordUrl;
+            backdropVideo.play().catch(() => {});
+          }
           backdropVideo.classList.remove('hidden');
+          syncMobileVideoShot(backdropVideo);
         }
       } else if (reelState.screenrecordUrl && reelState.screenrecordMode === 'inset') {
         if (backdropVideo) backdropVideo.classList.add('hidden');
         if (recordCard && recordVideo) {
           recordCard.classList.remove('hidden');
-          recordVideo.src = reelState.screenrecordUrl;
+          if (recordVideo.src !== reelState.screenrecordUrl) {
+            recordVideo.dataset.lastSlideIdx = '';
+            recordVideo.src = reelState.screenrecordUrl;
+            recordVideo.play().catch(() => {});
+          }
+          syncMobileVideoShot(recordVideo);
           if (urlLabel && reelState.sourceUrl) {
             try { urlLabel.textContent = new URL(reelState.sourceUrl).hostname.replace(/^www\\./, ''); } catch {}
           }
