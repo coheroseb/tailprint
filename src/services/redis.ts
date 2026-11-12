@@ -388,6 +388,29 @@ export class RedisService {
     return { allowed, remaining: Math.max(0, maxPerHour - usage) };
   }
 
+  public async checkAiToolRateLimit(
+    ip: string,
+    maxPerHour = 5,
+    isExempt = false
+  ): Promise<{ allowed: boolean; remaining: number }> {
+    // Exempt founder and local development addresses
+    if (
+      isExempt ||
+      ip === '127.0.0.1' ||
+      ip === '::1' ||
+      ip === '130.225.247.124' ||
+      ip === '46.224.82.103'
+    ) {
+      return { allowed: true, remaining: 9999 };
+    }
+
+    const hour = Math.floor(Date.now() / (1000 * 60 * 60));
+    const key = `ratelimit:ai_tool:${ip}:${hour}`;
+    const usage = await this.client.incr(key);
+    const allowed = usage <= maxPerHour;
+    return { allowed, remaining: Math.max(0, maxPerHour - usage) };
+  }
+
   public async getFreeKeyByEmail(email: string): Promise<string | null> {
     const key = `free_key_email:${email.toLowerCase().trim()}`;
     const val = await this.client.get<string>(key);

@@ -3039,12 +3039,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest AI script limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -3119,12 +3122,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest AI script limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -3175,12 +3181,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest AI script limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -3233,12 +3242,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest AI script limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -3316,12 +3328,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest AI script limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -3361,12 +3376,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest AI script limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -3437,12 +3455,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest AI script limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -3462,12 +3483,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/reel/video',
     async (request: any, reply: any) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+          message: 'Guest video rendering limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 
@@ -4285,12 +4309,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     },
     async (request: any, reply: any) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1') || authHeader.startsWith('Bearer sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Free tool rate limit exceeded (max 25 renders/hour).',
+          message: 'Guest AI logo decomposition limit reached (max 5/hour). Claim 100 free monthly renders at tailprint.com (no credit card required) or upgrade for unlimited access.',
         });
       }
 

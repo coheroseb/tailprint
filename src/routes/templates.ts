@@ -2232,7 +2232,7 @@ This domain is for use in documentation examples without needing permission. Thi
               <span class="text-4xl font-extrabold text-white">$${PLANS.starter.priceUsd}</span>
               <span class="text-slate-400 ml-1.5 text-sm">/ mo</span>
             </div>
-            <p class="text-xs text-emerald-400 font-bold mt-1">2,500 renders / month</p>
+            <p class="text-xs text-emerald-400 font-bold mt-1">3,000 renders / month</p>
             <p class="text-xs text-slate-400 mt-3 leading-relaxed">${PLANS.starter.description}</p>
 
             <ul class="mt-6 space-y-2.5 text-xs text-slate-300">
@@ -2240,7 +2240,7 @@ This domain is for use in documentation examples without needing permission. Thi
             </ul>
           </div>
           <button onclick="startCheckout('starter')" class="mt-6 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition text-xs">
-            Start with Starter ($14/mo)
+            Start with Starter ($${PLANS.starter.priceUsd}/mo)
           </button>
         </div>
 
@@ -2258,7 +2258,7 @@ This domain is for use in documentation examples without needing permission. Thi
               <span class="text-4xl font-extrabold text-white">$${PLANS.pro.priceUsd}</span>
               <span class="text-slate-400 ml-1.5 text-sm">/ mo</span>
             </div>
-            <p class="text-xs text-emerald-400 font-bold mt-1">20,000 renders / month</p>
+            <p class="text-xs text-emerald-400 font-bold mt-1">25,000 renders / month</p>
             <p class="text-xs text-slate-300 mt-3 leading-relaxed">${PLANS.pro.description}</p>
 
             <ul class="mt-6 space-y-2.5 text-xs text-slate-200">
@@ -2266,7 +2266,7 @@ This domain is for use in documentation examples without needing permission. Thi
             </ul>
           </div>
           <button onclick="startCheckout('pro')" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition text-xs shadow-lg shadow-indigo-600/30">
-            Get Pro (20k Renders)
+            Get Pro (25k Renders)
           </button>
         </div>
 
@@ -2284,7 +2284,7 @@ This domain is for use in documentation examples without needing permission. Thi
               <span class="text-4xl font-extrabold text-white">$${PLANS.business.priceUsd}</span>
               <span class="text-slate-400 ml-1.5 text-sm">/ mo</span>
             </div>
-            <p class="text-xs text-emerald-400 font-bold mt-1">75,000 renders / month</p>
+            <p class="text-xs text-emerald-400 font-bold mt-1">100,000 renders / month</p>
             <p class="text-xs text-slate-400 mt-3 leading-relaxed">${PLANS.business.description}</p>
 
             <ul class="mt-6 space-y-2.5 text-xs text-slate-300">
@@ -2292,7 +2292,7 @@ This domain is for use in documentation examples without needing permission. Thi
             </ul>
           </div>
           <button onclick="startCheckout('business')" class="mt-6 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition text-xs">
-            Scale with Business ($99/mo)
+            Scale with Business ($${PLANS.business.priceUsd}/mo)
           </button>
         </div>
       </div>
@@ -2303,11 +2303,11 @@ This domain is for use in documentation examples without needing permission. Thi
           <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold uppercase tracking-wider mb-1.5">
             <span>Enterprise & Custom Pools</span>
           </div>
-          <h4 class="text-white font-bold text-base">Need 100,000+ monthly renders, dedicated browser workers or strict 99.9% uptime SLA?</h4>
-          <p class="text-xs text-slate-400 mt-1">Enterprise plans start at $199/mo with dedicated Chromium instances and private Slack/Discord technical channel.</p>
+          <h4 class="text-white font-bold text-base">Need 250,000+ monthly renders, dedicated browser workers or strict 99.9% uptime SLA?</h4>
+          <p class="text-xs text-slate-400 mt-1">Enterprise plans start at $${PLANS.enterprise.priceUsd}/mo with dedicated Chromium instances and private Slack/Discord technical channel.</p>
         </div>
         <button onclick="startCheckout('enterprise')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition whitespace-nowrap border border-slate-700">
-          Deploy Enterprise ($199/mo)
+          Deploy Enterprise ($${PLANS.enterprise.priceUsd}/mo)
         </button>
       </div>
     </div>

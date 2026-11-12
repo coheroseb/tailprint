@@ -994,12 +994,12 @@ describe('Tailprint Test Suite', () => {
       expect(result.details.customerId).toBe('cus_customer_abc');
       expect(result.details.plan).toBe('pro');
 
-      // Verify the generated key is stored in Redis and active with Pro limit (20,000)
+      // Verify the generated key is stored in Redis and active with Pro limit (25,000)
       const rawKey = result.details.rawApiKey;
       const storedKey = await redisService.getApiKey(rawKey);
       expect(storedKey).toBeDefined();
       expect(storedKey?.status).toBe('active');
-      expect(storedKey?.monthly_limit).toBe(20000);
+      expect(storedKey?.monthly_limit).toBe(25000);
     });
 
     it('updates customer plan and limits on customer.subscription.updated', async () => {
@@ -1040,7 +1040,7 @@ describe('Tailprint Test Suite', () => {
       const result = JSON.parse(response.body);
       expect(result.action).toBe('subscription_updated');
       expect(result.details.plan).toBe('business');
-      expect(result.details.monthlyLimit).toBe(75000);
+      expect(result.details.monthlyLimit).toBe(100000);
     }, 15000);
 
     it('creates a checkout session for free plan via POST /v1/billing/checkout', async () => {
