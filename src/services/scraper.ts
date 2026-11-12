@@ -169,6 +169,35 @@ export class ScraperService {
       text: markdown,
     });
 
+    // Extract Logo / Favicon URL
+    let detectedLogoUrl: string | undefined = undefined;
+    const appleIcon = doc.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href');
+    const imgLogo = doc.querySelector('header img[src*="logo" i], nav img[src*="logo" i], img[src*="logo" i]')?.getAttribute('src');
+    const standardIcon = doc.querySelector('link[rel*="icon"]')?.getAttribute('href');
+    const ogImg = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+
+    const candidateLogo = appleIcon || imgLogo || standardIcon || ogImg;
+    if (candidateLogo) {
+      try {
+        detectedLogoUrl = new URL(candidateLogo, opts.url).href;
+      } catch {}
+    }
+    if (!detectedLogoUrl) {
+      try {
+        const u = new URL(opts.url);
+        detectedLogoUrl = `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=128`;
+      } catch {}
+    }
+
+    // Extract Theme Color
+    let detectedThemeColor: string | undefined = undefined;
+    const metaTheme =
+      doc.querySelector('meta[name="theme-color"]')?.getAttribute('content') ||
+      doc.querySelector('meta[name="msapplication-TileColor"]')?.getAttribute('content');
+    if (metaTheme && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(metaTheme.trim())) {
+      detectedThemeColor = metaTheme.trim();
+    }
+
     return {
       url: opts.url,
       title,
@@ -177,6 +206,8 @@ export class ScraperService {
       description,
       markdown,
       language: detected.code,
+      logo_url: detectedLogoUrl,
+      theme_color: detectedThemeColor,
       word_count: wordCount,
       estimated_tokens: estimatedTokens,
       raw_content_bytes: rawBytes,

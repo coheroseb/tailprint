@@ -15,7 +15,13 @@ export interface ReelScript {
   title: string;
   brand: string;
   handle?: string;
-  theme: 'cyberpunk' | 'midnight' | 'gradient' | 'sunset' | 'clean';
+  logoUrl?: string;
+  brandColors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+  theme: 'brand' | 'cyberpunk' | 'midnight' | 'gradient' | 'sunset' | 'clean';
   aspectRatio?: '9:16' | '1:1' | '16:9' | '4:5';
   screenrecordUrl?: string;
   screenrecordMode?: 'inset' | 'backdrop' | 'none';
@@ -30,6 +36,39 @@ export interface RenderReelResult {
   script: ReelScript;
   pdfStored?: { hostedUrl: string; fileId: string };
   previewStored?: { hostedUrl: string; fileId: string };
+}
+
+/**
+ * Computes a high-contrast brand color palette from a detected website theme color.
+ */
+export function deriveBrandPalette(themeColor?: string): { primary: string; secondary: string; accent: string } {
+  if (themeColor && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(themeColor.trim())) {
+    let hex = themeColor.trim().replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    const rDark = Math.max(6, Math.round(r * 0.18));
+    const gDark = Math.max(9, Math.round(g * 0.18));
+    const bDark = Math.max(16, Math.round(b * 0.18));
+    const secondary = `#${rDark.toString(16).padStart(2, '0')}${gDark.toString(16).padStart(2, '0')}${bDark.toString(16).padStart(2, '0')}`;
+
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    const accent = luminance > 0.65 ? '#e11d48' : '#38bdf8';
+
+    return {
+      primary: `#${hex}`,
+      secondary,
+      accent,
+    };
+  }
+
+  return {
+    primary: '#4f46e5',
+    secondary: '#090d16',
+    accent: '#38bdf8',
+  };
 }
 
 export class ReelService {
@@ -188,11 +227,14 @@ Respond ONLY with valid JSON in this exact structure:
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed.slides && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+            const brandColors = deriveBrandPalette(scraped.theme_color);
             return {
               title: parsed.title || scraped.title || 'Highlights',
               brand: parsed.brand || detected.profile.defaultBrand,
               handle: `@${(parsed.brand || 'brand').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
-              theme: 'gradient',
+              logoUrl: scraped.logo_url || undefined,
+              brandColors,
+              theme: 'brand',
               aspectRatio: '9:16',
               language: detected.code,
               languageLabel: detected.label,
@@ -227,11 +269,14 @@ Respond ONLY with valid JSON in this exact structure:
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed.slides && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+            const brandColors = deriveBrandPalette(scraped.theme_color);
             return {
               title: parsed.title || scraped.title || 'Highlights',
               brand: parsed.brand || detected.profile.defaultBrand,
               handle: `@${(parsed.brand || 'brand').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
-              theme: 'gradient',
+              logoUrl: scraped.logo_url || undefined,
+              brandColors,
+              theme: 'brand',
               aspectRatio: '9:16',
               language: detected.code,
               languageLabel: detected.label,
@@ -443,11 +488,16 @@ Respond ONLY with valid JSON in this exact structure:
       },
     ];
 
+    const brandColors = deriveBrandPalette(scraped.theme_color);
+    const logoUrl = scraped.logo_url || undefined;
+
     return {
       title: hookHeadline,
       brand,
       handle: `@${brand.toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
-      theme: 'gradient',
+      logoUrl,
+      brandColors,
+      theme: 'brand',
       aspectRatio: '9:16',
       screenrecordUrl: screenrecord?.hostedUrl,
       screenrecordMode: screenrecord ? 'inset' : 'none',
@@ -463,7 +513,19 @@ Respond ONLY with valid JSON in this exact structure:
    * Generates a 9:16 vertical (1080x1920) multi-page PDF story deck and cover preview.
    */
   public async renderReelDeck(script: ReelScript): Promise<RenderReelResult> {
-    const themeStyles: Record<string, { bg: string; text: string; subtext: string; tagBg: string; tagText: string; accent: string }> = {
+    const brandColors = script.brandColors || deriveBrandPalette();
+
+    const themeStyles: Record<string, { bg: string; customStyle?: string; text: string; subtext: string; tagBg: string; tagText: string; accent: string; accentStyle?: string }> = {
+      brand: {
+        bg: 'bg-slate-950',
+        customStyle: `background: linear-gradient(135deg, ${brandColors.primary}, ${brandColors.secondary});`,
+        text: 'text-white',
+        subtext: 'text-slate-200/80',
+        tagBg: 'bg-white/10 border border-white/20',
+        tagText: 'text-white',
+        accent: 'text-cyan-400',
+        accentStyle: `color: ${brandColors.accent};`,
+      },
       gradient: {
         bg: 'bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950',
         text: 'text-white',
@@ -506,7 +568,7 @@ Respond ONLY with valid JSON in this exact structure:
       },
     };
 
-    const currentTheme = themeStyles[script.theme] || themeStyles.gradient;
+    const currentTheme = themeStyles[script.theme] || themeStyles.brand || themeStyles.gradient;
     const aspect = script.aspectRatio || '9:16';
     const dimensions: Record<string, { width: number; height: number }> = {
       '9:16': { width: 1080, height: 1920 },
@@ -526,7 +588,7 @@ Respond ONLY with valid JSON in this exact structure:
         const paddingClass = isSquare ? 'p-12' : isLandscape ? 'p-16' : 'p-20';
 
         return `
-        <div class="slide-page w-[${width}px] h-[${height}px] ${paddingClass} flex flex-col justify-between ${currentTheme.bg} relative overflow-hidden" style="page-break-after: always; break-after: page;">
+        <div class="slide-page w-[${width}px] h-[${height}px] ${paddingClass} flex flex-col justify-between ${currentTheme.bg} relative overflow-hidden" style="page-break-after: always; break-after: page; ${currentTheme.customStyle || ''}">
           <!-- Top ambient radial glow -->
           <div class="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-indigo-500/20 blur-3xl pointer-events-none"></div>
           <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-purple-500/20 blur-3xl pointer-events-none"></div>
@@ -542,9 +604,13 @@ Respond ONLY with valid JSON in this exact structure:
             <!-- Author & Brand Header -->
             <div class="flex items-center justify-between border-b border-white/10 pb-5">
               <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
-                  ${script.brand.slice(0, 2).toUpperCase()}
-                </div>
+                ${
+                  script.logoUrl
+                    ? `<img src="${script.logoUrl}" class="w-12 h-12 rounded-2xl object-contain bg-white/10 p-1 border border-white/20 shadow-lg shadow-black/40" />`
+                    : `<div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
+                        ${script.brand.slice(0, 2).toUpperCase()}
+                      </div>`
+                }
                 <div>
                   <div class="font-extrabold text-xl text-white tracking-tight">${script.brand}</div>
                   <div class="text-xs font-medium ${currentTheme.subtext}">${script.handle || '@insights'}</div>

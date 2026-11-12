@@ -156,6 +156,10 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
             Pricing
           </a>
 
+          <a href="/guides" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition">
+            Guides
+          </a>
+
           <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1">
             <span>Docs</span>
             <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -1399,7 +1403,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           <div>
             <label class="block text-[11px] text-slate-400 font-medium mb-2">Visual Color Theme</label>
             <div class="flex flex-wrap gap-2">
-              <button onclick="setReelTheme('gradient')" id="theme-btn-gradient" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-400/40">Gradient Glow</button>
+              <button onclick="setReelTheme('brand')" id="theme-btn-brand" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-500 to-indigo-600 text-white shadow-md border border-white/30 flex items-center space-x-1"><span>Brand Auto ✨</span></button>
+              <button onclick="setReelTheme('gradient')" id="theme-btn-gradient" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Gradient Glow</button>
               <button onclick="setReelTheme('cyberpunk')" id="theme-btn-cyberpunk" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Cyberpunk Neon</button>
               <button onclick="setReelTheme('midnight')" id="theme-btn-midnight" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Midnight Emerald</button>
               <button onclick="setReelTheme('sunset')" id="theme-btn-sunset" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Sunset Amber</button>
@@ -1495,6 +1500,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               <!-- Brand Bar -->
               <div class="flex items-center justify-between border-b border-white/10 pb-3">
                 <div class="flex items-center space-x-2.5">
+                  <img id="preview-logo-img" src="" class="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md" />
                   <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md">
                     TP
                   </div>
@@ -1642,7 +1648,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       title: "Instant Vector PDF Generation for Developers",
       brand: "Tailprint",
       handle: "@tailprint",
-      theme: "gradient",
+      logoUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E",
+      brandColors: {
+        primary: "#4f46e5",
+        secondary: "#090d16",
+        accent: "#38bdf8"
+      },
+      theme: "brand",
       aspectRatio: "9:16",
       screenrecordUrl: null,
       screenrecordMode: "inset",
@@ -1689,6 +1701,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     // Theme CSS maps
     const themeMaps = {
+      brand: {
+        bg: "linear-gradient(135deg, #4f46e5 0%, #090d16 100%)",
+        text: "#ffffff",
+        subtext: "rgba(226, 232, 240, 0.85)",
+        tagBg: "rgba(255, 255, 255, 0.12)",
+        tagBorder: "rgba(255, 255, 255, 0.25)",
+        tagText: "#ffffff",
+        statBg: "rgba(255, 255, 255, 0.08)",
+        statBorder: "rgba(255, 255, 255, 0.18)",
+        statColor: "#38bdf8"
+      },
       gradient: {
         bg: "linear-gradient(145deg, #1e1b4b 0%, #31104b 50%, #030712 100%)",
         text: "#ffffff",
@@ -1778,11 +1801,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     function setReelTheme(themeName) {
       reelState.theme = themeName;
-      ['gradient', 'cyberpunk', 'midnight', 'sunset', 'clean'].forEach(t => {
+      ['brand', 'gradient', 'cyberpunk', 'midnight', 'sunset', 'clean'].forEach(t => {
         const btn = document.getElementById('theme-btn-' + t);
         if (btn) {
           if (t === themeName) {
-            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-400/40';
+            btn.className = t === 'brand'
+              ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-500 to-indigo-600 text-white shadow-md border border-white/40'
+              : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-400/40';
           } else {
             btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800';
           }
@@ -1868,7 +1893,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     function updatePreviewDisplay() {
       const slide = reelState.slides[currentSlideIdx] || reelState.slides[0];
-      const theme = themeMaps[reelState.theme] || themeMaps.gradient;
+      if (reelState.brandColors) {
+        themeMaps.brand.bg = "linear-gradient(135deg, " + reelState.brandColors.primary + " 0%, " + reelState.brandColors.secondary + " 100%)";
+        themeMaps.brand.statColor = reelState.brandColors.accent;
+      }
+      const theme = themeMaps[reelState.theme] || themeMaps.brand || themeMaps.gradient;
       const screen = document.getElementById('reel-screen');
 
       // Apply theme background
@@ -1878,7 +1907,22 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       // Brand & Avatar
       document.getElementById('preview-brand').textContent = reelState.brand;
       document.getElementById('preview-handle').textContent = reelState.handle;
-      document.getElementById('preview-avatar').textContent = reelState.brand.slice(0, 2).toUpperCase();
+
+      const logoImg = document.getElementById('preview-logo-img');
+      const avatarDiv = document.getElementById('preview-avatar');
+      if (reelState.logoUrl) {
+        if (logoImg) {
+          logoImg.src = reelState.logoUrl;
+          logoImg.classList.remove('hidden');
+        }
+        if (avatarDiv) avatarDiv.classList.add('hidden');
+      } else {
+        if (logoImg) logoImg.classList.add('hidden');
+        if (avatarDiv) {
+          avatarDiv.classList.remove('hidden');
+          avatarDiv.textContent = reelState.brand.slice(0, 2).toUpperCase();
+        }
+      }
 
       // Tag
       const tagEl = document.getElementById('preview-tag');
@@ -2110,6 +2154,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           reelState.slides = data.script.slides || reelState.slides;
           reelState.cta = data.script.cta || reelState.cta;
           reelState.sourceUrl = data.script.sourceUrl || url;
+          if (data.script.logoUrl) {
+            reelState.logoUrl = data.script.logoUrl;
+          }
+          if (data.script.brandColors) {
+            reelState.brandColors = data.script.brandColors;
+          }
+          if (data.script.theme) {
+            setReelTheme(data.script.theme);
+          }
           if (data.script.screenrecordUrl) {
             reelState.screenrecordUrl = data.script.screenrecordUrl;
             reelState.screenrecordMode = 'inset';
@@ -2352,7 +2405,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       } else {
         // Gradient
         const grad = ctx.createLinearGradient(0, 0, W, H);
-        if (reelState.theme === 'cyberpunk') {
+        if (reelState.theme === 'brand' && reelState.brandColors) {
+          grad.addColorStop(0, reelState.brandColors.primary);
+          grad.addColorStop(1, reelState.brandColors.secondary);
+        } else if (reelState.theme === 'cyberpunk') {
           grad.addColorStop(0, '#09090b');
           grad.addColorStop(1, '#18181b');
         } else if (reelState.theme === 'midnight') {
@@ -2410,13 +2466,24 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const headerY = aspect === '9:16' ? 160 : aspect === '4:5' ? 120 : 100;
       const avatarSize = aspect === '9:16' ? 80 : 70;
       
-      // Avatar
-      ctx.fillStyle = '#6366f1';
-      roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, 22, true, false);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold ' + (avatarSize === 80 ? '36px' : '32px') + ' system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(reelState.brand.slice(0, 2).toUpperCase(), barMargin + avatarSize / 2, headerY + (avatarSize * 0.65));
+      // Avatar or Brand Logo
+      const logoImg = document.getElementById('preview-logo-img');
+      if (logoImg && logoImg.complete && logoImg.naturalWidth > 0 && !logoImg.classList.contains('hidden')) {
+        ctx.save();
+        roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, 20, false, false);
+        ctx.clip();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.fillRect(barMargin, headerY, avatarSize, avatarSize);
+        ctx.drawImage(logoImg, barMargin, headerY, avatarSize, avatarSize);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#6366f1';
+        roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, 22, true, false);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold ' + (avatarSize === 80 ? '36px' : '32px') + ' system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(reelState.brand.slice(0, 2).toUpperCase(), barMargin + avatarSize / 2, headerY + (avatarSize * 0.65));
+      }
 
       // Brand text
       ctx.textAlign = 'left';
@@ -2954,6 +3021,14 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               screenrecordMode: z.string().optional(),
               language: z.string().optional(),
               languageLabel: z.string().optional(),
+              logoUrl: z.string().optional(),
+              brandColors: z
+                .object({
+                  primary: z.string(),
+                  secondary: z.string(),
+                  accent: z.string(),
+                })
+                .optional(),
               slides: z.array(
                 z.object({
                   tag: z.string().optional(),
@@ -3055,7 +3130,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           title: z.string().default('Social Reel Deck'),
           brand: z.string().default('Brand'),
           handle: z.string().optional().default('@brand'),
-          theme: z.enum(['cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).default('gradient'),
+          logoUrl: z.string().optional(),
+          brandColors: z
+            .object({
+              primary: z.string(),
+              secondary: z.string(),
+              accent: z.string(),
+            })
+            .optional(),
+          theme: z.enum(['brand', 'cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).default('brand'),
           aspectRatio: z.enum(['9:16', '1:1', '16:9', '4:5']).optional().default('9:16'),
           screenrecordUrl: z.string().optional(),
           screenrecordMode: z.enum(['inset', 'backdrop', 'none']).optional().default('inset'),
