@@ -821,27 +821,27 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
       if (activeApiTab === 'curl') {
         if (isImage) {
-          codeBlock.textContent = 'curl -X POST https://tailprint.com/v1/render/image \\\n' +
-            '  -H "Authorization: Bearer sec_live_..." \\\n' +
-            '  -H "Content-Type: application/json" \\\n' +
-            '  -d \'{\\n' +
-            '    "html": ' + JSON.stringify(html) + ',\\n' +
-            '    "width": ' + (fmt === 'og-card' ? 1200 : 1280) + ',\\n' +
-            '    "height": ' + (fmt === 'og-card' ? 630 : 720) + ',\\n' +
-            '    "type": "png"\\n' +
-            '  }\' \\\n' +
-            '  --output render.png';
+          codeBlock.textContent = "curl -X POST https://tailprint.com/v1/render/image \\\n" +
+            "  -H \"Authorization: Bearer sec_live_...\" \\\n" +
+            "  -H \"Content-Type: application/json\" \\\n" +
+            "  -d '{\\n" +
+            "    \"html\": " + JSON.stringify(html) + ",\\n" +
+            "    \"width\": " + (fmt === 'og-card' ? 1200 : 1280) + ",\\n" +
+            "    \"height\": " + (fmt === 'og-card' ? 630 : 720) + ",\\n" +
+            "    \"type\": \"png\"\\n" +
+            "  }' \\\n" +
+            "  --output render.png";
         } else {
-          codeBlock.textContent = 'curl -X POST https://tailprint.com/v1/render/pdf \\\n' +
-            '  -H "Authorization: Bearer sec_live_..." \\\n' +
-            '  -H "Content-Type: application/json" \\\n' +
-            '  -d \'{\\n' +
-            '    "html": ' + JSON.stringify(html) + ',\\n' +
-            '    "format": "A4",\\n' +
-            '    "landscape": ' + isLandscape + ',\\n' +
-            '    "smart_pagination": ' + smartPaginationEnabled + '\\n' +
-            '  }\' \\\n' +
-            '  --output document.pdf';
+          codeBlock.textContent = "curl -X POST https://tailprint.com/v1/render/pdf \\\n" +
+            "  -H \"Authorization: Bearer sec_live_...\" \\\n" +
+            "  -H \"Content-Type: application/json\" \\\n" +
+            "  -d '{\\n" +
+            "    \"html\": " + JSON.stringify(html) + ",\\n" +
+            "    \"format\": \"A4\",\\n" +
+            "    \"landscape\": " + isLandscape + ",\\n" +
+            "    \"smart_pagination\": " + smartPaginationEnabled + "\\n" +
+            "  }' \\\n" +
+            "  --output document.pdf";
         }
       } else if (activeApiTab === 'node') {
         codeBlock.textContent = 'import fs from "node:fs";\n\n' +
