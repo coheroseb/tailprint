@@ -46,6 +46,9 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().default('Tailprint <noreply@tailprint.com>'),
+
+  // Founder Admin Analytics Dashboard Secret
+  ADMIN_SECRET: z.string().default('tailprint2026'),
 });
 
 export type Env = z.infer<typeof envSchema>;

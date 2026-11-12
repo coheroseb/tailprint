@@ -1,0 +1,642 @@
+import crypto from 'node:crypto';
+import { redisService } from './redis.js';
+import { env } from '../config/env.js';
+
+export interface AnalyticsEvent {
+  id: string;
+  timestamp: string;
+  type: 'VISIT' | 'SIGNUP' | 'PDF' | 'IMAGE' | 'EINVOICE' | 'SCRAPE' | 'PLAYGROUND' | 'MCP' | 'AI_BOT';
+  path: string;
+  detail: string;
+  country: string;
+  latencyMs?: number;
+}
+
+export interface DailyMetric {
+  date: string;
+  pageviews: number;
+  uniqueVisitors: number;
+  renders: number;
+  signups: number;
+  visitorHashes?: string[];
+}
+
+export interface AnalyticsState {
+  startedAt: string;
+  totalPageviews: number;
+  totalUniqueVisitors: number;
+  usage: {
+    pdf: number;
+    image: number;
+    einvoice: number;
+    scrape: number;
+    playground: number;
+    mcp: number;
+    signups: number;
+  };
+  pages: Record<string, number>;
+  referrers: Record<string, number>;
+  countries: Record<string, number>;
+  bots: Record<string, number>;
+  daily: Record<string, DailyMetric>;
+  recentEvents: AnalyticsEvent[];
+}
+
+export interface NpmDownloadStats {
+  lastDay: number;
+  lastWeek: number;
+  lastMonth: number;
+  version: string;
+  fetchedAt: string;
+}
+
+const REDIS_ANALYTICS_KEY = 'analytics:state:v1';
+
+const BOT_PATTERNS: Array<{ name: string; regex: RegExp }> = [
+  { name: 'ClaudeBot (Anthropic)', regex: /claudebot|anthropic/i },
+  { name: 'GPTBot / ChatGPT (OpenAI)', regex: /gptbot|chatgpt-user|oai-searchbot/i },
+  { name: 'PerplexityBot', regex: /perplexitybot/i },
+  { name: 'Googlebot', regex: /googlebot|google-inspectiontool/i },
+  { name: 'Bingbot', regex: /bingbot/i },
+  { name: 'Applebot', regex: /applebot/i },
+  { name: 'Cursor / MCP Client', regex: /cursor|mcp-client|modelcontextprotocol/i },
+  { name: 'GitHub / Dependabot', regex: /github|dependabot/i },
+  { name: 'Twitter / Slack / LinkedIn Preview', regex: /twitterbot|slackbot|linkedinbot|discordbot|whatsapp/i },
+  { name: 'Ahrefs / Semrush SEO', regex: /ahrefsbot|semrushbot|dotbot|mj12bot/i },
+];
+
+export class AnalyticsService {
+  private static instance: AnalyticsService | null = null;
+  private state: AnalyticsState;
+  private dirty = false;
+  private flushTimer: NodeJS.Timeout | null = null;
+  private initialized = false;
+  private npmCache: { data: NpmDownloadStats; expiresAt: number } | null = null;
+
+  private constructor() {
+    this.state = this.createEmptyState();
+  }
+
+  public static getInstance(): AnalyticsService {
+    if (!AnalyticsService.instance) {
+      AnalyticsService.instance = new AnalyticsService();
+    }
+    return AnalyticsService.instance;
+  }
+
+  private createEmptyState(): AnalyticsState {
+    return {
+      startedAt: new Date().toISOString(),
+      totalPageviews: 0,
+      totalUniqueVisitors: 0,
+      usage: {
+        pdf: 0,
+        image: 0,
+        einvoice: 0,
+        scrape: 0,
+        playground: 0,
+        mcp: 0,
+        signups: 0,
+      },
+      pages: {},
+      referrers: {},
+      countries: {},
+      bots: {},
+      daily: {},
+      recentEvents: [],
+    };
+  }
+
+  public async init(): Promise<void> {
+    if (this.initialized || env.NODE_ENV === 'test') return;
+    this.initialized = true;
+    try {
+      const saved = await redisService.getJson<AnalyticsState>(REDIS_ANALYTICS_KEY);
+      if (saved && typeof saved === 'object' && saved.usage) {
+        this.state = {
+          ...this.createEmptyState(),
+          ...saved,
+          usage: {
+            ...this.createEmptyState().usage,
+            ...(saved.usage || {}),
+          },
+          pages: saved.pages || {},
+          referrers: saved.referrers || {},
+          countries: saved.countries || {},
+          bots: saved.bots || {},
+          daily: saved.daily || {},
+          recentEvents: Array.isArray(saved.recentEvents) ? saved.recentEvents.slice(0, 60) : [],
+        };
+      }
+    } catch {
+      // Ignore load errors
+    }
+  }
+
+  private scheduleFlush(): void {
+    if (env.NODE_ENV === 'test') return;
+    this.dirty = true;
+    if (this.flushTimer) return;
+    this.flushTimer = setTimeout(() => {
+      this.flushTimer = null;
+      this.flush().catch(() => {});
+    }, 5000);
+    if (this.flushTimer.unref) {
+      this.flushTimer.unref();
+    }
+  }
+
+  public async flush(): Promise<void> {
+    if (!this.dirty || env.NODE_ENV === 'test') return;
+    this.dirty = false;
+    try {
+      // Prune daily history older than 30 days to keep state compact
+      const dates = Object.keys(this.state.daily).sort();
+      if (dates.length > 30) {
+        for (const oldDate of dates.slice(0, dates.length - 30)) {
+          delete this.state.daily[oldDate];
+        }
+      }
+      await redisService.setJson(REDIS_ANALYTICS_KEY, this.state);
+    } catch {
+      // Ignore Redis write error
+    }
+  }
+
+  private getDateKey(d = new Date()): string {
+    return d.toISOString().slice(0, 10);
+  }
+
+  private getOrCreateDay(dateKey: string): DailyMetric {
+    if (!this.state.daily[dateKey]) {
+      this.state.daily[dateKey] = {
+        date: dateKey,
+        pageviews: 0,
+        uniqueVisitors: 0,
+        renders: 0,
+        signups: 0,
+        visitorHashes: [],
+      };
+    }
+    return this.state.daily[dateKey];
+  }
+
+  private detectBot(userAgent: string): string | null {
+    if (!userAgent) return null;
+    for (const b of BOT_PATTERNS) {
+      if (b.regex.test(userAgent)) return b.name;
+    }
+    if (/bot|crawler|spider|headless|curl|python-requests|axios|node-fetch|undici/i.test(userAgent)) {
+      return 'Automated Script / CLI';
+    }
+    return null;
+  }
+
+  private parseReferrerHost(referer?: string): string {
+    if (!referer) return 'Direct / Bookmark';
+    try {
+      const url = new URL(referer);
+      const host = url.hostname.replace(/^www\./, '').toLowerCase();
+      if (host.includes('tailprint.com') || host.includes('localhost')) return 'Internal Navigation';
+      if (host.includes('npmjs.com')) return 'npmjs.com';
+      if (host.includes('github.com')) return 'github.com';
+      if (host.includes('google.')) return 'Google Search';
+      if (host.includes('bing.com')) return 'Bing Search';
+      if (host.includes('ycombinator.com')) return 'Hacker News';
+      if (host.includes('t.co') || host.includes('twitter.com') || host.includes('x.com')) return 'X / Twitter';
+      if (host.includes('linkedin.com')) return 'LinkedIn';
+      if (host.includes('reddit.com')) return 'Reddit';
+      return host;
+    } catch {
+      return 'Direct / Bookmark';
+    }
+  }
+
+  private extractCountry(headers: Record<string, any>): string {
+    const cfCountry = headers['cf-ipcountry'] || headers['x-vercel-ip-country'] || headers['x-country-code'];
+    if (cfCountry && typeof cfCountry === 'string' && cfCountry.length === 2) {
+      return cfCountry.toUpperCase();
+    }
+    const acceptLang = headers['accept-language'];
+    if (acceptLang && typeof acceptLang === 'string') {
+      const first = acceptLang.split(',')[0]?.trim() || '';
+      const parts = first.split('-');
+      if (parts.length === 2 && parts[1].length === 2) {
+        return parts[1].toUpperCase();
+      }
+      if (first.startsWith('da')) return 'DK';
+      if (first.startsWith('de')) return 'DE';
+      if (first.startsWith('fr')) return 'FR';
+      if (first.startsWith('es')) return 'ES';
+      if (first.startsWith('nl')) return 'NL';
+      if (first.startsWith('sv')) return 'SE';
+      if (first.startsWith('nb') || first.startsWith('nn')) return 'NO';
+    }
+    return 'GLOBAL';
+  }
+
+  private pushEvent(event: Omit<AnalyticsEvent, 'id' | 'timestamp'>): void {
+    const entry: AnalyticsEvent = {
+      id: crypto.randomBytes(4).toString('hex'),
+      timestamp: new Date().toISOString(),
+      ...event,
+    };
+    this.state.recentEvents.unshift(entry);
+    if (this.state.recentEvents.length > 60) {
+      this.state.recentEvents.length = 60;
+    }
+  }
+
+  public trackHttpRequest(params: {
+    method: string;
+    url: string;
+    statusCode: number;
+    ip: string;
+    userAgent: string;
+    referer?: string;
+    headers: Record<string, any>;
+    latencyMs: number;
+  }): void {
+    const cleanPath = params.url.split('?')[0] || '/';
+
+    // Skip noisy internal polling or healthchecks
+    if (
+      cleanPath === '/health' ||
+      cleanPath.startsWith('/v1/admin') ||
+      cleanPath === '/admin' ||
+      cleanPath === '/favicon.ico' ||
+      cleanPath === '/og-image.png'
+    ) {
+      return;
+    }
+
+    const dateKey = this.getDateKey();
+    const day = this.getOrCreateDay(dateKey);
+    const country = this.extractCountry(params.headers);
+    const botName = this.detectBot(params.userAgent);
+
+    // 1. Track API & Engine Actions (POST /v1/...)
+    if (params.method === 'POST' && params.statusCode < 400) {
+      if (cleanPath === '/v1/render/pdf') {
+        this.state.usage.pdf++;
+        day.renders++;
+        this.pushEvent({
+          type: 'PDF',
+          path: cleanPath,
+          detail: 'API Vector PDF Render',
+          country,
+          latencyMs: Math.round(params.latencyMs),
+        });
+        this.scheduleFlush();
+        return;
+      }
+
+      if (cleanPath === '/v1/render/image') {
+        this.state.usage.image++;
+        day.renders++;
+        this.pushEvent({
+          type: 'IMAGE',
+          path: cleanPath,
+          detail: 'API OG Image Render',
+          country,
+          latencyMs: Math.round(params.latencyMs),
+        });
+        this.scheduleFlush();
+        return;
+      }
+
+      if (cleanPath === '/v1/render/einvoice' || cleanPath === '/v1/tools/factur-x') {
+        this.state.usage.einvoice++;
+        day.renders++;
+        this.pushEvent({
+          type: 'EINVOICE',
+          path: cleanPath,
+          detail: 'Factur-X Hybrid E-Invoice Render',
+          country,
+          latencyMs: Math.round(params.latencyMs),
+        });
+        this.scheduleFlush();
+        return;
+      }
+
+      if (cleanPath === '/v1/scrape/markdown' || cleanPath === '/v1/scrape/playground') {
+        this.state.usage.scrape++;
+        day.renders++;
+        this.pushEvent({
+          type: 'SCRAPE',
+          path: cleanPath,
+          detail: 'LLM Markdown Web Scrape',
+          country,
+          latencyMs: Math.round(params.latencyMs),
+        });
+        this.scheduleFlush();
+        return;
+      }
+
+      if (
+        cleanPath === '/v1/render/playground' ||
+        cleanPath.startsWith('/v1/tools/') ||
+        cleanPath.startsWith('/v1/studio/')
+      ) {
+        this.state.usage.playground++;
+        day.renders++;
+        this.pushEvent({
+          type: 'PLAYGROUND',
+          path: cleanPath,
+          detail: `Interactive Tool (${cleanPath.replace('/v1/', '')})`,
+          country,
+          latencyMs: Math.round(params.latencyMs),
+        });
+        this.scheduleFlush();
+        return;
+      }
+
+      if (cleanPath === '/v1/auth/claim-free-key') {
+        this.state.usage.signups++;
+        day.signups++;
+        this.pushEvent({
+          type: 'SIGNUP',
+          path: cleanPath,
+          detail: 'New Free Developer API Key Claimed',
+          country,
+          latencyMs: Math.round(params.latencyMs),
+        });
+        this.scheduleFlush();
+        return;
+      }
+
+      if (cleanPath.startsWith('/v1/mcp')) {
+        this.state.usage.mcp++;
+        this.pushEvent({
+          type: 'MCP',
+          path: cleanPath,
+          detail: 'MCP Agent Tool Invocation',
+          country,
+          latencyMs: Math.round(params.latencyMs),
+        });
+        this.scheduleFlush();
+        return;
+      }
+    }
+
+    // 2. Track GET Pageviews & Crawlers
+    if (params.method === 'GET' && params.statusCode === 200) {
+      if (cleanPath.startsWith('/v1/mcp/sse')) {
+        this.state.usage.mcp++;
+        this.pushEvent({
+          type: 'MCP',
+          path: cleanPath,
+          detail: 'MCP SSE Stream Connected',
+          country,
+        });
+        this.scheduleFlush();
+        return;
+      }
+
+      // Only count primary web pages & GEO endpoints
+      const trackablePages = new Set([
+        '/',
+        '/docs',
+        '/dashboard',
+        '/tools',
+        '/tools/mockup',
+        '/tools/carousel',
+        '/tools/factur-x',
+        '/tools/visual-diff',
+        '/mockup',
+        '/carousel',
+        '/factur-x',
+        '/visual-diff',
+        '/studio',
+        '/guides',
+        '/llms.txt',
+        '/sitemap.xml',
+      ]);
+
+      const isTrackablePage =
+        trackablePages.has(cleanPath) ||
+        cleanPath.startsWith('/guides/') ||
+        cleanPath.startsWith('/templates/');
+
+      if (!isTrackablePage) return;
+
+      if (botName) {
+        this.state.bots[botName] = (this.state.bots[botName] || 0) + 1;
+        if (cleanPath === '/llms.txt' || botName.includes('Claude') || botName.includes('GPT') || botName.includes('Perplexity')) {
+          this.pushEvent({
+            type: 'AI_BOT',
+            path: cleanPath,
+            detail: `${botName} indexed ${cleanPath}`,
+            country,
+          });
+        }
+        this.scheduleFlush();
+        return;
+      }
+
+      // Human visitor pageview
+      this.state.totalPageviews++;
+      day.pageviews++;
+
+      this.state.pages[cleanPath] = (this.state.pages[cleanPath] || 0) + 1;
+      this.state.countries[country] = (this.state.countries[country] || 0) + 1;
+
+      const refSource = this.parseReferrerHost(params.referer);
+      if (refSource !== 'Internal Navigation') {
+        this.state.referrers[refSource] = (this.state.referrers[refSource] || 0) + 1;
+      }
+
+      // Unique visitor fingerprint for the day (privacy-preserving short hash)
+      const visitorHash = crypto
+        .createHash('sha256')
+        .update(`${dateKey}:${params.ip}:${params.userAgent}`)
+        .digest('hex')
+        .slice(0, 12);
+
+      if (!day.visitorHashes) {
+        day.visitorHashes = [];
+      }
+      if (!day.visitorHashes.includes(visitorHash)) {
+        if (day.visitorHashes.length < 5000) {
+          day.visitorHashes.push(visitorHash);
+        }
+        day.uniqueVisitors++;
+        this.state.totalUniqueVisitors++;
+      }
+
+      this.pushEvent({
+        type: 'VISIT',
+        path: cleanPath,
+        detail: refSource === 'Internal Navigation' ? 'Page Visit' : `From ${refSource}`,
+        country,
+        latencyMs: Math.round(params.latencyMs),
+      });
+
+      this.scheduleFlush();
+    }
+  }
+
+  public async getNpmStats(): Promise<NpmDownloadStats> {
+    if (this.npmCache && Date.now() < this.npmCache.expiresAt) {
+      return this.npmCache.data;
+    }
+
+    const fallback: NpmDownloadStats = {
+      lastDay: 0,
+      lastWeek: 414,
+      lastMonth: 414,
+      version: '1.0.1',
+      fetchedAt: new Date().toISOString(),
+    };
+
+    try {
+      const [dayRes, weekRes, monthRes, regRes] = await Promise.allSettled([
+        fetch('https://api.npmjs.org/downloads/point/last-day/tailprint', { signal: AbortSignal.timeout(3500) }),
+        fetch('https://api.npmjs.org/downloads/point/last-week/tailprint', { signal: AbortSignal.timeout(3500) }),
+        fetch('https://api.npmjs.org/downloads/point/last-month/tailprint', { signal: AbortSignal.timeout(3500) }),
+        fetch('https://registry.npmjs.org/tailprint/latest', { signal: AbortSignal.timeout(3500) }),
+      ]);
+
+      let lastDay = 0;
+      let lastWeek = 414;
+      let lastMonth = 414;
+      let version = '1.0.1';
+
+      if (dayRes.status === 'fulfilled' && dayRes.value.ok) {
+        const d: any = await dayRes.value.json();
+        if (typeof d.downloads === 'number') lastDay = d.downloads;
+      }
+      if (weekRes.status === 'fulfilled' && weekRes.value.ok) {
+        const w: any = await weekRes.value.json();
+        if (typeof w.downloads === 'number') lastWeek = w.downloads;
+      }
+      if (monthRes.status === 'fulfilled' && monthRes.value.ok) {
+        const m: any = await monthRes.value.json();
+        if (typeof m.downloads === 'number') lastMonth = m.downloads;
+      }
+      if (regRes.status === 'fulfilled' && regRes.value.ok) {
+        const r: any = await regRes.value.json();
+        if (r.version) version = r.version;
+      }
+
+      const data: NpmDownloadStats = {
+        lastDay,
+        lastWeek,
+        lastMonth: Math.max(lastMonth, lastWeek),
+        version,
+        fetchedAt: new Date().toISOString(),
+      };
+
+      this.npmCache = {
+        data,
+        expiresAt: Date.now() + 5 * 60 * 1000, // Cache for 5 minutes
+      };
+      return data;
+    } catch {
+      return fallback;
+    }
+  }
+
+  public async getDashboardSnapshot() {
+    await this.init();
+
+    const todayKey = this.getDateKey();
+    const today = this.getOrCreateDay(todayKey);
+
+    // Build last 14 days array
+    const last14Days: Array<{
+      date: string;
+      label: string;
+      pageviews: number;
+      uniqueVisitors: number;
+      renders: number;
+      signups: number;
+    }> = [];
+
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400 * 1000);
+      const key = this.getDateKey(d);
+      const metric = this.state.daily[key];
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      last14Days.push({
+        date: key,
+        label,
+        pageviews: metric?.pageviews || 0,
+        uniqueVisitors: metric?.uniqueVisitors || 0,
+        renders: metric?.renders || 0,
+        signups: metric?.signups || 0,
+      });
+    }
+
+    const [customers, npmStats] = await Promise.all([
+      redisService.listCustomerAccounts(),
+      this.getNpmStats(),
+    ]);
+
+    const totalRendersFromCustomers = customers.reduce((sum, c) => sum + (c.current_usage || 0), 0);
+    const totalTrackedRenders =
+      this.state.usage.pdf +
+      this.state.usage.image +
+      this.state.usage.einvoice +
+      this.state.usage.scrape +
+      this.state.usage.playground;
+
+    const paidPlanPrices: Record<string, number> = {
+      free: 0,
+      starter: 14,
+      pro: 49,
+      business: 149,
+      enterprise: 499,
+    };
+
+    const freeCustomers = customers.filter((c) => c.plan === 'free').length;
+    const paidCustomers = customers.filter((c) => c.plan !== 'free' && c.status === 'active').length;
+    const estimatedMrrUsd = customers
+      .filter((c) => c.status === 'active')
+      .reduce((sum, c) => sum + (paidPlanPrices[c.plan] || 0), 0);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      startedAt: this.state.startedAt,
+      today: {
+        date: todayKey,
+        pageviews: today.pageviews,
+        uniqueVisitors: today.uniqueVisitors,
+        renders: today.renders,
+        signups: today.signups,
+      },
+      totals: {
+        pageviews: this.state.totalPageviews,
+        uniqueVisitors: this.state.totalUniqueVisitors,
+        renders: Math.max(totalTrackedRenders, totalRendersFromCustomers),
+        totalUsers: customers.length,
+        freeUsers: freeCustomers,
+        paidUsers: paidCustomers,
+        estimatedMrrUsd,
+      },
+      usage: this.state.usage,
+      npm: npmStats,
+      topPages: Object.entries(this.state.pages)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([path, count]) => ({ path, count })),
+      topReferrers: Object.entries(this.state.referrers)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([source, count]) => ({ source, count })),
+      topCountries: Object.entries(this.state.countries)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([country, count]) => ({ country, count })),
+      aiBots: Object.entries(this.state.bots)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([bot, count]) => ({ bot, count })),
+      last14Days,
+      customers,
+      recentEvents: this.state.recentEvents.slice(0, 50),
+    };
+  }
+}
+
+export const analyticsService = AnalyticsService.getInstance();

@@ -87,6 +87,18 @@ class MemoryRedisClient {
     set.add(member);
     return had ? 0 : 1;
   }
+
+  async keys(pattern: string): Promise<string[]> {
+    const prefix = pattern.replace(/\*$/, '');
+    const result: string[] = [];
+    for (const k of this.data.keys()) {
+      this.cleanKey(k);
+      if (this.data.has(k) && k.startsWith(prefix)) {
+        result.push(k);
+      }
+    }
+    return result;
+  }
 }
 
 export class RedisService {
@@ -96,6 +108,7 @@ export class RedisService {
 
   private constructor() {
     const isUpstashConfigured = Boolean(
+      env.NODE_ENV !== 'test' &&
       env.UPSTASH_REDIS_REST_URL &&
       env.UPSTASH_REDIS_REST_TOKEN &&
       !env.UPSTASH_REDIS_REST_URL.includes('your-upstash-redis-url') &&
@@ -400,6 +413,108 @@ export class RedisService {
       }
     }
     return val as T;
+  }
+
+  public async listCustomerAccounts(): Promise<
+    Array<{
+      email?: string;
+      customer_id: string;
+      plan: string;
+      key_prefix: string;
+      monthly_limit: number;
+      current_usage: number;
+      status: string;
+      created_at: string;
+    }>
+  > {
+    const accounts: Array<{
+      email?: string;
+      customer_id: string;
+      plan: string;
+      key_prefix: string;
+      monthly_limit: number;
+      current_usage: number;
+      status: string;
+      created_at: string;
+    }> = [];
+
+    try {
+      const month = this.getMonthString();
+      const seenHashes = new Set<string>();
+      const clientAny = this.client as any;
+
+      if (typeof clientAny.keys === 'function') {
+        const emailKeys: string[] = await clientAny.keys('free_key_email:*');
+        for (const ek of emailKeys) {
+          const email = ek.replace('free_key_email:', '');
+          if (email.includes('@example.com') || email.includes('test_live_claim')) continue;
+          const rawKey = await this.client.get<string>(ek);
+          if (!rawKey) continue;
+          const hash = this.hashKey(rawKey);
+          seenHashes.add(hash);
+          const recRaw = await this.client.get<ApiKeyRecord | string>(`api_keys:${hash}`);
+          const usageVal = await this.client.get<number | string>(`usage:${hash}:${month}`);
+          const rec: ApiKeyRecord = recRaw
+            ? typeof recRaw === 'string'
+              ? JSON.parse(recRaw)
+              : recRaw
+            : {
+                key_prefix: rawKey.slice(0, 14),
+                customer_id: `cus_free_${hash.slice(0, 8)}`,
+                plan: 'free',
+                monthly_limit: 100,
+                status: 'active',
+                created_at: new Date().toISOString(),
+              };
+
+          accounts.push({
+            email,
+            customer_id: rec.customer_id,
+            plan: rec.plan || 'free',
+            key_prefix: rec.key_prefix || rawKey.slice(0, 14),
+            monthly_limit: rec.monthly_limit || 100,
+            current_usage: Number(usageVal || 0),
+            status: rec.status || 'active',
+            created_at: rec.created_at || new Date().toISOString(),
+          });
+        }
+
+        const custKeys: string[] = await clientAny.keys('customer_keys:*');
+        for (const ck of custKeys) {
+          const cid = ck.replace('customer_keys:', '');
+          if (
+            cid === 'cus_dev_sandbox' ||
+            cid === 'cus_dev_auto' ||
+            cid === 'cus_customer_abc' ||
+            cid === 'cus_quota_test'
+          ) {
+            continue;
+          }
+          const hashes: string[] = await clientAny.smembers(ck);
+          for (const hash of hashes) {
+            if (seenHashes.has(hash)) continue;
+            seenHashes.add(hash);
+            const recRaw = await this.client.get<ApiKeyRecord | string>(`api_keys:${hash}`);
+            if (!recRaw) continue;
+            const rec: ApiKeyRecord = typeof recRaw === 'string' ? JSON.parse(recRaw) : recRaw;
+            const usageVal = await this.client.get<number | string>(`usage:${hash}:${month}`);
+            accounts.push({
+              customer_id: rec.customer_id || cid,
+              plan: rec.plan || 'starter',
+              key_prefix: rec.key_prefix || 'sec_live_...',
+              monthly_limit: rec.monthly_limit || 2500,
+              current_usage: Number(usageVal || 0),
+              status: rec.status || 'active',
+              created_at: rec.created_at || new Date().toISOString(),
+            });
+          }
+        }
+      }
+    } catch {
+      // Ignore scan errors
+    }
+
+    return accounts.sort((a, b) => b.created_at.localeCompare(a.created_at));
   }
 }
 

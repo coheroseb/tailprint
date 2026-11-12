@@ -18,8 +18,11 @@ import { mcpRoutes } from './routes/mcp.js';
 import { usageRoutes } from './routes/usage.js';
 import { toolsRoutes } from './routes/tools.js';
 import { studioRoutes } from './routes/studio.js';
+import { guidesRoutes } from './routes/guides.js';
+import { adminRoutes } from './routes/admin.js';
 import { browserService, RenderTimeoutError } from './services/browser.js';
 import { redisService } from './services/redis.js';
+import { analyticsService } from './services/analytics.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -49,17 +52,17 @@ export async function buildApp(): Promise<FastifyInstance> {
         version: '1.0.1',
         description: `Tailprint is the high-performance **Tailwind-Native Render & PDF Engine + Model Context Protocol (MCP) Server** ([tailprint.com](https://tailprint.com)).
 
-Convert raw HTML styled with arbitrary Tailwind CSS utility classes into pixel-perfect vector PDFs, 1200×630 Open Graph images, EU-compliant Factur-X e-invoices, and scrape web pages into token-efficient Markdown for LLMs with 90%+ context savings.
+Convert raw HTML styled with arbitrary Tailwind CSS utility classes into pixel-perfect vector PDFs, 1200×630 Open Graph preview images, EU-compliant Factur-X e-invoices, and scrape web pages into token-efficient Markdown for LLMs with 90%+ context savings.
 
 ---
 
-### 📚 Table of Contents & Vejledninger
+### 📚 Table of Contents & Developer Guides
 1. [Authentication & API Keys](#section/authentication)
 2. [Quickstart: cURL, TypeScript & Python](#section/quickstart)
-3. [Vejledning: Tailwind CSS til Print & PDF](#section/tailwind-pdf-guide)
-4. [Vejledning: EU E-Fakturering (Factur-X / ZUGFeRD / EN 16931)](#section/einvoice-guide)
-5. [Vejledning: Open Graph & Social Banners](#section/opengraph-guide)
-6. [Vejledning: AI Web Scraping & Markdown](#section/scraper-guide)
+3. [Guide: Tailwind CSS for Print & Vector PDF](#section/tailwind-pdf-guide)
+4. [Guide: European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)](#section/einvoice-guide)
+5. [Guide: High-Resolution Open Graph & Social Banners](#section/opengraph-guide)
+6. [Guide: AI Web Scraping & Markdown Extraction](#section/scraper-guide)
 7. [Model Context Protocol (MCP) — 22 Native Tools](#section/mcp-reference)
 8. [Developer Tools & Creative Studio](#section/developer-tools)
 9. [Zero Data Retention & Enterprise Security](#section/privacy-security)
@@ -151,7 +154,7 @@ with open('output.pdf', 'wb') as f:
 ---
 
 <a id="section/tailwind-pdf-guide"></a>
-### 🎨 Vejledning: Tailwind CSS til Print & Vector PDF
+### 🎨 Guide: Tailwind CSS for Print & Vector PDF
 
 Tailprint compiles Tailwind CSS via pre-warmed headless Chromium with full JIT (Just-In-Time) evaluation. You can use any modern Tailwind classes, arbitrary values, flexbox, CSS grid, and Google fonts.
 
@@ -193,9 +196,9 @@ Tailprint supports custom HTML header and footer templates. Chromium automatical
 ---
 
 <a id="section/einvoice-guide"></a>
-### 🇪🇺 Vejledning: EU E-Fakturering (Factur-X / ZUGFeRD / EN 16931)
+### 🇪🇺 Guide: European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)
 
-Starting 2026, European B2B electronic invoice mandates require businesses across the EU (including Denmark, Germany, France, Italy, and Poland) to issue legally compliant structured e-invoices.
+Starting 2026, European B2B electronic invoice mandates require businesses across the EU (including Germany, France, Italy, Poland, and Denmark) to issue legally compliant structured e-invoices.
 
 Tailprint includes native support for **Hybrid PDF/A-3 E-Invoicing**:
 - **Human-Readable:** A print-ready visual vector PDF invoice with custom branding.
@@ -215,9 +218,9 @@ curl -X POST https://tailprint.com/v1/render/einvoice \\
     "currency": "EUR",
     "profile": "BASIC",
     "seller": {
-      "name": "Acme Nordic ApS",
+      "name": "Acme Solutions Ltd",
       "vatId": "DK12345678",
-      "street": "Vesterbrogade 12",
+      "street": "Commercial Street 12",
       "city": "Copenhagen",
       "country": "DK"
     },
@@ -246,7 +249,7 @@ The resulting PDF contains the XML embedded directly in the PDF file catalog (\`
 ---
 
 <a id="section/opengraph-guide"></a>
-### 🖼️ Vejledning: Open Graph & Social Banners
+### 🖼️ Guide: High-Resolution Open Graph & Social Banners
 
 Use \`POST /v1/render/image\` to generate high-resolution social preview cards (1200×630 px) with automatic SHA-256 caching.
 - Repeated requests with identical HTML or URL return instant \`X-Cache: HIT\` in under 50ms.
@@ -268,7 +271,7 @@ curl -X POST https://tailprint.com/v1/render/image \\
 ---
 
 <a id="section/scraper-guide"></a>
-### 🌐 Vejledning: AI Web Scraping & Markdown Extraction
+### 🌐 Guide: AI Web Scraping & Markdown Extraction
 
 LLMs waste millions of tokens parsing noisy HTML, cookie consent banners, header bars, and tracking scripts. \`POST /v1/scrape/markdown\` converts any public webpage into clean GitHub Flavored Markdown (GFM):
 - Strips ads, navigation menus, modals, and tracking pixels using Mozilla Readability.
@@ -300,7 +303,7 @@ Tailprint exposes a production-grade, 100% spec-compliant Model Context Protocol
 | \`render_chart\` | Data Visuals | Inline PNG + CDN Link | High-DPI bar, line, radar, doughnut, and pie charts with Chart.js. |
 | \`generate_qr\` | Utilities | Inline PNG + CDN Link | Mathematically verified scan-ready QR codes and barcodes. |
 | \`render_device_mockup\` | Marketing | Inline PNG + CDN Link | Wraps any URL into a MacBook Pro + floating iPhone 16 studio mockup canvas. |
-| \`stamp_pdf\` | Security | PDF Link + Base64 | Stamps diagonal watermarks (CONFIDENTIAL, DRAFT, FORTROLIGT) across all PDF pages. |
+| \`stamp_pdf\` | Security | PDF Link + Base64 | Stamps diagonal watermarks (e.g. CONFIDENTIAL, DRAFT) across all PDF pages. |
 | \`compare_snapshots\` | QA / Testing | Inline PNG + CDN Link | 3-panel visual regression diff heatmap highlighting layout shifts with neon-pink overlay. |
 | \`render_carousel\` | Social Media | LinkedIn PDF + PNG Cover | Multi-slide 1080x1350 px portrait carousels for LinkedIn and Instagram. |
 | \`generate_einvoice\` | Compliance / EU | Hybrid PDF + Factur-X XML | Generates EU-compliant hybrid e-invoices (Factur-X / ZUGFeRD / EN 16931) with embedded CII XML. |
@@ -450,7 +453,31 @@ curl -X GET https://tailprint.com/v1/usage \\
     }
   );
 
-  // 5. Register application routes
+  // 5. Non-blocking Founder Analytics & Telemetry Hook
+  fastify.addHook('onResponse', async (request, reply) => {
+    try {
+      const forwarded = request.headers['x-forwarded-for'];
+      const clientIp =
+        (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : undefined) ||
+        request.ip ||
+        '0.0.0.0';
+
+      analyticsService.trackHttpRequest({
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+        ip: clientIp,
+        userAgent: String(request.headers['user-agent'] || ''),
+        referer: typeof request.headers['referer'] === 'string' ? request.headers['referer'] : undefined,
+        headers: request.headers as Record<string, any>,
+        latencyMs: reply.elapsedTime || 0,
+      });
+    } catch {
+      // Never block response lifecycle
+    }
+  });
+
+  // 6. Register application routes
   await fastify.register(templateRoutes);
   await fastify.register(dashboardRoutes);
   await fastify.register(renderRoutes);
@@ -459,6 +486,8 @@ curl -X GET https://tailprint.com/v1/usage \\
   await fastify.register(usageRoutes);
   await fastify.register(toolsRoutes);
   await fastify.register(studioRoutes);
+  await fastify.register(guidesRoutes);
+  await fastify.register(adminRoutes);
   await fastify.register(webhookRoutes);
 
   // 6. Centralized Error Handler
@@ -496,8 +525,9 @@ curl -X GET https://tailprint.com/v1/usage \\
     });
   });
 
-  // Graceful browser shutdown
+  // Graceful browser & telemetry shutdown
   fastify.addHook('onClose', async () => {
+    await analyticsService.flush();
     await browserService.close();
   });
 
@@ -508,6 +538,7 @@ curl -X GET https://tailprint.com/v1/usage \\
 if (process.env.NODE_ENV !== 'test') {
   const start = async () => {
     try {
+      await analyticsService.init();
       const app = await buildApp();
 
       // Pre-warm Chromium pool in the background

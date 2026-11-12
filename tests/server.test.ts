@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import crypto from 'node:crypto';
+import vm from 'node:vm';
 import { decryptPDF } from 'cryptpdf';
 import { PDFDocument } from 'pdf-lib';
 import { buildApp } from '../src/server.js';
@@ -41,6 +42,15 @@ describe('Tailprint Test Suite', () => {
       expect(response.body).toContain('Tailprint');
       expect(response.body).toContain('Invoice');
       expect(response.body).toContain('Certificate');
+
+      // Validate that all inline executable <script> tags have zero syntax errors
+      const inlineScripts = [
+        ...response.body.matchAll(/<script(?![^>]*type=['"]application\/ld\+json['"])(?![^>]*src=)[^>]*>([\s\S]*?)<\/script>/gi),
+      ];
+      expect(inlineScripts.length).toBeGreaterThan(0);
+      for (const match of inlineScripts) {
+        expect(() => new vm.Script(match[1])).not.toThrow();
+      }
     });
 
     it('GET /dashboard renders the customer self-service dashboard page', async () => {
@@ -196,6 +206,26 @@ describe('Tailprint Test Suite', () => {
       expect(res.body).toContain('Factur-X E-Invoice Generator');
     });
 
+    it('GET /admin renders Founder Analytics UI and /v1/admin/stats enforces auth', async () => {
+      const pageRes = await app.inject({ method: 'GET', url: '/admin' });
+      expect(pageRes.statusCode).toBe(200);
+      expect(pageRes.body).toContain('Founder Live Telemetry');
+
+      const unauthRes = await app.inject({ method: 'GET', url: '/v1/admin/stats' });
+      expect(unauthRes.statusCode).toBe(401);
+
+      const authRes = await app.inject({
+        method: 'GET',
+        url: '/v1/admin/stats',
+        headers: { 'x-admin-key': env.ADMIN_SECRET },
+      });
+      expect(authRes.statusCode).toBe(200);
+      const body = JSON.parse(authRes.body);
+      expect(body.today).toBeDefined();
+      expect(body.totals).toBeDefined();
+      expect(body.npm).toBeDefined();
+    });
+
     it('GET /tools/visual-diff and /visual-diff render the visual regression diff tool page', async () => {
       const res = await app.inject({ method: 'GET', url: '/tools/visual-diff' });
       expect(res.statusCode).toBe(200);
@@ -335,6 +365,53 @@ describe('Tailprint Test Suite', () => {
       expect(data.pdfUrl).toBeDefined();
       expect(data.previewUrl).toBeDefined();
     }, 20000);
+
+    it('GET /guides renders the developer guides knowledge hub', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/guides',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('text/html');
+      expect(response.body).toContain('Developer Guides');
+      expect(response.body).toContain('How to Convert Tailwind HTML to Pixel-Perfect Vector PDF');
+      expect(response.body).toContain('European E-Invoicing Guide');
+    });
+
+    it('GET /guides/:slug renders individual technical guide with Schema.org JSON-LD', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/guides/tailwind-html-to-pdf-nextjs',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('text/html');
+      expect(response.body).toContain('Next.js App Router Route Handler');
+      expect(response.body).toContain('TechArticle');
+      expect(response.body).toContain('application/ld+json');
+    });
+
+    it('GET /guides/invalid-slug returns 404 with helpful message', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/guides/non-existent-article-slug',
+      });
+      expect(response.statusCode).toBe(404);
+      const data = JSON.parse(response.body);
+      expect(data.error).toBe('Not Found');
+    });
+
+    it('GET /sitemap.xml contains technical guide URLs and tools', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/sitemap.xml',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('application/xml');
+      expect(response.body).toContain('https://tailprint.com/guides');
+      expect(response.body).toContain('https://tailprint.com/guides/tailwind-html-to-pdf-nextjs');
+      expect(response.body).toContain('https://tailprint.com/guides/factur-x-zugferd-pdf-api');
+      expect(response.body).toContain('https://tailprint.com/tools');
+    });
   });
 
   describe('Authentication & Quotas', () => {
