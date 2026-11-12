@@ -1323,7 +1323,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           <div id="reel-screen" class="w-full h-full rounded-[38px] p-6 flex flex-col justify-between relative overflow-hidden text-white transition-all duration-300">
             
             <!-- Live Screenrecord Ambient Video Backdrop (Only active in backdrop mode) -->
-            <video id="preview-backdrop-video" src="" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none hidden transition-opacity duration-300"></video>
+            <video id="preview-backdrop-video" src="" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-45 pointer-events-none hidden transition-opacity duration-300"></video>
 
             <!-- Archetype Stage Decor (Nordic hairline frame / Brutalist crosshairs / Terminal grid) -->
             <div id="preview-archetype-decor" class="absolute inset-0 pointer-events-none z-10"></div>

@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { env } from '../config/env.js';
@@ -30,8 +31,18 @@ export class StorageService {
       ? env.STORAGE_PATH
       : path.join(process.cwd(), env.STORAGE_PATH);
 
-    if (!fs.existsSync(this.storageDir)) {
-      fs.mkdirSync(this.storageDir, { recursive: true });
+    try {
+      if (!fs.existsSync(this.storageDir)) {
+        fs.mkdirSync(this.storageDir, { recursive: true });
+      }
+      fs.accessSync(this.storageDir, fs.constants.W_OK);
+    } catch (err) {
+      const fallbackDir = path.join(os.tmpdir(), 'tailprint-storage');
+      console.warn(`[StorageService] Primary storage path ${this.storageDir} is not writable, falling back to ${fallbackDir}:`, err);
+      this.storageDir = fallbackDir;
+      if (!fs.existsSync(this.storageDir)) {
+        fs.mkdirSync(this.storageDir, { recursive: true });
+      }
     }
 
     // Run initial prune of expired files on startup

@@ -336,7 +336,7 @@ export class ReelService {
     if (aiScript) {
       if (screenrecord) {
         aiScript.screenrecordUrl = screenrecord.hostedUrl;
-        aiScript.screenrecordMode = aiScript.layout === 'iphone' || aiScript.layout === 'split' ? 'inset' : 'backdrop';
+        aiScript.screenrecordMode = 'inset';
       }
       return aiScript;
     }
@@ -761,7 +761,7 @@ Respond ONLY with valid JSON in this exact structure:
       cleanExport: true,
       aspectRatio: '9:16',
       screenrecordUrl: screenrecord?.hostedUrl,
-      screenrecordMode: screenrecord ? (recommendedLayout === 'iphone' || recommendedLayout === 'split' ? 'inset' : 'backdrop') : 'none',
+      screenrecordMode: screenrecord ? 'inset' : 'none',
       language: detected.code,
       languageLabel: detected.label,
       slides,
