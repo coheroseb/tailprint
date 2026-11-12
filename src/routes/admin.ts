@@ -862,8 +862,12 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
             statusBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px]">✉️ Pitch Sent</span>';
           }
 
-          const demoLink = l.customDemoPdfUrl
-            ? '<a href="' + l.customDemoPdfUrl + '" target="_blank" class="text-indigo-400 hover:underline font-mono flex items-center space-x-1"><span>📄 View PDF</span><span>↗</span></a>'
+          const cleanPdfUrl = l.customDemoPdfUrl
+            ? l.customDemoPdfUrl.replace(/^https?:\/\/localhost:\d+/i, 'https://tailprint.com')
+            : '';
+
+          const demoLink = cleanPdfUrl
+            ? '<a href="' + cleanPdfUrl + '" target="_blank" class="text-indigo-400 hover:underline font-mono flex items-center space-x-1"><span>📄 View PDF</span><span>↗</span></a>'
             : '<span class="text-slate-600 italic">Not generated yet</span>';
 
           const actionBtns = [];
@@ -1021,7 +1025,7 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
               '<p class="text-xs text-slate-400 mt-1 line-clamp-2">' + c.contentMarkdown.replace(/[#\\-\\r\\n]/g, ' ') + '</p>' +
             '</div>' +
             '<div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">' +
-              '<a href="' + (c.pdfUrl || '#') + '" target="_blank" class="px-3 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/50 text-xs font-bold transition flex items-center space-x-1">' +
+              '<a href="' + ((c.pdfUrl || '#').replace(/^https?:\\/\\/localhost:\\d+/i, 'https://tailprint.com')) + '" target="_blank" class="px-3 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/50 text-xs font-bold transition flex items-center space-x-1">' +
                 '<span>📄 Download PDF Slides</span>' +
               '</a>' +
               '<button onclick="copyCarouselTextById(&apos;' + c.id + '&apos;)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">' +
@@ -1268,7 +1272,7 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       document.getElementById('modalPitchCompany').textContent = lead.companyName + ' (' + lead.domain + ')';
       document.getElementById('modalPitchSubject').textContent = lead.emailSubject || 'No subject generated yet';
       document.getElementById('modalPitchBody').innerHTML = lead.emailBodyHtml || '<p class="text-slate-500 italic">No pitch copy generated yet.</p>';
-      document.getElementById('modalPitchPdfLink').href = lead.customDemoPdfUrl || '#';
+      document.getElementById('modalPitchPdfLink').href = (lead.customDemoPdfUrl || '#').replace(/^https?:\/\/localhost:\d+/i, 'https://tailprint.com');
       document.getElementById('pitchModal').classList.remove('hidden');
     }
 

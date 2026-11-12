@@ -102,7 +102,11 @@ export class GrowthAgentService {
   private loadLeads(): GrowthLead[] {
     try {
       if (fs.existsSync(this.leadsFile)) {
-        return JSON.parse(fs.readFileSync(this.leadsFile, 'utf-8'));
+        const raw: GrowthLead[] = JSON.parse(fs.readFileSync(this.leadsFile, 'utf-8'));
+        return raw.map((l) => ({
+          ...l,
+          customDemoPdfUrl: l.customDemoPdfUrl?.replace(/^https?:\/\/localhost:\d+/i, 'https://tailprint.com'),
+        }));
       }
     } catch (err) {
       console.warn('[GrowthAgent] Error reading leads file:', err);
@@ -121,7 +125,12 @@ export class GrowthAgentService {
   private loadContent(): GrowthContentItem[] {
     try {
       if (fs.existsSync(this.contentFile)) {
-        return JSON.parse(fs.readFileSync(this.contentFile, 'utf-8'));
+        const raw: GrowthContentItem[] = JSON.parse(fs.readFileSync(this.contentFile, 'utf-8'));
+        return raw.map((c) => ({
+          ...c,
+          pdfUrl: c.pdfUrl?.replace(/^https?:\/\/localhost:\d+/i, 'https://tailprint.com'),
+          previewImageUrl: c.previewImageUrl?.replace(/^https?:\/\/localhost:\d+/i, 'https://tailprint.com'),
+        }));
       }
     } catch (err) {
       console.warn('[GrowthAgent] Error reading content file:', err);
