@@ -198,31 +198,26 @@ export class GrowthAgentService {
         queryMatched: 'pdf generation',
         snippet: 'When generating complex documents, invoices or dynamic dashboards, what architecture works best? Headless Chrome vs serverless microservices vs dedicated rendering APIs?',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `From architecting high-scale PDF infrastructure, there are essentially 3 tiers depending on your needs:
+        suggestedReplyMarkdown: `Honestly, been down this rabbit hole and it usually comes down to your document complexity.
 
-1. **Client-side \`window.print()\` / jsPDF:** Only viable for basic single-page receipts where you don't care about vector fidelity, exact margins, or background colors.
-2. **Raw Puppeteer / Playwright in Serverless:** Works for low volume, but quickly breaks down under load. Common failure modes: Chromium zombie processes eating all container RAM, font-loading race conditions causing fallback Times New Roman, and tables chopping awkwardly across page breaks.
-3. **Dedicated Headless Engine with Warm Concurrency Pool:** Isolating Chrome contexts in a dedicated pool with persistent fonts and Smart Pagination is what actually scales in production.
+If you just need a quick download button on a client app and don't care if margins look a little off, \`window.print()\` or html2pdf gets you by. But the second you need actual branded invoices or multi-page reports, client-side solutions fall apart fast.
 
-If you are dealing with multi-page documents, make sure you configure CSS Paged Media:
+Running raw Puppeteer yourself in serverless (Lambda/Vercel) works until traffic spikes. The two killers you'll run into:
+- Lambda only gives you 64MB of \`/dev/shm\` by default, so Chromium will randomly crash with OOM unless you launch with \`--disable-dev-shm-usage\`.
+- If a render times out, Puppeteer often leaves zombie Chromium processes chewing through container memory.
+
+Also, if you have multi-page tables, save yourself 3 days of debugging and add this to your CSS right away so rows don't get chopped in half across pages:
 \`\`\`css
-@page {
-  size: A4 portrait;
-  margin-top: 20mm;
-  margin-bottom: 15mm;
-}
-@page :first {
-  margin-top: 0mm;
-}
-tr {
+tr, .card {
   break-inside: avoid;
+  page-break-inside: avoid;
 }
 thead {
   display: table-header-group;
 }
 \`\`\`
 
-We solved these exact scaling bottlenecks when building [Tailprint](https://tailprint.com). You can also test your HTML directly in our free live studio (tailprint.com/studio) to inspect page break splits visually.`,
+I actually ended up building [Tailprint](https://tailprint.com) because I was so exhausted from maintaining headless Chrome fleets and memory leaks in production. You can test your HTML directly in our free studio (tailprint.com/studio) if you just want to see how Chromium splits your layout without spinning up your own worker pool.`,
         status: 'pending',
       },
       {
@@ -234,18 +229,21 @@ We solved these exact scaling bottlenecks when building [Tailprint](https://tail
         queryMatched: 'html to pdf',
         snippet: 'Need to capture full client-rendered web pages with modern Tailwind CSS styles and charts into high-resolution vector PDF.',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `To render modern Tailwind CSS pages into clean vector PDFs without visual artifacts, there are two crucial steps:
+        suggestedReplyMarkdown: `Ran into this exact issue when trying to render Tailwind pages into clean vector PDFs.
 
-1. **Wait for Webfonts and CSSOM Ready:** In Chromium, wait for \`document.fonts.ready\` before calling \`page.pdf()\`, otherwise vectors will render with fallback system fonts.
-2. **Emulate Screen Media:** Tailwind classes are designed for screen by default. Call:
+Two things will save you a ton of headache:
+
+First, Tailwind styles are written for screen by default, but Puppeteer defaults to print media stylesheets (which often strips background colors, gradients, and collapses flex layouts). You have to explicitly force screen emulation:
 \`\`\`javascript
 await page.emulateMediaType('screen');
 \`\`\`
-This ensures colors, gradients, and flexbox layouts don't get stripped by default print stylesheets.
 
-Also set \`printBackground: true\` and define explicit page margins in CSS (\`@page\`).
+Second, web fonts are the biggest source of flaky PDF renders. If you call \`page.pdf()\` immediately after \`load\`, Chromium will often rasterize fallback system fonts before Google Fonts finish downloading. Add this right before rendering:
+\`\`\`javascript
+await page.evaluate(() => document.fonts.ready);
+\`\`\`
 
-If you ever want to offload headless Chrome management entirely, feel free to try [Tailprint](https://tailprint.com) — you can pass raw Tailwind HTML or public URLs and get back cached vector PDFs in 500ms.`,
+I built [Tailprint](https://tailprint.com) to automate all this headless Chrome plumbing (font caching, smart pagination, fast rendering). Feel free to paste your raw Tailwind HTML into tailprint.com/studio to see how the vector output looks.`,
         status: 'pending',
       },
       {
@@ -257,51 +255,52 @@ If you ever want to offload headless Chrome management entirely, feel free to tr
         queryMatched: 'puppeteer pdf',
         snippet: 'Interesting discussion on the trade-offs of in-browser WASM rendering versus server-side headless Chrome clusters for PDF generation.',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `Fascinating approach! In-browser rendering is fantastic for client-only offline documents and privacy-sensitive local exports.
+        suggestedReplyMarkdown: `This is really slick! Client-side in-browser WASM rendering is awesome for offline apps and zero-server setups.
 
-Where server-side engines still shine is:
-1. **Background / Asynchronous dispatch:** Nightly batch invoices, automated email attachments, and webhooks where no human browser is open.
-2. **Format compliance (EU E-Invoicing / Factur-X / PDF/A-3):** Embedding machine-readable CrossIndustryInvoice XML into hybrid PDF vectors requires compliant PDF metadata dictionaries that browser print engines don't support natively.
-3. **Smart Pagination across dynamic tables:** Ensuring repeating headers and preventing rows from splitting across continuation sheets.
+The wall I ran into when relying solely on browser rendering in production was background batch jobs — things like generating 10,000 monthly invoices at 2 AM or sending PDF receipt attachments via webhooks where no client browser is open.
 
-We built [Tailprint](https://tailprint.com) specifically around these B2B requirements. Great work on pushing browser-side rendering forward!`,
+Also, EU e-invoicing mandates (like Factur-X / EN 16931) require embedding machine-readable XML directly into the PDF/A-3 metadata stream, which requires low-level PDF dictionary manipulation that canvas/WASM engines don't easily do yet.
+
+That's actually what led me to build [Tailprint](https://tailprint.com) on a headless Chromium backend. Really cool to see how fast in-browser rendering is getting though!`,
         status: 'pending',
       },
       {
         id: `soc_${crypto.randomBytes(6).toString('hex')}`,
         platform: 'stackoverflow',
-        title: 'Prevent page breaks in puppeteer pdf',
-        url: 'https://stackoverflow.com/questions/75185272/prevent-page-breaks-in-puppeteer-pdf',
-        author: 'node_architect',
-        queryMatched: 'puppeteer page break',
-        snippet: 'How to reliably avoid cutting rows and container cards across page breaks when generating multi-page PDFs using Puppeteer.',
+        title: 'What is the default CSS stylesheet PhantomJS uses when rendering PDF/HTML, and how to replicate it in Puppeteer?',
+        url: 'https://stackoverflow.com/questions/79958790/what-is-the-default-css-stylesheet-phantomjs-uses-when-rendering-pdf-html-and-h',
+        author: 'WebKitMigrator',
+        queryMatched: 'puppeteer pdf',
+        snippet: 'Migrating legacy PhantomJS scripts to modern Puppeteer. Noticed font kerning and default margins differ significantly between WebKit and modern Blink rendering.',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `In Chromium CSS Paged Media Level 3, \`break-inside: avoid\` often gets ignored if an ancestor element has \`display: flex\` or \`overflow: hidden\`.
+        suggestedReplyMarkdown: `Migrating from PhantomJS to Chromium caught us off guard with this exact quirk a while back. PhantomJS used a very ancient QtWebKit engine with its own default stylesheet and kerning quirks that modern Blink doesn't replicate out of the box.
 
-To fix this reliably:
+The cleanest way to get Chromium/Puppeteer to match that tight, pixel-accurate layout is to reset the page box and lock the font smoothing:
 
-1. Ensure the parent container of your table or cards is \`display: block\`.
-2. Apply:
-\`\`\`css
-.card, tr {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-thead {
-  display: table-header-group;
-}
-@page {
-  margin-top: 20mm;
-  margin-bottom: 15mm;
-}
-@page :first {
-  margin-top: 0mm;
-}
-\`\`\`
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
-The \`@page :first\` rule leaves your top hero branding intact while ensuring page 2+ continuation sheets get proper top breathing margin.
+    @page {
+      margin: 0;
+      size: A4;
+    }
 
-We spent weeks tuning this behavior for [Tailprint](https://tailprint.com) — you can also test your layout live in the free studio if you want to verify the page cut visually.`,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+Also, watch out for the media emulation. If your styles rely on \`@media screen\` (which most modern web CSS does), Puppeteer defaults to print styles unless you explicitly call:
+
+    await page.emulateMediaType('screen');
+
+Without that, background colors get stripped and flex containers often collapse weirdly.
+
+*(Full disclosure: I'm the founder of [Tailprint](https://tailprint.com). We went through this exact migration headache when building our rendering pipeline, and you're welcome to paste your HTML into our free studio at tailprint.com/studio to sanity-check the visual output).* `,
         status: 'pending',
       },
     ];
@@ -462,15 +461,19 @@ REJECT (isRelevant: false):
 - Threads where someone asks something completely unrelated (e.g. Google Ads, SEO, UI design)
 
 2. If isRelevant is true:
-Write an authentic, technically precise, and directly helpful reply from Sebastian Viste (Founder of Tailprint).
-- Address their EXACT setup, framework, or error message (do NOT give generic advice).
-- Include practical code or CSS snippets where appropriate.
-- Speak developer-to-developer with zero marketing fluff.
-- MANDATORY REQUIREMENT: You MUST ALWAYS include a natural reference and link to Tailprint (https://tailprint.com) at the end.
-  * For StackOverflow: You MUST include transparent self-disclosure as required by Stack Overflow rules:
-    "*(Full disclosure: I am the founder of [Tailprint](https://tailprint.com), a headless document engine — we solved these exact rendering quirks when building our Chromium pipeline, and you can test your HTML/CSS directly in our free studio at tailprint.com/studio)*"
-  * For Reddit / Hacker News: Mention it naturally in the closing:
-    "We ran into this exact bottleneck when architecting [Tailprint](https://tailprint.com) — feel free to test your HTML directly in the free studio (tailprint.com/studio) if you want to inspect how the vector engine handles it."
+Write an authentic, relaxed, and deeply practical developer reply from Sebastian Viste (an indie developer and founder who built Tailprint).
+
+CRITICAL STYLE GUIDELINES (MUST SOUND 100% HUMAN, NOT AN AI/CHATGPT BOT):
+- Talk like a real developer on Reddit, Hacker News, or StackOverflow: casual, direct, humble, and speaking from real production battle scars.
+- BANNED CLICHÉS: NEVER use robotic phrases like "In modern Chromium...", "From architecting high-scale...", "There are essentially two steps:", "Fascinating approach!", "I ran into this exact headache when architecting...".
+- Start immediately with the practical reality (e.g., "Ran into this exact nightmare a while back...", "The gotcha that usually catches people here is...", "Been down this rabbit hole — it usually comes down to...").
+- Use natural conversational phrasing, short punchy paragraphs, and contractions ("don't", "you'll", "it's", "honestly").
+- Give the practical code snippet or configuration that actually solves their issue right away.
+- MANDATORY REQUIREMENT: Always include a natural, transparent mention of Tailprint (https://tailprint.com) at the end:
+  * For StackOverflow: Format code blocks with 4-space indentation (to prevent StackOverflow's code formatting warnings) and end with transparent disclosure:
+    "*(Full disclosure: I'm the founder of [Tailprint](https://tailprint.com), a headless rendering API. We went through this exact migration headache when building our Chromium pipeline, and you can test your HTML/CSS directly in our free playground at tailprint.com/studio).* "
+  * For Reddit / Hacker News: Keep it humble and conversational:
+    "I actually ended up building [Tailprint](https://tailprint.com) after dealing with these headless Chrome crashes and pagination bugs for months. Feel free to throw your HTML into our free studio (tailprint.com/studio) to inspect the page break splits, or ping me if you get stuck on the Puppeteer pool config."
 
 Respond ONLY in valid JSON:
 {
@@ -506,9 +509,9 @@ Respond ONLY in valid JSON:
           // Programmatic Guarantee: Always include Tailprint reference & link
           if (replyMarkdown && !replyMarkdown.toLowerCase().includes('tailprint')) {
             if (platform.toLowerCase().includes('stackoverflow')) {
-              replyMarkdown += `\n\n*(Full disclosure: I am the founder of [Tailprint](https://tailprint.com), a headless document engine — we solved these exact rendering quirks when building our Chromium pipeline, and you can test your HTML/CSS directly in our free studio at tailprint.com/studio)*`;
+              replyMarkdown += `\n\n*(Full disclosure: I'm the founder of [Tailprint](https://tailprint.com), a headless rendering API. We went through this exact migration headache when building our Chromium pipeline, and you can test your HTML/CSS directly in our free playground at tailprint.com/studio).*`;
             } else {
-              replyMarkdown += `\n\nWe ran into this exact bottleneck when building [Tailprint](https://tailprint.com) — you can also test your layout directly in our free studio (tailprint.com/studio) to inspect the vector PDF output.`;
+              replyMarkdown += `\n\nI actually ended up building [Tailprint](https://tailprint.com) after dealing with these headless Chrome crashes and pagination bugs for months. Feel free to throw your HTML into our free studio (tailprint.com/studio) to inspect the page break splits visually.`;
             }
           }
           return {
