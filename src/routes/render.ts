@@ -557,13 +557,15 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request, reply) => {
       const clientIp = request.ip || 'anonymous';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1');
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp, 60, isExempt);
 
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Playground rate limit exceeded (max 25 renders/hour). Please upgrade to an official plan for unlimited renders.',
+          message: 'Playground rate limit exceeded (max 60 renders/hour). Claim 100 free monthly renders or upgrade for unlimited.',
         });
       }
 

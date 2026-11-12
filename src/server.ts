@@ -26,6 +26,7 @@ import { analyticsService } from './services/analytics.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
+    trustProxy: true,
     logger: env.NODE_ENV !== 'test' ? {
       level: env.NODE_ENV === 'production' ? 'info' : 'debug',
     } : false,

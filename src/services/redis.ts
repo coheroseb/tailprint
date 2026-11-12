@@ -365,7 +365,22 @@ export class RedisService {
     return val;
   }
 
-  public async checkPlaygroundRateLimit(ip: string, maxPerHour = 25): Promise<{ allowed: boolean; remaining: number }> {
+  public async checkPlaygroundRateLimit(
+    ip: string,
+    maxPerHour = 60,
+    isExempt = false
+  ): Promise<{ allowed: boolean; remaining: number }> {
+    // Exempt founder and local development addresses
+    if (
+      isExempt ||
+      ip === '127.0.0.1' ||
+      ip === '::1' ||
+      ip === '130.225.247.124' ||
+      ip === '46.224.82.103'
+    ) {
+      return { allowed: true, remaining: 9999 };
+    }
+
     const hour = Math.floor(Date.now() / (1000 * 60 * 60));
     const key = `ratelimit:playground:${ip}:${hour}`;
     const usage = await this.client.incr(key);

@@ -25,16 +25,18 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request, reply) => {
       const clientIp = request.ip || '127.0.0.1';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp, 35);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1');
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp, 60, isExempt);
 
-      reply.header('X-RateLimit-Limit', '35');
+      reply.header('X-RateLimit-Limit', '60');
       reply.header('X-RateLimit-Remaining', String(rateLimit.remaining));
 
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Playground rate limit exceeded (35 renders/hour). Sign up or upgrade at tailprint.com/#pricing for unlimited API access.',
+          message: 'Playground rate limit exceeded (60 renders/hour). Sign up or upgrade at tailprint.com/#pricing for unlimited API access.',
         });
       }
 
@@ -74,16 +76,18 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request, reply) => {
       const clientIp = request.ip || '127.0.0.1';
-      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp, 35);
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1');
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp, 60, isExempt);
 
-      reply.header('X-RateLimit-Limit', '35');
+      reply.header('X-RateLimit-Limit', '60');
       reply.header('X-RateLimit-Remaining', String(rateLimit.remaining));
 
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
           error: 'Too Many Requests',
-          message: 'Playground rate limit exceeded (35 renders/hour). Sign up or upgrade at tailprint.com/#pricing for unlimited API access.',
+          message: 'Playground rate limit exceeded (60 renders/hour). Sign up or upgrade at tailprint.com/#pricing for unlimited API access.',
         });
       }
 
