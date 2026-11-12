@@ -488,35 +488,183 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
 
         <!-- Main Product Links (Desktop) -->
         <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
-          <a href="#playground" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-            <span>Playground</span>
-          </a>
-          <a href="#templates" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
+          
+          <!-- Product Dropdown -->
+          <div class="relative group">
+            <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
+              <span>Product</span>
+              <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="absolute left-0 top-full pt-2 w-[340px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
+              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
+                
+                <a href="#playground" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-indigo-500/20">
+                    ⚡
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1.5">
+                      <span>Live Sandbox</span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Interactive HTML to PDF & PNG playground in browser</p>
+                  </div>
+                </a>
+
+                <a href="#mcp" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-purple-500/20">
+                    🤖
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
+                      <span>AI MCP Server</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono font-semibold">npx tailprint</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Model Context Protocol for Claude & Cursor agents</p>
+                  </div>
+                </a>
+
+                <a href="#scraper" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-cyan-500/20">
+                    🌐
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-cyan-300">
+                      Web to Markdown
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Clean web pages into LLM markdown with token savings</p>
+                  </div>
+                </a>
+
+                <div class="pt-2 mt-1 border-t border-slate-800/70 px-2.5 pb-1 flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Sub-500ms Chromium engine</span>
+                  <span class="text-indigo-400 font-semibold font-mono">Tailwind v3/v4</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Templates Direct Link -->
+          <a href="#templates" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
             <span>Templates</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono leading-none">${TEMPLATES.length}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-mono leading-none">${TEMPLATES.length}</span>
           </a>
-          <a href="/tools" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
-            <span>Free Tools</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase tracking-wider leading-none">New</span>
-          </a>
-          <a href="#scraper" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
-            Scraper
-          </a>
-          <a href="#mcp" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
-            <span>MCP Server</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold uppercase tracking-wider leading-none">AI</span>
-          </a>
-          <a href="#pricing" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
+
+          <!-- Free Tools Dropdown -->
+          <div class="relative group">
+            <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
+              <span>Free Tools</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase tracking-wider leading-none">New</span>
+              <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="absolute left-0 top-full pt-2 w-[350px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
+              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
+                
+                <a href="/tools/carousel" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-blue-500/20">
+                    📱
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-blue-300 flex items-center space-x-1.5">
+                      <span>LinkedIn Carousel Maker</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Markdown to 1080×1350 multi-page PDF & PNG covers</p>
+                  </div>
+                </a>
+
+                <a href="/tools/factur-x" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-emerald-500/20">
+                    🇪🇺
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-emerald-300 flex items-center space-x-1.5">
+                      <span>Factur-X & PEPPOL Generator</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-semibold">EN 16931</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Hybrid PDF/A-3 invoices with embedded XML</p>
+                  </div>
+                </a>
+
+                <a href="/tools/visual-diff" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-pink-500/20">
+                    🔍
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-pink-300">
+                      Visual Regression Diff
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Pixelmatch diff heatmap & visual comparison canvas</p>
+                  </div>
+                </a>
+
+                <div class="pt-1.5 mt-1 border-t border-slate-800/70 p-1">
+                  <a href="/tools" class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 text-xs font-semibold text-indigo-300 hover:text-white transition">
+                    <span>Browse All Free Developer Tools</span>
+                    <span>→</span>
+                  </a>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing Link -->
+          <a href="#pricing" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition">
             Pricing
           </a>
-          <a href="#faq" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition">
-            FAQ
-          </a>
-          <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1">
-            <span>Docs</span>
-            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
+
+          <!-- Resources Dropdown -->
+          <div class="relative group">
+            <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
+              <span>Resources</span>
+              <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="absolute right-0 md:left-0 top-full pt-2 w-[280px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
+              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
+                
+                <a href="/docs" target="_blank" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+                    📖
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1">
+                      <span>API Reference</span>
+                      <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Interactive Swagger / OpenAPI docs</p>
+                  </div>
+                </a>
+
+                <a href="https://www.npmjs.com/package/tailprint" target="_blank" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                    📦
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1">
+                      <span>NPM Package</span>
+                      <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">CLI & MCP server for Node.js</p>
+                  </div>
+                </a>
+
+                <a href="#faq" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                    💡
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-amber-300">
+                      FAQ & Architecture
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Caching, latency & self-hosting</p>
+                  </div>
+                </a>
+
+              </div>
+            </div>
+          </div>
+
         </nav>
       </div>
 
@@ -541,15 +689,83 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
     </div>
 
     <!-- Mobile Slide-down Navigation -->
-    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800/80 bg-slate-950/95 px-6 py-4 space-y-2">
-      <a href="#playground" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-900">Live Playground</a>
-      <a href="#templates" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Templates (${TEMPLATES.length})</a>
-      <a href="#scraper" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">URL Scraper</a>
-      <a href="#mcp" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">MCP Server (AI)</a>
-      <a href="#pricing" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Pricing</a>
-      <a href="#faq" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">FAQ</a>
-      <a href="/docs" target="_blank" class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">API Documentation</a>
-      <a href="/dashboard" class="block px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:bg-slate-900">Customer Dashboard</a>
+    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800/80 bg-slate-950/98 backdrop-blur-2xl px-6 py-5 space-y-4 max-h-[85vh] overflow-y-auto">
+      
+      <!-- Product Group -->
+      <div>
+        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Product & Engine</p>
+        <div class="space-y-1">
+          <a href="#playground" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-900">
+            <span>⚡ Live Playground</span>
+          </a>
+          <a href="#mcp" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>🤖 AI MCP Server</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">Claude & Cursor</span>
+          </a>
+          <a href="#scraper" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>🌐 Web to Markdown Scraper</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Free Tools Group -->
+      <div class="pt-2 border-t border-slate-800/60">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Free Developer Tools</p>
+          <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold uppercase">No Login</span>
+        </div>
+        <div class="space-y-1">
+          <a href="/tools/carousel" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>📱 LinkedIn Carousel Maker</span>
+          </a>
+          <a href="/tools/factur-x" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>🇪🇺 EU Factur-X & PEPPOL</span>
+          </a>
+          <a href="/tools/visual-diff" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>🔍 Visual Regression Diff</span>
+          </a>
+          <a href="/tools" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-indigo-400 hover:bg-slate-900">
+            <span>View All Free Tools Hub</span>
+            <span>→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Templates & Docs -->
+      <div class="pt-2 border-t border-slate-800/60">
+        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Library & Resources</p>
+        <div class="space-y-1">
+          <a href="#templates" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>Templates Library</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">${TEMPLATES.length}</span>
+          </a>
+          <a href="/docs" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>API Docs (Swagger)</span>
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+          <a href="https://www.npmjs.com/package/tailprint" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>NPM Package (CLI & MCP)</span>
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+          <a href="#pricing" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>Pricing Plans</span>
+          </a>
+          <a href="#faq" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
+            <span>FAQ</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Portal & CTA -->
+      <div class="pt-3 border-t border-slate-800/80 space-y-2">
+        <a href="/dashboard" class="block w-full py-2.5 text-center rounded-xl bg-slate-900 border border-slate-800 text-sm font-semibold text-slate-200 hover:bg-slate-800">
+          Customer Portal
+        </a>
+        <button onclick="startCheckout('free')" class="w-full py-2.5 text-center rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30">
+          ⚡ Claim 100 Free Renders
+        </button>
+      </div>
+
     </div>
   </header>
 
