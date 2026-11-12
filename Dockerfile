@@ -32,6 +32,7 @@ ENV NODE_ENV=production \
 # Install required system packages, NSS, FreeType, and standard international fonts
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    ffmpeg \
     fonts-liberation \
     fonts-dejavu-core \
     fonts-noto-color-emoji \

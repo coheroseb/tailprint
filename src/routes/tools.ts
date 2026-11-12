@@ -1419,6 +1419,48 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </div>
           </div>
 
+          <!-- Visual Layout & Animation Template Selector -->
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] text-slate-400 font-medium">Visual Layout &amp; Animation Template</label>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">4 Layouts</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <button onclick="setReelLayout('classic')" id="layout-btn-classic" class="px-3 py-2 rounded-xl font-bold bg-indigo-600 text-white border border-indigo-400/40 flex items-center justify-center space-x-1.5 shadow-md">
+                <span>🎴</span><span>Classic Card</span>
+              </button>
+              <button onclick="setReelLayout('split')" id="layout-btn-split" class="px-3 py-2 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center justify-center space-x-1.5">
+                <span>🎬</span><span>Split Cinema</span>
+              </button>
+              <button onclick="setReelLayout('iphone')" id="layout-btn-iphone" class="px-3 py-2 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center justify-center space-x-1.5">
+                <span>📱</span><span>3D iPhone Pro</span>
+              </button>
+              <button onclick="setReelLayout('editorial')" id="layout-btn-editorial" class="px-3 py-2 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center justify-center space-x-1.5">
+                <span>📰</span><span>Editorial Stat</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Voiceover & Background Beat -->
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="block text-[11px] text-slate-200 font-bold">🎙️ AI Voiceover &amp; Baggrunds-Beat (MP4 Lyd)</label>
+                <p class="text-[10px] text-slate-500">Automatisk dansk/engelsk AI-speak synkroniseret med hvert slide + synth beat</p>
+              </div>
+              <button id="btn-live-preview-audio" onclick="toggleLivePreviewAudio()" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-slate-950 text-slate-300 border border-slate-700 hover:border-rose-500 hover:text-white">
+                <span id="live-audio-icon">🔇</span>
+                <span id="live-audio-label">Hør Live Lyd</span>
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs">
+              <button onclick="setAudioMode('voice_beat')" id="audio-btn-voice_beat" class="px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white border border-rose-400/40">🎙️ AI Voiceover + Beat</button>
+              <button onclick="setAudioMode('beat_only')" id="audio-btn-beat_only" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">🎵 Kun Synth Beat</button>
+              <button onclick="setAudioMode('voice_only')" id="audio-btn-voice_only" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">🗣️ Kun AI Voiceover</button>
+              <button onclick="setAudioMode('none')" id="audio-btn-none" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">🔇 Uden Lyd</button>
+            </div>
+          </div>
+
           <!-- Screenrecord Display Mode -->
           <div class="pt-2 border-t border-slate-800 space-y-2">
             <div class="flex items-center justify-between">
@@ -1522,6 +1564,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <!-- Live Screenrecord Ambient Video Backdrop (Only active in backdrop mode) -->
             <video id="preview-backdrop-video" src="" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none hidden transition-opacity duration-300"></video>
 
+            <!-- Editorial Giant Watermark (Only active in editorial layout) -->
+            <div id="preview-editorial-watermark" class="hidden absolute top-1/3 left-3 text-7xl font-black text-white/10 pointer-events-none select-none tracking-tighter z-10">380ms</div>
+
             <!-- Ambient Animated Glow -->
             <div id="screen-glow" class="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-indigo-500/30 blur-3xl ambient-glow pointer-events-none"></div>
             <div class="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-rose-500/25 blur-3xl ambient-glow pointer-events-none"></div>
@@ -1552,7 +1597,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </div>
 
             <!-- Main Slide Content (Center) -->
-            <div id="preview-content-container" class="my-auto z-20 space-y-3 py-2">
+            <div id="preview-content-container" class="my-auto z-20 space-y-3 py-2 transition-all duration-200">
               <h2 id="preview-headline" class="text-xl font-black tracking-tight leading-tight text-white drop-shadow-md">
                 Sub-500ms Vector PDF Generation for Developers
               </h2>
@@ -1562,9 +1607,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                 <span id="preview-stat-label" class="text-[10px] font-bold uppercase text-white/90 tracking-wide">Average Render Time</span>
               </div>
 
-              <!-- Floating Live Screenrecord Browser Card (Active in inset mode) -->
-              <div id="preview-screenrecord-card" class="hidden rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md">
-                <div class="px-2.5 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[8px]">
+              <!-- Floating Live Screenrecord Browser Card (Active in inset / split / iphone mode) -->
+              <div id="preview-screenrecord-card" class="hidden rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300">
+                <div id="preview-browser-bar" class="px-2.5 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[8px]">
                   <div class="flex items-center space-x-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
@@ -1624,13 +1669,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <span id="btn-mobile-live-badge" class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/25 font-black uppercase tracking-wider">Live</span>
           </button>
 
-          <!-- Video Export (Canvas MediaRecorder) -->
+          <!-- Server-Side H.264 MP4 + AAC AI Voiceover Export -->
           <button
             id="btn-export-video"
             onclick="exportReelVideo()"
             class="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-2"
           >
-            <span id="btn-export-label">🎥 Download 9:16 Video (MP4 / WebM)</span>
+            <span id="btn-export-label">🎥 Download 9:16 MP4 Video (H.264 + AI Lyd)</span>
           </button>
 
           <div class="grid grid-cols-2 gap-2">
@@ -1655,7 +1700,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <div id="recording-overlay" class="hidden w-full max-w-[360px] p-3 rounded-xl bg-slate-900 border border-rose-500/50 text-center space-y-2">
           <div class="flex items-center justify-center space-x-2 text-xs font-bold text-rose-400">
             <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></div>
-            <span>Recording <span id="record-aspect-label">9:16</span> Frames (<span id="record-percent">0%</span>)...</span>
+            <span id="recording-status-text">Rendering <span id="record-aspect-label">9:16</span> MP4 + AI Voiceover (<span id="record-percent">0%</span>)...</span>
           </div>
           <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
             <div id="record-progress-bar" class="bg-rose-500 h-full transition-all duration-150" style="width: 0%"></div>
@@ -1742,6 +1787,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         accent: "#38bdf8"
       },
       theme: "brand",
+      layout: "classic",
+      audioMode: "voice_beat",
+      language: "en",
       aspectRatio: "9:16",
       screenrecordUrl: null,
       screenrecordMode: "inset",
@@ -2017,6 +2065,123 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       debouncedSyncToMobile();
     }
 
+    function setReelLayout(layoutName) {
+      reelState.layout = layoutName;
+      ['classic', 'split', 'iphone', 'editorial'].forEach(l => {
+        const btn = document.getElementById('layout-btn-' + l);
+        if (btn) {
+          if (l === layoutName) {
+            btn.className = 'px-3 py-2 rounded-xl font-bold bg-indigo-600 text-white border border-indigo-400/40 flex items-center justify-center space-x-1.5 shadow-md';
+          } else {
+            btn.className = 'px-3 py-2 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center justify-center space-x-1.5';
+          }
+        }
+      });
+      updatePreviewDisplay();
+      debouncedSyncToMobile();
+    }
+
+    let liveAudioEnabled = false;
+    let currentTtsAudio = null;
+    let webAudioCtx = null;
+    let webAudioGain = null;
+
+    function setAudioMode(mode) {
+      reelState.audioMode = mode;
+      ['voice_beat', 'beat_only', 'voice_only', 'none'].forEach(m => {
+        const btn = document.getElementById('audio-btn-' + m);
+        if (btn) {
+          if (m === mode) {
+            btn.className = 'px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white border border-rose-400/40';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800';
+          }
+        }
+      });
+      if (liveAudioEnabled) {
+        playSlideLiveAudio(currentSlideIdx);
+      }
+      debouncedSyncToMobile();
+    }
+
+    function startWebAudioAmbientPad() {
+      try {
+        if (!webAudioCtx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          webAudioCtx = new AudioCtx();
+          webAudioGain = webAudioCtx.createGain();
+          webAudioGain.gain.value = 0.04;
+          webAudioGain.connect(webAudioCtx.destination);
+          [110, 164.81, 220, 277.18].forEach((freq) => {
+            const osc = webAudioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            osc.connect(webAudioGain);
+            osc.start();
+          });
+        }
+        if (webAudioCtx.state === 'suspended') {
+          webAudioCtx.resume();
+        }
+        webAudioGain.gain.setTargetAtTime(0.04, webAudioCtx.currentTime, 0.2);
+      } catch (e) {}
+    }
+
+    function stopWebAudioAmbientPad() {
+      try {
+        if (webAudioGain && webAudioCtx) {
+          webAudioGain.gain.setTargetAtTime(0.0001, webAudioCtx.currentTime, 0.15);
+        }
+      } catch (e) {}
+    }
+
+    function toggleLivePreviewAudio() {
+      liveAudioEnabled = !liveAudioEnabled;
+      const btn = document.getElementById('btn-live-preview-audio');
+      const icon = document.getElementById('live-audio-icon');
+      const label = document.getElementById('live-audio-label');
+      if (liveAudioEnabled) {
+        if (btn) btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        if (icon) icon.textContent = '🔊';
+        if (label) label.textContent = 'Live Lyd Aktiv';
+        playSlideLiveAudio(currentSlideIdx);
+      } else {
+        if (btn) btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-slate-950 text-slate-300 border border-slate-700 hover:border-rose-500 hover:text-white';
+        if (icon) icon.textContent = '🔇';
+        if (label) label.textContent = 'Hør Live Lyd';
+        if (currentTtsAudio) {
+          try { currentTtsAudio.pause(); } catch (e) {}
+        }
+        stopWebAudioAmbientPad();
+      }
+    }
+
+    function playSlideLiveAudio(slideIdx) {
+      if (!liveAudioEnabled) return;
+      const mode = reelState.audioMode || 'voice_beat';
+      if (mode === 'none') {
+        if (currentTtsAudio) { try { currentTtsAudio.pause(); } catch (e) {} }
+        stopWebAudioAmbientPad();
+        return;
+      }
+      if (mode === 'voice_beat' || mode === 'beat_only') {
+        startWebAudioAmbientPad();
+      } else {
+        stopWebAudioAmbientPad();
+      }
+      if (mode === 'voice_beat' || mode === 'voice_only') {
+        const slide = reelState.slides[slideIdx];
+        if (!slide) return;
+        const text = [slide.headline, slide.stat ? (slide.stat + ' ' + (slide.statLabel || '')) : '', slide.body].filter(Boolean).join('. ');
+        const lang = reelState.language || 'da';
+        if (currentTtsAudio) {
+          try { currentTtsAudio.pause(); } catch (e) {}
+        }
+        currentTtsAudio = new Audio('/v1/tools/reel/tts?lang=' + encodeURIComponent(lang) + '&text=' + encodeURIComponent(text));
+        currentTtsAudio.play().catch(() => {});
+      }
+    }
+
     function renderSlidesEditor() {
       const container = document.getElementById('slides-editor-container');
       document.getElementById('slide-count-badge').textContent = reelState.slides.length;
@@ -2168,6 +2333,53 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         statCard.classList.add('hidden');
       }
 
+      // Apply Visual Layout template styling (classic, split, iphone, editorial)
+      const layout = reelState.layout || 'classic';
+      const contentBox = document.getElementById('preview-content-container');
+      const watermark = document.getElementById('preview-editorial-watermark');
+      const srCard = document.getElementById('preview-screenrecord-card');
+      const browserBar = document.getElementById('preview-browser-bar');
+
+      if (watermark) {
+        if (layout === 'editorial') {
+          watermark.textContent = slide.stat || ('0' + (currentSlideIdx + 1));
+          watermark.classList.remove('hidden');
+        } else {
+          watermark.classList.add('hidden');
+        }
+      }
+
+      if (contentBox) {
+        if (layout === 'editorial') {
+          contentBox.style.borderLeft = '4px solid ' + (theme.statColor || '#38bdf8');
+          contentBox.style.paddingLeft = '12px';
+          contentBox.style.background = 'transparent';
+        } else if (layout === 'split') {
+          contentBox.style.borderLeft = 'none';
+          contentBox.style.paddingLeft = '0px';
+          contentBox.style.background = 'rgba(9, 13, 22, 0.72)';
+          contentBox.style.padding = '12px';
+          contentBox.style.borderRadius = '16px';
+          contentBox.style.borderTop = '3px solid ' + (theme.statColor || '#38bdf8');
+        } else {
+          contentBox.style.borderLeft = 'none';
+          contentBox.style.borderTop = 'none';
+          contentBox.style.paddingLeft = '0px';
+          contentBox.style.padding = '8px 0';
+          contentBox.style.background = 'transparent';
+        }
+      }
+
+      if (srCard && browserBar) {
+        if (layout === 'iphone') {
+          srCard.className = 'mx-auto w-40 rounded-[26px] border-4 border-slate-600 bg-slate-950 shadow-2xl overflow-hidden transition-all duration-300';
+          browserBar.innerHTML = '<div class="mx-auto w-12 h-2.5 bg-black rounded-full my-0.5"></div>';
+        } else {
+          srCard.className = 'rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300';
+          browserBar.innerHTML = '<div class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span></div><span id="preview-browser-url" class="font-mono text-slate-400 truncate max-w-[140px]">tailprint.com</span>';
+        }
+      }
+
       // CTA & Slide indicator
       document.getElementById('preview-cta').textContent = reelState.cta;
       document.getElementById('preview-slide-indicator').textContent = (currentSlideIdx + 1) + ' / ' + reelState.slides.length;
@@ -2270,6 +2482,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       document.getElementById('icon-play').classList.remove('hidden');
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+      if (currentTtsAudio) { try { currentTtsAudio.pause(); } catch (e) {} }
+      stopWebAudioAmbientPad();
       if (reelState.karaoke) {
         applyKaraokeHighlight(1.0, 1);
       }
@@ -2286,6 +2500,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     function restartCurrentSlide() {
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+
+      if (liveAudioEnabled && isPlaying) {
+        playSlideLiveAudio(currentSlideIdx);
+      }
 
       progressStartTime = performance.now();
       const duration = reelState.duration;
@@ -2383,6 +2601,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           reelState.slides = data.script.slides || reelState.slides;
           reelState.cta = data.script.cta || reelState.cta;
           reelState.sourceUrl = data.script.sourceUrl || url;
+          if (data.script.language) {
+            reelState.language = data.script.language;
+          }
           if (data.script.logoUrl) {
             reelState.logoUrl = data.script.logoUrl;
           }
@@ -2495,7 +2716,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
 
       const btnExportLabel = document.getElementById('btn-export-label');
-      if (btnExportLabel) btnExportLabel.textContent = '🎥 Download ' + ratio + ' Video (MP4 / WebM)';
+      if (btnExportLabel) btnExportLabel.textContent = '🎥 Download ' + ratio + ' MP4 Video (H.264 + AI Lyd)';
       const btnPdfLabel = document.getElementById('btn-pdf-label');
       if (btnPdfLabel) btnPdfLabel.textContent = '📥 ' + ratio + ' Story PDF';
       const btnPngText = document.getElementById('btn-png-text');
@@ -2512,15 +2733,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       debouncedSyncToMobile();
     }
 
-    // 1. Export Reel Video using HTML5 Canvas & MediaRecorder (Supports 9:16, 1:1, 16:9, 4:5)
+    // 1. Export Real H.264 + AAC .MP4 Video via Server-Side FFmpeg + AI Voiceover (with Client Fallback)
     async function exportReelVideo() {
       pausePlayback();
       const ratio = reelState.aspectRatio || '9:16';
-      const dim = getCanvasDimensions(ratio);
-      const canvas = document.getElementById('export-canvas');
-      canvas.width = dim.w;
-      canvas.height = dim.h;
-      const ctx = canvas.getContext('2d');
       const overlay = document.getElementById('recording-overlay');
       const percentEl = document.getElementById('record-percent');
       const progressBar = document.getElementById('record-progress-bar');
@@ -2528,8 +2744,55 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       overlay.classList.remove('hidden');
       btn.disabled = true;
+      if (percentEl) percentEl.textContent = '15%';
+      if (progressBar) progressBar.style.width = '15%';
 
-      // Prepare source video if screenrecord is active
+      let fakeProg = 15;
+      const progInterval = setInterval(() => {
+        fakeProg = Math.min(92, fakeProg + 6);
+        if (percentEl) percentEl.textContent = fakeProg + '%';
+        if (progressBar) progressBar.style.width = fakeProg + '%';
+      }, 450);
+
+      try {
+        const res = await fetch('/v1/tools/reel/video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reelState)
+        });
+        clearInterval(progInterval);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.downloadUrl || data.videoUrl) {
+            if (percentEl) percentEl.textContent = '100%';
+            if (progressBar) progressBar.style.width = '100%';
+            const dlUrl = data.downloadUrl || (data.videoUrl + '?download=true');
+            const a = document.createElement('a');
+            a.href = dlUrl;
+            a.download = 'social-' + ratio.replace(':', '-') + '-' + (reelState.brand || 'reel').toLowerCase() + '.mp4';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            overlay.classList.add('hidden');
+            btn.disabled = false;
+            startPlayback();
+            return;
+          }
+        }
+      } catch (err) {
+        clearInterval(progInterval);
+        console.warn('Server MP4 render fallback to local canvas:', err);
+      }
+
+      // Fallback: local canvas recording if server endpoint is unreachable
+      const dim = getCanvasDimensions(ratio);
+      const canvas = document.getElementById('export-canvas');
+      canvas.width = dim.w;
+      canvas.height = dim.h;
+      const ctx = canvas.getContext('2d');
+
       const exportVid = document.getElementById('export-source-video');
       const hasVideo = reelState.screenrecordUrl && reelState.screenrecordMode !== 'none' && exportVid;
       if (hasVideo) {
@@ -2547,12 +2810,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
 
       const totalSlides = reelState.slides.length;
-      const slideDurationMs = 2500; // 2.5s per slide in video export
+      const slideDurationMs = 2500;
       const fps = 30;
       const framesPerSlide = (slideDurationMs / 1000) * fps;
       const totalFrames = totalSlides * framesPerSlide;
 
-      // Setup MediaRecorder
       const stream = canvas.captureStream(fps);
       let mimeType = 'video/webm;codecs=vp9';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -2578,7 +2840,6 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       recorder.start();
 
-      // Render frame by frame
       let frameCount = 0;
       for (let sIdx = 0; sIdx < totalSlides; sIdx++) {
         const slide = reelState.slides[sIdx];
@@ -2587,15 +2848,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         for (let f = 0; f < framesPerSlide; f++) {
           frameCount++;
           const progress = f / framesPerSlide;
-
-          // Draw Canvas Frame for the active aspect ratio
           drawReelFrame(ctx, slide, sIdx, totalSlides, progress, theme, dim.w, dim.h);
-
           const overallPct = Math.round((frameCount / totalFrames) * 100);
           percentEl.textContent = overallPct + '%';
           progressBar.style.width = overallPct + '%';
-
-          // Yield to let stream capture frame
           await new Promise((r) => setTimeout(r, 1000 / fps));
         }
       }
@@ -2742,12 +2998,100 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       ctx.textAlign = 'center';
       ctx.fillText(tagText, W - barMargin - tagWidth / 2, headerY + 43);
 
-      // 4. Content Area adapted to Aspect Ratio
+      // 4. Content Area adapted to Aspect Ratio & Visual Layout Template
       const hWords = (slide.headline || '').split(' ').filter(Boolean).length;
       const bWords = (slide.body || '').split(' ').filter(Boolean).length;
       const totalW = hWords + bWords;
+      const layout = reelState.layout || 'classic';
+      const hasInsetVid = !!(reelState.screenrecordUrl && reelState.screenrecordMode === 'inset' && exportVid && exportVid.readyState >= 2);
 
-      if (aspect === '16:9') {
+      if (layout === 'editorial' && aspect === '9:16') {
+        const watermark = slide.stat || ('0' + (slideIdx + 1));
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.font = '900 280px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(watermark, barMargin - 10, H * 0.45);
+        ctx.restore();
+
+        const editX = barMargin + 42;
+        const editW = W - editX - barMargin;
+        ctx.fillStyle = theme.statColor || '#38bdf8';
+        roundRect(ctx, barMargin, 410, 12, 680, 6, true, false);
+
+        ctx.textAlign = 'left';
+        ctx.font = '900 68px system-ui, -apple-system, sans-serif';
+        drawKaraokeText(ctx, slide.headline, editX, 480, editW, 86, 0, totalW, slideProgress, theme, reelState.karaoke);
+
+        let bodyY = 820;
+        if (slide.stat) {
+          ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+          const statW = ctx.measureText(slide.stat).width;
+          ctx.fillStyle = theme.statColor;
+          ctx.fillText(slide.stat, editX, 895);
+          ctx.font = 'bold 30px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.text;
+          ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), editX + statW + 30, 885);
+          bodyY = 1010;
+        }
+        ctx.font = '500 38px system-ui, -apple-system, sans-serif';
+        drawKaraokeText(ctx, slide.body, editX, bodyY, editW, 60, hWords, totalW, slideProgress, theme, reelState.karaoke);
+
+      } else if (layout === 'split' && aspect === '9:16') {
+        const splitY = Math.round(H * 0.43);
+        ctx.save();
+        if (hasInsetVid) {
+          ctx.drawImage(exportVid, 0, 220, W, splitY - 220);
+        } else {
+          ctx.fillStyle = 'rgba(9, 13, 22, 0.35)';
+          ctx.fillRect(0, 220, W, splitY - 220);
+          ctx.fillStyle = theme.statColor || '#38bdf8';
+          ctx.font = '900 120px system-ui, -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(slide.stat || ('0' + (slideIdx + 1)), W / 2, splitY - 190);
+        }
+        ctx.fillStyle = theme.statColor || '#38bdf8';
+        ctx.fillRect(0, splitY - 3, W, 6);
+        ctx.fillStyle = 'rgba(9, 13, 22, 0.85)';
+        ctx.fillRect(0, splitY + 3, W, H - splitY);
+        ctx.restore();
+
+        ctx.textAlign = 'left';
+        ctx.font = '900 62px system-ui, -apple-system, sans-serif';
+        drawKaraokeText(ctx, slide.headline, barMargin, splitY + 110, W - (barMargin * 2), 78, 0, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '500 38px system-ui, -apple-system, sans-serif';
+        drawKaraokeText(ctx, slide.body, barMargin, splitY + 380, W - (barMargin * 2), 58, hWords, totalW, slideProgress, theme, reelState.karaoke);
+
+      } else if (layout === 'iphone' && aspect === '9:16') {
+        ctx.textAlign = 'left';
+        ctx.font = '900 52px system-ui, -apple-system, sans-serif';
+        drawKaraokeText(ctx, slide.headline, barMargin, 285, W - (barMargin * 2), 66, 0, totalW, slideProgress, theme, reelState.karaoke);
+
+        const pW = 440, pH = 740, pX = (W - pW) / 2, pY = 430;
+        ctx.fillStyle = '#334155';
+        roundRect(ctx, pX - 10, pY - 10, pW + 20, pH + 20, 64, true, false);
+        ctx.fillStyle = '#090d16';
+        roundRect(ctx, pX, pY, pW, pH, 54, true, false);
+        if (hasInsetVid) {
+          ctx.save();
+          roundRect(ctx, pX + 8, pY + 8, pW - 16, pH - 16, 46, false, false);
+          ctx.clip();
+          ctx.drawImage(exportVid, pX + 8, pY + 8, pW - 16, pH - 16);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = theme.statColor || '#38bdf8';
+          ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(slide.stat || ('0' + (slideIdx + 1)), W / 2, pY + pH * 0.5);
+        }
+        ctx.fillStyle = '#000000';
+        roundRect(ctx, W / 2 - 65, pY + 20, 130, 32, 16, true, false);
+
+        ctx.textAlign = 'left';
+        ctx.font = '500 36px system-ui, -apple-system, sans-serif';
+        drawKaraokeText(ctx, slide.body, barMargin, pY + pH + 85, W - (barMargin * 2), 54, hWords, totalW, slideProgress, theme, reelState.karaoke);
+
+      } else if (aspect === '16:9') {
         // 2-Column Wide Cinematic Layout
         ctx.textAlign = 'left';
         ctx.font = '900 58px system-ui, -apple-system, sans-serif';
@@ -2824,26 +3168,43 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 54, hWords, totalW, slideProgress, theme, reelState.karaoke);
 
       } else {
-        // 9:16 Full Vertical Reel
+        // 9:16 Full Vertical Reel (Classic Card with optional Inset Browser Window)
         ctx.textAlign = 'left';
-        ctx.font = '900 68px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.headline, barMargin, 480, W - (barMargin * 2), 88, 0, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '900 ' + (hasInsetVid ? '58px' : '68px') + ' system-ui, -apple-system, sans-serif';
+        const hRes = drawKaraokeText(ctx, slide.headline, barMargin, hasInsetVid ? 320 : 480, W - (barMargin * 2), hasInsetVid ? 74 : 88, 0, totalW, slideProgress, theme, reelState.karaoke);
 
-        let bodyY = 820;
+        let curY = hasInsetVid ? Math.max(460, hRes.endY + 20) : 800;
+        if (hasInsetVid) {
+          const winW = W - (barMargin * 2);
+          const winH = 420;
+          ctx.save();
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+          roundRect(ctx, barMargin, curY, winW, winH, 28, true, false);
+          roundRect(ctx, barMargin, curY, winW, winH, 28, false, false);
+          ctx.clip();
+          ctx.fillStyle = 'rgba(30, 41, 59, 0.95)';
+          ctx.fillRect(barMargin, curY, winW, 42);
+          ctx.drawImage(exportVid, barMargin, curY + 42, winW, winH - 42);
+          ctx.restore();
+          curY += winH + 40;
+        }
+
+        let bodyY = curY + 20;
         if (slide.stat) {
+          const boxH = hasInsetVid ? 128 : 150;
           ctx.fillStyle = theme.statBg;
-          roundRect(ctx, barMargin, 800, W - (barMargin * 2), 150, 32, true, false);
+          roundRect(ctx, barMargin, curY, W - (barMargin * 2), boxH, 32, true, false);
 
-          ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+          ctx.font = '900 ' + (hasInsetVid ? '70px' : '84px') + ' system-ui, -apple-system, sans-serif';
           const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
-          ctx.fillText(slide.stat, barMargin + 40, 905);
+          ctx.fillText(slide.stat, barMargin + 40, curY + (hasInsetVid ? 90 : 105));
 
           ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
           ctx.fillStyle = theme.text;
-          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 40 + statW + 40, 895);
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 40 + statW + 40, curY + (hasInsetVid ? 80 : 95));
 
-          bodyY = 1040;
+          bodyY = curY + boxH + (hasInsetVid ? 70 : 90);
         }
 
         ctx.font = '500 38px system-ui, -apple-system, sans-serif';
@@ -3577,6 +3938,77 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     }
   );
 
+  // 6.5 POST /v1/tools/reel/video (Server-Side H.264 MP4 + AAC AI Voiceover & Beat Render)
+  fastify.post(
+    '/v1/tools/reel/video',
+    async (request: any, reply: any) => {
+      const clientIp = request.ip || 'anonymous';
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+        });
+      }
+
+      const body = (request.body || {}) as any;
+      const rawDur = Number(body.duration) || 3000;
+      const durationSec = rawDur > 50 ? rawDur / 1000 : rawDur;
+
+      const result = await reelService.renderReelVideoMp4({
+        title: body.title || 'Social Reel',
+        brand: body.brand || 'Tailprint',
+        handle: body.handle || '@tailprint',
+        logoUrl: body.logoUrl || undefined,
+        brandColors: body.brandColors || undefined,
+        theme: body.theme || 'brand',
+        layout: body.layout || 'classic',
+        audioMode: body.audioMode || 'voice_beat',
+        karaoke: body.karaoke !== false,
+        duration: durationSec,
+        aspectRatio: body.aspectRatio || '9:16',
+        screenrecordUrl: body.screenrecordUrl || undefined,
+        screenrecordMode: body.screenrecordMode || 'inset',
+        cleanExport: body.cleanExport !== false,
+        language: body.language || 'da',
+        slides: Array.isArray(body.slides) && body.slides.length > 0 ? body.slides : [
+          { tag: '01', headline: body.title || 'Highlights', body: body.cta || '' },
+        ],
+        cta: body.cta || 'Follow for more • Link in bio',
+        sourceUrl: body.sourceUrl || undefined,
+      });
+
+      return reply.code(200).send({
+        success: true,
+        videoUrl: result.videoStored.hostedUrl,
+        downloadUrl: result.videoStored.downloadUrl,
+        durationSec: result.durationSec,
+        hasAudio: result.hasAudio,
+      });
+    }
+  );
+
+  // 6.6 GET /v1/tools/reel/tts (Live Preview AI Voiceover Stream)
+  fastify.get(
+    '/v1/tools/reel/tts',
+    { schema: { hide: true } },
+    async (request: any, reply: any) => {
+      const q = (request.query || {}) as { text?: string; lang?: string };
+      const text = (q.text || '').trim().slice(0, 450);
+      const lang = (q.lang || 'da').trim().slice(0, 5);
+      if (!text) {
+        return reply.code(400).send({ error: 'Missing text' });
+      }
+      const mp3Buffer = await reelService.generateTtsMp3(text, lang);
+      return reply
+        .code(200)
+        .header('Content-Type', 'audio/mpeg')
+        .header('Cache-Control', 'public, max-age=3600')
+        .send(mp3Buffer);
+    }
+  );
+
   // 7. POST /v1/tools/reel/share (Generates Mobile QR & Shareable Preview Link)
   fastify.post(
     '/v1/tools/reel/share',
@@ -3768,13 +4200,16 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   <!-- Ambient Video Backdrop (if backdrop mode) -->
   <video id="mobile-backdrop-video" src="" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none hidden transition-opacity duration-300"></video>
 
+  <!-- Editorial Giant Watermark (Only active in editorial layout) -->
+  <div id="mobile-editorial-watermark" class="hidden absolute top-1/3 left-4 text-8xl font-black text-white/10 pointer-events-none select-none tracking-tighter z-10">380ms</div>
+
   <!-- Ambient Glow -->
   <div id="mobile-screen-glow" class="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-indigo-500/30 blur-3xl ambient-glow pointer-events-none"></div>
 
   <!-- Live Sync Status Pill -->
-  <div id="sync-toast-pill" class="fixed top-3 right-3 z-50 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-black flex items-center space-x-1.5 shadow-2xl backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 transform -translate-y-1">
+  <div id="sync-toast-pill" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-full bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 text-[10px] font-mono font-black flex items-center space-x-1.5 shadow-2xl backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 transform -translate-y-1">
     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-    <span>SYNC LIVE</span>
+    <span>LIVE SYNKRONISERET</span>
   </div>
 
   <!-- Top Area: Instagram Story Progress Bars & Brand Header -->
@@ -3797,10 +4232,14 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         </div>
       </div>
 
-      <div class="flex items-center space-x-2 flex-shrink-0">
-        <span id="mobile-tag" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
+      <div class="flex items-center space-x-1.5 flex-shrink-0">
+        <span id="mobile-tag" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
           HOOK
         </span>
+        <button id="btn-mobile-audio" onclick="toggleMobileAudio(event)" class="px-2.5 h-9 rounded-full bg-white/10 active:bg-white/25 border border-white/20 flex items-center space-x-1 text-white text-[11px] font-bold transition" title="Slå AI Voiceover & Lyd til/fra">
+          <span id="mobile-audio-icon">🔇</span>
+          <span id="mobile-audio-text">Lyd</span>
+        </button>
         <button onclick="shareReel(event)" class="w-9 h-9 rounded-full bg-white/10 active:bg-white/25 border border-white/20 flex items-center justify-center text-white text-xs transition" title="Del Reel">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
         </button>
@@ -3809,7 +4248,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   </header>
 
   <!-- Center Area: Slide Content -->
-  <main id="mobile-content-container" class="my-auto px-6 py-4 z-30 space-y-4 max-w-lg mx-auto w-full">
+  <main id="mobile-content-container" class="my-auto px-6 py-4 z-30 space-y-4 max-w-lg mx-auto w-full transition-all duration-200">
     <h1 id="mobile-headline" class="text-2xl sm:text-3xl font-black tracking-tight leading-snug drop-shadow-xl text-white"></h1>
 
     <!-- Stat Card -->
@@ -3818,9 +4257,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       <span id="mobile-stat-label" class="text-[11px] font-bold uppercase text-white/90 tracking-wide"></span>
     </div>
 
-    <!-- Floating Live Screenrecord Card (inset mode) -->
-    <div id="mobile-screenrecord-card" class="hidden rounded-2xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md">
-      <div class="px-3 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[9px]">
+    <!-- Floating Live Screenrecord Card (inset / split / iphone mode) -->
+    <div id="mobile-screenrecord-card" class="hidden rounded-2xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300">
+      <div id="mobile-browser-bar" class="px-3 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[9px]">
         <div class="flex items-center space-x-1">
           <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
           <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
@@ -3836,15 +4275,23 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   </main>
 
   <!-- Bottom Navigation & CTA Bar -->
-  <footer class="pb-[calc(env(safe-area-inset-bottom,0px)+16px)] px-5 z-40 space-y-2.5 max-w-lg mx-auto w-full">
-    <!-- Interactive CTA Link -->
-    <a id="mobile-cta-btn" href="#" target="_blank" class="w-full py-3.5 px-5 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-[0.98] border border-white/30 backdrop-blur-xl flex items-center justify-between text-white font-extrabold text-xs shadow-2xl transition">
-      <div class="flex items-center space-x-2 truncate">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-        <span id="mobile-cta-text" class="truncate">Link i bio</span>
-      </div>
-      <span class="text-slate-300 font-black ml-2">→</span>
-    </a>
+  <footer class="pb-[calc(env(safe-area-inset-bottom,0px)+16px)] px-5 z-40 space-y-2 max-w-lg mx-auto w-full">
+    <div class="grid grid-cols-12 gap-2">
+      <!-- Interactive CTA Link -->
+      <a id="mobile-cta-btn" href="#" target="_blank" class="col-span-7 py-3.5 px-4 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-[0.98] border border-white/30 backdrop-blur-xl flex items-center justify-between text-white font-extrabold text-xs shadow-2xl transition">
+        <div class="flex items-center space-x-2 truncate">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+          <span id="mobile-cta-text" class="truncate">Link i bio</span>
+        </div>
+        <span class="text-slate-300 font-black ml-1">→</span>
+      </a>
+
+      <!-- Direct One-Tap MP4 Video Download / Save to Camera Roll -->
+      <button id="btn-mobile-download-mp4" onclick="downloadMobileMp4(event)" class="col-span-5 py-3.5 px-3 rounded-2xl bg-gradient-to-r from-rose-600 to-indigo-600 active:scale-[0.98] border border-white/30 flex items-center justify-center space-x-1.5 text-white font-black text-xs shadow-2xl transition">
+        <span>📲</span>
+        <span id="mobile-mp4-label">Gem MP4</span>
+      </button>
+    </div>
 
     <!-- Slide Indicator & Tips -->
     <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
@@ -3875,6 +4322,141 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     let touchStartTime = 0;
     let touchStartX = 0;
     let touchStartY = 0;
+    let mobileAudioEnabled = false;
+    let mobileTtsAudio = null;
+    let mobileAudioCtx = null;
+    let mobileAudioGain = null;
+
+    function startMobileAmbientBeat() {
+      try {
+        if (!mobileAudioCtx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          mobileAudioCtx = new AudioCtx();
+          mobileAudioGain = mobileAudioCtx.createGain();
+          mobileAudioGain.gain.value = 0.04;
+          mobileAudioGain.connect(mobileAudioCtx.destination);
+          [110, 164.81, 220, 277.18].forEach((freq) => {
+            const osc = mobileAudioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            osc.connect(mobileAudioGain);
+            osc.start();
+          });
+        }
+        if (mobileAudioCtx.state === 'suspended') {
+          mobileAudioCtx.resume();
+        }
+        mobileAudioGain.gain.setTargetAtTime(0.04, mobileAudioCtx.currentTime, 0.2);
+      } catch (e) {}
+    }
+
+    function stopMobileAmbientBeat() {
+      try {
+        if (mobileAudioGain && mobileAudioCtx) {
+          mobileAudioGain.gain.setTargetAtTime(0.0001, mobileAudioCtx.currentTime, 0.15);
+        }
+      } catch (e) {}
+    }
+
+    function playMobileSlideAudio(idx) {
+      if (!mobileAudioEnabled) return;
+      const mode = reelState.audioMode || 'voice_beat';
+      if (mode === 'none') {
+        if (mobileTtsAudio) { try { mobileTtsAudio.pause(); } catch (e) {} }
+        stopMobileAmbientBeat();
+        return;
+      }
+      if (mode === 'voice_beat' || mode === 'beat_only') {
+        startMobileAmbientBeat();
+      } else {
+        stopMobileAmbientBeat();
+      }
+      if (mode === 'voice_beat' || mode === 'voice_only') {
+        const s = reelState.slides[idx];
+        if (!s) return;
+        const text = [s.headline, s.stat ? (s.stat + ' ' + (s.statLabel || '')) : '', s.body].filter(Boolean).join('. ');
+        const lang = reelState.language || 'da';
+        if (mobileTtsAudio) {
+          try { mobileTtsAudio.pause(); } catch (e) {}
+        }
+        mobileTtsAudio = new Audio('/v1/tools/reel/tts?lang=' + encodeURIComponent(lang) + '&text=' + encodeURIComponent(text));
+        mobileTtsAudio.play().catch(() => {});
+      }
+    }
+
+    function toggleMobileAudio(e) {
+      if (e) e.stopPropagation();
+      mobileAudioEnabled = !mobileAudioEnabled;
+      const icon = document.getElementById('mobile-audio-icon');
+      const btn = document.getElementById('btn-mobile-audio');
+      if (mobileAudioEnabled) {
+        if (icon) icon.textContent = '🔊';
+        if (btn) btn.classList.add('bg-emerald-500/30', 'border-emerald-400/50');
+        playMobileSlideAudio(currentSlideIdx);
+      } else {
+        if (icon) icon.textContent = '🔇';
+        if (btn) btn.classList.remove('bg-emerald-500/30', 'border-emerald-400/50');
+        if (mobileTtsAudio) { try { mobileTtsAudio.pause(); } catch (e) {} }
+        stopMobileAmbientBeat();
+      }
+    }
+
+    async function downloadMobileMp4(e) {
+      if (e) e.stopPropagation();
+      const btn = document.getElementById('btn-mobile-download-mp4');
+      const label = document.getElementById('mobile-mp4-label');
+      if (!btn || !label) return;
+      btn.disabled = true;
+      label.textContent = 'Renderer MP4...';
+
+      try {
+        const res = await fetch('/v1/tools/reel/video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reelState)
+        });
+        const data = await res.json();
+        if (!res.ok || (!data.downloadUrl && !data.videoUrl)) {
+          throw new Error(data.message || 'Kunne ikke generere MP4');
+        }
+        const dlUrl = data.downloadUrl || (data.videoUrl + '?download=true');
+
+        // Try native iOS/Android file share sheet ("Save Video" to Camera Roll)
+        if (navigator.canShare && navigator.share) {
+          try {
+            const vidRes = await fetch(dlUrl);
+            const blob = await vidRes.blob();
+            const file = new File([blob], (reelState.brand || 'reel').toLowerCase() + '-reel.mp4', { type: 'video/mp4' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: reelState.title || reelState.brand,
+              });
+              label.textContent = 'Gemt ✓';
+              setTimeout(() => { label.textContent = 'Gem MP4'; btn.disabled = false; }, 2000);
+              return;
+            }
+          } catch (shareErr) {}
+        }
+
+        // Direct MP4 download fallback
+        const a = document.createElement('a');
+        a.href = dlUrl;
+        a.download = (reelState.brand || 'reel').toLowerCase() + '-reel.mp4';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        label.textContent = 'Hentet ✓';
+      } catch (err) {
+        alert('Fejl ved MP4 download: ' + err.message);
+        label.textContent = 'Gem MP4';
+      } finally {
+        setTimeout(() => {
+          label.textContent = 'Gem MP4';
+          btn.disabled = false;
+        }, 2500);
+      }
+    }
 
     function applyLiveSync(updatedState) {
       if (!updatedState || !updatedState.slides || !updatedState.slides.length) return;
@@ -4070,12 +4652,18 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       isPlaying = false;
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+      if (mobileTtsAudio) { try { mobileTtsAudio.pause(); } catch (e) {} }
+      stopMobileAmbientBeat();
       applyKaraokeHighlight(1.0, 1);
     }
 
     function restartCurrentSlide() {
       if (slideTimer) clearTimeout(slideTimer);
       if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+
+      if (mobileAudioEnabled && isPlaying) {
+        playMobileSlideAudio(currentSlideIdx);
+      }
 
       progressStartTime = performance.now();
       const duration = reelState.duration || 3500;
@@ -4225,8 +4813,50 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         statCard.classList.add('hidden');
       }
 
-      // Screenrecord
+      // Apply Visual Layout template styling on mobile (classic, split, iphone, editorial)
+      const layout = reelState.layout || 'classic';
+      const contentBox = document.getElementById('mobile-content-container');
+      const watermark = document.getElementById('mobile-editorial-watermark');
       const recordCard = document.getElementById('mobile-screenrecord-card');
+      const browserBar = document.getElementById('mobile-browser-bar');
+
+      if (watermark) {
+        if (layout === 'editorial') {
+          watermark.textContent = slide.stat || ('0' + (currentSlideIdx + 1));
+          watermark.classList.remove('hidden');
+        } else {
+          watermark.classList.add('hidden');
+        }
+      }
+
+      if (contentBox) {
+        if (layout === 'editorial') {
+          contentBox.style.borderLeft = '5px solid ' + (theme.statColor || '#38bdf8');
+          contentBox.style.borderTop = 'none';
+          contentBox.style.background = 'transparent';
+        } else if (layout === 'split') {
+          contentBox.style.borderLeft = 'none';
+          contentBox.style.background = 'rgba(9, 13, 22, 0.78)';
+          contentBox.style.borderRadius = '24px';
+          contentBox.style.borderTop = '4px solid ' + (theme.statColor || '#38bdf8');
+        } else {
+          contentBox.style.borderLeft = 'none';
+          contentBox.style.borderTop = 'none';
+          contentBox.style.background = 'transparent';
+        }
+      }
+
+      if (recordCard && browserBar) {
+        if (layout === 'iphone') {
+          recordCard.className = 'mx-auto w-48 rounded-[32px] border-4 border-slate-600 bg-slate-950 shadow-2xl overflow-hidden transition-all duration-300';
+          browserBar.innerHTML = '<div class="mx-auto w-14 h-3 bg-black rounded-full my-0.5"></div>';
+        } else {
+          recordCard.className = 'rounded-2xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300';
+          browserBar.innerHTML = '<div class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span></div><span id="mobile-browser-url" class="font-mono text-slate-400 truncate max-w-[160px]">tailprint.com</span>';
+        }
+      }
+
+      // Screenrecord
       const recordVideo = document.getElementById('mobile-screenrecord-video');
       const backdropVideo = document.getElementById('mobile-backdrop-video');
       const urlLabel = document.getElementById('mobile-browser-url');
