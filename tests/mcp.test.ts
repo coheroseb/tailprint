@@ -19,7 +19,7 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     await browserService.close();
   });
 
-  it('lists all registered MCP tools correctly', async () => {
+  it('lists all 11 registered PDF & Document MCP tools correctly', async () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createMcpServer();
     await server.connect(serverTransport);
@@ -30,31 +30,18 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     const result = await client.listTools();
     const toolNames = result.tools.map((t) => t.name);
 
-    expect(toolNames).toContain('scrape_markdown');
     expect(toolNames).toContain('render_pdf');
-    expect(toolNames).toContain('render_image');
     expect(toolNames).toContain('list_templates');
     expect(toolNames).toContain('get_template_source');
     expect(toolNames).toContain('render_template');
-    expect(toolNames).toContain('render_chart');
-    expect(toolNames).toContain('generate_qr');
-    expect(toolNames).toContain('render_device_mockup');
     expect(toolNames).toContain('stamp_pdf');
-    expect(toolNames).toContain('compare_snapshots');
-    expect(toolNames).toContain('render_carousel');
     expect(toolNames).toContain('generate_einvoice');
     expect(toolNames).toContain('merge_pdfs');
     expect(toolNames).toContain('split_pdf');
     expect(toolNames).toContain('fill_pdf_form');
     expect(toolNames).toContain('compress_pdf');
-    expect(toolNames).toContain('render_mermaid');
     expect(toolNames).toContain('render_presentation');
-    expect(toolNames).toContain('generate_social_card');
-    expect(toolNames).toContain('extract_tables_from_url');
-    expect(toolNames).toContain('audit_webpage');
-    expect(toolNames).toContain('convert_logo_for_canva');
-    expect(toolNames).toContain('create_social_reel');
-    expect(toolNames.length).toBe(24);
+    expect(toolNames.length).toBe(11);
 
     await client.close();
     await server.close();
@@ -79,6 +66,7 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(parsedList.some((t: any) => t.id === 'invoice')).toBe(true);
     expect(parsedList.some((t: any) => t.id === 'ticket')).toBe(true);
     expect(parsedList.some((t: any) => t.id === 'receipt')).toBe(true);
+    expect(parsedList.some((t: any) => t.id === 'og-card')).toBe(false);
 
     // Test get_template_source
     const invoiceRes = (await client.callTool({
@@ -87,40 +75,6 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     })) as any;
     expect(invoiceRes.isError).toBeFalsy();
     expect(invoiceRes.content[0].text).toContain('Invoice');
-
-    await client.close();
-    await server.close();
-  });
-
-  it('executes render_image tool and returns inline image content block', async () => {
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    const server = createMcpServer();
-    await server.connect(serverTransport);
-
-    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
-    await client.connect(clientTransport);
-
-    const imageRes = (await client.callTool({
-      name: 'render_image',
-      arguments: {
-        html: '<div class="p-8 bg-blue-600 text-white font-bold text-2xl">MCP Generated Card</div>',
-        width: 600,
-        height: 315,
-        type: 'png',
-      },
-    })) as any;
-
-    expect(imageRes.isError).toBeFalsy();
-    // Check for inline image content block for rich MCP clients
-    const imgBlock = imageRes.content.find((c: any) => c.type === 'image');
-    expect(imgBlock).toBeDefined();
-    expect(imgBlock.mimeType).toBe('image/png');
-    expect(imgBlock.data.length).toBeGreaterThan(100);
-
-    // Check for text block with summary and data URI
-    const textBlock = imageRes.content.find((c: any) => c.type === 'text');
-    expect(textBlock).toBeDefined();
-    expect(textBlock.text).toContain('data:image/png;base64,');
 
     await client.close();
     await server.close();
@@ -186,7 +140,7 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     await server.close();
   });
 
-  it('lists and executes MCP Prompts (workflows)', async () => {
+  it('lists and executes MCP Prompts (PDF & E-Invoice workflows)', async () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createMcpServer();
     await server.connect(serverTransport);
@@ -199,8 +153,8 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     const promptNames = promptList.prompts.map((p) => p.name);
 
     expect(promptNames).toContain('generate_invoice');
-    expect(promptNames).toContain('summarize_url_to_pdf');
-    expect(promptNames).toContain('create_social_card');
+    expect(promptNames).toContain('generate_b2b_invoice');
+    expect(promptNames.length).toBe(2);
 
     // Execute generate_invoice prompt
     const promptResult = await client.getPrompt({
@@ -216,65 +170,6 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(promptResult.messages.length).toBe(1);
     expect((promptResult.messages[0].content as any).text).toContain('Stark Industries');
     expect((promptResult.messages[0].content as any).text).toContain('render_template');
-
-    await client.close();
-    await server.close();
-  });
-
-  it('executes render_chart tool to return inline chart image', async () => {
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    const server = createMcpServer();
-    await server.connect(serverTransport);
-
-    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
-    await client.connect(clientTransport);
-
-    const chartRes = (await client.callTool({
-      name: 'render_chart',
-      arguments: {
-        type: 'bar',
-        labels: ['Jan', 'Feb', 'Mar'],
-        datasets: [{ label: 'Sales', data: [100, 250, 400] }],
-        title: 'Q1 Growth',
-        theme: 'dark',
-        width: 800,
-        height: 500,
-      },
-    })) as any;
-
-    expect(chartRes.isError).toBeFalsy();
-    const imgBlock = chartRes.content.find((c: any) => c.type === 'image');
-    expect(imgBlock).toBeDefined();
-    expect(imgBlock.mimeType).toBe('image/png');
-    expect(imgBlock.data.length).toBeGreaterThan(100);
-
-    await client.close();
-    await server.close();
-  });
-
-  it('executes generate_qr tool to create scannable QR code', async () => {
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    const server = createMcpServer();
-    await server.connect(serverTransport);
-
-    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
-    await client.connect(clientTransport);
-
-    const qrRes = (await client.callTool({
-      name: 'generate_qr',
-      arguments: {
-        text: 'https://tailprint.com',
-        size: 300,
-        dark_color: '#4f46e5',
-        light_color: '#ffffff',
-      },
-    })) as any;
-
-    expect(qrRes.isError).toBeFalsy();
-    const imgBlock = qrRes.content.find((c: any) => c.type === 'image');
-    expect(imgBlock).toBeDefined();
-    expect(imgBlock.mimeType).toBe('image/png');
-    expect(qrRes.content[1].text).toContain('data:image/png;base64,');
 
     await client.close();
     await server.close();
@@ -315,70 +210,6 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     await server.close();
   });
 
-  it('executes compare_snapshots tool to detect differences between HTML versions', async () => {
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    const server = createMcpServer();
-    await server.connect(serverTransport);
-
-    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
-    await client.connect(clientTransport);
-
-    const res = (await client.callTool({
-      name: 'compare_snapshots',
-      arguments: {
-        before_html: '<div style="width:400px;height:200px;background:blue;color:white;font-size:24px;">Button V1</div>',
-        after_html: '<div style="width:400px;height:200px;background:red;color:white;font-size:24px;">Button V2</div>',
-        width: 400,
-        height: 200,
-      },
-    })) as any;
-
-    expect(res.isError).toBeFalsy();
-    expect(res.content[0].type).toBe('image');
-    expect(res.content[0].mimeType).toBe('image/png');
-    expect(res.content[1].text).toContain('Visual Regression Report');
-    expect(res.content[1].text).toContain('Changed Pixels');
-
-    await client.close();
-    await server.close();
-  }, 25000);
-
-  it('executes render_carousel tool to generate multi-slide LinkedIn PDF and PNG preview', async () => {
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    const server = createMcpServer();
-    await server.connect(serverTransport);
-
-    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
-    await client.connect(clientTransport);
-
-    const res = (await client.callTool({
-      name: 'render_carousel',
-      arguments: {
-        title: '3 Rules for High Output',
-        author_name: 'Test Author',
-        theme: 'dark',
-        markdown: `
-# Rule 1: Automate Visuals
-Never do manual screenshots when an API can do it.
-Takeaway: Speed wins.
----
-# Rule 2: Keep Contexts Lean
-Strip extraneous DOM elements.
-Takeaway: 90% token savings.
-`,
-      },
-    })) as any;
-
-    expect(res.isError).toBeFalsy();
-    expect(res.content[0].type).toBe('image');
-    expect(res.content[0].mimeType).toBe('image/png');
-    expect(res.content[1].text).toContain('Multi-Slide Carousel Generated Successfully');
-    expect(res.content[1].text).toContain('LinkedIn Carousel (Multi-page PDF)');
-
-    await client.close();
-    await server.close();
-  }, 25000);
-
   it('executes generate_einvoice tool to produce hybrid Factur-X PDF with embedded XML', async () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createMcpServer();
@@ -418,7 +249,7 @@ Takeaway: 90% token savings.
     await server.close();
   }, 25000);
 
-  it('GET /v1/mcp/tools returns catalog of all 24 tools', async () => {
+  it('GET /v1/mcp/tools returns catalog of all 11 PDF & Document tools', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/v1/mcp/tools',
@@ -426,45 +257,15 @@ Takeaway: 90% token savings.
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
-    expect(body.totalTools).toBe(24);
-    expect(body.tools.length).toBe(24);
+    expect(body.totalTools).toBe(11);
+    expect(body.tools.length).toBe(11);
     const names = body.tools.map((t: any) => t.name);
+    expect(names).toContain('render_pdf');
+    expect(names).toContain('generate_einvoice');
     expect(names).toContain('merge_pdfs');
     expect(names).toContain('split_pdf');
-    expect(names).toContain('render_mermaid');
     expect(names).toContain('render_presentation');
-    expect(names).toContain('create_social_reel');
-    expect(names).toContain('generate_social_card');
-    expect(names).toContain('extract_tables_from_url');
-    expect(names).toContain('audit_webpage');
   });
-
-  it('executes generate_social_card and returns inline image block', async () => {
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    const server = createMcpServer();
-    await server.connect(serverTransport);
-
-    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
-    await client.connect(clientTransport);
-
-    const res = (await client.callTool({
-      name: 'generate_social_card',
-      arguments: {
-        title: 'Instant High-Performance Vector PDF Generation',
-        description: 'Sub-millisecond headless Chromium rendering for AI agents.',
-        category: 'Engineering',
-        theme: 'dark',
-        brand_name: 'Tailprint',
-      },
-    })) as any;
-
-    expect(res.isError).toBeFalsy();
-    expect(res.content.some((c: any) => c.type === 'image')).toBe(true);
-    expect(res.content.some((c: any) => c.type === 'text' && c.text.includes('Direct Image Link'))).toBe(true);
-
-    await client.close();
-    await server.close();
-  }, 20000);
 
   it('executes merge_pdfs and split_pdf tools', async () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -516,7 +317,7 @@ Takeaway: 90% token savings.
     await server.close();
   }, 30000);
 
-  it('lists MCP resources and prompts including new additions', async () => {
+  it('lists MCP resources and prompts including PDF guides', async () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createMcpServer();
     await server.connect(serverTransport);
@@ -535,7 +336,6 @@ Takeaway: 90% token savings.
     const promptNames = prompts.prompts.map((p) => p.name);
     expect(promptNames).toContain('generate_invoice');
     expect(promptNames).toContain('generate_b2b_invoice');
-    expect(promptNames).toContain('visual_regression_audit');
 
     await client.close();
     await server.close();

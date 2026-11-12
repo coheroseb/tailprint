@@ -63,6 +63,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     '/v1/tools/studio/render-image',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Live Render Image from Studio Playground',
         description: 'Free browser studio endpoint with rate-limiting. Renders Tailwind HTML into a high-res PNG image.',

@@ -199,11 +199,12 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     }
   );
 
-  // Canonical POST /v1/render/image (Documented in OpenAPI / Scalar)
+  // Canonical POST /v1/render/image (Hidden from public PDF OpenAPI docs)
   fastify.post(
     '/v1/render/image',
     {
       schema: {
+        hide: true,
         tags: ['Rendering'],
         summary: 'Render HTML with Tailwind to Open Graph / Image',
         description: 'Generates an optimized PNG or JPEG image from HTML containing Tailwind CSS classes. Results are hashed and cached.',
@@ -510,8 +511,8 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       schema: {
         tags: ['Hosted Delivery'],
-        summary: 'Access hosted PDF or image document',
-        description: 'Serves an ephemeral or hosted document generated with store: true. Cached with immutable CDN headers.',
+        summary: 'Access hosted PDF document',
+        description: 'Serves an ephemeral or hosted PDF document generated with store: true. Cached with immutable CDN headers.',
         params: z.object({
           fileId: z.string().describe('File ID returned from hosted render'),
         }),

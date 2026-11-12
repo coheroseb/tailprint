@@ -3472,6 +3472,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/carousel',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Generate LinkedIn / Instagram Carousel PDF',
         description: 'Generates a multi-slide 1080x1350 px portrait document from Markdown slides (separated by "---") with custom branding and themes. Returns a hosted PDF link and cover image URL.',
@@ -3637,6 +3638,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/visual-diff',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Generate Visual Regression Diff Heatmap',
         description: 'Captures two public URLs and generates a 3-panel comparison image (Baseline, Modified, Diff Overlay) highlighting visual changes in neon-pink.',
@@ -3707,6 +3709,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/mockup',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Generate 3D Device Mockup (MacBook & iPhone)',
         description: 'Captures any public web URL and renders a photorealistic 3D presentation scene containing a MacBook Pro and floating iPhone on a studio gradient canvas.',
@@ -3777,6 +3780,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/reel/script',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Generate Social Reel Script & Live Screenrecord from URL',
         description: 'Scrapes a given URL, synthesizes a punchy 4-5 slide script with tags, headlines, body insights, and optionally captures a live scrolling video of the target site.',
@@ -3863,6 +3867,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/reel/screenrecord',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Capture Live Scrolling Screenrecord of any Webpage',
         description: 'Navigates to any public URL, suppresses cookie dialogs, and records a smooth scrolling video exported as WebM on CDN.',
@@ -3928,6 +3933,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/reel',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Render Multi-Format Social Video/Reel PDF & Preview PNG',
         description: 'Generates a full-bleed vector PDF story deck and cover PNG from structured slide data in 9:16, 1:1, 16:9 or 4:5.',
@@ -4075,6 +4081,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/reel/from-url',
     {
       schema: {
+        hide: true,
         tags: ['Tools'],
         summary: 'Generate 9:16 Video Reel & Instagram Caption Directly from Article URL',
         description:
@@ -5109,6 +5116,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/canva-logo',
     {
       schema: {
+        hide: true,
         tags: ['Free Tools'],
         summary: 'Convert an AI-generated raster logo (or prompt) into 100% Canva-editable SVG color layers and an Editable Vector PDF with separated text boxes.',
       },

@@ -17,13 +17,13 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       schema: {
         tags: ['Templates'],
-        summary: 'List Ready-to-Use Tailwind Templates',
-        description: 'Returns pre-designed Tailwind CSS templates for Invoices, Certificates, Executive Reports, Resumes, OG Banners, and Shipping Labels.',
+        summary: 'List Ready-to-Use Tailwind Document Templates',
+        description: 'Returns pre-designed Tailwind CSS PDF document templates for Invoices, EU Factur-X E-Invoices, Certificates, Executive Reports, Resumes, Quotes, NDAs, Statements, Presentations, Contracts, and Shipping Labels.',
       },
     },
     async () => {
       return {
-        templates: TEMPLATES.map((t) => ({
+        templates: TEMPLATES.filter((t) => t.id !== 'og-card').map((t) => ({
           id: t.id,
           title: t.title,
           category: t.category,
@@ -222,16 +222,28 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://tailprint.com/studio</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools/factur-x</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://tailprint.com/showcase</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tailprint.com/guides</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tailprint.com/guides/tailwind-html-to-pdf-nextjs</loc>
@@ -258,82 +270,10 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://tailprint.com/guides/dynamic-open-graph-images-tailwind</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/guides/automate-social-media-content-from-blog-url</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/guides/url-to-video-reels-api</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/guides/convert-ai-logo-to-editable-canva-vector</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/guides/automate-blog-posts-to-instagram-reels</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/tools/canva-logo</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/tools/reel</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/studio</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://tailprint.com/tools</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/tools/carousel</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/tools/factur-x</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/tools/visual-diff</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://tailprint.com/tools/mockup</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
   </url>
   <url>
     <loc>https://tailprint.com/dashboard</loc>
@@ -345,7 +285,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <loc>https://tailprint.com/llms.txt</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 </urlset>`;
 
@@ -357,9 +297,15 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
   // GET /rss.xml & /feed.xml - RSS 2.0 Feed for Automations (Make.com, Zapier, Feedly)
   const serveRssFeed = async (_request: any, reply: any) => {
-    const articles = Object.values(GUIDE_ARTICLES).sort(
-      (a, b) => new Date(b.datePublished).getTime() - new Date(a.datePublished).getTime()
-    );
+    const coreSlugs = new Set([
+      'tailwind-html-to-pdf-nextjs',
+      'factur-x-zugferd-pdf-api',
+      'puppeteer-serverless-pdf-alternatives',
+      'best-mcp-servers-claude-cursor',
+    ]);
+    const articles = Object.values(GUIDE_ARTICLES)
+      .filter((a) => coreSlugs.has(a.slug))
+      .sort((a, b) => new Date(b.datePublished).getTime() - new Date(a.datePublished).getTime());
 
     const escapeXml = (unsafe: string) =>
       unsafe.replace(/[<>&'"]/g, (c) => {
@@ -389,9 +335,9 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tailprint Technical Guides &amp; Articles</title>
+    <title>Tailprint Technical Guides &amp; PDF Architecture</title>
     <link>https://tailprint.com/guides</link>
-    <description>In-depth technical guides on converting Tailwind HTML to PDF, EU Factur-X e-invoicing, AI social reels, and Model Context Protocol (MCP).</description>
+    <description>In-depth technical guides on converting Tailwind HTML to vector PDF, EU Factur-X e-invoicing (EN 16931), and Model Context Protocol (MCP) document automation.</description>
     <language>en</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="https://tailprint.com/rss.xml" rel="self" type="application/rss+xml"/>
@@ -411,39 +357,37 @@ ${itemsXml}
 
   // GET /llms.txt - Generative Engine Optimization standard for AI (llmstxt.org)
   fastify.get('/llms.txt', { schema: { hide: true } }, async (_request, reply) => {
-    const llms = `# Tailprint — Tailwind-Native Render & PDF Engine + AI Web Scraper
+    const llms = `# Tailprint — Tailwind-Native HTML to PDF & European Factur-X E-Invoicing API
 
-> High-performance developer API and Model Context Protocol (MCP) server for converting Tailwind CSS HTML into vector PDFs, EU Factur-X e-invoices, cached Open Graph preview images, and token-efficient LLM Markdown in under 500ms.
+> High-performance developer API and Model Context Protocol (MCP) server for converting Tailwind CSS HTML into vector PDFs and legally compliant EU Factur-X / ZUGFeRD (EN 16931) hybrid e-invoices in under 500ms.
 
 ## Core Capabilities
 - **Tailwind-Native PDF Engine**: Submits raw HTML styled with arbitrary Tailwind CSS classes (including JIT syntax like \`w-[350px]\` and dynamic grids) and generates vector-sharp, print-ready PDF documents without build steps or headless browser maintenance.
-- **European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)**: Generates legally compliant hybrid PDF/A-3 invoices with embedded CrossIndustryInvoice XML for automated ERP ingestion (DATEV, SAP, Dinero, Billy, Chorus Pro).
-- **Open Graph Card Generator**: Renders social preview cards (PNG/JPEG) with automatic SHA-256 caching and sub-400ms cached delivery.
-- **LLM Web Scraper**: Scrapes public URLs, strips ads, scripts, and clutter with Mozilla Readability, and outputs token-efficient structured Markdown saving 90%+ context window tokens.
-- **Model Context Protocol (MCP)**: Native Remote SSE and stdio CLI integration for Claude Desktop, Cursor, Windsurf, and autonomous AI agents exposing 22 production tools.
-- **Developer Tools**: LinkedIn Carousel generator, 3D Device Mockup maker, Visual Regression diff heatmap, and URL-to-Video Reel synthesizer.
+- **Smart Pagination Shield**: Automatically repeats \`<thead>\` table headers across multi-page splits, locks \`<tr>\` rows against mid-row cuts (\`break-inside: avoid\`), prevents orphaned headings, and injects running page counters.
+- **European E-Invoicing (Factur-X / ZUGFeRD 2.2 / EN 16931)**: Generates legally compliant hybrid PDF/A-3 invoices with embedded CrossIndustryInvoice XML (\`/EmbeddedFiles\`) for automated ERP ingestion (DATEV, SAP, Dinero, Billy, Chorus Pro).
+- **Zero-Retention Privacy Mode (\`no_store: true\`)**: Renders confidential contracts, medical records, and financial statements purely in transient RAM without disk persistence or cache storage.
+- **Model Context Protocol (MCP)**: Native Remote SSE and stdio CLI integration for Claude Desktop, Cursor, Windsurf, and autonomous AI agents exposing 11 specialized PDF & Document tools.
 
 ## Quick API Reference
 - Base URL: https://tailprint.com
-- Documentation: https://tailprint.com/docs
+- Interactive OpenAPI Docs: https://tailprint.com/docs
+- Live Tailwind PDF Studio: https://tailprint.com/studio
+- EU Factur-X Inspector & Builder: https://tailprint.com/tools/factur-x
 - MCP Remote SSE Endpoint: https://tailprint.com/v1/mcp/sse
-- Developer Free Tier: 100 free monthly renders with zero credit card required
+- Developer Free Tier: 100 free monthly PDF renders with zero credit card required
 
 ### Key Endpoints
-- POST /v1/render/pdf : Compiles raw HTML + Tailwind CSS to vector PDF
-- POST /v1/render/einvoice : Generates EU-compliant Factur-X hybrid PDF/A-3 invoice with embedded XML
-- POST /v1/render/image : Compiles raw HTML + Tailwind CSS to 1200x630 PNG/JPEG
-- POST /v1/scrape/markdown : Scrapes public URL to clean LLM-ready Markdown
-- POST /v1/tools/carousel : Generates 1080x1350 multi-page PDF & cover from Markdown
-- POST /v1/tools/visual-diff : Compares before/after URLs and returns visual diff heatmap
-- POST /v1/tools/mockup : 3D MacBook Pro + iPhone mockup generator
-- POST /v1/tools/reel/script : AI storyboard script & mobile screenrecord video from any article URL
-- POST /v1/tools/reel : Renders 9:16 vertical decks, 4:5 carousels, or 16:9 presentations
-- POST /v1/auth/claim-free-key : Claim instant free developer API key (100 renders/mo)
+- POST /v1/render/pdf : Compiles raw HTML + Tailwind CSS or URL to vector PDF with Smart Pagination Shield
+- POST /v1/render/einvoice : Generates EU-compliant Factur-X (EN 16931) hybrid PDF/A-3 invoice with embedded XML
+- GET /templates : Lists all 13 pre-designed Tailwind CSS document templates
+- GET /templates/:id/download : Live-renders and downloads any PDF template
+- POST /v1/tools/factur-x : Interactive Factur-X hybrid PDF + XML generator
+- GET /v1/mcp/tools : Lists all 11 MCP PDF & Document tools and JSON schemas
+- POST /v1/auth/claim-free-key : Claim instant free developer API key (100 PDFs/mo)
 - GET /v1/usage : Real-time quota and monthly billing cycle check
 
-## Model Context Protocol (MCP) Setup (22 Tools)
-Tailprint includes 22 native tools: \`render_pdf\`, \`render_image\`, \`generate_einvoice\`, \`scrape_markdown\`, \`render_chart\`, \`generate_qr\`, \`render_device_mockup\`, \`stamp_pdf\`, \`compare_snapshots\`, \`render_carousel\`, \`merge_pdfs\`, \`split_pdf\`, \`fill_pdf_form\`, \`compress_pdf\`, \`render_mermaid\`, \`render_presentation\`, \`generate_social_card\`, \`extract_tables_from_url\`, \`audit_webpage\`, \`list_templates\`, \`render_template\`, \`get_template_source\`.
+## Model Context Protocol (MCP) Setup (11 Document & PDF Tools)
+Tailprint includes 11 native PDF & Document tools: \`render_pdf\`, \`generate_einvoice\`, \`render_template\`, \`list_templates\`, \`get_template_source\`, \`stamp_pdf\`, \`merge_pdfs\`, \`split_pdf\`, \`fill_pdf_form\`, \`compress_pdf\`, \`render_presentation\`.
 
 Claude Desktop (\`claude_desktop_config.json\`):
 \`\`\`json
@@ -465,15 +409,11 @@ Cursor IDE & Windsurf:
 - URL: https://tailprint.com/v1/mcp/sse?api_key=YOUR_API_KEY
 
 ## Technical Guides & Architecture
-- Customer Stories & Showcase: https://tailprint.com/showcase
+- PDF Document Showcase: https://tailprint.com/showcase
 - Next.js Tailwind to PDF: https://tailprint.com/guides/tailwind-html-to-pdf-nextjs
 - European Factur-X & ZUGFeRD E-Invoicing API: https://tailprint.com/guides/factur-x-zugferd-pdf-api
 - Why Puppeteer in Serverless Fails (And Alternatives): https://tailprint.com/guides/puppeteer-serverless-pdf-alternatives
 - Best MCP Servers for Claude & Cursor (2026): https://tailprint.com/guides/best-mcp-servers-claude-cursor
-- Dynamic Open Graph Images with Tailwind & Edge Caching: https://tailprint.com/guides/dynamic-open-graph-images-tailwind
-- Automate Social Media Content from Blog URLs: https://tailprint.com/guides/automate-social-media-content-from-blog-url
-- Turn Any Article URL into Short-Form Video & Reels: https://tailprint.com/guides/url-to-video-reels-api
-- Interactive Reel Maker Tool: https://tailprint.com/tools/reel
 - Guides Knowledge Hub: https://tailprint.com/guides
 `;
 
@@ -542,7 +482,7 @@ Cursor IDE & Windsurf:
         "url": "https://tailprint.com",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "All (Cloud API & MCP Server)",
-        "description": "High-performance Tailwind-Native Render & PDF Engine + AI Web Scraper. Compiles raw Tailwind CSS HTML into vector PDFs and cached social preview images in under 500ms.",
+        "description": "High-performance Tailwind-Native PDF & EU Factur-X E-Invoicing Engine. Compiles raw Tailwind CSS HTML into vector PDFs and EN 16931 hybrid invoices in under 500ms.",
         "offers": [
           {
             "@type": "Offer",

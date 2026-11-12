@@ -69,6 +69,7 @@ export const scrapeRoutes: FastifyPluginAsyncZod = async (fastify) => {
     '/v1/scrape/markdown',
     {
       schema: {
+        hide: true,
         tags: ['Scraping & AI'],
         summary: 'Scrape URL and Extract LLM-Ready Markdown',
         description:

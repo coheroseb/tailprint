@@ -51,11 +51,11 @@ export async function buildApp(): Promise<FastifyInstance> {
     openapi: {
       openapi: '3.1.0',
       info: {
-        title: 'Tailprint API',
-        version: '1.0.1',
-        description: `Tailprint is the high-performance **Tailwind-Native Render & PDF Engine + Model Context Protocol (MCP) Server** ([tailprint.com](https://tailprint.com)).
+        title: 'Tailprint PDF & E-Invoicing API',
+        version: '1.1.1',
+        description: `Tailprint is the high-performance **Tailwind-Native HTML-to-PDF Engine, EU Factur-X E-Invoicing API & Model Context Protocol (MCP) Server** ([tailprint.com](https://tailprint.com)).
 
-Convert raw HTML styled with arbitrary Tailwind CSS utility classes into pixel-perfect vector PDFs, 1200×630 Open Graph preview images, EU-compliant Factur-X e-invoices, and scrape web pages into token-efficient Markdown for LLMs with 90%+ context savings.
+Convert raw HTML styled with arbitrary Tailwind CSS utility classes into pixel-perfect vector PDFs with **Smart Pagination Shield**, generate legally compliant European **Factur-X / ZUGFeRD (EN 16931)** hybrid e-invoices, and automate PDF operations (merge, split, form-fill, stamp, compress) in under 500ms.
 
 ---
 
@@ -64,12 +64,10 @@ Convert raw HTML styled with arbitrary Tailwind CSS utility classes into pixel-p
 2. [Quickstart: cURL, TypeScript & Python](#section/quickstart)
 3. [Guide: Tailwind CSS for Print & Vector PDF](#section/tailwind-pdf-guide)
 4. [Guide: European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)](#section/einvoice-guide)
-5. [Guide: High-Resolution Open Graph & Social Banners](#section/opengraph-guide)
-6. [Guide: AI Web Scraping & Markdown Extraction](#section/scraper-guide)
-7. [Model Context Protocol (MCP) — 22 Native Tools](#section/mcp-reference)
-8. [Developer Tools & Creative Studio](#section/developer-tools)
-9. [Zero Data Retention & Enterprise Security](#section/privacy-security)
-10. [Quotas, Rate Limits & Error Handling](#section/quotas-errors)
+5. [Model Context Protocol (MCP) — 11 Native PDF & Document Tools](#section/mcp-reference)
+6. [Interactive PDF Studio & Factur-X Generator](#section/developer-tools)
+7. [Zero Data Retention & Enterprise Security](#section/privacy-security)
+8. [Quotas, Rate Limits & Error Handling](#section/quotas-errors)
 
 ---
 
@@ -81,7 +79,7 @@ All production endpoints under \`/v1/...\` require an API key passed in the stan
 Authorization: Bearer sec_live_...
 \`\`\`
 
-#### Claim a Free Developer Key (100 renders/month)
+#### Claim a Free Developer Key (100 PDF renders/month)
 You can instantly provision an API key with zero credit card required via our free auth endpoint:
 \`\`\`bash
 curl -X POST https://tailprint.com/v1/auth/claim-free-key \\
@@ -93,7 +91,7 @@ Or visit [tailprint.com/#pricing](https://tailprint.com/#pricing) to choose a pl
 ---
 
 <a id="section/quickstart"></a>
-### 🚀 Quickstart: Your First Render in 30 Seconds
+### 🚀 Quickstart: Your First PDF Render in 30 Seconds
 
 #### cURL
 \`\`\`bash
@@ -101,7 +99,7 @@ curl -X POST https://tailprint.com/v1/render/pdf \\
   -H "Authorization: Bearer sec_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
-    "html": "<div class=\\"p-12 bg-slate-900 text-white font-sans\\"><h1 class=\\"text-3xl font-bold text-indigo-400\\">Invoice #1042</h1><p class=\\"text-slate-400 mt-2\\">Sub-800ms Tailwind PDF generation.</p></div>",
+    "html": "<div class=\\"p-12 bg-slate-900 text-white font-sans\\"><h1 class=\\"text-3xl font-bold text-indigo-400\\">Invoice #1042</h1><p class=\\"text-slate-400 mt-2\\">Sub-500ms Tailwind PDF generation.</p></div>",
     "format": "A4",
     "smart_pagination": true
   }' \\
@@ -170,7 +168,7 @@ When building print documents, use Tailwind arbitrary values for exact millimete
 #### 2. Smart Pagination Shield & Page Breaks
 To prevent awkward page splits across invoice tables, cards, or signature blocks:
 - Use Tailwind break utilities: \`break-inside-avoid\`, \`break-before-page\`, \`break-after-page\`.
-- Enable \`"smart_pagination": true\` in your API payload. Tailprint injects a custom CSS printing shield that guarantees tables and cards stay intact.
+- Enable \`"smart_pagination": true\` in your API payload. Tailprint injects a custom CSS printing shield that repeats \`<thead>\` table headers across pages and guarantees table rows stay intact.
 
 \`\`\`html
 <!-- Keep table rows or signature blocks together -->
@@ -201,7 +199,7 @@ Tailprint supports custom HTML header and footer templates. Chromium automatical
 <a id="section/einvoice-guide"></a>
 ### 🇪🇺 Guide: European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)
 
-Starting 2026, European B2B electronic invoice mandates require businesses across the EU (including Germany, France, Italy, Poland, and Denmark) to issue legally compliant structured e-invoices.
+European B2B electronic invoice mandates require businesses across the EU (including Germany, France, Italy, Poland, and Denmark) to issue legally compliant structured e-invoices.
 
 Tailprint includes native support for **Hybrid PDF/A-3 E-Invoicing**:
 - **Human-Readable:** A print-ready visual vector PDF invoice with custom branding.
@@ -251,78 +249,24 @@ The resulting PDF contains the XML embedded directly in the PDF file catalog (\`
 
 ---
 
-<a id="section/opengraph-guide"></a>
-### 🖼️ Guide: High-Resolution Open Graph & Social Banners
-
-Use \`POST /v1/render/image\` to generate high-resolution social preview cards (1200×630 px) with automatic SHA-256 caching.
-- Repeated requests with identical HTML or URL return instant \`X-Cache: HIT\` in under 50ms.
-- Set \`store: true\` to receive an ephemeral or permanent CDN URL suitable for \`<meta property="og:image" content="...">\`.
-
-\`\`\`bash
-curl -X POST https://tailprint.com/v1/render/image \\
-  -H "Authorization: Bearer sec_live_..." \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "html": "<div class=\\"w-full h-full flex flex-col justify-between p-16 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white\\"><span class=\\"text-indigo-400 font-mono font-bold tracking-widest text-sm uppercase\\">Tailprint Release</span><h1 class=\\"text-6xl font-black leading-tight\\">High-Performance Vector PDF Engine</h1><div class=\\"flex items-center space-x-4\\"><div class=\\"w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center font-bold\\">TP</div><span class=\\"text-slate-400 font-medium text-lg\\">tailprint.com</span></div></div>",
-    "width": 1200,
-    "height": 630,
-    "type": "png",
-    "store": true
-  }'
-\`\`\`
-
----
-
-<a id="section/scraper-guide"></a>
-### 🌐 Guide: AI Web Scraping & Markdown Extraction
-
-LLMs waste millions of tokens parsing noisy HTML, cookie consent banners, header bars, and tracking scripts. \`POST /v1/scrape/markdown\` converts any public webpage into clean GitHub Flavored Markdown (GFM):
-- Strips ads, navigation menus, modals, and tracking pixels using Mozilla Readability.
-- Evaluates client-rendered JavaScript (SPAs, React, Next.js).
-- Saves **90%+ context window tokens** compared to raw HTML.
-- Built-in Redis 24h caching (\`X-Cache: HIT\`).
-
-\`\`\`bash
-curl -X POST https://tailprint.com/v1/scrape/markdown \\
-  -H "Authorization: Bearer sec_live_..." \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "url": "https://techcrunch.com/2026/02/10/example-article",
-    "strip_images": true
-  }'
-\`\`\`
-
----
-
 <a id="section/mcp-reference"></a>
-### 🤖 Model Context Protocol (MCP) — 22 Native Tools
+### 🤖 Model Context Protocol (MCP) — 11 Native PDF & Document Tools
 
-Tailprint exposes a production-grade, 100% spec-compliant Model Context Protocol server featuring **22 Native Tools** across local stdio and remote Server-Sent Events (SSE):
+Tailprint exposes a production-grade, 100% spec-compliant Model Context Protocol server featuring **11 Native Document & PDF Tools** across local stdio and remote Server-Sent Events (SSE):
 
 | MCP Tool | Category | Returns | Purpose |
 |---|---|---|---|
 | \`render_pdf\` | Documents | PDF Link + Base64 | Renders Tailwind HTML or public URL into vector PDF with headers/footers & encryption. |
-| \`render_image\` | Open Graph | Inline PNG + CDN Link | Renders Open Graph social preview cards from Tailwind CSS with SHA-256 caching. |
-| \`render_chart\` | Data Visuals | Inline PNG + CDN Link | High-DPI bar, line, radar, doughnut, and pie charts with Chart.js. |
-| \`generate_qr\` | Utilities | Inline PNG + CDN Link | Mathematically verified scan-ready QR codes and barcodes. |
-| \`render_device_mockup\` | Marketing | Inline PNG + CDN Link | Wraps any URL into a MacBook Pro + floating iPhone 16 studio mockup canvas. |
-| \`stamp_pdf\` | Security | PDF Link + Base64 | Stamps diagonal watermarks (e.g. CONFIDENTIAL, DRAFT) across all PDF pages. |
-| \`compare_snapshots\` | QA / Testing | Inline PNG + CDN Link | 3-panel visual regression diff heatmap highlighting layout shifts with neon-pink overlay. |
-| \`render_carousel\` | Social Media | LinkedIn PDF + PNG Cover | Multi-slide 1080x1350 px portrait carousels for LinkedIn and Instagram. |
 | \`generate_einvoice\` | Compliance / EU | Hybrid PDF + Factur-X XML | Generates EU-compliant hybrid e-invoices (Factur-X / ZUGFeRD / EN 16931) with embedded CII XML. |
-| \`scrape_markdown\` | AI Ingestion | Clean Markdown | Scrapes any web URL, stripping cookie walls and ads with 90%+ token savings. |
-| \`render_template\` | Automation | PDF / PNG + CDN Link | Directly renders 8 pre-built Tailwind templates with data substitution. |
-| \`list_templates\` | Automation | JSON Catalog | Lists all available templates in the Tailprint catalog. |
-| \`get_template_source\` | Automation | HTML Source | Retrieves full template source code for LLM inspection and customization. |
+| \`render_template\` | Automation | PDF + CDN Link | Directly renders pre-built Tailwind document templates with JSON variable substitution. |
+| \`list_templates\` | Automation | JSON Catalog | Lists all available document templates in the Tailprint catalog. |
+| \`get_template_source\` | Automation | HTML Source | Retrieves full template HTML source code for LLM inspection and customization. |
 | \`merge_pdfs\` | Document Ops | PDF Link + Base64 | Merges two or more PDF documents into a single unified vector PDF. |
 | \`split_pdf\` | Document Ops | PDF Link + Base64 | Extracts specific pages or page ranges (e.g. "1-3, 5, 8-10") from a PDF into a new PDF. |
 | \`fill_pdf_form\` | Document Ops | PDF Link + Base64 | Fills interactive AcroForms with text, numbers, or checkboxes, with optional flattening. |
 | \`compress_pdf\` | Document Ops | PDF Link + Base64 | Compacts and shrinks PDF file size by bundling objects into compressed streams. |
-| \`render_mermaid\` | Diagrams | PNG / PDF / SVG | Renders Mermaid diagram syntax (flowcharts, sequence, ER diagrams) into high-res images or PDFs. |
-| \`render_presentation\` | Keynotes | 16:9 PDF + Preview | Converts Markdown slides (separated by "---") into widescreen 16:9 presentation PDFs. |
-| \`generate_social_card\` | Open Graph | Inline PNG + CDN Link | High-converting 1200x630 OpenGraph / Twitter social card generator without raw HTML. |
-| \`extract_tables_from_url\` | AI Ingestion | JSON + Markdown | Scrapes and extracts all HTML tables from any URL into structured JSON and Markdown tables. |
-| \`audit_webpage\` | QA & Audit | Markdown Audit Report | Technical SEO, accessibility, and DOM audit of any public URL with a health score (0-100). |
+| \`stamp_pdf\` | Security | PDF Link + Base64 | Stamps diagonal watermarks (e.g. CONFIDENTIAL, DRAFT) across all PDF pages. |
+| \`render_presentation\` | Presentations | 16:9 PDF + Preview | Converts Markdown slides (separated by "---") into widescreen 16:9 presentation PDFs. |
 
 #### Connecting Claude Desktop
 Add this configuration to your Claude Desktop config file:
@@ -352,14 +296,11 @@ Add this configuration to your Claude Desktop config file:
 ---
 
 <a id="section/developer-tools"></a>
-### 🛠️ Developer Tools & Creative Studio
+### 🛠️ Interactive PDF Studio & Factur-X Generator
 
-Tailprint provides both visual web tools and matching API endpoints:
-- **Interactive Template Studio:** [\`tailprint.com/studio\`](https://tailprint.com/studio) — Live Tailwind HTML editor with instant split-pane PDF preview and Smart Pagination Shield.
-- **LinkedIn Carousel Maker:** [\`tailprint.com/tools/carousel\`](https://tailprint.com/tools/carousel) & \`POST /v1/tools/carousel\` — Markdown to 1080×1350 multi-page PDF document posts.
-- **Factur-X & PEPPOL Generator:** [\`tailprint.com/tools/factur-x\`](https://tailprint.com/tools/factur-x) & \`POST /v1/tools/factur-x\` — Interactive generator for EU compliant e-invoices.
-- **Visual Regression Diff:** [\`tailprint.com/tools/visual-diff\`](https://tailprint.com/tools/visual-diff) & \`POST /v1/tools/visual-diff\` — Pixelmatch layout diff heatmap comparing two URLs.
-- **Device Mockup Generator:** [\`tailprint.com/tools/mockup\`](https://tailprint.com/tools/mockup) & \`POST /v1/tools/mockup\` — 3D MacBook Pro + iPhone presentation scene maker.
+Tailprint provides visual browser tools backed by our PDF API:
+- **Interactive PDF Studio:** [\`tailprint.com/studio\`](https://tailprint.com/studio) — Live Tailwind HTML editor with instant split-pane PDF preview and Smart Pagination Shield.
+- **Factur-X & PEPPOL Generator:** [\`tailprint.com/tools/factur-x\`](https://tailprint.com/tools/factur-x) & \`POST /v1/tools/factur-x\` — Interactive generator for EU compliant hybrid e-invoices.
 
 ---
 
@@ -383,7 +324,7 @@ curl -X GET https://tailprint.com/v1/usage \\
 \`\`\`
 
 #### Standard Status Codes
-- \`200 OK\`: Request completed successfully. Returns binary PDF/PNG or JSON response.
+- \`200 OK\`: Request completed successfully. Returns binary PDF or JSON response.
 - \`400 Bad Request\`: Invalid JSON schema or conflicting parameters (e.g., specifying both \`no_store\` and \`store\`).
 - \`401 Unauthorized\`: Missing, expired, or inactive API key.
 - \`429 Too Many Requests\`: Monthly quota limit exhausted or playground rate limit reached. Upgrading plan unlocks higher concurrency.
