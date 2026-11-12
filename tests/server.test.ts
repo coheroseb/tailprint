@@ -223,6 +223,7 @@ describe('Tailprint Test Suite', () => {
           brand: 'Acme',
           handle: '@acme',
           theme: 'gradient',
+          aspectRatio: '9:16',
           slides: [
             {
               tag: 'REVELATION',
@@ -247,6 +248,33 @@ describe('Tailprint Test Suite', () => {
       expect(data.slideCount).toBe(2);
       expect(data.pdfUrl).toBeDefined();
       expect(data.previewUrl).toBeDefined();
+    }, 25000);
+
+    it('POST /v1/tools/reel supports multi-format aspect ratios (16:9 landscape)', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/tools/reel',
+        remoteAddress: `10.42.1.${Math.floor(Math.random() * 200) + 1}`,
+        payload: {
+          title: 'Landscape Video Deck',
+          brand: 'Acme',
+          theme: 'cyberpunk',
+          aspectRatio: '16:9',
+          slides: [
+            {
+              tag: 'OVERVIEW',
+              headline: 'Next-Gen Video Player',
+              body: '16:9 widescreen layout for YouTube and Twitter video cards.',
+            },
+          ],
+          cta: 'Watch now',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.pdfUrl).toBeDefined();
     }, 25000);
 
     it('POST /v1/tools/carousel renders a multi-slide carousel without API key (rate-limited)', async () => {

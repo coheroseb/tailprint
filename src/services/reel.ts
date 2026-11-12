@@ -15,6 +15,7 @@ export interface ReelScript {
   brand: string;
   handle?: string;
   theme: 'cyberpunk' | 'midnight' | 'gradient' | 'sunset' | 'clean';
+  aspectRatio?: '9:16' | '1:1' | '16:9' | '4:5';
   slides: ReelSlide[];
   cta: string;
   sourceUrl?: string;
@@ -157,72 +158,113 @@ export class ReelService {
     };
 
     const currentTheme = themeStyles[script.theme] || themeStyles.gradient;
+    const aspect = script.aspectRatio || '9:16';
+    const dimensions: Record<string, { width: number; height: number }> = {
+      '9:16': { width: 1080, height: 1920 },
+      '1:1': { width: 1080, height: 1080 },
+      '16:9': { width: 1920, height: 1080 },
+      '4:5': { width: 1080, height: 1350 },
+    };
+    const { width, height } = dimensions[aspect] || dimensions['9:16'];
 
     const slidesHtml = script.slides
       .map((slide, idx) => {
         const slideNum = idx + 1;
         const total = script.slides.length;
 
+        const isLandscape = aspect === '16:9';
+        const isSquare = aspect === '1:1';
+        const paddingClass = isSquare ? 'p-12' : isLandscape ? 'p-16' : 'p-20';
+
         return `
-        <div class="slide-page w-[1080px] h-[1920px] p-20 flex flex-col justify-between ${currentTheme.bg} relative overflow-hidden" style="page-break-after: always; break-after: page;">
+        <div class="slide-page w-[${width}px] h-[${height}px] ${paddingClass} flex flex-col justify-between ${currentTheme.bg} relative overflow-hidden" style="page-break-after: always; break-after: page;">
           <!-- Top ambient radial glow -->
           <div class="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-indigo-500/20 blur-3xl pointer-events-none"></div>
           <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-purple-500/20 blur-3xl pointer-events-none"></div>
 
           <!-- Top Progress Bar (Reel Style) -->
           <div class="z-10">
-            <div class="flex items-center space-x-2 w-full mb-8">
+            <div class="flex items-center space-x-2 w-full mb-6">
               ${Array.from({ length: total })
                 .map((_, i) => `<div class="h-1.5 flex-1 rounded-full ${i <= idx ? 'bg-white' : 'bg-white/20'}"></div>`)
                 .join('')}
             </div>
 
             <!-- Author & Brand Header -->
-            <div class="flex items-center justify-between border-b border-white/10 pb-6">
+            <div class="flex items-center justify-between border-b border-white/10 pb-5">
               <div class="flex items-center space-x-4">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-indigo-500/30">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
                   ${script.brand.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <div class="font-extrabold text-2xl text-white tracking-tight">${script.brand}</div>
-                  <div class="text-sm font-medium ${currentTheme.subtext}">${script.handle || '@insights'}</div>
+                  <div class="font-extrabold text-xl text-white tracking-tight">${script.brand}</div>
+                  <div class="text-xs font-medium ${currentTheme.subtext}">${script.handle || '@insights'}</div>
                 </div>
               </div>
-              <div class="px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${currentTheme.tagBg} ${currentTheme.tagText}">
+              <div class="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${currentTheme.tagBg} ${currentTheme.tagText}">
                 ${slide.tag || `0${slideNum}`}
               </div>
             </div>
           </div>
 
-          <!-- Main Reel Slide Body -->
-          <div class="my-auto z-10 max-w-3xl space-y-8">
-            <h1 class="text-6xl font-black tracking-tight leading-tight ${currentTheme.text}">
-              ${slide.headline}
-            </h1>
-            
-            ${
-              slide.stat
-                ? `
-              <div class="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl flex items-center space-x-6">
-                <span class="text-7xl font-black ${currentTheme.accent}">${slide.stat}</span>
-                <span class="text-2xl font-bold text-white uppercase tracking-wider">${slide.statLabel || 'Growth Metric'}</span>
+          <!-- Main Reel Slide Body (Responsive to Aspect Ratio) -->
+          ${
+            isLandscape
+              ? `
+            <div class="grid grid-cols-2 gap-12 my-auto z-10 items-center">
+              <div class="space-y-6">
+                <h1 class="text-5xl font-black tracking-tight leading-tight ${currentTheme.text}">
+                  ${slide.headline}
+                </h1>
+                ${
+                  slide.stat
+                    ? `
+                  <div class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl flex items-center space-x-5">
+                    <span class="text-6xl font-black ${currentTheme.accent}">${slide.stat}</span>
+                    <span class="text-xl font-bold text-white uppercase tracking-wider">${slide.statLabel || 'Metric'}</span>
+                  </div>
+                `
+                    : ''
+                }
               </div>
-            `
-                : ''
-            }
+              <div class="space-y-6">
+                <p class="text-2xl font-medium leading-relaxed ${currentTheme.subtext}">
+                  ${slide.body}
+                </p>
+              </div>
+            </div>
+          `
+              : `
+            <div class="my-auto z-10 max-w-3xl space-y-6">
+              <h1 class="${isSquare ? 'text-4xl' : 'text-6xl'} font-black tracking-tight leading-tight ${currentTheme.text}">
+                ${slide.headline}
+              </h1>
+              
+              ${
+                slide.stat
+                  ? `
+                <div class="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl flex items-center space-x-6">
+                  <span class="${isSquare ? 'text-5xl' : 'text-7xl'} font-black ${currentTheme.accent}">${slide.stat}</span>
+                  <span class="${isSquare ? 'text-lg' : 'text-2xl'} font-bold text-white uppercase tracking-wider">${slide.statLabel || 'Growth Metric'}</span>
+                </div>
+              `
+                  : ''
+              }
 
-            <p class="text-3xl font-medium leading-relaxed ${currentTheme.subtext}">
-              ${slide.body}
-            </p>
-          </div>
+              <p class="${isSquare ? 'text-xl' : 'text-3xl'} font-medium leading-relaxed ${currentTheme.subtext}">
+                ${slide.body}
+              </p>
+            </div>
+          `
+          }
 
           <!-- Footer / CTA -->
-          <div class="z-10 flex items-center justify-between border-t border-white/10 pt-8">
-            <div class="flex items-center space-x-3 text-lg font-bold text-white">
+          <div class="z-10 flex items-center justify-between border-t border-white/10 pt-6">
+            <div class="flex items-center space-x-3 text-base font-bold text-white">
               <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>${script.cta}</span>
             </div>
-            <div class="text-base font-mono font-bold ${currentTheme.subtext}">
+            <div class="text-sm font-mono font-bold ${currentTheme.subtext}">
               Slide ${slideNum} / ${total}
             </div>
           </div>
@@ -238,7 +280,7 @@ export class ReelService {
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @page {
-      size: 1080px 1920px;
+      size: ${width}px ${height}px;
       margin: 0;
     }
     body {
@@ -250,8 +292,8 @@ export class ReelService {
     }
     .slide-page {
       box-sizing: border-box;
-      width: 1080px;
-      height: 1920px;
+      width: ${width}px;
+      height: ${height}px;
       page-break-after: always;
       break-after: page;
     }
@@ -262,7 +304,7 @@ export class ReelService {
 </body>
 </html>`;
 
-    // 1. Render multi-page 9:16 PDF
+    // 1. Render multi-page vector PDF
     const pdfBuffer = await browserService.renderPdf({
       html: fullHtml,
       format: 'A4',
@@ -273,8 +315,8 @@ export class ReelService {
     // 2. Render cover preview PNG (Slide 1)
     const previewBuffer = await browserService.renderImage({
       html: fullHtml,
-      width: 1080,
-      height: 1920,
+      width,
+      height,
       type: 'png',
     });
 

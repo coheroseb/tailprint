@@ -1414,21 +1414,41 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       </div>
 
-      <!-- Right Column: Mobile 9:16 Reel Player & Exporter (5 cols) -->
-      <div class="lg:col-span-5 flex flex-col items-center space-y-5 sticky top-24">
+      <!-- Right Column: Multi-Format Reel Player & Exporter (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col items-center space-y-4 sticky top-24">
         
-        <!-- iPhone 16 Pro Frame Mockup -->
-        <div class="relative w-[340px] h-[640px] bg-slate-950 rounded-[48px] p-3 shadow-2xl shadow-rose-950/20 border-4 border-slate-800 flex flex-col justify-between overflow-hidden">
+        <!-- Multi-Format Aspect Ratio Switcher -->
+        <div class="w-full max-w-[360px] bg-slate-900/90 border border-slate-800 rounded-2xl p-1 shadow-xl flex items-center justify-between text-[11px] font-bold">
+          <button onclick="setAspectRatio('9:16')" id="format-btn-9-16" class="flex-1 py-1.5 px-2 rounded-xl bg-rose-600 text-white shadow-md shadow-rose-600/30 transition flex items-center justify-center space-x-1">
+            <span>📱</span>
+            <span>9:16</span>
+          </button>
+          <button onclick="setAspectRatio('1:1')" id="format-btn-1-1" class="flex-1 py-1.5 px-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center space-x-1">
+            <span>⬛</span>
+            <span>1:1</span>
+          </button>
+          <button onclick="setAspectRatio('16:9')" id="format-btn-16-9" class="flex-1 py-1.5 px-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center space-x-1">
+            <span>💻</span>
+            <span>16:9</span>
+          </button>
+          <button onclick="setAspectRatio('4:5')" id="format-btn-4-5" class="flex-1 py-1.5 px-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center space-x-1">
+            <span>📐</span>
+            <span>4:5</span>
+          </button>
+        </div>
+
+        <!-- Frame Mockup (Adapts size & borders depending on aspect ratio) -->
+        <div id="preview-mockup-frame" class="relative w-[320px] h-[600px] bg-slate-950 rounded-[48px] p-3 shadow-2xl shadow-rose-950/20 border-4 border-slate-800 flex flex-col justify-between overflow-hidden transition-all duration-300">
           
           <!-- Outer Titanium Rim Highlight -->
-          <div class="absolute inset-0 rounded-[44px] border border-white/10 pointer-events-none"></div>
+          <div id="mockup-rim" class="absolute inset-0 rounded-[44px] border border-white/10 pointer-events-none transition-all duration-300"></div>
 
-          <!-- Top Dynamic Island Pill -->
-          <div class="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-30 flex items-center justify-end px-2">
+          <!-- Top Dynamic Island Pill (Only visible in 9:16) -->
+          <div id="mockup-island" class="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-30 flex items-center justify-end px-2 transition-all duration-300">
             <div class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-800"></div>
           </div>
 
-          <!-- Inside Screen (9:16 Canvas Area) -->
+          <!-- Inside Screen -->
           <div id="reel-screen" class="w-full h-full rounded-[38px] p-6 flex flex-col justify-between relative overflow-hidden text-white transition-all duration-300">
             
             <!-- Ambient Animated Glow -->
@@ -1460,7 +1480,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </div>
 
             <!-- Main Slide Content (Center) -->
-            <div class="my-auto z-20 space-y-3.5 py-4">
+            <div id="preview-content-container" class="my-auto z-20 space-y-3.5 py-3">
               <h2 id="preview-headline" class="text-2xl font-black tracking-tight leading-tight text-white drop-shadow-md">
                 Sub-500ms Vector PDF Generation for Developers
               </h2>
@@ -1505,14 +1525,14 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         </div>
 
         <!-- Action Export Buttons -->
-        <div class="w-full max-w-[340px] space-y-2">
+        <div class="w-full max-w-[360px] space-y-2">
           <!-- Video Export (Canvas MediaRecorder) -->
           <button
             id="btn-export-video"
             onclick="exportReelVideo()"
             class="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-2"
           >
-            <span>🎥 Download 9:16 Video (MP4 / WebM)</span>
+            <span id="btn-export-label">🎥 Download 9:16 Video (MP4 / WebM)</span>
           </button>
 
           <div class="grid grid-cols-2 gap-2">
@@ -1521,22 +1541,23 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               id="btn-download-pdf"
               class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition border border-slate-700 flex items-center justify-center space-x-1.5"
             >
-              <span>📥 Story PDF</span>
+              <span id="btn-pdf-label">📥 9:16 Story PDF</span>
             </button>
             <button
               onclick="saveCurrentSlidePng()"
+              id="btn-save-png"
               class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition border border-slate-700 flex items-center justify-center space-x-1.5"
             >
-              <span>🖼️ Save PNG</span>
+              <span id="btn-png-text">🖼️ Save 9:16 PNG</span>
             </button>
           </div>
         </div>
 
         <!-- Recording Progress Overlay -->
-        <div id="recording-overlay" class="hidden w-full max-w-[340px] p-3 rounded-xl bg-slate-900 border border-rose-500/50 text-center space-y-2">
+        <div id="recording-overlay" class="hidden w-full max-w-[360px] p-3 rounded-xl bg-slate-900 border border-rose-500/50 text-center space-y-2">
           <div class="flex items-center justify-center space-x-2 text-xs font-bold text-rose-400">
             <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></div>
-            <span>Recording 9:16 Video Frames (<span id="record-percent">0%</span>)...</span>
+            <span>Recording <span id="record-aspect-label">9:16</span> Frames (<span id="record-percent">0%</span>)...</span>
           </div>
           <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
             <div id="record-progress-bar" class="bg-rose-500 h-full transition-all duration-150" style="width: 0%"></div>
@@ -1578,6 +1599,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       brand: "Tailprint",
       handle: "@tailprint",
       theme: "gradient",
+      aspectRatio: "9:16",
       cta: "Follow for daily insights • Link in bio",
       duration: 3000,
       slides: [
@@ -1991,10 +2013,100 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
     }
 
-    // 1. Export Reel Video using HTML5 Canvas & MediaRecorder (1080x1920)
+    function getCanvasDimensions(ratio) {
+      if (ratio === '1:1') return { w: 1080, h: 1080 };
+      if (ratio === '16:9') return { w: 1920, h: 1080 };
+      if (ratio === '4:5') return { w: 1080, h: 1350 };
+      return { w: 1080, h: 1920 };
+    }
+
+    function setAspectRatio(ratio) {
+      reelState.aspectRatio = ratio;
+
+      ['9:16', '1:1', '16:9', '4:5'].forEach((r) => {
+        const btn = document.getElementById('format-btn-' + r.replace(':', '-'));
+        if (btn) {
+          if (r === ratio) {
+            btn.className = 'flex-1 py-1.5 px-2 rounded-xl bg-rose-600 text-white shadow-md shadow-rose-600/30 transition flex items-center justify-center space-x-1';
+          } else {
+            btn.className = 'flex-1 py-1.5 px-2 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center space-x-1';
+          }
+        }
+      });
+
+      const frame = document.getElementById('preview-mockup-frame');
+      const rim = document.getElementById('mockup-rim');
+      const island = document.getElementById('mockup-island');
+      const screen = document.getElementById('reel-screen');
+      const contentContainer = document.getElementById('preview-content-container');
+
+      if (ratio === '9:16') {
+        frame.style.width = '320px';
+        frame.style.height = '600px';
+        frame.style.borderRadius = '48px';
+        if (rim) rim.style.borderRadius = '44px';
+        if (screen) screen.style.borderRadius = '38px';
+        if (island) island.style.display = 'flex';
+        if (contentContainer) {
+          contentContainer.className = 'my-auto z-20 space-y-3.5 py-3';
+        }
+      } else if (ratio === '1:1') {
+        frame.style.width = '380px';
+        frame.style.height = '380px';
+        frame.style.borderRadius = '32px';
+        if (rim) rim.style.borderRadius = '28px';
+        if (screen) screen.style.borderRadius = '24px';
+        if (island) island.style.display = 'none';
+        if (contentContainer) {
+          contentContainer.className = 'my-auto z-20 space-y-2 py-1';
+        }
+      } else if (ratio === '16:9') {
+        frame.style.width = '480px';
+        frame.style.height = '270px';
+        frame.style.borderRadius = '24px';
+        if (rim) rim.style.borderRadius = '20px';
+        if (screen) screen.style.borderRadius = '16px';
+        if (island) island.style.display = 'none';
+        if (contentContainer) {
+          contentContainer.className = 'my-auto z-20 grid grid-cols-2 gap-4 items-center space-y-0 py-1';
+        }
+      } else if (ratio === '4:5') {
+        frame.style.width = '340px';
+        frame.style.height = '425px';
+        frame.style.borderRadius = '32px';
+        if (rim) rim.style.borderRadius = '28px';
+        if (screen) screen.style.borderRadius = '24px';
+        if (island) island.style.display = 'none';
+        if (contentContainer) {
+          contentContainer.className = 'my-auto z-20 space-y-2.5 py-1';
+        }
+      }
+
+      const btnExportLabel = document.getElementById('btn-export-label');
+      if (btnExportLabel) btnExportLabel.textContent = '🎥 Download ' + ratio + ' Video (MP4 / WebM)';
+      const btnPdfLabel = document.getElementById('btn-pdf-label');
+      if (btnPdfLabel) btnPdfLabel.textContent = '📥 ' + ratio + ' Story PDF';
+      const btnPngText = document.getElementById('btn-png-text');
+      if (btnPngText) btnPngText.textContent = '🖼️ Save ' + ratio + ' PNG';
+      const recordAspectLabel = document.getElementById('record-aspect-label');
+      if (recordAspectLabel) recordAspectLabel.textContent = ratio;
+
+      const canvas = document.getElementById('export-canvas');
+      const dim = getCanvasDimensions(ratio);
+      canvas.width = dim.w;
+      canvas.height = dim.h;
+
+      updatePreviewDisplay();
+    }
+
+    // 1. Export Reel Video using HTML5 Canvas & MediaRecorder (Supports 9:16, 1:1, 16:9, 4:5)
     async function exportReelVideo() {
       pausePlayback();
+      const ratio = reelState.aspectRatio || '9:16';
+      const dim = getCanvasDimensions(ratio);
       const canvas = document.getElementById('export-canvas');
+      canvas.width = dim.w;
+      canvas.height = dim.h;
       const ctx = canvas.getContext('2d');
       const overlay = document.getElementById('recording-overlay');
       const percentEl = document.getElementById('record-percent');
@@ -2027,7 +2139,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'social-reel-' + reelState.brand.toLowerCase() + '.webm';
+          a.download = 'social-' + ratio.replace(':', '-') + '-' + reelState.brand.toLowerCase() + '.webm';
           a.click();
           URL.revokeObjectURL(url);
           resolve();
@@ -2046,8 +2158,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           frameCount++;
           const progress = f / framesPerSlide;
 
-          // Draw Canvas Frame (1080 x 1920)
-          drawReelFrame(ctx, slide, sIdx, totalSlides, progress, theme);
+          // Draw Canvas Frame for the active aspect ratio
+          drawReelFrame(ctx, slide, sIdx, totalSlides, progress, theme, dim.w, dim.h);
 
           const overallPct = Math.round((frameCount / totalFrames) * 100);
           percentEl.textContent = overallPct + '%';
@@ -2066,16 +2178,20 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       startPlayback();
     }
 
-    // Helper: Draws single 1080x1920 frame on Canvas
-    function drawReelFrame(ctx, slide, slideIdx, totalSlides, slideProgress, theme) {
-      const W = 1080;
-      const H = 1920;
+    // Helper: Draws single frame on Canvas with dynamic W and H
+    function drawReelFrame(ctx, slide, slideIdx, totalSlides, slideProgress, theme, W, H) {
+      if (!W || !H) {
+        const dim = getCanvasDimensions(reelState.aspectRatio || '9:16');
+        W = dim.w;
+        H = dim.h;
+      }
+      const aspect = reelState.aspectRatio || '9:16';
 
-      // 1. Background
+      // 1. Background Fill
       ctx.fillStyle = '#030712';
       ctx.fillRect(0, 0, W, H);
 
-      // Gradient overlay
+      // Gradient
       const grad = ctx.createLinearGradient(0, 0, W, H);
       if (reelState.theme === 'cyberpunk') {
         grad.addColorStop(0, '#09090b');
@@ -2098,27 +2214,26 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 
-      // Subtle radial glow
+      // Radial glow
       const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
       radial.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
       radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = radial;
       ctx.fillRect(0, 0, W, H);
 
-      // 2. Top Progress Bars (Reel Style)
-      const barTop = 90;
-      const barHeight = 8;
+      // 2. Progress bars
+      const barMargin = aspect === '1:1' ? 60 : aspect === '4:5' ? 70 : 80;
+      const barTop = aspect === '9:16' ? 90 : aspect === '4:5' ? 60 : 50;
+      const barHeight = aspect === '1:1' ? 7 : 8;
       const barSpacing = 16;
-      const totalBarWidth = W - 160;
+      const totalBarWidth = W - (barMargin * 2);
       const singleBarWidth = (totalBarWidth - (barSpacing * (totalSlides - 1))) / totalSlides;
 
       for (let i = 0; i < totalSlides; i++) {
-        const x = 80 + i * (singleBarWidth + barSpacing);
-        // Base bar
+        const x = barMargin + i * (singleBarWidth + barSpacing);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         roundRect(ctx, x, barTop, singleBarWidth, barHeight, 4, true, false);
 
-        // Fill bar
         let fillW = 0;
         if (i < slideIdx) {
           fillW = singleBarWidth;
@@ -2132,85 +2247,168 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
 
       // 3. Header: Brand Avatar & Name
-      const headerY = 160;
+      const headerY = aspect === '9:16' ? 160 : aspect === '4:5' ? 120 : 100;
+      const avatarSize = aspect === '9:16' ? 80 : 70;
+      
       // Avatar
       ctx.fillStyle = '#6366f1';
-      roundRect(ctx, 80, headerY, 80, 80, 24, true, false);
+      roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, 22, true, false);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold ' + (avatarSize === 80 ? '36px' : '32px') + ' system-ui, -apple-system, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(reelState.brand.slice(0, 2).toUpperCase(), 120, headerY + 54);
+      ctx.fillText(reelState.brand.slice(0, 2).toUpperCase(), barMargin + avatarSize / 2, headerY + (avatarSize * 0.65));
 
-      // Brand & Handle
+      // Brand text
       ctx.textAlign = 'left';
-      ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold ' + (avatarSize === 80 ? '38px' : '34px') + ' system-ui, -apple-system, sans-serif';
       ctx.fillStyle = theme.text;
-      ctx.fillText(reelState.brand, 180, headerY + 40);
+      ctx.fillText(reelState.brand, barMargin + avatarSize + 20, headerY + (avatarSize * 0.48));
 
       ctx.font = '500 24px monospace';
       ctx.fillStyle = theme.subtext;
-      ctx.fillText(reelState.handle, 180, headerY + 72);
+      ctx.fillText(reelState.handle, barMargin + avatarSize + 20, headerY + (avatarSize * 0.88));
 
       // Tag Pill
       const tagText = (slide.tag || 'HOOK').toUpperCase();
       ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
       const tagWidth = ctx.measureText(tagText).width + 48;
       ctx.fillStyle = theme.tagBg;
-      roundRect(ctx, W - 80 - tagWidth, headerY + 12, tagWidth, 54, 27, true, false);
+      roundRect(ctx, W - barMargin - tagWidth, headerY + 10, tagWidth, 50, 25, true, false);
       ctx.fillStyle = theme.tagText;
       ctx.textAlign = 'center';
-      ctx.fillText(tagText, W - 80 - tagWidth / 2, headerY + 47);
+      ctx.fillText(tagText, W - barMargin - tagWidth / 2, headerY + 43);
 
-      // 4. Headline (Wrapped)
-      ctx.textAlign = 'left';
-      ctx.font = '900 68px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = theme.text;
-      wrapText(ctx, slide.headline, 80, 480, W - 160, 88);
-
-      // 5. Stat Card (if present)
-      let bodyY = 820;
-      if (slide.stat) {
-        ctx.fillStyle = theme.statBg;
-        roundRect(ctx, 80, 800, W - 160, 150, 32, true, false);
-
-        ctx.font = '900 84px system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = theme.statColor;
-        ctx.fillText(slide.stat, 120, 905);
-
-        ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      // 4. Content Area adapted to Aspect Ratio
+      if (aspect === '16:9') {
+        // 2-Column Wide Cinematic Layout
+        ctx.textAlign = 'left';
+        ctx.font = '900 58px system-ui, -apple-system, sans-serif';
         ctx.fillStyle = theme.text;
-        ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), 120 + ctx.measureText(slide.stat).width + 40, 895);
+        wrapText(ctx, slide.headline, barMargin, 290, 820, 74);
 
-        bodyY = 1040;
+        if (slide.stat) {
+          ctx.fillStyle = theme.statBg;
+          roundRect(ctx, barMargin, 580, 820, 140, 28, true, false);
+
+          ctx.font = '900 78px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.statColor;
+          ctx.fillText(slide.stat, barMargin + 40, 680);
+
+          ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.text;
+          ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), barMargin + 40 + ctx.measureText(slide.stat).width + 30, 670);
+        }
+
+        // Right Column Body Text
+        ctx.font = '500 36px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.subtext;
+        wrapText(ctx, slide.body, W / 2 + 30, 310, W / 2 - barMargin - 40, 58);
+
+      } else if (aspect === '1:1') {
+        // Square Post Layout
+        ctx.textAlign = 'left';
+        ctx.font = '900 52px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.text;
+        wrapText(ctx, slide.headline, barMargin, 270, W - (barMargin * 2), 68);
+
+        let bodyY = 460;
+        if (slide.stat) {
+          ctx.fillStyle = theme.statBg;
+          roundRect(ctx, barMargin, 430, W - (barMargin * 2), 125, 24, true, false);
+
+          ctx.font = '900 70px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.statColor;
+          ctx.fillText(slide.stat, barMargin + 35, 520);
+
+          ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.text;
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + ctx.measureText(slide.stat).width + 25, 510);
+
+          bodyY = 620;
+        }
+
+        ctx.font = '500 32px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.subtext;
+        wrapText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 50);
+
+      } else if (aspect === '4:5') {
+        // 4:5 Feed Portrait Layout
+        ctx.textAlign = 'left';
+        ctx.font = '900 58px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.text;
+        wrapText(ctx, slide.headline, barMargin, 320, W - (barMargin * 2), 76);
+
+        let bodyY = 540;
+        if (slide.stat) {
+          ctx.fillStyle = theme.statBg;
+          roundRect(ctx, barMargin, 530, W - (barMargin * 2), 135, 28, true, false);
+
+          ctx.font = '900 76px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.statColor;
+          ctx.fillText(slide.stat, barMargin + 35, 625);
+
+          ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.text;
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + ctx.measureText(slide.stat).width + 30, 615);
+
+          bodyY = 740;
+        }
+
+        ctx.font = '500 34px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.subtext;
+        wrapText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 54);
+
+      } else {
+        // 9:16 Full Vertical Reel
+        ctx.textAlign = 'left';
+        ctx.font = '900 68px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.text;
+        wrapText(ctx, slide.headline, barMargin, 480, W - (barMargin * 2), 88);
+
+        let bodyY = 820;
+        if (slide.stat) {
+          ctx.fillStyle = theme.statBg;
+          roundRect(ctx, barMargin, 800, W - (barMargin * 2), 150, 32, true, false);
+
+          ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.statColor;
+          ctx.fillText(slide.stat, barMargin + 40, 905);
+
+          ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+          ctx.fillStyle = theme.text;
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 40 + ctx.measureText(slide.stat).width + 40, 895);
+
+          bodyY = 1040;
+        }
+
+        ctx.font = '500 38px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.subtext;
+        wrapText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 60);
       }
 
-      // 6. Body Text
-      ctx.font = '500 38px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = theme.subtext;
-      wrapText(ctx, slide.body, 80, bodyY, W - 160, 60);
-
-      // 7. Footer CTA
-      const footerY = H - 120;
+      // 5. Footer CTA
+      const footerY = aspect === '16:9' ? H - 70 : aspect === '1:1' ? H - 70 : aspect === '4:5' ? H - 90 : H - 120;
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(80, footerY - 50);
-      ctx.lineTo(W - 80, footerY - 50);
+      ctx.moveTo(barMargin, footerY - 40);
+      ctx.lineTo(W - barMargin, footerY - 40);
       ctx.stroke();
 
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
-      ctx.arc(95, footerY, 12, 0, Math.PI * 2);
+      ctx.arc(barMargin + 15, footerY, 12, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.font = 'bold 30px system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
       ctx.fillStyle = theme.text;
-      ctx.fillText(reelState.cta, 125, footerY + 10);
+      ctx.textAlign = 'left';
+      ctx.fillText(reelState.cta, barMargin + 40, footerY + 10);
 
       ctx.textAlign = 'right';
-      ctx.font = 'bold 28px monospace';
+      ctx.font = 'bold 26px monospace';
       ctx.fillStyle = theme.subtext;
-      ctx.fillText((slideIdx + 1) + ' / ' + totalSlides, W - 80, footerY + 10);
+      ctx.fillText((slideIdx + 1) + ' / ' + totalSlides, W - barMargin, footerY + 10);
     }
 
     // Canvas roundRect helper
@@ -2252,6 +2450,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     async function downloadReelPdf() {
       const btn = document.getElementById('btn-download-pdf');
       btn.disabled = true;
+      const ratio = reelState.aspectRatio || '9:16';
       btn.textContent = 'Generating PDF...';
 
       try {
@@ -2270,25 +2469,29 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         alert(err.message);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>📥 Story PDF</span>';
+        btn.innerHTML = '<span>📥 ' + ratio + ' Story PDF</span>';
       }
     }
 
     // 3. Save Current Frame as PNG
     function saveCurrentSlidePng() {
+      const ratio = reelState.aspectRatio || '9:16';
+      const dim = getCanvasDimensions(ratio);
       const canvas = document.getElementById('export-canvas');
+      canvas.width = dim.w;
+      canvas.height = dim.h;
       const ctx = canvas.getContext('2d');
       const theme = themeMaps[reelState.theme] || themeMaps.gradient;
       const slide = reelState.slides[currentSlideIdx];
 
-      drawReelFrame(ctx, slide, currentSlideIdx, reelState.slides.length, 1.0, theme);
+      drawReelFrame(ctx, slide, currentSlideIdx, reelState.slides.length, 1.0, theme, dim.w, dim.h);
 
       canvas.toBlob((blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'reel-slide-' + (currentSlideIdx + 1) + '.png';
+        a.download = 'social-' + ratio.replace(':', '-') + '-slide-' + (currentSlideIdx + 1) + '.png';
         a.click();
         URL.revokeObjectURL(url);
       }, 'image/png');
@@ -2628,13 +2831,14 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     {
       schema: {
         tags: ['Tools'],
-        summary: 'Render 9:16 Vertical Reel PDF & Preview PNG',
-        description: 'Generates a 9:16 full-bleed vector PDF story deck and cover PNG from structured slide data.',
+        summary: 'Render Multi-Format Social Video/Reel PDF & Preview PNG',
+        description: 'Generates a full-bleed vector PDF story deck and cover PNG from structured slide data in 9:16, 1:1, 16:9 or 4:5.',
         body: z.object({
           title: z.string().default('Social Reel Deck'),
           brand: z.string().default('Brand'),
           handle: z.string().optional().default('@brand'),
           theme: z.enum(['cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).default('gradient'),
+          aspectRatio: z.enum(['9:16', '1:1', '16:9', '4:5']).optional().default('9:16'),
           slides: z
             .array(
               z.object({
