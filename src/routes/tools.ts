@@ -1265,8 +1265,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                 <p class="text-[10px] text-slate-500">Hides story progress bars &amp; '3/4' counter for clean TikTok &amp; Reels video</p>
               </div>
             </div>
-            <button id="clean-export-toggle-btn" onclick="toggleCleanExport()" class="px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30">
-              <span id="clean-export-toggle-status">Clean Video ✨</span>
+            <button id="clean-export-toggle-btn" onclick="toggleCleanExport()" class="px-3 py-1 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 bg-slate-950 text-slate-400 border border-slate-800 hover:text-white">
+              <span id="clean-export-toggle-status">Story Tabs On</span>
             </button>
           </div>
         </div>
@@ -1568,7 +1568,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       aspectRatio: "9:16",
       screenrecordUrl: null,
       screenrecordMode: "inset",
-      cleanExport: true,
+      cleanExport: false,
       sourceUrl: "https://tailprint.com",
       cta: "Follow for daily insights • Link in bio",
       duration: 3000,
@@ -1931,11 +1931,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     }
 
     function toggleCleanExport() {
-      reelState.cleanExport = reelState.cleanExport === false ? true : false;
+      reelState.cleanExport = !reelState.cleanExport;
       const btn = document.getElementById('clean-export-toggle-btn');
       const status = document.getElementById('clean-export-toggle-status');
       if (btn && status) {
-        if (reelState.cleanExport !== false) {
+        if (reelState.cleanExport) {
           btn.className = 'px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30';
           status.textContent = 'Clean Video ✨';
         } else {
@@ -1943,6 +1943,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           status.textContent = 'Story Tabs On';
         }
       }
+      updatePreviewDisplay();
       debouncedSyncToMobile();
     }
 
@@ -2310,7 +2311,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       // CTA & Slide indicator
       document.getElementById('preview-cta').textContent = reelState.cta;
-      document.getElementById('preview-slide-indicator').textContent = (currentSlideIdx + 1) + ' / ' + reelState.slides.length;
+      const slideInd = document.getElementById('preview-slide-indicator');
+      const progRow = document.getElementById('progress-bars-row');
+      if (slideInd) {
+        slideInd.textContent = (currentSlideIdx + 1) + ' / ' + reelState.slides.length;
+        if (reelState.cleanExport) slideInd.classList.add('hidden');
+        else slideInd.classList.remove('hidden');
+      }
+      if (progRow) {
+        if (reelState.cleanExport) progRow.classList.add('hidden');
+        else progRow.classList.remove('hidden');
+      }
 
       // Render top progress bar segments
       renderProgressBars();
@@ -4152,7 +4163,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         aspectRatio: body.aspectRatio || '9:16',
         screenrecordUrl: body.screenrecordUrl || undefined,
         screenrecordMode: body.screenrecordMode || 'inset',
-        cleanExport: body.cleanExport !== false,
+        cleanExport: Boolean(body.cleanExport),
         language: body.language || 'da',
         slides: Array.isArray(body.slides) && body.slides.length > 0 ? body.slides : [
           { tag: '01', headline: body.title || 'Highlights', body: body.cta || '' },

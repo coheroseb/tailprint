@@ -205,10 +205,7 @@ export function recommendReelLayout(
   hasStrongStat = false
 ): 'classic' | 'split' | 'iphone' | 'editorial' {
   if (hasScreenrecord) {
-    if (archetype === 'bento' || archetype === 'creator' || archetype === 'brand') return 'iphone';
-    if (archetype === 'terminal' || archetype === 'brutalist' || archetype === 'cyberpunk') return 'split';
-    if (archetype === 'nordic' || archetype === 'sunset' || archetype === 'clean') return 'split';
-    return 'iphone';
+    return 'classic';
   }
 
   switch (archetype) {
@@ -1433,7 +1430,7 @@ Respond ONLY with valid JSON in this exact structure:
             ...script,
             slides,
             layout: script.layout || 'classic',
-            cleanExport: script.cleanExport !== false,
+            cleanExport: Boolean(script.cleanExport),
             screenrecordUrl: resolvedScreenrecordUrl,
             screenrecordMode: script.screenrecordMode || (resolvedScreenrecordUrl ? 'inset' : 'none'),
             brandColors: script.brandColors || deriveBrandPalette(),
@@ -1980,55 +1977,6 @@ Respond ONLY with valid JSON in this exact structure:
             const isSquare = W === H;
             const padX = isLandscape ? 110 : isSquare ? 80 : 90;
 
-            // Layout-specific background stages (e.g. Split-Screen Cinema top 44% stage)
-            const splitY = Math.round(H * 0.43);
-            if (layout === 'split') {
-              ctx.save();
-              ctx.beginPath();
-              ctx.rect(0, 0, W, splitY);
-              ctx.clip();
-              if (videoReady) {
-                drawVideoCover(0, 0, W, splitY, true);
-                const topVig = ctx.createLinearGradient(0, 0, 0, splitY);
-                topVig.addColorStop(0, 'rgba(9,13,22,0.72)');
-                topVig.addColorStop(0.4, 'rgba(9,13,22,0.18)');
-                topVig.addColorStop(1, 'rgba(9,13,22,0.75)');
-                ctx.fillStyle = topVig;
-                ctx.fillRect(0, 0, W, splitY);
-              } else {
-                const stageGrad = ctx.createRadialGradient(W * 0.5, splitY * 0.55, 20, W * 0.5, splitY * 0.55, W * 0.65);
-                stageGrad.addColorStop(0, t.accent + '44');
-                stageGrad.addColorStop(1, isLight ? 'rgba(226, 232, 240, 0.85)' : 'rgba(9,13,22,0.65)');
-                ctx.fillStyle = stageGrad;
-                ctx.fillRect(0, 0, W, splitY);
-
-                // Big visual metric or slide badge in center of top stage
-                const heroText = slide.stat || `0${slideIdx + 1}`;
-                ctx.fillStyle = t.accent;
-                ctx.font = `900 130px ${t.fontHead}`;
-                const hw = ctx.measureText(heroText).width;
-                ctx.fillText(heroText, (W - hw) / 2, splitY * 0.62);
-                if (slide.statLabel) {
-                  ctx.fillStyle = t.text;
-                  ctx.font = `bold 28px ${t.fontBody}`;
-                  const lw = ctx.measureText(slide.statLabel.toUpperCase()).width;
-                  ctx.fillText(slide.statLabel.toUpperCase(), (W - lw) / 2, splitY * 0.62 + 52);
-                }
-              }
-              ctx.restore();
-
-              // Bottom cinema panel
-              const botGrad = ctx.createLinearGradient(0, splitY, 0, H);
-              botGrad.addColorStop(0, t.bg1);
-              botGrad.addColorStop(1, t.bg2);
-              ctx.fillStyle = botGrad;
-              ctx.fillRect(0, splitY, W, H - splitY);
-
-              // Glowing accent divider line
-              ctx.fillStyle = t.accent;
-              ctx.fillRect(0, splitY - 3, W, themeKey === 'brutalist' ? 8 : 5);
-            }
-
             // 2. Sleek Top Instagram Story Progress Bars
             if (!cleanExport) {
               const barGap = 12;
@@ -2148,32 +2096,63 @@ Respond ONLY with valid JSON in this exact structure:
             ctx.translate(-W / 2, -H / 2);
 
             if (layout === 'split') {
-              // Bottom 57% panel content
-              let curY = splitY + 95;
-              const headFont = isSquare ? 50 : 62;
-              const headLineH = isSquare ? 62 : 76;
-              curY = drawHighlightedHeadline(slide.headline || '', padX, curY, W - padX * 2, headLineH, headFont);
+              // Split Cinema card matching Studio Preview (#reel-screen layout === 'split')
+              const hasInsetVideo = videoReady && st.screenrecordMode === 'inset' && !isLandscape;
+              const cardX = padX;
+              const cardW = W - padX * 2;
+              const cardY = hasInsetVideo ? headerY + 135 : (isSquare ? 240 : 340);
+              const cardH = hasInsetVideo ? (isSquare ? 620 : 1080) : (isSquare ? 520 : 760);
+              const splitRadius = themeKey === 'brutalist' ? 0 : 28;
 
-              if (slide.stat && videoReady) {
-                curY += 15;
-                drawArchetypeCard(padX, curY, W - padX * 2, 134, false);
+              ctx.save();
+              ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.88)' : 'rgba(9, 13, 22, 0.76)';
+              roundRect(cardX, cardY, cardW, cardH, splitRadius);
+              ctx.fill();
+              ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)';
+              ctx.lineWidth = 1.5;
+              roundRect(cardX, cardY, cardW, cardH, splitRadius);
+              ctx.stroke();
+
+              // Top 5px accent bar
+              ctx.fillStyle = t.accent;
+              roundRect(cardX, cardY, cardW, 8, splitRadius > 0 ? 4 : 0);
+              ctx.fill();
+              ctx.restore();
+
+              const innerX = cardX + 38;
+              const innerW = cardW - 76;
+              let curY = cardY + 86;
+              const headFont = hasInsetVideo ? 50 : (isSquare ? 50 : 62);
+              const headLineH = hasInsetVideo ? 62 : (isSquare ? 62 : 76);
+              curY = drawHighlightedHeadline(slide.headline || '', innerX, curY, innerW, headLineH, headFont);
+
+              if (slide.stat) {
+                curY += 14;
+                const statBoxH = hasInsetVideo ? 114 : 134;
+                drawArchetypeCard(innerX, curY, innerW, statBoxH, false);
                 ctx.fillStyle = t.accent;
-                ctx.font = `900 68px ${t.fontHead}`;
+                ctx.font = `900 ${hasInsetVideo ? 60 : 68}px ${t.fontHead}`;
                 const sw = ctx.measureText(slide.stat).width;
-                ctx.fillText(slide.stat, padX + 36, curY + 90);
+                ctx.fillText(slide.stat, innerX + 32, curY + (hasInsetVideo ? 80 : 90));
                 ctx.fillStyle = t.text;
-                ctx.font = `bold 28px ${t.fontBody}`;
-                ctx.fillText((slide.statLabel || '').toUpperCase(), padX + 36 + sw + 28, curY + 78);
-                curY += 180;
+                ctx.font = `bold 26px ${t.fontBody}`;
+                ctx.fillText((slide.statLabel || '').toUpperCase(), innerX + 32 + sw + 24, curY + (hasInsetVideo ? 70 : 78));
+                curY += statBoxH + 24;
               } else {
-                curY += 32;
+                curY += 20;
               }
 
-              const bodyFont = isSquare ? 34 : 40;
-              const bodyLineH = isSquare ? 50 : 60;
-              drawKaraokeText(slide.body || '', padX, curY, W - padX * 2, bodyLineH, slideProgress, bodyFont);
+              if (hasInsetVideo) {
+                const winH = isSquare ? 230 : 360;
+                drawBrowserInsetCard(innerX, curY, innerW, winH);
+                curY += winH + 34;
+              }
 
-            } else if (layout === 'iphone') {
+              const bodyFont = hasInsetVideo ? 34 : (isSquare ? 34 : 40);
+              const bodyLineH = hasInsetVideo ? 50 : (isSquare ? 50 : 60);
+              drawKaraokeText(slide.body || '', innerX, curY, innerW, bodyLineH, slideProgress, bodyFont);
+
+            } else if (layout === 'iphone' && videoReady && st.screenrecordMode === 'inset') {
               // Headline above 3D iPhone 16 Pro frame + Karaoke below
               let curY = headerY + 150;
               const headFont = isSquare ? 42 : 52;
