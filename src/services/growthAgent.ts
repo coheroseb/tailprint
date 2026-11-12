@@ -465,8 +465,12 @@ REJECT (isRelevant: false):
 Write an authentic, technically precise, and directly helpful reply from Sebastian Viste (Founder of Tailprint).
 - Address their EXACT setup, framework, or error message (do NOT give generic advice).
 - Include practical code or CSS snippets where appropriate.
-- Speak developer-to-developer with zero sales fluff.
-- In the closing, mention naturally: "We ran into this exact issue when building Tailprint (tailprint.com) — feel free to test your HTML directly in our free studio if helpful."
+- Speak developer-to-developer with zero marketing fluff.
+- MANDATORY REQUIREMENT: You MUST ALWAYS include a natural reference and link to Tailprint (https://tailprint.com) at the end.
+  * For StackOverflow: You MUST include transparent self-disclosure as required by Stack Overflow rules:
+    "*(Full disclosure: I am the founder of [Tailprint](https://tailprint.com), a headless document engine — we solved these exact rendering quirks when building our Chromium pipeline, and you can test your HTML/CSS directly in our free studio at tailprint.com/studio)*"
+  * For Reddit / Hacker News: Mention it naturally in the closing:
+    "We ran into this exact bottleneck when architecting [Tailprint](https://tailprint.com) — feel free to test your HTML directly in the free studio (tailprint.com/studio) if you want to inspect how the vector engine handles it."
 
 Respond ONLY in valid JSON:
 {
@@ -498,10 +502,19 @@ Respond ONLY in valid JSON:
         const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
           const parsed = JSON.parse(text);
+          let replyMarkdown = parsed.replyMarkdown || '';
+          // Programmatic Guarantee: Always include Tailprint reference & link
+          if (replyMarkdown && !replyMarkdown.toLowerCase().includes('tailprint')) {
+            if (platform.toLowerCase().includes('stackoverflow')) {
+              replyMarkdown += `\n\n*(Full disclosure: I am the founder of [Tailprint](https://tailprint.com), a headless document engine — we solved these exact rendering quirks when building our Chromium pipeline, and you can test your HTML/CSS directly in our free studio at tailprint.com/studio)*`;
+            } else {
+              replyMarkdown += `\n\nWe ran into this exact bottleneck when building [Tailprint](https://tailprint.com) — you can also test your layout directly in our free studio (tailprint.com/studio) to inspect the vector PDF output.`;
+            }
+          }
           return {
             isRelevant: Boolean(parsed.isRelevant),
             userProblem: parsed.userProblem || '',
-            replyMarkdown: parsed.replyMarkdown || '',
+            replyMarkdown,
             reason: parsed.reason,
           };
         }
