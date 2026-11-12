@@ -820,71 +820,73 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       var codeBlock = document.getElementById('apiCodeBlock');
 
       if (activeApiTab === 'curl') {
-        if (isImage) {
-          codeBlock.textContent = "curl -X POST https://tailprint.com/v1/render/image \\\n" +
-            "  -H \"Authorization: Bearer sec_live_...\" \\\n" +
-            "  -H \"Content-Type: application/json\" \\\n" +
-            "  -d '{\\n" +
-            "    \"html\": " + JSON.stringify(html) + ",\\n" +
-            "    \"width\": " + (fmt === 'og-card' ? 1200 : 1280) + ",\\n" +
-            "    \"height\": " + (fmt === 'og-card' ? 630 : 720) + ",\\n" +
-            "    \"type\": \"png\"\\n" +
-            "  }' \\\n" +
-            "  --output render.png";
-        } else {
-          codeBlock.textContent = "curl -X POST https://tailprint.com/v1/render/pdf \\\n" +
-            "  -H \"Authorization: Bearer sec_live_...\" \\\n" +
-            "  -H \"Content-Type: application/json\" \\\n" +
-            "  -d '{\\n" +
-            "    \"html\": " + JSON.stringify(html) + ",\\n" +
-            "    \"format\": \"A4\",\\n" +
-            "    \"landscape\": " + isLandscape + ",\\n" +
-            "    \"smart_pagination\": " + smartPaginationEnabled + "\\n" +
-            "  }' \\\n" +
-            "  --output document.pdf";
-        }
+        var payloadObj = isImage
+          ? { html: html, width: fmt === 'og-card' ? 1200 : 1280, height: fmt === 'og-card' ? 630 : 720, type: 'png' }
+          : { html: html, format: 'A4', landscape: isLandscape, smart_pagination: smartPaginationEnabled };
+
+        var endpoint = isImage ? 'image' : 'pdf';
+        var outfile = isImage ? 'render.png' : 'document.pdf';
+
+        codeBlock.textContent = [
+          'curl -X POST https://tailprint.com/v1/render/' + endpoint + ' \\\\',
+          '  -H "Authorization: Bearer sec_live_..." \\\\',
+          '  -H "Content-Type: application/json" \\\\',
+          '  -d ' + JSON.stringify(JSON.stringify(payloadObj)) + ' \\\\',
+          '  --output ' + outfile
+        ].join('\\n');
       } else if (activeApiTab === 'node') {
-        codeBlock.textContent = 'import fs from "node:fs";\n\n' +
-          'const response = await fetch("https://tailprint.com/v1/render/' + (isImage ? 'image' : 'pdf') + '", {\n' +
-          '  method: "POST",\n' +
-          '  headers: {\n' +
-          '    "Authorization": "Bearer sec_live_...",\n' +
-          '    "Content-Type": "application/json",\n' +
-          '  },\n' +
-          '  body: JSON.stringify({\n' +
-          '    html: ' + JSON.stringify(html) + ',\n' +
-          '    format: "A4",\n' +
-          '    landscape: ' + isLandscape + ',\n' +
-          '    smart_pagination: ' + smartPaginationEnabled + ',\n' +
-          '  }),\n' +
-          '});\n\n' +
-          'const buffer = Buffer.from(await response.arrayBuffer());\n' +
-          'fs.writeFileSync("output.' + (isImage ? 'png' : 'pdf') + '", buffer);\n' +
-          'console.log("Document rendered successfully!");';
+        codeBlock.textContent = [
+          'import fs from "node:fs";',
+          '',
+          'const response = await fetch("https://tailprint.com/v1/render/' + (isImage ? 'image' : 'pdf') + '", {',
+          '  method: "POST",',
+          '  headers: {',
+          '    authorization: "Bearer sec_live_...",',
+          '    "content-type": "application/json",',
+          '  },',
+          '  body: JSON.stringify({',
+          '    html: ' + JSON.stringify(html) + ',',
+          '    format: "A4",',
+          '    landscape: ' + isLandscape + ',',
+          '    smart_pagination: ' + smartPaginationEnabled + ',',
+          '  }),',
+          '});',
+          '',
+          'const buffer = Buffer.from(await response.arrayBuffer());',
+          'fs.writeFileSync("output.' + (isImage ? 'png' : 'pdf') + '", buffer);',
+          'console.log("Document rendered successfully!");'
+        ].join('\\n');
       } else if (activeApiTab === 'python') {
-        codeBlock.textContent = 'import requests\n\n' +
-          'url = "https://tailprint.com/v1/render/' + (isImage ? 'image' : 'pdf') + '"\n' +
-          'headers = {\n' +
-          '    "Authorization": "Bearer sec_live_...",\n' +
-          '    "Content-Type": "application/json"\n' +
-          '}\n' +
-          'payload = {\n' +
-          '    "html": ' + JSON.stringify(html) + ',\n' +
-          '    "format": "A4",\n' +
-          '    "landscape": ' + (isLandscape ? 'True' : 'False') + ',\n' +
-          '    "smart_pagination": ' + (smartPaginationEnabled ? 'True' : 'False') + '\n' +
-          '}\n\n' +
-          'response = requests.post(url, json=payload, headers=headers)\n' +
-          'with open("output.' + (isImage ? 'png' : 'pdf') + '", "wb") as f:\n' +
-          '    f.write(response.content)\n\n' +
-          'print("Document saved successfully!")';
+        codeBlock.textContent = [
+          'import requests',
+          '',
+          'url = "https://tailprint.com/v1/render/' + (isImage ? 'image' : 'pdf') + '"',
+          'headers = {',
+          '    "Authorization": "Bearer sec_live_...",',
+          '    "Content-Type": "application/json"',
+          '}',
+          'payload = {',
+          '    "html": ' + JSON.stringify(html) + ',',
+          '    "format": "A4",',
+          '    "landscape": ' + (isLandscape ? 'True' : 'False') + ',',
+          '    "smart_pagination": ' + (smartPaginationEnabled ? 'True' : 'False'),
+          '}',
+          '',
+          'response = requests.post(url, json=payload, headers=headers)',
+          'with open("output.' + (isImage ? 'png' : 'pdf') + '", "wb") as f:',
+          '    f.write(response.content)',
+          '',
+          'print("Document saved successfully!")'
+        ].join('\\n');
       } else if (activeApiTab === 'mcp') {
-        codeBlock.textContent = '// In Claude Desktop, Cursor, or your AI Agent:\n' +
-          'await call_tool("tailprint", "render_pdf", {\n' +
-          '  "html": ' + JSON.stringify(html) + ',\n' +
-          '  "format": "A4",\n' +
-          '  "landscape": ' + isLandscape + '\n' +
-          '});';
+        codeBlock.textContent = [
+          '// In Claude Desktop, Cursor, or your AI Agent:',
+          'await call_tool("tailprint", "render_pdf", {',
+          '  "html": ' + JSON.stringify(html) + ',',
+          '  "format": "A4",',
+          '  "landscape": ' + isLandscape,
+          '});'
+        ].join('\\n');
       }
     }
 
