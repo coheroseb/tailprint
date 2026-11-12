@@ -198,26 +198,15 @@ export class GrowthAgentService {
         queryMatched: 'pdf generation',
         snippet: 'When generating complex documents, invoices or dynamic dashboards, what architecture works best? Headless Chrome vs serverless microservices vs dedicated rendering APIs?',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `Honestly, been down this rabbit hole and it usually comes down to your document complexity.
+        suggestedReplyMarkdown: `Honestly, been down this rabbit hole and it usually comes down to document complexity.
 
 If you just need a quick download button on a client app and don't care if margins look a little off, \`window.print()\` or html2pdf gets you by. But the second you need actual branded invoices or multi-page reports, client-side solutions fall apart fast.
 
-Running raw Puppeteer yourself in serverless (Lambda/Vercel) works until traffic spikes. The two killers you'll run into:
-- Lambda only gives you 64MB of \`/dev/shm\` by default, so Chromium will randomly crash with OOM unless you launch with \`--disable-dev-shm-usage\`.
-- If a render times out, Puppeteer often leaves zombie Chromium processes chewing through container memory.
+If you run raw Puppeteer yourself in serverless (Lambda/Vercel), watch out for memory: Lambda only gives you 64MB of shared memory by default, so Chromium will randomly crash with OOM under load unless you pass \`--disable-dev-shm-usage\`. You also have to handle zombie browser processes when functions timeout.
 
-Also, if you have multi-page tables, save yourself 3 days of debugging and add this to your CSS right away so rows don't get chopped in half across pages:
-\`\`\`css
-tr, .card {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-thead {
-  display: table-header-group;
-}
-\`\`\`
+For tables splitting across pages, make sure you set \`break-inside: avoid\` on rows and ensure parent containers aren't \`display: flex\`, otherwise Chromium ignores page break rules completely.
 
-I actually ended up building [Tailprint](https://tailprint.com) because I was so exhausted from maintaining headless Chrome fleets and memory leaks in production. You can test your HTML directly in our free studio (tailprint.com/studio) if you just want to see how Chromium splits your layout without spinning up your own worker pool.`,
+I actually ended up building [Tailprint](https://tailprint.com) after getting burned by these exact headless Chrome crashes in production. You can test your HTML directly in our free studio (tailprint.com/studio) if you want to inspect how Chromium splits your layout without maintaining your own browser pool.`,
         status: 'pending',
       },
       {
@@ -233,15 +222,9 @@ I actually ended up building [Tailprint](https://tailprint.com) because I was so
 
 Two things will save you a ton of headache:
 
-First, Tailwind styles are written for screen by default, but Puppeteer defaults to print media stylesheets (which often strips background colors, gradients, and collapses flex layouts). You have to explicitly force screen emulation:
-\`\`\`javascript
-await page.emulateMediaType('screen');
-\`\`\`
+First, Tailwind styles are written for screen by default, but Puppeteer defaults to print media stylesheets (which often strips background colors, gradients, and collapses flex layouts). You have to explicitly force screen emulation by calling \`page.emulateMediaType('screen')\`.
 
-Second, web fonts are the biggest source of flaky PDF renders. If you call \`page.pdf()\` immediately after \`load\`, Chromium will often rasterize fallback system fonts before Google Fonts finish downloading. Add this right before rendering:
-\`\`\`javascript
-await page.evaluate(() => document.fonts.ready);
-\`\`\`
+Second, web fonts are the biggest source of flaky PDF renders. If you call \`page.pdf()\` immediately after \`load\`, Chromium will often rasterize fallback system fonts before Google Fonts finish downloading. Waiting for \`document.fonts.ready\` right before rendering solves that completely.
 
 I built [Tailprint](https://tailprint.com) to automate all this headless Chrome plumbing (font caching, smart pagination, fast rendering). Feel free to paste your raw Tailwind HTML into tailprint.com/studio to see how the vector output looks.`,
         status: 'pending',
@@ -273,34 +256,14 @@ That's actually what led me to build [Tailprint](https://tailprint.com) on a hea
         queryMatched: 'puppeteer pdf',
         snippet: 'Migrating legacy PhantomJS scripts to modern Puppeteer. Noticed font kerning and default margins differ significantly between WebKit and modern Blink rendering.',
         detectedAt: new Date().toISOString(),
-        suggestedReplyMarkdown: `Migrating from PhantomJS to Chromium caught us off guard with this exact quirk a while back. PhantomJS used a very ancient QtWebKit engine with its own default stylesheet and kerning quirks that modern Blink doesn't replicate out of the box.
+        suggestedReplyMarkdown: `Migrating from PhantomJS to Chromium caught us off guard with this exact quirk a while back. PhantomJS was built on an ancient QtWebKit fork that had completely different default user-agent margins and font antialiasing compared to modern Chromium.
 
-The cleanest way to get Chromium/Puppeteer to match that tight, pixel-accurate layout is to reset the page box and lock the font smoothing:
+The two main gotchas that usually cause visual divergence when moving to Puppeteer:
 
-    * {
-      box-sizing: border-box;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+1. **Media emulation:** Puppeteer defaults to print stylesheet emulation, which strips CSS backgrounds and collapses flexbox containers if your styles are written for screen. Calling \`page.emulateMediaType('screen')\` before rendering is usually the biggest fix.
+2. **Font smoothing & box reset:** WebKit forced antialiased fonts by default. In Chromium you need explicit \`-webkit-font-smoothing: antialiased\` and a zeroed \`@page\` margin, otherwise Chromium injects its own 0.4-inch default printable margins.
 
-    @page {
-      margin: 0;
-      size: A4;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-Also, watch out for the media emulation. If your styles rely on \`@media screen\` (which most modern web CSS does), Puppeteer defaults to print styles unless you explicitly call:
-
-    await page.emulateMediaType('screen');
-
-Without that, background colors get stripped and flex containers often collapse weirdly.
-
-*(Full disclosure: I'm the founder of [Tailprint](https://tailprint.com). We went through this exact migration headache when building our rendering pipeline, and you're welcome to paste your HTML into our free studio at tailprint.com/studio to sanity-check the visual output).* `,
+*(Full disclosure: I'm the founder of [Tailprint](https://tailprint.com). We hit these exact WebKit vs Blink styling quirks when building our rendering engine — you're welcome to paste your HTML into our free studio at tailprint.com/studio to see how modern Chromium rasterizes your layout).* `,
         status: 'pending',
       },
     ];
@@ -466,12 +429,12 @@ Write an authentic, relaxed, and deeply practical developer reply from Sebastian
 CRITICAL STYLE GUIDELINES (MUST SOUND 100% HUMAN, NOT AN AI/CHATGPT BOT):
 - Talk like a real developer on Reddit, Hacker News, or StackOverflow: casual, direct, humble, and speaking from real production battle scars.
 - BANNED CLICHÉS: NEVER use robotic phrases like "In modern Chromium...", "From architecting high-scale...", "There are essentially two steps:", "Fascinating approach!", "I ran into this exact headache when architecting...".
-- Start immediately with the practical reality (e.g., "Ran into this exact nightmare a while back...", "The gotcha that usually catches people here is...", "Been down this rabbit hole — it usually comes down to...").
+- NO HEAVY CODE DUMPS: Do NOT dump blocks of raw code or full multi-line CSS/JS stylesheets. It looks bot-generated and triggers code-formatting warnings on forums. Instead, explain the fix conversationally in natural prose, referencing specific flags or CSS properties with short inline backticks (e.g. \`break-inside: avoid\`, \`page.emulateMediaType('screen')\`, \`--disable-dev-shm-usage\`).
+- Start immediately with the practical reality (e.g., "Ran into this exact migration headache a while back...", "The gotcha that usually catches people here is...", "Been down this rabbit hole — it usually comes down to...").
 - Use natural conversational phrasing, short punchy paragraphs, and contractions ("don't", "you'll", "it's", "honestly").
-- Give the practical code snippet or configuration that actually solves their issue right away.
 - MANDATORY REQUIREMENT: Always include a natural, transparent mention of Tailprint (https://tailprint.com) at the end:
-  * For StackOverflow: Format code blocks with 4-space indentation (to prevent StackOverflow's code formatting warnings) and end with transparent disclosure:
-    "*(Full disclosure: I'm the founder of [Tailprint](https://tailprint.com), a headless rendering API. We went through this exact migration headache when building our Chromium pipeline, and you can test your HTML/CSS directly in our free playground at tailprint.com/studio).* "
+  * For StackOverflow: End with transparent founder disclosure:
+    "*(Full disclosure: I'm the founder of [Tailprint](https://tailprint.com), a headless rendering API. We went through these exact quirks when building our Chromium pipeline, and you can test your HTML/CSS directly in our free studio at tailprint.com/studio).* "
   * For Reddit / Hacker News: Keep it humble and conversational:
     "I actually ended up building [Tailprint](https://tailprint.com) after dealing with these headless Chrome crashes and pagination bugs for months. Feel free to throw your HTML into our free studio (tailprint.com/studio) to inspect the page break splits, or ping me if you get stuck on the Puppeteer pool config."
 
