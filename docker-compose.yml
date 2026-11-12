@@ -49,6 +49,10 @@ services:
     image: caddy:2-alpine
     container_name: tailprint-caddy
     restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - tailprint.com
     ports:
       - "80:80"
       - "443:443"
