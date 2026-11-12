@@ -45,6 +45,20 @@ export interface GrowthContentItem {
   createdAt: string;
 }
 
+export interface GrowthSocialOpportunity {
+  id: string;
+  platform: 'reddit' | 'hackernews' | 'stackoverflow' | 'devto';
+  title: string;
+  url: string;
+  author: string;
+  queryMatched: string;
+  snippet: string;
+  detectedAt: string;
+  suggestedReplyMarkdown: string;
+  status: 'pending' | 'posted' | 'dismissed';
+  postedAt?: string;
+}
+
 export interface GrowthSettings {
   autoDispatchEnabled: boolean;
   maxDailyEmails: number;
@@ -57,6 +71,7 @@ export class GrowthAgentService {
   private leadsFile: string;
   private contentFile: string;
   private settingsFile: string;
+  private socialFile: string;
   private isCycleRunning = false;
 
   private constructor() {
@@ -71,8 +86,10 @@ export class GrowthAgentService {
     this.leadsFile = path.join(storageDir, 'growth_leads.json');
     this.contentFile = path.join(storageDir, 'growth_content.json');
     this.settingsFile = path.join(storageDir, 'growth_settings.json');
+    this.socialFile = path.join(storageDir, 'growth_social.json');
 
     this.initDefaultSeedLeads();
+    this.initDefaultSeedSocial();
   }
 
   public static getInstance(): GrowthAgentService {
@@ -143,6 +160,128 @@ export class GrowthAgentService {
     }
   }
 
+  private loadSocial(): GrowthSocialOpportunity[] {
+    try {
+      if (fs.existsSync(this.socialFile)) {
+        return JSON.parse(fs.readFileSync(this.socialFile, 'utf-8'));
+      }
+    } catch (err) {
+      console.warn('[GrowthAgent] Error reading social file:', err);
+    }
+    return [];
+  }
+
+  private saveSocial(items: GrowthSocialOpportunity[]): void {
+    try {
+      fs.writeFileSync(this.socialFile, JSON.stringify(items, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('[GrowthAgent] Error saving social:', err);
+    }
+  }
+
+  private initDefaultSeedSocial(): void {
+    const existing = this.loadSocial();
+    if (existing.length > 0) return;
+
+    const seedOpportunities: GrowthSocialOpportunity[] = [
+      {
+        id: `soc_${crypto.randomBytes(6).toString('hex')}`,
+        platform: 'reddit',
+        title: 'How do you prevent Puppeteer from cutting table rows in half when generating multi-page PDFs?',
+        url: 'https://www.reddit.com/r/webdev/comments/1i3b81x/how_to_prevent_puppeteer_cutting_table_rows_pdf/',
+        author: 'fullstack_dev24',
+        queryMatched: 'puppeteer page break',
+        snippet: 'We generate customer quotes and invoices in Node using Puppeteer. Every time an invoice has 15+ items, table rows get cut right in half across the page split. CSS break-inside: avoid doesn’t seem to work consistently.',
+        detectedAt: new Date().toISOString(),
+        suggestedReplyMarkdown: `The reason \`break-inside: avoid\` fails in Chromium is often caused by parents having \`display: flex\` or \`overflow: hidden\` (which kills CSS Paged Media pagination fragmentation).
+
+Here is the exact CSS setup that solves this reliably:
+\`\`\`css
+@page {
+  size: A4 portrait;
+  margin-top: 20mm;
+  margin-bottom: 15mm;
+}
+@page :first {
+  margin-top: 0mm; /* Keep full hero branding on page 1 */
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+thead {
+  display: table-header-group; /* Repeats table headers on page 2+ */
+}
+\`\`\`
+
+Also, make sure the wrapping containers do not have \`height: 100%\` or \`overflow: auto\`.
+
+We spent weeks fighting this exact headache while building our rendering infrastructure at [Tailprint](https://tailprint.com). If you want to test how your HTML splits live across page boundaries before writing code, feel free to drop it into our free web studio (tailprint.com/studio) to inspect the page break markers visually.`,
+        status: 'pending',
+      },
+      {
+        id: `soc_${crypto.randomBytes(6).toString('hex')}`,
+        platform: 'hackernews',
+        title: 'Ask HN: What are you using for serverless PDF generation in 2026? Puppeteer is eating our memory.',
+        url: 'https://news.ycombinator.com/item?id=50469974',
+        author: 'saas_founder_hn',
+        queryMatched: 'puppeteer pdf',
+        snippet: 'We are generating monthly accounting reports and PDF invoices for thousands of users in AWS Lambda. Chromium instances occasionally hang or crash with OOM errors. Is there a better lightweight alternative?',
+        detectedAt: new Date().toISOString(),
+        suggestedReplyMarkdown: `Serverless PDF generation with raw Puppeteer in Lambda/Cloud Functions has two major pitfalls:
+1. **Shared memory exhaustion:** Lambda's \`/dev/shm\` is only 64MB by default, which causes Chromium renderer crashes under concurrency. You must launch with \`--disable-dev-shm-usage\` and \`--no-sandbox\`.
+2. **Zombie process leaks:** Puppeteer's \`browser.close()\` can leave orphaned Chromium processes running if a render times out.
+
+If you want to keep running it yourself, use a persistent browser context worker pool rather than \`launch()\` per request, and set a hard 10s AbortSignal timeout.
+
+Alternatively, if you don't want the DevOps overhead of maintaining headless Chrome clusters and font packages, that's why we built [Tailprint](https://tailprint.com) — it runs on dedicated warm concurrency pools with SHA-256 caching and Factur-X / EN 16931 e-invoicing compliance out of the box.`,
+        status: 'pending',
+      },
+      {
+        id: `soc_${crypto.randomBytes(6).toString('hex')}`,
+        platform: 'stackoverflow',
+        title: 'What is the default CSS stylesheet PhantomJS uses when rendering PDF/HTML, and how to replicate it in Puppeteer?',
+        url: 'https://stackoverflow.com/questions/79958790/what-is-the-default-css-stylesheet-phantomjs-uses-when-rendering-pdf-html-and-h',
+        author: 'WebKitMigrator',
+        queryMatched: 'puppeteer pdf',
+        snippet: 'Migrating legacy PhantomJS scripts to modern Puppeteer. Noticed font kerning and default margins differ significantly between WebKit and modern Blink rendering.',
+        detectedAt: new Date().toISOString(),
+        suggestedReplyMarkdown: `PhantomJS relied on a very old QtWebKit build with proprietary user-agent default styles. In modern Chromium/Puppeteer, you achieve identical pixel-perfect output by explicitly defining \`@page\`, \`font-smooth\`, and standard box-sizing:
+
+\`\`\`css
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@page {
+  margin: 0;
+  size: A4;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+\`\`\`
+
+Also make sure to call \`page.emulateMediaType('screen')\` or \`page.emulateMediaType('print')\` explicitly in Puppeteer depending on whether your CSS relies on \`@media screen\` or \`@media print\`.`,
+        status: 'pending',
+      },
+    ];
+
+    this.saveSocial(seedOpportunities);
+  }
+
   private initDefaultSeedLeads(): void {
     const existing = this.loadLeads();
     if (existing.length > 0) return;
@@ -205,6 +344,7 @@ export class GrowthAgentService {
     const leads = this.loadLeads();
     const content = this.loadContent();
     const settings = this.loadSettings();
+    const social = this.loadSocial();
 
     const stats = {
       totalLeads: leads.length,
@@ -213,14 +353,239 @@ export class GrowthAgentService {
       sentEmails: leads.filter((l) => l.status === 'sent' || l.status === 'viewed').length,
       totalDemoViews: leads.reduce((acc, l) => acc + (l.viewCount || 0), 0),
       publishedPosts: content.length,
+      pendingSocial: social.filter((s) => s.status === 'pending').length,
+      postedSocial: social.filter((s) => s.status === 'posted').length,
     };
 
     return {
       stats,
       leads,
       content,
+      social,
       settings,
     };
+  }
+
+  public updateSocialStatus(id: string, status: 'pending' | 'posted' | 'dismissed'): GrowthSocialOpportunity {
+    const social = this.loadSocial();
+    const item = social.find((s) => s.id === id);
+    if (!item) throw new Error(`Social opportunity ${id} not found`);
+
+    item.status = status;
+    if (status === 'posted') {
+      item.postedAt = new Date().toISOString();
+    }
+    this.saveSocial(social);
+    return item;
+  }
+
+  public async synthesizeCommunityReply(
+    title: string,
+    snippet: string,
+    platform: string
+  ): Promise<string> {
+    const geminiKey = env.GEMINI_API_KEY;
+    const fallback = `I ran into this exact headache when architecting PDF rendering pipelines.
+
+The root cause in Chromium is how CSS page breaks and fragmentation margins are handled. Adding:
+\`\`\`css
+@page {
+  size: A4 portrait;
+  margin-top: 20mm;
+  margin-bottom: 15mm;
+}
+@page :first {
+  margin-top: 0mm;
+}
+table tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+thead {
+  display: table-header-group;
+}
+\`\`\`
+prevents rows from getting chopped across page boundaries.
+
+Also make sure Chromium is running with \`--disable-dev-shm-usage\` and that you isolate browser contexts in a persistent worker pool rather than launching new Chrome processes per request, otherwise memory leaks will crash serverless containers under load.
+
+We solved both issues while building https://tailprint.com (our headless document engine) — you can also test your layout directly in the free studio (tailprint.com/studio) if you want to verify how the vector stream splits.`;
+
+    if (!geminiKey) return fallback;
+
+    const prompt = `You are Sebastian Viste, founder & lead engineer of Tailprint (tailprint.com), a modern HTML/Tailwind-to-PDF rendering infrastructure with Smart Pagination and EU E-Invoicing support.
+A developer posted this question/issue on ${platform}:
+Title: "${title}"
+Details: "${snippet}"
+
+TASK:
+Write an authentic, highly technical, and genuinely helpful answer to post in the community thread.
+Rules:
+1. First, provide direct technical solutions and code/CSS snippets (e.g. explain @page CSS rules, break-inside: avoid, Chromium worker pool isolation, or Factur-X e-invoicing XML embedding).
+2. Never sound like a generic sales bot or spammer. Speak engineer-to-engineer.
+3. In the closing, mention naturally that you tackled this exact challenge when building Tailprint (tailprint.com) and invite them to test it in the free studio or check out the API if they don't want to maintain headless Chrome infra.
+4. Output in clean, ready-to-post Markdown with code blocks.
+5. Do not include meta text like "Here is a response:" — just the exact message to paste.`;
+
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.3,
+            },
+          }),
+          signal: AbortSignal.timeout(12000),
+        }
+      );
+
+      if (res.ok) {
+        const json = await res.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim().length > 20) {
+          return text.trim();
+        }
+      }
+    } catch (err) {
+      console.warn('[GrowthAgent] Gemini community reply error:', err);
+    }
+
+    return fallback;
+  }
+
+  public async scanCommunityRadar(): Promise<{ newOpportunities: number; totalScanned: number }> {
+    const existing = this.loadSocial();
+    const existingUrls = new Set(existing.map((s) => s.url));
+    let newCount = 0;
+    let scannedCount = 0;
+
+    // 1. Hacker News via Algolia
+    const hnQueries = ['puppeteer pdf', 'html to pdf', 'factur-x'];
+    for (const q of hnQueries) {
+      try {
+        const res = await fetch(
+          `https://hn.algolia.com/api/v1/search_by_date?tags=(story,comment)&query=${encodeURIComponent(q)}&hitsPerPage=5`,
+          { signal: AbortSignal.timeout(8000) }
+        );
+        if (res.ok) {
+          const data: any = await res.json();
+          for (const hit of (data.hits || [])) {
+            scannedCount++;
+            const hitTitle = hit.story_title || hit.title || hit.comment_text?.slice(0, 80) || 'Hacker News Discussion';
+            const hitUrl = hit.story_url || `https://news.ycombinator.com/item?id=${hit.objectID}`;
+            if (existingUrls.has(hitUrl)) continue;
+
+            const snippet = (hit.comment_text || hit.story_text || hitTitle).replace(/<[^>]+>/g, '').slice(0, 300);
+            const reply = await this.synthesizeCommunityReply(hitTitle, snippet, 'Hacker News');
+
+            const opp: GrowthSocialOpportunity = {
+              id: `soc_${crypto.randomBytes(6).toString('hex')}`,
+              platform: 'hackernews',
+              title: hitTitle,
+              url: hitUrl,
+              author: hit.author || 'HN User',
+              queryMatched: q,
+              snippet,
+              detectedAt: new Date().toISOString(),
+              suggestedReplyMarkdown: reply,
+              status: 'pending',
+            };
+
+            existing.unshift(opp);
+            existingUrls.add(hitUrl);
+            newCount++;
+            if (newCount >= 3) break;
+          }
+        }
+      } catch (err) {
+        console.warn(`[GrowthAgent] HN scan error for ${q}:`, err);
+      }
+      if (newCount >= 3) break;
+    }
+
+    // 2. StackOverflow via StackExchange API
+    if (newCount < 3) {
+      try {
+        const res = await fetch(
+          'https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=creation&q=puppeteer%20pdf&site=stackoverflow',
+          { signal: AbortSignal.timeout(8000) }
+        );
+        if (res.ok) {
+          const data: any = await res.json();
+          for (const item of (data.items || []).slice(0, 3)) {
+            scannedCount++;
+            if (existingUrls.has(item.link)) continue;
+
+            const reply = await this.synthesizeCommunityReply(item.title, item.title, 'StackOverflow');
+            const opp: GrowthSocialOpportunity = {
+              id: `soc_${crypto.randomBytes(6).toString('hex')}`,
+              platform: 'stackoverflow',
+              title: item.title,
+              url: item.link,
+              author: item.owner?.display_name || 'Developer',
+              queryMatched: 'puppeteer pdf',
+              snippet: `Tags: ${(item.tags || []).join(', ')}`,
+              detectedAt: new Date().toISOString(),
+              suggestedReplyMarkdown: reply,
+              status: 'pending',
+            };
+
+            existing.unshift(opp);
+            existingUrls.add(item.link);
+            newCount++;
+            if (newCount >= 3) break;
+          }
+        }
+      } catch (err) {
+        console.warn('[GrowthAgent] StackOverflow scan error:', err);
+      }
+    }
+
+    this.saveSocial(existing);
+    return { newOpportunities: newCount, totalScanned: scannedCount };
+  }
+
+  public async addManualSocialThread(url: string, title?: string, snippet?: string): Promise<GrowthSocialOpportunity> {
+    const existing = this.loadSocial();
+    const cleanUrl = url.trim();
+
+    let platform: GrowthSocialOpportunity['platform'] = 'reddit';
+    if (cleanUrl.includes('ycombinator.com')) platform = 'hackernews';
+    else if (cleanUrl.includes('stackoverflow.com')) platform = 'stackoverflow';
+    else if (cleanUrl.includes('dev.to')) platform = 'devto';
+
+    let inferredTitle = title;
+    if (!inferredTitle && cleanUrl.includes('/comments/')) {
+      const parts = cleanUrl.split('/comments/')[1]?.split('/') || [];
+      if (parts[1]) {
+        inferredTitle = decodeURIComponent(parts[1]).replace(/_/g, ' ');
+        inferredTitle = inferredTitle.charAt(0).toUpperCase() + inferredTitle.slice(1);
+      }
+    }
+    inferredTitle = inferredTitle || 'Community Discussion Thread';
+
+    const reply = await this.synthesizeCommunityReply(inferredTitle, snippet || inferredTitle, platform);
+
+    const opp: GrowthSocialOpportunity = {
+      id: `soc_${crypto.randomBytes(6).toString('hex')}`,
+      platform,
+      title: inferredTitle,
+      url: cleanUrl,
+      author: 'Community Poster',
+      queryMatched: 'manual',
+      snippet: snippet || inferredTitle,
+      detectedAt: new Date().toISOString(),
+      suggestedReplyMarkdown: reply,
+      status: 'pending',
+    };
+
+    existing.unshift(opp);
+    this.saveSocial(existing);
+    return opp;
   }
 
   public toggleAutoDispatch(enabled: boolean): GrowthSettings {
@@ -583,6 +948,16 @@ Respond ONLY with valid JSON in this exact structure:
         console.log('[GrowthAgent] Generating seed LinkedIn carousel...');
         const item = await this.generateLinkedInCarousel();
         actionsTaken.push(`Created LinkedIn carousel: "${item.title}"`);
+      }
+
+      // 4. Scan developer community radar if pending opportunities are low
+      const pendingOpportunities = this.loadSocial().filter((s) => s.status === 'pending');
+      if (pendingOpportunities.length < 3) {
+        console.log('[GrowthAgent] Scanning community radar for developer discussions...');
+        const scanRes = await this.scanCommunityRadar();
+        if (scanRes.newOpportunities > 0) {
+          actionsTaken.push(`Found ${scanRes.newOpportunities} community discussions with pre-written answers`);
+        }
       }
 
       settings.lastRunAt = new Date().toISOString();

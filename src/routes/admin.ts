@@ -116,6 +116,31 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
     return reply.code(200).send({ item, data: growthAgentService.getDashboardSnapshot() });
   });
 
+  fastify.post('/v1/admin/growth/social/scan', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const scanResult = await growthAgentService.scanCommunityRadar();
+    return reply.code(200).send({ scanResult, data: growthAgentService.getDashboardSnapshot() });
+  });
+
+  fastify.post('/v1/admin/growth/social/:id/status', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const { id } = request.params as { id: string };
+    const { status } = (request.body as any) || {};
+    if (!status || !['pending', 'posted', 'dismissed'].includes(status)) {
+      return reply.code(400).send({ error: 'Valid status required' });
+    }
+    const item = growthAgentService.updateSocialStatus(id, status);
+    return reply.code(200).send({ item, data: growthAgentService.getDashboardSnapshot() });
+  });
+
+  fastify.post('/v1/admin/growth/social/add', { schema: { hide: true } }, async (request, reply) => {
+    if (!checkAdminAuth(request, reply)) return;
+    const { url, title, snippet } = (request.body as any) || {};
+    if (!url) return reply.code(400).send({ error: 'URL is required' });
+    const item = await growthAgentService.addManualSocialThread(url, title, snippet);
+    return reply.code(200).send({ item, data: growthAgentService.getDashboardSnapshot() });
+  });
+
   // Founder Live Analytics & Telemetry Dashboard UI
   fastify.get(
     '/admin',
@@ -298,13 +323,13 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </div>
 
       <!-- Growth KPI Micro-cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5 my-6">
         <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
           <span class="text-[11px] font-semibold text-slate-400">Target Leads</span>
           <div id="growth-kpi-leads" class="text-2xl font-black text-white mt-1">0</div>
         </div>
         <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-          <span class="text-[11px] font-semibold text-slate-400">Branded Demos Ready</span>
+          <span class="text-[11px] font-semibold text-slate-400">Branded Demos</span>
           <div id="growth-kpi-demos" class="text-2xl font-black text-indigo-400 mt-1">0</div>
         </div>
         <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
@@ -312,15 +337,23 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <div id="growth-kpi-sent" class="text-2xl font-black text-emerald-400 mt-1">0</div>
         </div>
         <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-          <span class="text-[11px] font-semibold text-slate-400">Social Carousels Ready</span>
+          <span class="text-[11px] font-semibold text-slate-400">Community Threads</span>
+          <div id="growth-kpi-social" class="text-2xl font-black text-orange-400 mt-1">0</div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span class="text-[11px] font-semibold text-slate-400">Carousels Ready</span>
           <div id="growth-kpi-content" class="text-2xl font-black text-purple-400 mt-1">0</div>
         </div>
       </div>
 
-      <!-- Leads & Content Tabs -->
+      <!-- Leads, Social Radar & Content Tabs -->
       <div class="border-b border-slate-800 flex items-center space-x-4 mb-4">
         <button id="growth-tab-leads-btn" onclick="setGrowthTab('leads')" class="pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition">
           🎯 B2B Target Leads & Demos
+        </button>
+        <button id="growth-tab-social-btn" onclick="setGrowthTab('social')" class="pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+          <span>💬 Community Radar (Reddit, HN & StackOverflow)</span>
+          <span id="growth-badge-social-count" class="hidden px-1.5 py-0.2 rounded-full bg-orange-500/20 text-orange-400 font-bold text-[10px]">0</span>
         </button>
         <button id="growth-tab-content-btn" onclick="setGrowthTab('content')" class="pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition">
           📄 Generated LinkedIn Carousels
@@ -345,7 +378,31 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         </table>
       </div>
 
-      <!-- Content 2: LinkedIn Carousels -->
+      <!-- Content 2: Social & Forum Radar -->
+      <div id="growth-tab-social" class="hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <p class="text-xs text-slate-400">
+            Monitors Reddit, Hacker News & StackOverflow discussions. AI writes high-value technical solutions highlighting Tailprint. Copy & post with 1 click!
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <form onsubmit="addManualSocialThread(event)" class="flex items-center space-x-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1">
+              <input id="input-social-url" type="url" placeholder="Paste Reddit / HN link..." required class="bg-transparent text-xs text-white placeholder-slate-500 font-mono focus:outline-none w-44" />
+              <button type="submit" class="px-2 py-0.5 rounded bg-orange-600 hover:bg-orange-500 text-white text-[10px] font-bold transition">
+                + Draft Reply
+              </button>
+            </form>
+            <button id="btn-scan-community" onclick="scanCommunityRadarNow()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition flex items-center space-x-1.5">
+              <span id="spinner-social-scan" class="hidden animate-spin">⏳</span>
+              <span>🔍 Scan Community Now</span>
+            </button>
+          </div>
+        </div>
+        <div id="growth-social-list" class="space-y-3.5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Content 3: LinkedIn Carousels -->
       <div id="growth-tab-content" class="hidden">
         <div class="flex items-center justify-between mb-4">
           <p class="text-xs text-slate-400">Auto-generated multi-slide PDF carousels built with Tailprint's own Carousel Engine.</p>
@@ -753,6 +810,8 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       document.getElementById('growth-kpi-demos').textContent = stats.demosGenerated || 0;
       document.getElementById('growth-kpi-sent').textContent = stats.sentEmails || 0;
       document.getElementById('growth-kpi-content').textContent = stats.publishedPosts || 0;
+      const kpiSocial = document.getElementById('growth-kpi-social');
+      if (kpiSocial) kpiSocial.textContent = stats.pendingSocial || 0;
 
       // Autodispatch toggle button
       const autoBtn = document.getElementById('btn-toggle-autodispatch');
@@ -806,6 +865,79 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         }).join('');
       }
 
+      // Render Community Social Radar
+      const socialContainer = document.getElementById('growth-social-list');
+      const social = data.social || [];
+      const pendingCount = social.filter(s => s.status === 'pending').length;
+
+      const badgeCount = document.getElementById('growth-badge-social-count');
+      if (badgeCount) {
+        if (pendingCount > 0) {
+          badgeCount.textContent = pendingCount;
+          badgeCount.classList.remove('hidden');
+        } else {
+          badgeCount.classList.add('hidden');
+        }
+      }
+
+      if (!social.length) {
+        socialContainer.innerHTML = '<div class="py-8 text-center text-slate-500">No community threads detected yet. Click "Scan Community Now" or paste a Reddit / HN link above!</div>';
+      } else {
+        socialContainer.innerHTML = social.map(s => {
+          let platformBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">FORUM</span>';
+          if (s.platform === 'reddit') {
+            platformBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">REDDIT</span>';
+          } else if (s.platform === 'hackernews') {
+            platformBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">HACKER NEWS</span>';
+          } else if (s.platform === 'stackoverflow') {
+            platformBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">STACKOVERFLOW</span>';
+          }
+
+          let statusBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">Answer Ready</span>';
+          if (s.status === 'posted') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px]">✓ Marked as Posted</span>';
+          } else if (s.status === 'dismissed') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-900 text-slate-600 text-[10px]">Dismissed</span>';
+          }
+
+          const replyEscaped = JSON.stringify(s.suggestedReplyMarkdown);
+
+          return '<div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-3">' +
+            '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
+              '<div class="flex items-center space-x-2">' +
+                platformBadge +
+                '<span class="text-xs text-slate-400 font-mono">Matched: ' + (s.queryMatched || 'pdf') + '</span>' +
+              '</div>' +
+              '<div class="flex items-center space-x-2">' +
+                statusBadge +
+                '<span class="text-[11px] text-slate-500 font-mono">' + new Date(s.detectedAt).toLocaleDateString() + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div>' +
+              '<a href="' + s.url + '" target="_blank" class="font-bold text-white text-sm hover:text-indigo-400 flex items-center space-x-1.5">' +
+                '<span>' + s.title + '</span>' +
+                '<span class="text-slate-500 text-xs font-mono">↗</span>' +
+              '</a>' +
+              '<p class="text-xs text-slate-400 mt-1 italic">"' + (s.snippet || '').slice(0, 200) + '..."</p>' +
+            '</div>' +
+            '<div class="p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs font-mono text-slate-300 whitespace-pre-wrap max-h-48 overflow-y-auto select-all">' +
+              s.suggestedReplyMarkdown +
+            '</div>' +
+            '<div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/70">' +
+              '<div class="text-[11px] text-slate-500">Author: ' + (s.author || 'User') + '</div>' +
+              '<div class="flex items-center space-x-2">' +
+                (s.status === 'pending'
+                  ? '<button onclick="dismissSocialThread(\'' + s.id + '\')" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs">Dismiss</button>'
+                  : '') +
+                '<button onclick="copyAndOpenSocialThread(\'' + s.id + '\', ' + replyEscaped + ', \'' + s.url + '\')" class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs transition flex items-center space-x-1.5 shadow-md shadow-orange-600/20">' +
+                  '<span>📋 Copy Answer & Open Thread ↗</span>' +
+                '</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+
       // Render LinkedIn Content Grid
       const contentGrid = document.getElementById('growth-carousels-grid');
       const content = data.content || [];
@@ -837,20 +969,97 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     function setGrowthTab(tab) {
       const leadsBtn = document.getElementById('growth-tab-leads-btn');
+      const socialBtn = document.getElementById('growth-tab-social-btn');
       const contentBtn = document.getElementById('growth-tab-content-btn');
       const leadsDiv = document.getElementById('growth-tab-leads');
+      const socialDiv = document.getElementById('growth-tab-social');
       const contentDiv = document.getElementById('growth-tab-content');
 
+      const inactiveBtn = 'pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition';
+      const activeBtn = 'pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition';
+
+      leadsBtn.className = inactiveBtn;
+      if (socialBtn) socialBtn.className = inactiveBtn + ' flex items-center space-x-1.5';
+      contentBtn.className = inactiveBtn;
+
+      leadsDiv.classList.add('hidden');
+      if (socialDiv) socialDiv.classList.add('hidden');
+      contentDiv.classList.add('hidden');
+
       if (tab === 'leads') {
-        leadsBtn.className = 'pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition';
-        contentBtn.className = 'pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition';
+        leadsBtn.className = activeBtn;
         leadsDiv.classList.remove('hidden');
-        contentDiv.classList.add('hidden');
+      } else if (tab === 'social') {
+        if (socialBtn) socialBtn.className = activeBtn + ' flex items-center space-x-1.5';
+        if (socialDiv) socialDiv.classList.remove('hidden');
       } else {
-        contentBtn.className = 'pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition';
-        leadsBtn.className = 'pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition';
+        contentBtn.className = activeBtn;
         contentDiv.classList.remove('hidden');
-        leadsDiv.classList.add('hidden');
+      }
+    }
+
+    async function copyAndOpenSocialThread(id, replyText, url) {
+      try {
+        await navigator.clipboard.writeText(replyText);
+        window.open(url, '_blank');
+        await fetch('/v1/admin/growth/social/' + id + '/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
+          body: JSON.stringify({ status: 'posted' })
+        });
+        fetchGrowthData();
+      } catch (err) {
+        alert('Copied, opening thread now: ' + url);
+        window.open(url, '_blank');
+      }
+    }
+
+    async function dismissSocialThread(id) {
+      try {
+        await fetch('/v1/admin/growth/social/' + id + '/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
+          body: JSON.stringify({ status: 'dismissed' })
+        });
+        fetchGrowthData();
+      } catch (err) {
+        console.error('Error dismissing thread:', err);
+      }
+    }
+
+    async function scanCommunityRadarNow() {
+      const spinner = document.getElementById('spinner-social-scan');
+      if (spinner) spinner.classList.remove('hidden');
+      try {
+        const res = await fetch('/v1/admin/growth/social/scan', {
+          method: 'POST',
+          headers: { 'X-Admin-Key': getAdminKey() }
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+      } catch (err) {
+        alert('Error scanning community: ' + err.message);
+      } finally {
+        if (spinner) spinner.classList.add('hidden');
+      }
+    }
+
+    async function addManualSocialThread(e) {
+      e.preventDefault();
+      const input = document.getElementById('input-social-url');
+      const url = input.value.trim();
+      if (!url) return;
+      try {
+        const res = await fetch('/v1/admin/growth/social/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
+          body: JSON.stringify({ url })
+        });
+        const json = await res.json();
+        if (json.data) renderGrowthUI(json.data);
+        input.value = '';
+      } catch (err) {
+        alert('Error adding thread: ' + err.message);
       }
     }
 
