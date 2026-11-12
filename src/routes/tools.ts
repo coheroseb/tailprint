@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { carouselService } from '../services/carousel.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { visualDiffService } from '../services/visualDiff.js';
+import { mockupService } from '../services/mockup.js';
 import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
 
@@ -70,6 +71,18 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
                       Visual Regression Diff
                     </div>
                     <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Pixelmatch diff heatmap & visual comparison canvas</p>
+                  </div>
+                </a>
+
+                <a href="/tools/mockup" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'Device Mockup' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                    📸
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-amber-300">
+                      Device Mockup Generator
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Turn any URL into a 3D MacBook &amp; iPhone scene</p>
                   </div>
                 </a>
 
@@ -159,6 +172,9 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
           </a>
           <a href="/tools/visual-diff" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Visual Regression Diff' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
             <span>🔍 Visual Regression Diff</span>
+          </a>
+          <a href="/tools/mockup" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Device Mockup' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
+            <span>📸 Device Mockup Generator</span>
           </a>
           <a href="/tools" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-indigo-400 hover:bg-slate-900">
             <span>View All Free Tools Hub</span>
@@ -271,8 +287,8 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </p>
     </div>
 
-    <!-- 3 Core Tools Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- 4 Core Tools Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
       <!-- Tool Card 1: LinkedIn Carousel -->
       <a href="/tools/carousel" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
@@ -330,6 +346,26 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         </div>
         <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-pink-400">
           <span>Launch Visual Diff</span>
+          <span class="group-hover:translate-x-1 transition">→</span>
+        </div>
+      </a>
+
+      <!-- Tool Card 4: Device Mockup Generator -->
+      <a href="/tools/mockup" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-amber-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl border border-amber-500/20 group-hover:scale-110 transition">
+            📸
+          </div>
+          <div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/40 uppercase">Founders &amp; Marketers</span>
+            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-amber-400 transition">Instant Device Mockup Generator</h2>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Transform any website URL into a multi-device presentation scene with 3D MacBook Pro &amp; iPhone frames. Perfect for Product Hunt, pitch decks &amp; Twitter.
+            </p>
+          </div>
+        </div>
+        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-amber-400">
+          <span>Create Device Mockup</span>
           <span class="group-hover:translate-x-1 transition">→</span>
         </div>
       </a>
@@ -991,6 +1027,179 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   fastify.get('/visual-diff', visualDiffHandler);
 
   // ==========================================
+  // PAGE 5: /tools/mockup (Instant Device Mockup Generator)
+  // ==========================================
+  const mockupHandler = async (_request: any, reply: any) => {
+    const html = `<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free Website Device Mockup Generator - MacBook &amp; iPhone | Tailprint</title>
+  <meta name="description" content="Generate instant 3D device mockups from any live URL. Realistic MacBook Pro and iPhone 15 frames with drop shadows, high-res 1600x1000 PNG download. Free online tool by Tailprint." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #030712; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+  ${renderHeader('Device Mockup')}
+
+  <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full space-y-12">
+    <!-- Header -->
+    <div class="text-center max-w-3xl mx-auto space-y-3">
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
+        <span>Instant 3D Device Compositing • MacBook Pro &amp; iPhone 15 Pro</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+        Free Website Device Mockup Generator
+      </h1>
+      <p class="text-slate-400 text-sm">
+        Transform any website URL into a multi-device presentation scene in seconds. Clean shadows, dark canvas, and ready for Product Hunt, Twitter, and pitch decks.
+      </p>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
+        <div class="sm:col-span-6">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Website URL</label>
+          <input id="mockup-url" type="url" value="https://stripe.com" placeholder="https://yourwebsite.com" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none focus:border-amber-500" />
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Title / Caption (Optional)</label>
+          <input id="mockup-title" type="text" value="Financial Infrastructure for the Internet" placeholder="e.g. Next-Gen Payments Platform" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-amber-500" />
+        </div>
+        <div class="sm:col-span-2">
+          <button id="btn-gen-mockup" onclick="generateMockup()" class="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition shadow-lg shadow-amber-600/30 flex items-center justify-center space-x-1.5">
+            <span>⚡ Generate Mockup</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output Preview Canvas -->
+    <div id="mockup-container" class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl min-h-[460px] flex flex-col items-center justify-center text-center">
+      <div id="mockup-state-empty" class="space-y-4 max-w-sm">
+        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-3xl mx-auto border border-amber-500/20">
+          📸
+        </div>
+        <h3 class="text-lg font-bold text-white">Multi-Device Presentation Studio</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Enter your website URL above and click <strong>"Generate Mockup"</strong>. Tailprint's Chromium engine captures both responsive viewports and renders a 1600×1000px composite image.
+        </p>
+      </div>
+
+      <div id="mockup-state-loading" class="hidden space-y-4 py-12">
+        <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs font-mono text-slate-300">Capturing desktop (1280×800) &amp; mobile (390×844) viewports...</p>
+      </div>
+
+      <div id="mockup-state-result" class="hidden w-full space-y-6">
+        <div class="rounded-xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 max-w-5xl mx-auto">
+          <img id="mockup-img" src="" alt="Generated Device Mockup" class="w-full h-auto object-cover" />
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <a id="btn-download-mockup" href="#" target="_blank" download="device-mockup.png" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition shadow-lg shadow-amber-600/20 flex items-center space-x-1.5">
+            <span>⬇ Download High-Res PNG (1600×1000)</span>
+          </a>
+          <button onclick="copyMockupUrl()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition border border-slate-700 flex items-center space-x-1.5">
+            <span id="copy-mockup-label">📋 Copy Public Link</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    ${renderConversionCallout(
+      'Device Mockup API',
+      '// Automated High-Res Device Mockups via Tailprint API\n' +
+        'const res = await fetch("https://tailprint.com/v1/tools/mockup", {\n' +
+        '  method: "POST",\n' +
+        '  headers: { "Content-Type": "application/json" },\n' +
+        '  body: JSON.stringify({\n' +
+        '    url: "https://stripe.com",\n' +
+        '    title: "Next-Gen Fintech",\n' +
+        '    delay_ms: 500\n' +
+        '  })\n' +
+        '});\n' +
+        'const { mockupUrl } = await res.json();\n' +
+        'console.log("Mockup saved at:", mockupUrl);'
+    )}
+  </main>
+
+  <footer class="py-8 border-t border-slate-900 text-center text-xs text-slate-500">
+    <p>© 2026 Tailprint (tailprint.com). High-performance Chromium &amp; MCP Infrastructure.</p>
+  </footer>
+
+  <script>
+    let currentMockupUrl = '';
+
+    async function generateMockup() {
+      const url = document.getElementById('mockup-url').value.trim();
+      const title = document.getElementById('mockup-title').value.trim();
+      if (!url) {
+        alert('Please enter a valid website URL');
+        return;
+      }
+
+      const btn = document.getElementById('btn-gen-mockup');
+      const emptyState = document.getElementById('mockup-state-empty');
+      const loadingState = document.getElementById('mockup-state-loading');
+      const resultState = document.getElementById('mockup-state-result');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="animate-spin">⏳</span><span>Rendering...</span>';
+      emptyState.classList.add('hidden');
+      resultState.classList.add('hidden');
+      loadingState.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/v1/tools/mockup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, title }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to generate device mockup');
+        }
+
+        currentMockupUrl = data.mockupUrl;
+        document.getElementById('mockup-img').src = data.mockupUrl;
+        document.getElementById('btn-download-mockup').href = data.mockupUrl;
+
+        loadingState.classList.add('hidden');
+        resultState.classList.remove('hidden');
+      } catch (err) {
+        alert(err.message);
+        loadingState.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>⚡ Generate Mockup</span>';
+      }
+    }
+
+    function copyMockupUrl() {
+      if (!currentMockupUrl) return;
+      navigator.clipboard.writeText(currentMockupUrl);
+      const label = document.getElementById('copy-mockup-label');
+      label.textContent = '✓ Link Copied!';
+      setTimeout(() => { label.textContent = '📋 Copy Public Link'; }, 2000);
+    }
+  </script>
+</body>
+</html>`;
+
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
+  };
+
+  fastify.get('/tools/mockup', mockupHandler);
+  fastify.get('/mockup', mockupHandler);
+
+  // ==========================================
   // FREE API ENDPOINTS (IP Rate-limited)
   // ==========================================
 
@@ -1152,6 +1361,52 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         diffImageUrl: stored.hostedUrl,
         diffPixels: result.differentPixels,
         diffPercentage: result.diffPercentage,
+      });
+    }
+  );
+
+  // 4. POST /v1/tools/mockup
+  fastify.post(
+    '/v1/tools/mockup',
+    {
+      schema: {
+        hide: true,
+        body: z.object({
+          url: z.string().url(),
+          title: z.string().optional(),
+          delay_ms: z.number().min(0).max(10000).optional().default(500),
+        }),
+      },
+    },
+    async (request, reply) => {
+      const clientIp = request.ip || 'anonymous';
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+        });
+      }
+
+      const body = request.body as any;
+      const buffer = await mockupService.renderDeviceMockup({
+        url: body.url,
+        title: body.title,
+        delay_ms: body.delay_ms ?? 500,
+      });
+
+      const stored = await storageService.saveFile(buffer, {
+        mimeType: 'image/png',
+        extension: 'png',
+        filename: 'device-mockup.png',
+      });
+
+      return reply.code(200).send({
+        success: true,
+        mockupUrl: stored.hostedUrl,
+        width: 1600,
+        height: 1000,
       });
     }
   );

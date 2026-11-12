@@ -118,6 +118,17 @@ describe('Tailprint Test Suite', () => {
       expect(response.body).toContain('Multi-Slide Carousel Maker');
       expect(response.body).toContain('Factur-X E-Invoice Generator');
       expect(response.body).toContain('Visual Regression Diff Heatmap');
+      expect(response.body).toContain('Instant Device Mockup Generator');
+    });
+
+    it('GET /tools/mockup and /mockup render the device mockup generator tool page', async () => {
+      const res1 = await app.inject({ method: 'GET', url: '/tools/mockup' });
+      expect(res1.statusCode).toBe(200);
+      expect(res1.body).toContain('Website Device Mockup Generator');
+
+      const res2 = await app.inject({ method: 'GET', url: '/mockup' });
+      expect(res2.statusCode).toBe(200);
+      expect(res2.body).toContain('Website Device Mockup Generator');
     });
 
     it('GET /tools/carousel and /carousel render the LinkedIn carousel tool page', async () => {
