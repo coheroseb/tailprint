@@ -74,7 +74,7 @@ describe('Tailprint Test Suite', () => {
 
       expect(response.statusCode).toBe(200);
       const data = JSON.parse(response.body);
-      expect(data.templates.length).toBe(8);
+      expect(data.templates.length).toBe(14);
       expect(data.templates.map((t: any) => t.id)).toEqual([
         'invoice',
         'certificate',
@@ -84,6 +84,12 @@ describe('Tailprint Test Suite', () => {
         'shipping-label',
         'ticket',
         'receipt',
+        'quote',
+        'nda',
+        'statement',
+        'einvoice',
+        'presentation',
+        'contract',
       ]);
     });
 

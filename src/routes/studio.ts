@@ -223,7 +223,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       <!-- Template Selector Dropdown -->
       <div class="flex items-center space-x-2">
         <label for="templateSelect" class="text-xs font-medium text-slate-400 hidden xl:inline">Template:</label>
-        <select id="templateSelect" class="bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 font-medium max-w-[180px] sm:max-w-[250px] cursor-pointer">
+        <select id="templateSelect" class="bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 font-medium w-auto min-w-[200px] max-w-[280px] lg:max-w-[340px] cursor-pointer shadow-sm">
           <option value="custom">✏️ Custom Blank Canvas</option>
           ${categories
             .map(
@@ -555,10 +555,12 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
       if (found) {
         codeEditor.value = found.html;
-        if (found.landscape) {
-          formatSelect.value = 'A4-landscape';
+        if (found.id === 'presentation') {
+          formatSelect.value = 'slide';
         } else if (found.id === 'og-card') {
           formatSelect.value = 'og-card';
+        } else if (found.landscape) {
+          formatSelect.value = 'A4-landscape';
         } else {
           formatSelect.value = 'A4-portrait';
         }
@@ -669,10 +671,12 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         }
         if (found) {
           codeEditor.value = found.html;
-          if (found.landscape) {
-            formatSelect.value = 'A4-landscape';
+          if (found.id === 'presentation') {
+            formatSelect.value = 'slide';
           } else if (found.id === 'og-card') {
             formatSelect.value = 'og-card';
+          } else if (found.landscape) {
+            formatSelect.value = 'A4-landscape';
           } else {
             formatSelect.value = 'A4-portrait';
           }

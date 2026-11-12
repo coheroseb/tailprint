@@ -1,13 +1,16 @@
-# Tailprint — Tailwind-Native Render & PDF Engine + AI Web Scraper
+# Tailprint — Document & Visual Infrastructure for Modern Apps & AI Agents
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
 [![Production](https://img.shields.io/badge/Production-tailprint.com-emerald.svg)](https://tailprint.com)
 [![Docs](https://img.shields.io/badge/API_Docs-Scalar-indigo.svg)](https://tailprint.com/docs)
 
-**Tailprint** ([tailprint.com](https://tailprint.com)) is a high-performance, developer-first rendering engine and Model Context Protocol (MCP) server. It accepts raw HTML styled with arbitrary **Tailwind CSS** utility classes and compiles print-ready, pixel-perfect vector **PDFs** or high-resolution **Open Graph images** in under 800ms.
+**Tailprint** ([tailprint.com](https://tailprint.com)) is a unified, developer-first programmable output engine and Model Context Protocol (MCP) server. It turns Tailwind HTML, data, and AI prompts into pixel-perfect vector **PDFs**, legally compliant **European Factur-X / ZUGFeRD e-invoices**, dynamic **Open Graph cards**, and marketing visuals in under 500ms.
 
-It also features an intelligent **LLM Web Scraper** that strips ads, trackers, and navigation boilerplate using Mozilla Readability, returning token-efficient structured Markdown.
+Organized into three core suites:
+1. **Document & Compliance Suite:** Vector PDFs, Smart Pagination Shield, Factur-X/ZUGFeRD e-invoicing, and complete PDF operations (merge, split, fill, watermark, compress).
+2. **Visual & Media Engine:** Live Template Studio IDE, Open Graph social banners with SHA-256 caching, 3D device mockups, dynamic charts, and LinkedIn carousels.
+3. **AI & Agent Infrastructure:** 22 spec-compliant MCP tools for Claude Desktop, Cursor, and Windsurf, plus an intelligent web-to-markdown scraper and zero-retention GDPR mode.
 
 ---
 

@@ -33,56 +33,60 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
         <!-- Main Product Links (Desktop) -->
         <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
           
-          <!-- Product Dropdown -->
+          <!-- Product Dropdown (Organized by 3 Core Pillars) -->
           <div class="relative group">
             <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
               <span>Product</span>
               <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="absolute left-0 top-full pt-2 w-[340px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
-              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
+            <div class="absolute left-0 top-full pt-2 w-[390px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
+              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2.5 space-y-1.5">
                 
-                <a href="/studio" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                <!-- Pillar 1: Documents & Compliance -->
+                <a href="/#documents" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-indigo-500/20">
-                    ⚡
+                    📄
                   </div>
                   <div>
                     <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1.5">
-                      <span>Template Studio</span>
-                      <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                      <span>Documents &amp; E-Invoicing</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono font-semibold">Factur-X</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Interactive split-screen IDE with real-time Tailwind JIT</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Tailwind vector PDFs, hybrid EU e-invoices &amp; pagination shield</p>
                   </div>
                 </a>
 
+                <!-- Pillar 2: Visual & Media Engine -->
+                <a href="/studio" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-pink-500/20">
+                    🎨
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-pink-300 flex items-center space-x-1.5">
+                      <span>Visual &amp; Media Engine</span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Interactive Studio IDE, OG social cards, charts &amp; 3D mockups</p>
+                  </div>
+                </a>
+
+                <!-- Pillar 3: AI & Agent Runtime -->
                 <a href="/#mcp" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-purple-500/20">
                     🤖
                   </div>
                   <div>
                     <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
-                      <span>AI MCP Server</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono font-semibold">npx tailprint</span>
+                      <span>AI Agent Infrastructure</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono font-semibold">22 MCP Tools</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Model Context Protocol for Claude &amp; Cursor agents</p>
-                  </div>
-                </a>
-
-                <a href="/#scraper" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-cyan-500/20">
-                    🌐
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-cyan-300">
-                      Web to Markdown
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Clean web pages into LLM markdown with token savings</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Model Context Protocol for Claude &amp; Cursor + Web Scraper</p>
                   </div>
                 </a>
 
                 <div class="pt-2 mt-1 border-t border-slate-800/70 px-2.5 pb-1 flex items-center justify-between text-[11px] text-slate-400">
                   <span>Sub-500ms Chromium engine</span>
-                  <span class="text-indigo-400 font-semibold font-mono">Tailwind v3/v4</span>
+                  <span class="text-indigo-400 font-semibold font-mono">Zero-Retention Mode</span>
                 </div>
 
               </div>
@@ -328,9 +332,6 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
           <a href="/#mcp" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
             <span>🤖 AI MCP Server</span>
             <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">Claude &amp; Cursor</span>
-          </a>
-          <a href="/#scraper" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>🌐 Web to Markdown Scraper</span>
           </a>
         </div>
       </div>

@@ -1373,64 +1373,6 @@ Cursor IDE & Windsurf:
     </div>
   </section>
 
-  <section id="scraper" class="py-16 bg-slate-900/60 border-t border-slate-800/80">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="text-center max-w-2xl mx-auto mb-10">
-        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 text-xs font-semibold mb-3">
-          <span>NEW: LLM-Ready Web Scraper & Markdown Cleaner</span>
-        </div>
-        <h2 class="text-3xl font-extrabold text-white">Turn Any Web Page into Clean Markdown</h2>
-        <p class="text-slate-400 mt-2">Mozilla Readability strips 95%+ boilerplate noise (scripts, cookie banners, navbars). Drastically cuts LLM token costs for RAG & AI agents.</p>
-      </div>
-
-      <!-- Live Interactive Scraper Box -->
-      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-        <div class="flex flex-col sm:flex-row gap-3">
-          <input id="scraper-input" type="url" value="https://example.com" placeholder="Enter any article or documentation URL..." class="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono" />
-          <button onclick="runLiveScrape()" id="scraper-btn" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition shadow-md shadow-indigo-600/30 flex items-center justify-center space-x-2">
-            <span>⚡ Scrape to Markdown</span>
-          </button>
-        </div>
-
-        <!-- Metrics & Output -->
-        <div id="scraper-results" class="mt-6 border-t border-slate-800/80 pt-6">
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-              <span class="text-[10px] uppercase font-bold text-slate-400 block">Token Savings</span>
-              <span id="metric-savings" class="text-xl font-black text-emerald-400 mt-0.5 block">94.2%</span>
-            </div>
-            <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-              <span class="text-[10px] uppercase font-bold text-slate-400 block">Estimated Tokens</span>
-              <span id="metric-tokens" class="text-xl font-black text-indigo-400 mt-0.5 block">181</span>
-            </div>
-            <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-              <span class="text-[10px] uppercase font-bold text-slate-400 block">Word Count</span>
-              <span id="metric-words" class="text-xl font-black text-slate-200 mt-0.5 block">136</span>
-            </div>
-            <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
-              <span class="text-[10px] uppercase font-bold text-slate-400 block">Cache Status</span>
-              <span id="metric-cache" class="text-xl font-black text-cyan-400 mt-0.5 block">HIT (Redis)</span>
-            </div>
-          </div>
-
-          <div class="relative">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Cleaned Markdown Output</span>
-              <button onclick="copyScrapedMarkdown()" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1">
-                <span>📋 Copy Clean Markdown</span>
-              </button>
-            </div>
-            <pre id="scraper-output" class="p-4 bg-slate-900 rounded-xl text-slate-300 text-xs font-mono max-h-64 overflow-y-auto whitespace-pre-wrap border border-slate-800"># Example Domain
-
-This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.
-
-[Learn more](https://iana.org/help/example-domains)</pre>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- Templates Section -->
   <section id="templates" class="py-20 bg-slate-900/40 border-t border-b border-slate-800/80">
     <div class="max-w-7xl mx-auto px-6">
@@ -1438,7 +1380,7 @@ This domain is for use in documentation examples without needing permission. Thi
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/50 text-indigo-400 text-xs font-semibold mb-3">
           <span>Ready to Copy & Render</span>
         </div>
-        <h2 class="text-3xl font-extrabold text-white">8 Production Tailwind Templates</h2>
+        <h2 class="text-3xl font-extrabold text-white">${TEMPLATES.length} Production Tailwind Templates</h2>
         <p class="text-slate-400 mt-2">One-click copy for clean Tailwind HTML or cURL terminal commands. Test immediate rendering on any template.</p>
       </div>
 
@@ -1454,6 +1396,18 @@ This domain is for use in documentation examples without needing permission. Thi
             <span>${
               t.id === 'invoice'
                 ? '🧾'
+                : t.id === 'quote'
+                ? '💼'
+                : t.id === 'statement'
+                ? '🏛️'
+                : t.id === 'nda'
+                ? '🔒'
+                : t.id === 'einvoice'
+                ? '🇪🇺'
+                : t.id === 'presentation'
+                ? '🖥️'
+                : t.id === 'contract'
+                ? '📝'
                 : t.id === 'certificate'
                 ? '🎓'
                 : t.id === 'report'
@@ -2616,56 +2570,6 @@ This domain is for use in documentation examples without needing permission. Thi
 
     const templateMeta = {
       ${TEMPLATES.map((t) => `'${t.id}': { landscape: ${t.landscape}, isImage: ${t.id === 'og-card'} }`).join(',\n      ')}
-    };
-
-    window.runLiveScrape = async function() {
-      const input = document.getElementById('scraper-input');
-      const btn = document.getElementById('scraper-btn');
-      const output = document.getElementById('scraper-output');
-      const savings = document.getElementById('metric-savings');
-      const tokens = document.getElementById('metric-tokens');
-      const words = document.getElementById('metric-words');
-      const cache = document.getElementById('metric-cache');
-
-      if (!input || !input.value) {
-        alert('Please enter a valid URL');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = 'Extracting...';
-
-      try {
-        const res = await fetch('/v1/scrape/playground', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: input.value, strip_images: true })
-        });
-        const data = await res.json();
-        if (data.markdown) {
-          output.innerText = data.markdown;
-          savings.innerText = data.token_savings_percent;
-          tokens.innerText = data.estimated_tokens;
-          words.innerText = data.word_count;
-          cache.innerText = data.cached ? 'HIT (Redis)' : 'MISS (Fresh)';
-        } else {
-          alert('Error: ' + (data.message || 'Failed to scrape page'));
-        }
-      } catch (err) {
-        alert('Request failed: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerText = '⚡ Scrape to Markdown';
-      }
-    };
-
-    window.copyScrapedMarkdown = function() {
-      const output = document.getElementById('scraper-output');
-      if (output && output.innerText) {
-        navigator.clipboard.writeText(output.innerText).then(() => {
-          alert('Cleaned Markdown copied to clipboard!');
-        });
-      }
     };
 
     window.switchTab = function(tabName) {

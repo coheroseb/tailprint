@@ -752,4 +752,780 @@ export const TEMPLATES: TemplateItem[] = [
   </div>
 </div>`,
   },
+  {
+    id: 'quote',
+    title: 'B2B Sales Quotation & Estimate',
+    category: 'Sales & Commercial',
+    description: 'Commercial project proposal with scope of work, itemized pricing, payment milestones, and client signature sign-off.',
+    format: 'A4',
+    landscape: false,
+    html: `<div class="max-w-4xl mx-auto p-12 bg-white text-slate-800 font-sans">
+  <!-- Top Header & Branding -->
+  <div class="flex justify-between items-start border-b border-slate-200 pb-8">
+    <div>
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 bg-gradient-to-tr from-indigo-700 to-sky-500 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-md">
+          N
+        </div>
+        <div>
+          <span class="text-2xl font-black text-slate-900 tracking-tight">Nordic Digital Agency ApS</span>
+          <p class="text-xs text-slate-500 font-medium">Enterprise Web & Cloud Solutions</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-3 leading-relaxed">
+        Strandgade 42, 2. sal<br>
+        1401 København K, Denmark<br>
+        CVR/VAT: DK-38291044 • contact@nordicdigital.io
+      </p>
+    </div>
+    <div class="text-right">
+      <span class="inline-block px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs uppercase tracking-wider border border-indigo-200">
+        Formal Proposal
+      </span>
+      <h1 class="text-3xl font-black text-slate-900 mt-2 tracking-tight">PROJECT QUOTE</h1>
+      <p class="text-sm font-bold text-indigo-600 font-mono mt-0.5">#QUO-2026-0842</p>
+      
+      <div class="mt-4 text-xs text-slate-500 space-y-1">
+        <p><span class="font-semibold text-slate-700">Date Issued:</span> November 12, 2026</p>
+        <p><span class="font-semibold text-slate-700">Valid Until:</span> December 12, 2026 (30 Days)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client & Project Overview -->
+  <div class="mt-8 grid grid-cols-2 gap-8 text-xs">
+    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200">
+      <p class="uppercase font-bold text-slate-400 tracking-wider text-[10px]">Client Information</p>
+      <p class="text-sm font-extrabold text-slate-900 mt-1">Apex Health Systems Nordic</p>
+      <p class="text-slate-600 mt-1 leading-relaxed">
+        Attn: Dr. Henrik Lindholm, VP Digital Health<br>
+        Vesterbrogade 128<br>
+        1620 København V, Denmark<br>
+        VAT ID: DK-84920194
+      </p>
+    </div>
+
+    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+      <div>
+        <p class="uppercase font-bold text-slate-400 tracking-wider text-[10px]">Project Scope & Timeline</p>
+        <p class="text-sm font-extrabold text-slate-900 mt-1">Patient Portal & Automated E-Invoicing</p>
+        <p class="text-slate-600 mt-1">
+          Full cloud migration, automated Factur-X billing backend, and responsive patient portal UI.
+        </p>
+      </div>
+      <div class="pt-3 border-t border-slate-200 flex items-center justify-between text-[11px]">
+        <span class="text-slate-500 font-medium">Estimated Delivery:</span>
+        <span class="font-bold text-slate-900">8 Weeks (Sprint Based)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Scope & Deliverables Table -->
+  <div class="mt-8 overflow-hidden rounded-xl border border-slate-200">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+          <th class="py-3 px-4">Item & Deliverable Description</th>
+          <th class="py-3 px-4 text-center">Unit / Hours</th>
+          <th class="py-3 px-4 text-right">Rate</th>
+          <th class="py-3 px-4 text-right">Amount (EUR)</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 text-slate-700">
+        <tr>
+          <td class="py-3.5 px-4">
+            <span class="font-bold text-slate-900">Architecture & Technical Discovery</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">System blueprint, GDPR data flow audit, and API contract specifications.</p>
+          </td>
+          <td class="py-3.5 px-4 text-center font-mono">40 hrs</td>
+          <td class="py-3.5 px-4 text-right font-mono">€ 140.00</td>
+          <td class="py-3.5 px-4 text-right font-bold font-mono">€ 5,600.00</td>
+        </tr>
+        <tr>
+          <td class="py-3.5 px-4">
+            <span class="font-bold text-slate-900">Automated E-Invoicing & Compliance Engine</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Integration of Factur-X / EN 16931 hybrid PDF generation and ERP sync.</p>
+          </td>
+          <td class="py-3.5 px-4 text-center font-mono">65 hrs</td>
+          <td class="py-3.5 px-4 text-right font-mono">€ 150.00</td>
+          <td class="py-3.5 px-4 text-right font-bold font-mono">€ 9,750.00</td>
+        </tr>
+        <tr>
+          <td class="py-3.5 px-4">
+            <span class="font-bold text-slate-900">Responsive Patient Portal UI & Design System</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Tailwind CSS frontend, accessibility WCAG 2.1 AA compliance, and mobile responsive views.</p>
+          </td>
+          <td class="py-3.5 px-4 text-center font-mono">80 hrs</td>
+          <td class="py-3.5 px-4 text-right font-mono">€ 135.00</td>
+          <td class="py-3.5 px-4 text-right font-bold font-mono">€ 10,800.00</td>
+        </tr>
+        <tr>
+          <td class="py-3.5 px-4">
+            <span class="font-bold text-slate-900">QA, Penetration Testing & Production Deployment</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Automated end-to-end tests, security hardening, and zero-downtime deployment setup.</p>
+          </td>
+          <td class="py-3.5 px-4 text-center font-mono">35 hrs</td>
+          <td class="py-3.5 px-4 text-right font-mono">€ 140.00</td>
+          <td class="py-3.5 px-4 text-right font-bold font-mono">€ 4,900.00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summary & Milestone Breakdown -->
+  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+      <p class="font-bold text-slate-800 uppercase text-[10px] tracking-wider">Payment Milestone Schedule</p>
+      <div class="flex justify-between py-1 border-b border-slate-200 text-slate-600">
+        <span>1. Upfront Deposit (Project Kick-off)</span>
+        <span class="font-bold text-slate-900">40% (€ 12,420.00)</span>
+      </div>
+      <div class="flex justify-between py-1 border-b border-slate-200 text-slate-600">
+        <span>2. Mid-point Sprint Acceptance (Week 4)</span>
+        <span class="font-bold text-slate-900">30% (€ 9,315.00)</span>
+      </div>
+      <div class="flex justify-between py-1 text-slate-600">
+        <span>3. Final Release & Handover (Week 8)</span>
+        <span class="font-bold text-slate-900">30% (€ 9,315.00)</span>
+      </div>
+    </div>
+
+    <div class="space-y-2 text-xs text-slate-600">
+      <div class="flex justify-between py-1.5 border-b border-slate-100">
+        <span>Subtotal Services</span>
+        <span class="font-mono font-bold text-slate-900">€ 31,050.00</span>
+      </div>
+      <div class="flex justify-between py-1.5 border-b border-slate-100">
+        <span>EU Reverse Charge / VAT (0% B2B)</span>
+        <span class="font-mono font-medium text-slate-900">€ 0.00</span>
+      </div>
+      <div class="flex justify-between py-2 text-sm font-black text-slate-900 border-t-2 border-slate-900">
+        <span>TOTAL ESTIMATE</span>
+        <span class="text-indigo-600 font-mono text-base">€ 31,050.00</span>
+      </div>
+      <p class="text-[10px] text-slate-400 text-right">Prices in EUR. Excludes 3rd-party hosting and external SaaS subscriptions.</p>
+    </div>
+  </div>
+
+  <!-- Acceptance & Formal Sign-off (Protected with break-inside-avoid) -->
+  <div class="break-inside-avoid mt-10 pt-6 border-t-2 border-slate-200">
+    <div class="flex justify-between items-end mb-4">
+      <div>
+        <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Acceptance of Quote & Proposal</h3>
+        <p class="text-xs text-slate-500 mt-0.5">By signing below, the client agrees to the scope, milestones, and commercial terms stated herein.</p>
+      </div>
+      <span class="text-[10px] text-slate-400 font-mono">Doc ref: SIG-QUO-2026-0842</span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-8 mt-6">
+      <div class="p-4 rounded-xl border border-slate-300 bg-slate-50/50">
+        <p class="text-[10px] uppercase font-bold text-slate-400">Authorized Client Signature (Apex Health)</p>
+        <div class="h-16 border-b border-dashed border-slate-300 flex items-end pb-2">
+          <span class="font-serif italic text-lg text-indigo-900">Dr. Henrik Lindholm</span>
+        </div>
+        <div class="mt-3 flex justify-between text-[11px] text-slate-500">
+          <span>Date: Nov 14, 2026</span>
+          <span>Title: VP Digital Health</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-slate-300 bg-slate-50/50">
+        <p class="text-[10px] uppercase font-bold text-slate-400">Accepted By (Nordic Digital Agency)</p>
+        <div class="h-16 border-b border-dashed border-slate-300 flex items-end pb-2">
+          <span class="font-serif italic text-lg text-slate-800">Sebastian Viste</span>
+        </div>
+        <div class="mt-3 flex justify-between text-[11px] text-slate-500">
+          <span>Date: Nov 12, 2026</span>
+          <span>Title: Managing Partner</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`,
+  },
+  {
+    id: 'nda',
+    title: 'Mutual Non-Disclosure Agreement (NDA)',
+    category: 'Legal & Contracts',
+    description: 'Enforceable bilateral confidentiality agreement with defined purpose, exclusions, IP clauses, and dual signature blocks.',
+    format: 'A4',
+    landscape: false,
+    html: `<div class="max-w-4xl mx-auto p-12 bg-white text-slate-900 font-sans leading-relaxed">
+  <!-- Document Header -->
+  <div class="text-center border-b border-slate-200 pb-6">
+    <div class="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest mb-2">
+      CONFIDENTIAL &amp; LEGALLY BINDING
+    </div>
+    <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase">
+      Mutual Non-Disclosure &amp; Confidentiality Agreement
+    </h1>
+    <p class="text-xs text-slate-500 mt-1">Standard Bilateral Corporate Form • Standard European Legal Framework</p>
+  </div>
+
+  <!-- Parties Definition -->
+  <div class="mt-6 text-xs text-slate-700 space-y-3">
+    <p>
+      This Mutual Non-Disclosure Agreement (the <strong class="text-slate-900">"Agreement"</strong>) is entered into and made effective as of <strong class="text-slate-900">November 12, 2026</strong> (the <strong class="text-slate-900">"Effective Date"</strong>), by and between:
+    </p>
+
+    <div class="grid grid-cols-2 gap-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+      <div>
+        <span class="font-bold text-slate-900 uppercase text-[10px] tracking-wider block text-indigo-700">Party A (Disclosing &amp; Receiving)</span>
+        <strong class="text-slate-900 block mt-1">Antigravity Technologies ApS</strong>
+        <p class="text-slate-600 mt-0.5">
+          Registration / CVR: DK-40291844<br>
+          Gammeltorv 8, 1457 København K, Denmark<br>
+          Represented by: Sebastian Viste, Chief Technology Officer
+        </p>
+      </div>
+      <div>
+        <span class="font-bold text-slate-900 uppercase text-[10px] tracking-wider block text-indigo-700">Party B (Disclosing &amp; Receiving)</span>
+        <strong class="text-slate-900 block mt-1">Vanguard Robotics Europe B.V.</strong>
+        <p class="text-slate-600 mt-0.5">
+          Registration / KvK: NL-84920194<br>
+          Keizersgracht 421, 1016 EK Amsterdam, Netherlands<br>
+          Represented by: Emma van der Meer, VP Corporate Strategy
+        </p>
+      </div>
+    </div>
+
+    <p>
+      Party A and Party B are collectively referred to as the <strong class="text-slate-900">"Parties"</strong> and individually as a <strong class="text-slate-900">"Party"</strong>.
+    </p>
+  </div>
+
+  <!-- Recitals & Purpose -->
+  <div class="mt-6 space-y-4 text-xs text-slate-700">
+    <div class="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
+      <span class="font-bold text-indigo-900 uppercase text-[10px] tracking-wider">Recitals &amp; Stated Purpose:</span>
+      <p class="text-slate-700 mt-1">
+        The Parties intend to explore a potential strategic business collaboration regarding autonomous AI agent document automation, headless cloud browser orchestration, and compliance architectures (the <strong class="text-slate-900">"Authorized Purpose"</strong>).
+      </p>
+    </div>
+
+    <!-- Numbered Sections -->
+    <div class="space-y-3.5">
+      <div>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">1. Definition of Confidential Information</h2>
+        <p class="mt-1 leading-normal text-slate-600">
+          "Confidential Information" shall mean all proprietary, non-public, or confidential information disclosed by one Party (the "Disclosing Party") to the other Party (the "Receiving Party"), whether orally, visually, electronically, or in writing, including but not limited to source code, browser architectures, business models, financial data, customer lists, and machine learning models.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">2. Exclusions from Confidentiality</h2>
+        <p class="mt-1 leading-normal text-slate-600">
+          Confidential Information does not include information that: (a) is or becomes publicly known through no breach of this Agreement; (b) was already rightfully in the Receiving Party's possession prior to disclosure; (c) is independently developed without reference to the Disclosing Party's Confidential Information; or (d) is required to be disclosed by applicable law or court order.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">3. Non-Disclosure &amp; Security Obligations</h2>
+        <p class="mt-1 leading-normal text-slate-600">
+          The Receiving Party shall exercise the same degree of care it uses to protect its own confidential materials (and never less than reasonable care). The Receiving Party agrees not to disclose Confidential Information to any third party, except to employees, advisors, or contractors who have a legitimate need to know and are bound by written confidentiality obligations at least as restrictive as this Agreement.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">4. Term &amp; Survival</h2>
+        <p class="mt-1 leading-normal text-slate-600">
+          This Agreement shall remain in effect for a period of <strong class="text-slate-900">two (2) years</strong> from the Effective Date. The confidentiality obligations regarding trade secrets and source code shall survive termination indefinitely.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">5. Governing Law &amp; Dispute Resolution</h2>
+        <p class="mt-1 leading-normal text-slate-600">
+          This Agreement shall be governed by and construed in accordance with the substantive laws of <strong class="text-slate-900">Denmark</strong>, without regard to conflict of laws principles. Any dispute arising out of or in connection with this Agreement shall be settled by the courts of Copenhagen.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signatures Block (Protected against page splitting) -->
+  <div class="break-inside-avoid mt-8 pt-6 border-t-2 border-slate-200">
+    <p class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">IN WITNESS WHEREOF, the Parties have executed this Mutual NDA:</p>
+
+    <div class="grid grid-cols-2 gap-8 text-xs">
+      <div class="p-4 rounded-xl border border-slate-300 bg-slate-50/60">
+        <span class="text-[10px] uppercase font-bold text-slate-400 block">For Party A: Antigravity Technologies</span>
+        <div class="h-14 border-b border-dashed border-slate-400 flex items-end pb-1.5">
+          <span class="font-serif italic text-lg text-slate-900">Sebastian Viste</span>
+        </div>
+        <div class="mt-2.5 space-y-0.5 text-[11px] text-slate-600">
+          <p><span class="font-semibold text-slate-800">Name:</span> Sebastian Viste</p>
+          <p><span class="font-semibold text-slate-800">Title:</span> Chief Technology Officer</p>
+          <p><span class="font-semibold text-slate-800">Date:</span> November 12, 2026</p>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-slate-300 bg-slate-50/60">
+        <span class="text-[10px] uppercase font-bold text-slate-400 block">For Party B: Vanguard Robotics Europe</span>
+        <div class="h-14 border-b border-dashed border-slate-400 flex items-end pb-1.5">
+          <span class="font-serif italic text-lg text-slate-900">Emma van der Meer</span>
+        </div>
+        <div class="mt-2.5 space-y-0.5 text-[11px] text-slate-600">
+          <p><span class="font-semibold text-slate-800">Name:</span> Emma van der Meer</p>
+          <p><span class="font-semibold text-slate-800">Title:</span> VP Corporate Strategy</p>
+          <p><span class="font-semibold text-slate-800">Date:</span> November 12, 2026</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`,
+  },
+  {
+    id: 'statement',
+    title: 'Monthly Financial Statement & Ledger',
+    category: 'FinTech & Banking',
+    description: 'Multi-page financial statement featuring opening/closing balance cards, itemized transaction ledger with repeated headers, and regulatory notices.',
+    format: 'A4',
+    landscape: false,
+    html: `<div class="max-w-4xl mx-auto p-12 bg-white text-slate-800 font-sans">
+  <!-- FinTech Statement Header -->
+  <div class="flex justify-between items-start border-b border-slate-200 pb-8">
+    <div>
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center font-black text-xl shadow">
+          ◈
+        </div>
+        <div>
+          <span class="text-2xl font-black text-slate-900 tracking-tight">FinScale Bank Europe</span>
+          <p class="text-xs text-slate-500 font-medium">Licensed Financial Entity • BIC: FINSDKK1</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-3 leading-relaxed">
+        Kongens Nytorv 18<br>
+        1050 København K, Denmark<br>
+        Support: business@finscale.eu • +45 70 20 80 90
+      </p>
+    </div>
+
+    <div class="text-right">
+      <span class="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-wider border border-emerald-200">
+        Account Statement
+      </span>
+      <h1 class="text-2xl font-black text-slate-900 mt-2 tracking-tight">MONTHLY LEDGER</h1>
+      <p class="text-xs font-mono text-slate-500 mt-0.5">Statement #STM-2026-11</p>
+
+      <div class="mt-3 text-xs text-slate-500 space-y-1">
+        <p><span class="font-semibold text-slate-700">Statement Period:</span> 01 Oct 2026 – 31 Oct 2026</p>
+        <p><span class="font-semibold text-slate-700">Issue Date:</span> 01 Nov 2026</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Summary Cards -->
+  <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+      <span class="text-[10px] uppercase font-bold text-slate-400 block">Account IBAN</span>
+      <span class="font-mono font-bold text-slate-900 text-xs mt-1 block">DK50 0044 0332 8109</span>
+      <span class="text-[10px] text-slate-500">Corporate EUR Account</span>
+    </div>
+
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+      <span class="text-[10px] uppercase font-bold text-slate-400 block">Opening Balance</span>
+      <span class="font-mono font-bold text-slate-900 text-sm mt-1 block">€ 42,850.20</span>
+      <span class="text-[10px] text-slate-500">As of Oct 1, 2026</span>
+    </div>
+
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+      <span class="text-[10px] uppercase font-bold text-emerald-600 block">Total Inflow</span>
+      <span class="font-mono font-bold text-emerald-600 text-sm mt-1 block">+ € 38,420.00</span>
+      <span class="text-[10px] text-slate-500">14 Credits received</span>
+    </div>
+
+    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md">
+      <span class="text-[10px] uppercase font-bold text-slate-400 block">Closing Balance</span>
+      <span class="font-mono font-black text-emerald-400 text-base mt-1 block">€ 61,424.95</span>
+      <span class="text-[10px] text-slate-400">As of Oct 31, 2026</span>
+    </div>
+  </div>
+
+  <!-- Itemized Transaction History (Protected with Smart Pagination Shield) -->
+  <div class="mt-8 overflow-hidden rounded-xl border border-slate-200">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+          <th class="py-3 px-4">Date</th>
+          <th class="py-3 px-4">Transaction Details &amp; Merchant</th>
+          <th class="py-3 px-4">Reference</th>
+          <th class="py-3 px-4 text-right">Debit (-)</th>
+          <th class="py-3 px-4 text-right">Credit (+)</th>
+          <th class="py-3 px-4 text-right">Balance</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 text-slate-700">
+        <tr>
+          <td class="py-3 px-4 font-mono text-slate-500">02 Oct 2026</td>
+          <td class="py-3 px-4">
+            <span class="font-bold text-slate-900">Stripe Payments Europe</span>
+            <p class="text-[10px] text-slate-400">Merchant Payout #po_9381042</p>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">TRX-948102</td>
+          <td class="py-3 px-4 text-right font-mono text-slate-400">—</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-emerald-600">+ € 12,450.00</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-slate-900">€ 55,300.20</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-mono text-slate-500">05 Oct 2026</td>
+          <td class="py-3 px-4">
+            <span class="font-bold text-slate-900">Amazon Web Services EMEA</span>
+            <p class="text-[10px] text-slate-400">Direct Debit Cloud Compute</p>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">AWS-INV-849</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600">- € 2,845.25</td>
+          <td class="py-3 px-4 text-right font-mono text-slate-400">—</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-slate-900">€ 52,454.95</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-mono text-slate-500">12 Oct 2026</td>
+          <td class="py-3 px-4">
+            <span class="font-bold text-slate-900">Client Wire Transfer (Acme Corp)</span>
+            <p class="text-[10px] text-slate-400">SEPA Credit Transfer #INV-2026-042</p>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">SEPA-004812</td>
+          <td class="py-3 px-4 text-right font-mono text-slate-400">—</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-emerald-600">+ € 15,000.00</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-slate-900">€ 67,454.95</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-mono text-slate-500">18 Oct 2026</td>
+          <td class="py-3 px-4">
+            <span class="font-bold text-slate-900">Tailprint SaaS Pro Subscription</span>
+            <p class="text-[10px] text-slate-400">Card Payment ch_3N4xLm2eZv</p>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">TP-SUB-PRO</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600">- € 39.00</td>
+          <td class="py-3 px-4 text-right font-mono text-slate-400">—</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-slate-900">€ 67,415.95</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-mono text-slate-500">25 Oct 2026</td>
+          <td class="py-3 px-4">
+            <span class="font-bold text-slate-900">Staff Payroll &amp; Social Taxes</span>
+            <p class="text-[10px] text-slate-400">Automated Salary Batch Run</p>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">PAY-BATCH-10</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600">- € 16,961.00</td>
+          <td class="py-3 px-4 text-right font-mono text-slate-400">—</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-slate-900">€ 50,454.95</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-mono text-slate-500">30 Oct 2026</td>
+          <td class="py-3 px-4">
+            <span class="font-bold text-slate-900">Inbound Customer Retainer</span>
+            <p class="text-[10px] text-slate-400">Consulting Services Q4</p>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">WIRE-891048</td>
+          <td class="py-3 px-4 text-right font-mono text-slate-400">—</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-emerald-600">+ € 10,970.00</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-slate-900">€ 61,424.95</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Regulatory & Legal Footer (Protected against page splitting) -->
+  <div class="break-inside-avoid mt-8 pt-6 border-t border-slate-200 text-[10px] text-slate-500 space-y-2">
+    <div class="flex justify-between items-center text-slate-700 font-semibold">
+      <span>Deposit Guarantee Scheme Notice:</span>
+      <span>Covered up to € 100,000 per depositor</span>
+    </div>
+    <p class="leading-relaxed">
+      FinScale Bank Europe is authorized and regulated by the European Central Bank and the Danish Financial Supervisory Authority (Finanstilsynet). Please inspect all entries carefully. Discrepancies must be reported in writing within 30 days of receipt.
+    </p>
+    <div class="pt-2 flex justify-between font-mono text-[9px] text-slate-400">
+      <span>SHA-256 Ledger Stamp: 9f82c01928abce847291a0b3820942851948</span>
+      <span>Page 1 of 1 • End of Statement</span>
+    </div>
+  </div>
+</div>`,
+  },
+  {
+    id: 'einvoice',
+    title: 'EU Factur-X & PEPPOL E-Invoice',
+    category: 'Billing & Accounting',
+    description: 'European hybrid e-invoice compliant with EN 16931 and ZUGFeRD 2.2 containing dual visual PDF and embedded factur-x.xml.',
+    format: 'A4',
+    landscape: false,
+    html: `<div class="max-w-4xl mx-auto p-12 bg-white text-slate-800 font-sans leading-relaxed">
+  <!-- E-Invoice Header & Compliance Badge -->
+  <div class="flex justify-between items-start border-b border-slate-200 pb-8">
+    <div>
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-xl shadow">
+          EU
+        </div>
+        <div>
+          <span class="text-2xl font-black text-slate-900 tracking-tight">Acme Nordic Cloud ApS</span>
+          <p class="text-xs text-slate-500">European B2B Infrastructure Provider</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-3 leading-relaxed">
+        Industrivej 24<br>
+        2600 Glostrup, Denmark<br>
+        VAT/CVR: DK-12345678 • PEPPOL ID: 0184:DK12345678
+      </p>
+    </div>
+
+    <div class="text-right">
+      <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold">
+        <span>🇪🇺 Factur-X / EN 16931 Compliant</span>
+      </div>
+      <h1 class="text-3xl font-black text-slate-900 mt-2 tracking-tight">TAX INVOICE</h1>
+      <p class="text-sm font-bold text-indigo-600 font-mono mt-0.5">#INV-2026-0042</p>
+
+      <div class="mt-4 text-xs text-slate-500 space-y-1">
+        <p><span class="font-semibold text-slate-700">Issue Date:</span> November 12, 2026</p>
+        <p><span class="font-semibold text-slate-700">Due Date:</span> December 12, 2026</p>
+        <p><span class="font-semibold text-slate-700">Profile:</span> EN 16931 (COMFORT/EXTENDED)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buyer Details & Embedded Metadata Notice -->
+  <div class="mt-8 grid grid-cols-2 gap-8 text-xs">
+    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200">
+      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Buyer (Customer)</span>
+      <strong class="text-sm font-extrabold text-slate-900 mt-1 block">Global Logistics Deutschland GmbH</strong>
+      <p class="text-slate-600 mt-1 leading-relaxed">
+        Alexanderplatz 4<br>
+        10178 Berlin, Germany<br>
+        USt-IdNr: DE-987654321 • PEPPOL ID: 0204:987654321
+      </p>
+    </div>
+
+    <div class="p-5 rounded-xl bg-amber-50/60 border border-amber-200/80 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-[10px] uppercase font-bold text-amber-900 tracking-wider">Embedded Factur-X Machine XML</span>
+        </div>
+        <p class="text-[11px] text-amber-900 mt-1.5 leading-relaxed">
+          This hybrid PDF/A-3 contains an embedded standardized <code class="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono text-[10px]">factur-x.xml</code> file for direct robotic ingestion in SAP, DATEV, Dinero, and Chorus Pro.
+        </p>
+      </div>
+      <div class="pt-3 border-t border-amber-200/60 text-[10px] font-mono text-amber-800 flex justify-between">
+        <span>CII Schema: urn:un:unece:uncefact:...</span>
+        <span class="font-bold">VALIDATED</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line Items Table -->
+  <div class="mt-8 overflow-hidden rounded-xl border border-slate-200">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+          <th class="py-3 px-4">Line Item Description</th>
+          <th class="py-3 px-4 text-center">Qty</th>
+          <th class="py-3 px-4 text-right">Unit Price</th>
+          <th class="py-3 px-4 text-right">VAT Rate</th>
+          <th class="py-3 px-4 text-right">Amount (EUR)</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 text-slate-700">
+        <tr>
+          <td class="py-3.5 px-4">
+            <span class="font-bold text-slate-900">Enterprise Cloud Rendering &amp; MCP Cluster</span>
+            <p class="text-[10px] text-slate-500">Dedicated Playwright pool reservation (Month of Nov 2026)</p>
+          </td>
+          <td class="py-3.5 px-4 text-center font-mono">1</td>
+          <td class="py-3.5 px-4 text-right font-mono">€ 450.00</td>
+          <td class="py-3.5 px-4 text-right font-mono text-slate-500">0% (RC)</td>
+          <td class="py-3.5 px-4 text-right font-bold font-mono">€ 450.00</td>
+        </tr>
+        <tr>
+          <td class="py-3.5 px-4">
+            <span class="font-bold text-slate-900">Factur-X European Compliance Gateway Add-on</span>
+            <p class="text-[10px] text-slate-500">Real-time PDF/A-3 compilation &amp; CII XML embedding</p>
+          </td>
+          <td class="py-3.5 px-4 text-center font-mono">1</td>
+          <td class="py-3.5 px-4 text-right font-mono">€ 150.00</td>
+          <td class="py-3.5 px-4 text-right font-mono text-slate-500">0% (RC)</td>
+          <td class="py-3.5 px-4 text-right font-bold font-mono">€ 150.00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- VAT Breakdown & Payment Info -->
+  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+      <span class="font-bold text-slate-800 uppercase text-[10px] tracking-wider block">Banking &amp; Settlement Details</span>
+      <div class="space-y-1 text-slate-600 text-[11px]">
+        <p><span class="font-semibold text-slate-800">Bank:</span> Danske Bank A/S</p>
+        <p><span class="font-semibold text-slate-800">IBAN:</span> <span class="font-mono">DK50 0044 0332 8109</span></p>
+        <p><span class="font-semibold text-slate-800">BIC/SWIFT:</span> <span class="font-mono">DABADKKK</span></p>
+        <p><span class="font-semibold text-slate-800">Payment Reference:</span> <span class="font-mono font-bold text-indigo-600">INV-2026-0042</span></p>
+      </div>
+      <p class="text-[10px] text-slate-400 pt-1">Intra-Community Supply: VAT Reverse Charged under Art. 196 EU VAT Directive.</p>
+    </div>
+
+    <div class="space-y-2 text-xs text-slate-600">
+      <div class="flex justify-between py-1.5 border-b border-slate-100">
+        <span>Net Total (Excl. VAT)</span>
+        <span class="font-mono font-bold text-slate-900">€ 600.00</span>
+      </div>
+      <div class="flex justify-between py-1.5 border-b border-slate-100">
+        <span>VAT Total (0% Reverse Charge)</span>
+        <span class="font-mono font-medium text-slate-900">€ 0.00</span>
+      </div>
+      <div class="flex justify-between py-2 text-sm font-black text-slate-900 border-t-2 border-slate-900">
+        <span>TOTAL PAYABLE</span>
+        <span class="text-amber-600 font-mono text-base">€ 600.00</span>
+      </div>
+      <p class="text-[10px] text-slate-400 text-right">Payable in EUR within 30 days of invoice date.</p>
+    </div>
+  </div>
+</div>`,
+  },
+  {
+    id: 'presentation',
+    title: '16:9 Executive Pitch Slide Deck',
+    category: 'Presentations & Pitch Decks',
+    description: 'Modern widescreen 16:9 presentation keynote slide with high-contrast typography, metrics cards, accent badges, and speaker branding.',
+    format: 'A4',
+    landscape: true,
+    html: `<div class="w-full h-full min-h-[580px] p-16 bg-slate-950 text-white font-sans flex flex-col justify-between relative overflow-hidden">
+  <!-- Ambient Gradient Aura -->
+  <div class="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+  <!-- Top Bar -->
+  <div class="flex items-center justify-between border-b border-slate-800 pb-6 relative z-10">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center font-black text-sm">TP</div>
+      <span class="font-bold text-sm tracking-tight text-slate-200">Tailprint • Series A Investor Deck</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <span class="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/60">Q4 2026 Executive Summary</span>
+    </div>
+  </div>
+
+  <!-- Slide Core Content -->
+  <div class="my-auto max-w-4xl relative z-10">
+    <span class="text-xs font-bold font-mono tracking-widest uppercase text-emerald-400">01 / MARKET VALIDATION</span>
+    <h1 class="text-4xl sm:text-5xl font-black text-white mt-3 leading-tight tracking-tight">
+      Developers Hate Puppeteer in Docker.<br>
+      <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">We Turn HTML into PDF in &lt; 500ms.</span>
+    </h1>
+
+    <div class="grid grid-cols-3 gap-6 mt-8">
+      <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+        <span class="text-3xl font-black text-white block">380 ms</span>
+        <span class="text-xs text-slate-400 mt-1 block">Median Vector PDF Latency</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+        <span class="text-3xl font-black text-emerald-400 block">22 Tools</span>
+        <span class="text-xs text-slate-400 mt-1 block">Native MCP Agent Catalog</span>
+      </div>
+      <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+        <span class="text-3xl font-black text-indigo-400 block">100%</span>
+        <span class="text-xs text-slate-400 mt-1 block">GDPR Zero-Retention Mode</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide Footer -->
+  <div class="flex items-center justify-between border-t border-slate-800 pt-6 text-xs text-slate-500 relative z-10">
+    <span>Confidential &amp; Proprietary • For Investment Review Only</span>
+    <span class="font-mono">Slide 04 / 18</span>
+  </div>
+</div>`,
+  },
+  {
+    id: 'contract',
+    title: 'Independent Contractor Agreement',
+    category: 'Legal & Contracts',
+    description: 'B2B service agreement specifying contractor deliverables, IP assignment, payment milestones, and dual signature blocks.',
+    format: 'A4',
+    landscape: false,
+    html: `<div class="max-w-4xl mx-auto p-12 bg-white text-slate-800 font-sans leading-relaxed">
+  <!-- Contract Header -->
+  <div class="text-center border-b border-slate-200 pb-6">
+    <span class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest mb-2">
+      B2B Professional Services
+    </span>
+    <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tight">
+      Independent Contractor Agreement
+    </h1>
+    <p class="text-xs text-slate-500 mt-1">Consulting, Software Engineering &amp; IP Assignment Contract</p>
+  </div>
+
+  <!-- Parties -->
+  <div class="mt-6 text-xs text-slate-700 space-y-3">
+    <p>
+      This Independent Contractor Agreement (the <strong class="text-slate-900">"Agreement"</strong>) is entered into on <strong class="text-slate-900">November 12, 2026</strong>, by and between:
+    </p>
+
+    <div class="grid grid-cols-2 gap-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+      <div>
+        <span class="font-bold text-slate-900 uppercase text-[10px] tracking-wider block text-indigo-700">Client</span>
+        <strong class="text-slate-900 block mt-1">Antigravity Technologies ApS</strong>
+        <p class="text-slate-600 mt-0.5">CVR: DK-40291844 • Gammeltorv 8, 1457 København K</p>
+      </div>
+      <div>
+        <span class="font-bold text-slate-900 uppercase text-[10px] tracking-wider block text-indigo-700">Contractor</span>
+        <strong class="text-slate-900 block mt-1">Viste Engineering Consulting</strong>
+        <p class="text-slate-600 mt-0.5">VAT: DK-98201944 • Strandvejen 102, 2900 Hellerup</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Numbered Contract Sections -->
+  <div class="mt-6 space-y-4 text-xs text-slate-700">
+    <div>
+      <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">1. Scope of Work &amp; Deliverables</h2>
+      <p class="mt-1 leading-normal text-slate-600">
+        Contractor agrees to perform cloud rendering infrastructure optimization, Playwright browser pool scaling, and Factur-X XML validation tools as detailed in Exhibit A.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">2. Compensation &amp; Invoicing</h2>
+      <p class="mt-1 leading-normal text-slate-600">
+        Client shall compensate Contractor at the fixed rate of <strong class="text-slate-900">€ 140.00 / hour</strong>, invoiced bi-weekly with 14-day payment terms via SEPA bank transfer.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">3. Intellectual Property Assignment</h2>
+      <p class="mt-1 leading-normal text-slate-600">
+        All works, code, models, documentation, and inventions authored by Contractor under this Agreement shall be considered "work made for hire" and are the sole and exclusive property of Client immediately upon creation.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-black text-slate-900 uppercase tracking-wide">4. Independent Contractor Status</h2>
+      <p class="mt-1 leading-normal text-slate-600">
+        Nothing in this Agreement shall be construed to create an employment, partnership, or joint venture relationship. Contractor is solely responsible for all tax, social security, and pension filings.
+      </p>
+    </div>
+  </div>
+
+  <!-- Dual Signatures (Protected from page breaks) -->
+  <div class="break-inside-avoid mt-8 pt-6 border-t-2 border-slate-200">
+    <p class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">IN WITNESS WHEREOF, the parties hereto have executed this Agreement:</p>
+
+    <div class="grid grid-cols-2 gap-8 text-xs">
+      <div class="p-4 rounded-xl border border-slate-300 bg-slate-50/60">
+        <span class="text-[10px] uppercase font-bold text-slate-400 block">Client Signature</span>
+        <div class="h-14 border-b border-dashed border-slate-400 flex items-end pb-1.5">
+          <span class="font-serif italic text-lg text-slate-900">Sebastian Viste</span>
+        </div>
+        <p class="mt-2 text-[11px] text-slate-600">For Antigravity Technologies ApS • Date: Nov 12, 2026</p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-slate-300 bg-slate-50/60">
+        <span class="text-[10px] uppercase font-bold text-slate-400 block">Contractor Signature</span>
+        <div class="h-14 border-b border-dashed border-slate-400 flex items-end pb-1.5">
+          <span class="font-serif italic text-lg text-indigo-900">Alexandre Moreau</span>
+        </div>
+        <p class="mt-2 text-[11px] text-slate-600">For Viste Engineering Consulting • Date: Nov 12, 2026</p>
+      </div>
+    </div>
+  </div>
+</div>`,
+  },
 ];
