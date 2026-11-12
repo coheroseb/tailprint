@@ -1056,6 +1056,168 @@ export async function generateMetadata({ params }: Props): Promise&lt;Metadata&g
       </section>
     `,
   },
+  'automate-blog-posts-to-instagram-reels': {
+    slug: 'automate-blog-posts-to-instagram-reels',
+    title: 'How to Automatically Turn Blog Posts into Instagram Reels with Make.com & Tailprint API',
+    seoTitle: 'Automate Blog-to-Instagram Reels with Make.com & Tailprint API — Full Guide',
+    description: 'Step-by-step tutorial to build a zero-click content repurposing pipeline: watch new articles via RSS, generate a 9:16 vertical video reel + captions with Tailprint, and publish directly to Instagram Reels with Make.com.',
+    category: 'Marketing Automation',
+    readTime: '6 min read',
+    datePublished: '2026-11-12T14:00:00Z',
+    dateModified: '2026-11-12T14:00:00Z',
+    keywords: 'turn blog into instagram reels, make com instagram reels automation, rss to instagram reels, url to video reel api, automate content repurposing, tailprint reel api, headless video automation',
+    relatedTool: {
+      name: 'AI Social Reel Maker',
+      url: '/tools/reel',
+    },
+    contentHtml: `
+      <section class="space-y-6">
+        <p class="text-lg text-slate-300 leading-relaxed">
+          Every founder, developer, and content team knows the struggle: you spend hours researching and writing high-value technical articles or blog updates, only to watch them get zero social distribution because you don't have the time to manually edit vertical videos, write punchy scripts, and format captions for <strong>Instagram Reels</strong> and <strong>TikTok</strong>.
+        </p>
+
+        <div class="p-5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30">
+          <h3 class="text-indigo-300 font-bold text-sm uppercase tracking-wider mb-2">⚡ The Zero-Touch Automation Pipeline</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            By connecting an <strong>RSS Feed</strong> to <strong>Make.com</strong> and delegating the heavy lifting to the <strong>Tailprint Video &amp; Reel Engine</strong>, every published blog post automatically generates a dynamic 9:16 vertical MP4 video, a high-converting caption with hashtags, and publishes straight to Instagram without a single manual click.
+          </p>
+        </div>
+
+        <h2 class="text-2xl font-bold text-white pt-6">How the Architecture Works</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Instead of brittle browser extensions or expensive $50/mo video SaaS tools, this workflow relies on lightweight event triggers and a dedicated headless rendering API:
+        </p>
+
+        <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 my-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-xs font-mono font-bold text-amber-400 uppercase">1. Trigger</span>
+              <h4 class="font-bold text-white mt-1 text-sm">RSS Feed Item</h4>
+              <p class="text-xs text-slate-400 mt-1">Make.com polls your blog RSS for new article links</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-xs font-mono font-bold text-cyan-400 uppercase">2. Extract</span>
+              <h4 class="font-bold text-white mt-1 text-sm">Tailprint Scraper</h4>
+              <p class="text-xs text-slate-400 mt-1">Scrapes core article text, extracts headings &amp; stats</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-xs font-mono font-bold text-indigo-400 uppercase">3. Render</span>
+              <h4 class="font-bold text-white mt-1 text-sm">9:16 Video Engine</h4>
+              <p class="text-xs text-slate-400 mt-1">Compiles slide animations &amp; records vertical MP4</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-xs font-mono font-bold text-pink-400 uppercase">4. Publish</span>
+              <h4 class="font-bold text-white mt-1 text-sm">Instagram API</h4>
+              <p class="text-xs text-slate-400 mt-1">Posts reel with generated caption &amp; hashtags</p>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-white pt-6">Step 1: Set Up the RSS Trigger in Make.com</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Create a new scenario in <strong>Make.com</strong>. Add the <strong>RSS</strong> module as the trigger:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 text-slate-300 text-sm">
+          <li><strong>Module</strong>: <em>RSS &rarr; Watch RSS feed items</em></li>
+          <li><strong>URL</strong>: Your site's RSS feed (e.g. <code>https://tailprint.com/rss.xml</code> or <code>https://yourdomain.com/feed</code>)</li>
+          <li><strong>Maximum number of returned items</strong>: <code>1</code></li>
+          <li><strong>Schedule</strong>: Every 15 to 60 minutes, or once daily depending on your publication schedule.</li>
+        </ul>
+
+        <h2 class="text-2xl font-bold text-white pt-6">Step 2: Add the Tailprint Video Generator (HTTP Module)</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Tailprint offers a specialized endpoint <code>POST /v1/tools/reel/from-url</code> that takes an article URL, parses its content, creates a compelling 4-slide script with a hook, pain point, solution, and CTA, and generates a ready-to-stream 9:16 MP4 video URL.
+        </p>
+
+        <p class="text-slate-400 text-sm">Add an <strong>HTTP &rarr; Make a request</strong> module with the following settings:</p>
+
+        <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 space-y-2 overflow-x-auto">
+          <div><span class="text-indigo-400 font-bold">URL:</span> https://tailprint.com/v1/tools/reel/from-url</div>
+          <div><span class="text-indigo-400 font-bold">Method:</span> POST</div>
+          <div><span class="text-indigo-400 font-bold">Headers:</span></div>
+          <div class="pl-4 text-slate-400">Content-Type: application/json</div>
+          <div class="pl-4 text-slate-400">Authorization: Bearer sec_live_your_tailprint_api_key</div>
+          <div><span class="text-indigo-400 font-bold">Body Type:</span> Raw (application/json)</div>
+          <div><span class="text-indigo-400 font-bold">Request Content:</span></div>
+          <pre class="text-emerald-400 p-2 bg-slate-900 rounded">{
+  "url": "{{1.url}}",
+  "record_video": false
+}</pre>
+          <div><span class="text-indigo-400 font-bold">Timeout:</span> 60 seconds <span class="text-slate-500">(rendering video and carousel takes ~15s)</span></div>
+          <div><span class="text-indigo-400 font-bold">Parse response:</span> Yes</div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-white pt-6">Step 3: Publish with Instagram for Business</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Connect your Instagram Professional or Creator account connected to a Facebook page, then add the <strong>Instagram for Business</strong> module:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 text-slate-300 text-sm">
+          <li><strong>Module</strong>: <em>Instagram for Business &rarr; Create a Reel</em></li>
+          <li><strong>Account</strong>: Select your connected Instagram Business Account.</li>
+          <li><strong>Video URL</strong>: <code>{{2.data.videoUrl}}</code> <span class="text-slate-500">(The public hosted MP4 URL returned by Tailprint)</span></li>
+          <li><strong>Caption</strong>: <code>{{2.data.caption}}</code> <span class="text-slate-500">(The structured caption generated with bullets and hashtags)</span></li>
+          <li><strong>Cover Image URL</strong>: <code>{{2.data.previewUrl}}</code> <span class="text-slate-500">(Optional high-res PNG cover card)</span></li>
+        </ul>
+
+        <div class="p-5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 my-6">
+          <h4 class="text-emerald-300 font-bold text-sm mb-1">🎉 Instant Verification</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Click <strong>Run once</strong> in Make.com with an existing article link. Within 20 seconds, the scenario will output the video, deliver it to Instagram, and your Reel will be live and gaining views in the algorithmic feed.
+          </p>
+        </div>
+
+        <h2 class="text-2xl font-bold text-white pt-6">Developer Alternative: Calling the API via Node.js or cURL</h2>
+        <p class="text-slate-300 leading-relaxed">
+          If you prefer triggering video generation directly from your CMS webhook (Ghost, Strapi, Sanity, or WordPress), you can call the API in any backend environment:
+        </p>
+
+        <pre class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 font-mono text-xs overflow-x-auto"><code>// Run this whenever a new post is published in your CMS
+const response = await fetch('https://tailprint.com/v1/tools/reel/from-url', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer ' + process.env.TAILPRINT_API_KEY,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    url: 'https://example.com/blog/my-new-release',
+    record_video: false
+  })
+});
+
+const data = await response.json();
+console.log('Video MP4:', data.videoUrl);
+console.log('Caption:', data.caption);
+console.log('Slides PDF:', data.pdfUrl);</code></pre>
+
+        <h2 class="text-2xl font-bold text-white pt-6">Why This Beats Traditional Video Creation</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h4 class="text-indigo-400 font-bold text-sm mb-1">⏱️ 0 Minutes Invested</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">Once configured, the pipeline runs 24/7 in the background whenever you publish content.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h4 class="text-cyan-400 font-bold text-sm mb-1">🎯 Consistent Branding</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">Every reel follows your chosen color scheme, verified typography, and proper 9:16 aspect ratio safe zones.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h4 class="text-emerald-400 font-bold text-sm mb-1">💸 90% Cost Reduction</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">Skip expensive $50-$100/mo AI video SaaS pricing and render dozens of video reels using your standard Tailprint quota.</p>
+          </div>
+        </div>
+
+        <!-- Interactive CTA Banner -->
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-purple-950/50 to-slate-950 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-6 my-8">
+          <div>
+            <h3 class="text-lg font-black text-white">Try the Social Reel Generator Live</h3>
+            <p class="text-slate-300 text-xs mt-1">Paste any URL or enter your key points to preview your 9:16 Reel slides and video right now.</p>
+          </div>
+          <a href="/tools/reel" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-sm transition shrink-0 shadow-lg shadow-indigo-600/30">
+            Launch Social Reel Studio →
+          </a>
+        </div>
+      </section>
+    `,
+  },
 };
 
 export const guidesRoutes: FastifyPluginAsyncZod = async (fastify) => {

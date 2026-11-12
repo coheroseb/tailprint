@@ -274,6 +274,12 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://tailprint.com/guides/automate-blog-posts-to-instagram-reels</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://tailprint.com/tools/canva-logo</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
