@@ -24,7 +24,7 @@ export const scrapeRoutes: FastifyPluginAsyncZod = async (fastify) => {
       reply.code(401).send({
         statusCode: 401,
         error: 'Unauthorized',
-        message: 'Missing or invalid Bearer authentication token. Example header: Authorization: Bearer sec_live_dev_test_key_12345',
+        message: 'Missing or invalid Bearer authentication token. Example header: Authorization: Bearer YOUR_API_KEY',
       });
       return null;
     }

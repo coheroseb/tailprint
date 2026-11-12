@@ -495,13 +495,13 @@ Cursor IDE & Windsurf:
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tailprint — Tailwind-Native Render &amp; PDF Engine + AI Web Scraper</title>
+  <title>Tailprint — Document &amp; Visual Infrastructure for Modern Apps &amp; AI Agents</title>
   <link rel="canonical" href="https://tailprint.com" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E" />
   
   <!-- Primary Meta Tags (SEO) -->
-  <meta name="description" content="Tailprint is the high-performance Tailwind-Native Render &amp; PDF Engine + Model Context Protocol (MCP) server. Generate print-ready vector PDFs and cached social cards in under 500ms." />
-  <meta name="keywords" content="Tailwind HTML to PDF, Tailwind CSS PDF API, PDF generation API, Model Context Protocol PDF, MCP server, vector PDF engine, Open Graph image generator, HTML to image API, web scraper for LLM, token efficient markdown" />
+  <meta name="description" content="Developer-first document &amp; visual infrastructure. Generate pixel-perfect vector PDFs, compliant European Factur-X e-invoices, high-DPI charts, and marketing assets in under 500ms — backed by 22 native MCP tools and zero-retention privacy." />
+  <meta name="keywords" content="Tailwind HTML to PDF, Factur-X API, ZUGFeRD invoice generator, EN 16931, Tailwind CSS PDF API, PDF generation API, Model Context Protocol PDF, MCP server, vector PDF engine, Open Graph image generator, web scraper for LLM" />
   <meta name="author" content="Tailprint" />
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   <meta name="theme-color" content="#090d16" />
@@ -511,22 +511,22 @@ Cursor IDE & Windsurf:
   <meta property="og:url" content="https://tailprint.com" />
   <meta property="og:site_name" content="Tailprint" />
   <meta property="og:locale" content="en_US" />
-  <meta property="og:title" content="Tailprint — Tailwind-Native Render &amp; PDF Engine + AI Web Scraper" />
-  <meta property="og:description" content="Sub-500ms PDF &amp; Open Graph image generation from raw Tailwind CSS, plus LLM-ready web scraping with 90%+ token savings. Model Context Protocol (MCP) ready." />
+  <meta property="og:title" content="Tailprint — Document &amp; Visual Infrastructure for Modern Apps &amp; AI Agents" />
+  <meta property="og:description" content="Programmable output engine for SaaS and AI. Sub-500ms vector PDFs, Factur-X e-invoices, dynamic charts, and 22 Model Context Protocol (MCP) tools." />
   <meta property="og:image" content="https://tailprint.com/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Tailprint — Developer Render &amp; PDF Engine" />
+  <meta property="og:image:alt" content="Tailprint — Document &amp; Visual Infrastructure" />
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://tailprint.com" />
   <meta name="twitter:site" content="@tailprint" />
   <meta name="twitter:creator" content="@tailprint" />
-  <meta name="twitter:title" content="Tailprint — Tailwind-Native Render &amp; PDF Engine" />
-  <meta name="twitter:description" content="Turn Tailwind CSS HTML into high-fidelity vector PDFs and Open Graph preview cards in under 500ms. Official MCP server for Claude and Cursor." />
+  <meta name="twitter:title" content="Tailprint — Document &amp; Visual Infrastructure" />
+  <meta name="twitter:description" content="Turn Tailwind CSS and AI prompts into vector PDFs, compliant EU e-invoices, and social visuals in under 500ms. Official 22-tool MCP server." />
   <meta name="twitter:image" content="https://tailprint.com/og-image.png" />
-  <meta name="twitter:image:alt" content="Tailprint — Developer Render &amp; PDF Engine" />
+  <meta name="twitter:image:alt" content="Tailprint — Document &amp; Visual Infrastructure" />
 
   <!-- Schema.org JSON-LD Structured Data for Search & Generative Engines (SEO & GEO) -->
   <script type="application/ld+json">
@@ -708,7 +708,7 @@ Cursor IDE & Windsurf:
       <!-- Top Banner Pill -->
       <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-950/70 border border-indigo-800/60 text-indigo-300 text-xs font-semibold mb-6 backdrop-blur-md shadow-lg shadow-indigo-950/50">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Sub-500ms Chromium Engine • Tailwind v3 & v4 JIT</span>
+        <span>Developer &amp; AI Output Infrastructure • Sub-500ms Chromium Engine • Tailwind v3 &amp; v4 JIT</span>
       </div>
 
       <!-- Avatar & Floating Interactive Mascot Unit -->
@@ -817,12 +817,12 @@ Cursor IDE & Windsurf:
       </div>
 
       <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
-        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML</span>.<br>
-        Receive Pixel-Perfect <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">PDFs, Visuals &amp; E-Invoices</span>.
+        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML or Prompts</span>.<br>
+        Receive Production <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">PDFs, Visuals &amp; E-Invoices</span>.
       </h1>
 
       <p class="mt-6 text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-        The complete document &amp; graphic engine for modern developers and AI agents. Generate vector PDFs with <strong>Smart Pagination Shield</strong>, hybrid Factur-X e-invoices, presentations, and social media assets in under 500ms — backed by <strong>22 native MCP tools</strong> and complete GDPR zero-retention privacy.
+        The unified programmable output engine for modern SaaS and autonomous AI agents. Generate vector PDFs with <strong>Smart Pagination Shield</strong>, legally compliant European Factur-X e-invoices, high-DPI charts, and marketing visuals in under 500ms — backed by <strong>22 native MCP tools</strong> and zero-retention privacy.
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-3.5">
@@ -864,108 +864,152 @@ Cursor IDE & Windsurf:
         </div>
       </div>
 
-      <!-- Complete Tailprint Ecosystem Showcase (6 Pillars) -->
-      <div class="mt-16 text-left">
-        <div class="text-center max-w-2xl mx-auto mb-8">
-          <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/70 border border-indigo-800/50 px-3 py-1 rounded-full">Complete Platform Architecture</span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3">Everything Modern Developers &amp; AI Agents Need</h2>
-          <p class="text-slate-400 text-sm mt-1">From raw Tailwind styling to compliant European e-invoicing and autonomous LLM tooling.</p>
+      <!-- The 3 Core Platform Pillars (Clear Enterprise Positioning) -->
+      <div class="mt-16 text-left" id="documents">
+        <div class="text-center max-w-2xl mx-auto mb-10">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/70 border border-indigo-800/50 px-3.5 py-1.5 rounded-full">Unified Output Architecture</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3">Three Unified Product Suites. One Fast Engine.</h2>
+          <p class="text-slate-400 text-sm mt-1.5">Organized for enterprise reliability, high-converting visuals, and autonomous AI agents.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <!-- Pillar 1: Tailwind PDF Engine -->
-          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 transition shadow-lg group">
-            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
-              ⚡
+          <!-- Pillar 1: Documents & Compliance Suite -->
+          <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-indigo-500/30 hover:border-indigo-400/60 transition shadow-xl relative overflow-hidden flex flex-col justify-between group">
+            <div class="absolute -right-12 -top-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-200">
+                  📄
+                </div>
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">B2B Core</span>
+              </div>
+              <h3 class="text-lg font-black text-white group-hover:text-indigo-300 transition">Document &amp; Compliance Suite</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Replace brittle Docker Puppeteer setups with a high-throughput vector PDF and compliance engine built for mission-critical SaaS billing.
+              </p>
+
+              <ul class="mt-4 space-y-2 text-xs text-slate-300">
+                <li class="flex items-start space-x-2">
+                  <span class="text-indigo-400 font-bold">✓</span>
+                  <span><strong>Tailwind Vector PDF:</strong> JIT compilation without PostCSS or build step.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-indigo-400 font-bold">✓</span>
+                  <span><strong>EU Factur-X / ZUGFeRD:</strong> Hybrid PDF/A-3 with embedded XML (EN 16931).</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-indigo-400 font-bold">✓</span>
+                  <span><strong>Smart Pagination Shield:</strong> Automatic repeating thead &amp; zero row slicing.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-indigo-400 font-bold">✓</span>
+                  <span><strong>Full Document Ops:</strong> PDF merge, split, AcroForm fill, watermark &amp; compress.</span>
+                </li>
+              </ul>
             </div>
-            <h3 class="text-base font-bold text-white group-hover:text-indigo-300 transition">Tailwind-Native PDF Engine</h3>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Compile raw HTML with Tailwind CSS v3 and v4 JIT utility classes directly into crisp, 100% vector PDFs in under 500ms. Supports arbitrary values, custom margins, dynamic header/footer page numbering, and AES-256 encryption.
-            </p>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-              <span>POST /v1/render/pdf</span>
-              <span class="text-indigo-400 font-semibold">Vector PDF</span>
+
+            <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+              <a href="#einvoice" class="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1">
+                <span>Explore E-Invoicing</span>
+                <span>→</span>
+              </a>
+              <span class="font-mono text-[11px] text-slate-500">POST /v1/render/pdf</span>
             </div>
           </div>
 
-          <!-- Pillar 2: Smart Pagination Shield -->
-          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 transition shadow-lg group">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
-              🛡️
+          <!-- Pillar 2: Visual & Media Engine -->
+          <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-pink-500/30 hover:border-pink-400/60 transition shadow-xl relative overflow-hidden flex flex-col justify-between group" id="visuals">
+            <div class="absolute -right-12 -top-12 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-11 h-11 rounded-xl bg-pink-500/10 border border-pink-500/30 text-pink-400 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-200">
+                  🎨
+                </div>
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">Developer Visuals</span>
+              </div>
+              <h3 class="text-lg font-black text-white group-hover:text-pink-300 transition">Visual &amp; Media Engine</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Automate high-converting marketing visuals, dynamic social cards, and live browser previews directly from code and templates.
+              </p>
+
+              <ul class="mt-4 space-y-2 text-xs text-slate-300">
+                <li class="flex items-start space-x-2">
+                  <span class="text-pink-400 font-bold">✓</span>
+                  <span><strong>Template Studio IDE:</strong> Live split-screen Tailwind editor with instant export.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-pink-400 font-bold">✓</span>
+                  <span><strong>Open Graph Social Cards:</strong> 1200×630 cards with instant SHA-256 caching.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-pink-400 font-bold">✓</span>
+                  <span><strong>3D Device Mockups:</strong> Wrap any URL into MacBook &amp; iPhone studio scenes.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-pink-400 font-bold">✓</span>
+                  <span><strong>Dynamic Charts &amp; QR:</strong> Chart.js data visuals, Mermaid diagrams &amp; barcodes.</span>
+                </li>
+              </ul>
             </div>
-            <h3 class="text-base font-bold text-white group-hover:text-emerald-300 transition">Smart Pagination &amp; Table Shield</h3>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Eliminates the classic multi-page PDF nightmare. Table headers (<code class="text-emerald-300">&lt;thead&gt;</code>) repeat automatically on every page, rows never slice in half, orphan headings are prevented, and headless tables are auto-wrapped.
-            </p>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-              <span>smart_pagination: true</span>
-              <span class="text-emerald-400 font-semibold">Zero Cutoffs</span>
+
+            <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+              <a href="/studio" class="text-pink-400 hover:text-pink-300 font-semibold flex items-center space-x-1">
+                <span>Open Template Studio</span>
+                <span>→</span>
+              </a>
+              <span class="font-mono text-[11px] text-slate-500">POST /v1/render/image</span>
             </div>
           </div>
 
-          <!-- Pillar 3: Interactive Template Studio -->
-          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/50 transition shadow-lg group">
-            <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
-              🎨
-            </div>
-            <h3 class="text-base font-bold text-white group-hover:text-purple-300 transition">Live Template Studio (/studio)</h3>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Full browser-based IDE with split-screen real-time Tailwind JIT preview, canvas sizing (A4, Letter, 16:9 Presentation, OG Card), dynamic JSON variable substitution, visual page break guides, and instant cURL/SDK code export.
-            </p>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-              <span>/studio • /tools/studio</span>
-              <span class="text-purple-400 font-semibold">Live IDE</span>
-            </div>
-          </div>
+          <!-- Pillar 3: AI & Autonomous Agent Runtime -->
+          <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-purple-500/30 hover:border-purple-400/60 transition shadow-xl relative overflow-hidden flex flex-col justify-between group" id="ai-agent">
+            <div class="absolute -right-12 -top-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-200">
+                  🤖
+                </div>
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">AI Ecosystem</span>
+              </div>
+              <h3 class="text-lg font-black text-white group-hover:text-purple-300 transition">AI &amp; Agent Infrastructure</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                Give Claude Desktop, Cursor, and autonomous AI agents hands to render documents, scrape clean context, and verify visual regression.
+              </p>
 
-          <!-- Pillar 4: 22 Native MCP Tools -->
-          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 transition shadow-lg group">
-            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
-              🤖
+              <ul class="mt-4 space-y-2 text-xs text-slate-300">
+                <li class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">✓</span>
+                  <span><strong>22 Native MCP Tools:</strong> Zero-setup Model Context Protocol via stdio &amp; SSE.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">✓</span>
+                  <span><strong>LLM Web Scraper:</strong> Strips cookie walls &amp; ads with 90%+ token savings.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">✓</span>
+                  <span><strong>Visual QA Regression:</strong> 3-panel pixelmatch diff heatmaps for UI testing.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">✓</span>
+                  <span><strong>GDPR Zero-Retention:</strong> Volatile RAM execution mode for sensitive client data.</span>
+                </li>
+              </ul>
             </div>
-            <h3 class="text-base font-bold text-white group-hover:text-cyan-300 transition">22 Native AI MCP Tools</h3>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Equip Claude Desktop, Cursor, and autonomous agents with complete document generation, PDF merging/splitting/form-filling, Mermaid diagramming, 16:9 presentations, web scraping, and automated SEO/a11y webpage audits.
-            </p>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-              <span>npx tailprint • SSE Stream</span>
-              <span class="text-cyan-400 font-semibold">22 Tools</span>
-            </div>
-          </div>
 
-          <!-- Pillar 5: Zero-Retention GDPR Privacy -->
-          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-rose-500/50 transition shadow-lg group">
-            <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
-              🔒
-            </div>
-            <h3 class="text-base font-bold text-white group-hover:text-rose-300 transition">Zero-Retention Mode (GDPR/HIPAA)</h3>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              When processing highly confidential healthcare, financial, or legal documents, enable <code class="text-rose-300">no_store: true</code>. Renders entirely in volatile RAM, bypasses CDN disk persistence, and omits caching.
-            </p>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-              <span>no_store: true</span>
-              <span class="text-rose-400 font-semibold">100% Private</span>
-            </div>
-          </div>
-
-          <!-- Pillar 6: EU Factur-X / PEPPOL E-Invoicing -->
-          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 transition shadow-lg group">
-            <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
-              🇪🇺
-            </div>
-            <h3 class="text-base font-bold text-white group-hover:text-amber-300 transition">EU Hybrid E-Invoicing (Factur-X)</h3>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Generate legally compliant European electronic invoices (EN 16931 / ZUGFeRD 2.2). Combines a human-readable Tailwind A4 PDF with embedded machine-readable <code class="text-amber-300">factur-x.xml</code> for SAP, DATEV, Dinero &amp; Chorus Pro.
-            </p>
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-              <span>POST /v1/render/einvoice</span>
-              <span class="text-amber-400 font-semibold">PEPPOL / EN 16931</span>
+            <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+              <a href="#mcp" class="text-purple-400 hover:text-purple-300 font-semibold flex items-center space-x-1">
+                <span>Connect MCP Tools</span>
+                <span>→</span>
+              </a>
+              <span class="font-mono text-[11px] text-slate-500">npx tailprint</span>
             </div>
           </div>
 
         </div>
       </div>
+    </div>
+  </section>
     </div>
   </section>
 
@@ -1216,6 +1260,119 @@ Cursor IDE & Windsurf:
 
     </div>
   </section>
+
+  <!-- European E-Invoicing & Compliance Section (Enterprise B2B Anchor) -->
+  <section id="einvoice" class="py-24 border-t border-slate-800/80 bg-gradient-to-b from-slate-950 via-amber-950/15 to-slate-950 relative overflow-hidden">
+    <div class="absolute -top-32 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="max-w-6xl mx-auto px-6 relative z-10">
+      
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-amber-950/70 border border-amber-800/60 text-amber-300 text-xs font-semibold mb-4 backdrop-blur-md shadow-lg shadow-amber-950/50">
+          <span>🇪🇺 Mandatory EU B2B Compliance • EN 16931 • Factur-X • ZUGFeRD 2.2</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          Hybrid PDF/A-3 Electronic Invoicing for Modern SaaS &amp; ERPs
+        </h2>
+        <p class="text-slate-400 mt-3 text-base leading-relaxed">
+          European B2B mandates require businesses in Germany, France, Poland, Italy, and across the EU to issue structured e-invoices. Tailprint compiles legal hybrid PDF/A-3 documents with embedded CrossIndustryInvoice XML in under 800ms.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Left: Compliance Specs & Features (7 cols) -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
+            <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+              <span class="text-amber-400">📄 + 🤖</span>
+              <span>The Hybrid Dual-Format Standard</span>
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Every invoice generated by <code class="text-amber-400 bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-800/50">POST /v1/render/einvoice</code> contains two synchronized layers:
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+              <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+                <div class="text-xs font-bold text-amber-300 flex items-center space-x-1.5">
+                  <span>1. Visual Vector PDF</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+                  Crisp, branded Tailwind CSS A4 layout for human accounting and print review.
+                </p>
+              </div>
+
+              <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+                <div class="text-xs font-bold text-emerald-300 flex items-center space-x-1.5">
+                  <span>2. Embedded factur-x.xml</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1 leading-snug">
+                  Standardized CII XML embedded in the PDF catalog for automatic ERP robot ingestion.
+                </p>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+              <span class="text-slate-500 font-semibold uppercase text-[10px]">ERP Ready:</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60 text-slate-300">SAP</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60 text-slate-300">DATEV</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60 text-slate-300">Dynamics 365</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60 text-slate-300">Chorus Pro</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60 text-slate-300">PEPPOL</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60 text-slate-300">Dinero / Billy</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3">
+            <a href="/tools/factur-x" class="px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition shadow-lg shadow-amber-600/25 flex items-center justify-center space-x-2">
+              <span>⚡ Try Live Factur-X Generator</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-950/50 text-amber-200">Free Tool</span>
+            </a>
+            <a href="/docs#section/einvoice-guide" class="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs transition flex items-center justify-center space-x-2">
+              <span>📖 Read E-Invoicing API Documentation</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Right: cURL / JSON Payload Snippet (5 cols) -->
+        <div class="lg:col-span-5 bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-2xl relative font-mono text-xs">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800 text-[11px] text-slate-400">
+            <span class="text-amber-400 font-bold">POST /v1/render/einvoice</span>
+            <span class="text-slate-500">profile: BASIC | EN16931</span>
+          </div>
+
+          <pre class="text-slate-300 text-[11px] leading-relaxed overflow-x-auto"><code>{
+  <span class="text-purple-400">"invoiceNumber"</span>: <span class="text-emerald-300">"INV-2026-0042"</span>,
+  <span class="text-purple-400">"currency"</span>: <span class="text-emerald-300">"EUR"</span>,
+  <span class="text-purple-400">"profile"</span>: <span class="text-emerald-300">"BASIC"</span>,
+  <span class="text-purple-400">"seller"</span>: {
+    <span class="text-purple-400">"name"</span>: <span class="text-emerald-300">"Acme Nordic ApS"</span>,
+    <span class="text-purple-400">"vatId"</span>: <span class="text-emerald-300">"DK12345678"</span>,
+    <span class="text-purple-400">"country"</span>: <span class="text-emerald-300">"DK"</span>
+  },
+  <span class="text-purple-400">"buyer"</span>: {
+    <span class="text-purple-400">"name"</span>: <span class="text-emerald-300">"Global Logistics GmbH"</span>,
+    <span class="text-purple-400">"vatId"</span>: <span class="text-emerald-300">"DE987654321"</span>,
+    <span class="text-purple-400">"country"</span>: <span class="text-emerald-300">"DE"</span>
+  },
+  <span class="text-purple-400">"lineItems"</span>: [{
+    <span class="text-purple-400">"name"</span>: <span class="text-emerald-300">"Cloud SaaS Subscription"</span>,
+    <span class="text-purple-400">"quantity"</span>: <span class="text-sky-300">1</span>,
+    <span class="text-purple-400">"unitPrice"</span>: <span class="text-sky-300">99.00</span>,
+    <span class="text-purple-400">"vatRate"</span>: <span class="text-sky-300">25.0</span>
+  }]
+}</code></pre>
+
+          <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
+            <span>Returns: PDF/A-3 with embedded XML</span>
+            <span class="text-emerald-400 font-bold">&lt; 800ms</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
   <section id="scraper" class="py-16 bg-slate-900/60 border-t border-slate-800/80">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center max-w-2xl mx-auto mb-10">
@@ -2555,7 +2712,7 @@ This domain is for use in documentation examples without needing permission. Thi
 
       const jsonStr = JSON.stringify(payloadObj);
       const cmd = 'curl -X POST ' + window.location.origin + endpoint + ' ' +
-        '-H "Authorization: Bearer sec_live_dev_test_key_12345" ' +
+        '-H "Authorization: Bearer YOUR_API_KEY" ' +
         '-H "Content-Type: application/json" ' +
         '--data-raw ' + JSON.stringify(jsonStr) + ' ' +
         '--output ' + key + '.' + outputExt;
