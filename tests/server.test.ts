@@ -293,6 +293,27 @@ describe('Tailprint Test Suite', () => {
       expect(data.success).toBe(true);
       expect(data.script).toBeDefined();
       expect(data.script.slides.length).toBeGreaterThan(0);
+      expect(data.script.language).toBe('en');
+    }, 25000);
+
+    it('POST /v1/tools/reel/script detects Danish language and outputs Danish tags & CTA', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/tools/reel/script',
+        remoteAddress: `10.42.1.${Math.floor(Math.random() * 200) + 1}`,
+        payload: {
+          url: 'https://cohero.dk',
+          record_video: false,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data.success).toBe(true);
+      expect(data.script.language).toBe('da');
+      expect(data.script.languageLabel).toContain('Dansk');
+      expect(data.script.cta).toContain('bio');
+      expect(data.script.slides[0].tag).toBe('GENNEMBRUDDET');
     }, 25000);
 
     it('POST /v1/tools/carousel renders a multi-slide carousel without API key (rate-limited)', async () => {

@@ -19,6 +19,7 @@ export const ScrapeMarkdownResponseSchema = z.object({
   markdown: z.string().describe('Clean, structured Markdown formatted for LLM prompts, RAG context, or agents'),
   word_count: z.number().int().describe('Total word count in cleaned markdown'),
   estimated_tokens: z.number().int().describe('Estimated LLM token count (~1.3 tokens per word)'),
+  language: z.string().optional().describe('Detected ISO language code (e.g. "da", "en", "de")'),
   raw_content_bytes: z.number().int().describe('Raw HTML payload size in bytes before cleaning'),
   markdown_bytes: z.number().int().describe('Cleaned Markdown payload size in bytes'),
   token_savings_percent: z.string().describe('Percentage of token payload saved compared to raw HTML (e.g. "94.2%")'),

@@ -1367,8 +1367,12 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </label>
             <span class="text-[10px] text-slate-500 hidden sm:inline">Chromium auto-scroller</span>
           </div>
+          <div id="reel-detected-lang-pill" class="hidden items-center space-x-2 pt-2 border-t border-slate-800/80">
+            <span class="text-[11px] text-slate-400">Detected Language:</span>
+            <span id="reel-lang-badge" class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono text-[10px] font-bold"></span>
+          </div>
           <p class="text-[11px] text-slate-400">
-            Tailprint extracts your core takeaways and records an ultra-smooth scrolling video of your live webpage.
+            Tailprint detects page language, extracts core takeaways &amp; stats, and records a smooth scrolling video.
           </p>
         </div>
 
@@ -2114,6 +2118,16 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           document.getElementById('reel-brand').value = reelState.brand;
           document.getElementById('reel-handle').value = reelState.handle;
           document.getElementById('reel-cta').value = reelState.cta;
+
+          if (data.script.languageLabel) {
+            const pill = document.getElementById('reel-detected-lang-pill');
+            const badge = document.getElementById('reel-lang-badge');
+            if (pill && badge) {
+              badge.textContent = data.script.languageLabel;
+              pill.classList.remove('hidden');
+              pill.classList.add('flex');
+            }
+          }
 
           currentSlideIdx = 0;
           renderSlidesEditor();
@@ -2938,6 +2952,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               aspectRatio: z.string().optional(),
               screenrecordUrl: z.string().optional(),
               screenrecordMode: z.string().optional(),
+              language: z.string().optional(),
+              languageLabel: z.string().optional(),
               slides: z.array(
                 z.object({
                   tag: z.string().optional(),

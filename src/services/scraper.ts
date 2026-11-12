@@ -5,6 +5,7 @@ import { gfm } from 'turndown-plugin-gfm';
 import type { BrowserContext, Page } from 'playwright';
 import { browserService } from './browser.js';
 import { env } from '../config/env.js';
+import { detectPageLanguage } from './language.js';
 import type { ScrapeMarkdownRequest, ScrapeMarkdownResponse } from '../schemas/scrape.js';
 
 export class ScraperService {
@@ -155,6 +156,19 @@ export class ScraperService {
       ? Math.max(0, ((1 - mdBytes / rawBytes) * 100)).toFixed(1) + '%'
       : '0.0%';
 
+    // Detect page language
+    const rawLangAttr =
+      doc.documentElement?.getAttribute('lang') ||
+      doc.querySelector('meta[property="og:locale"]')?.getAttribute('content') ||
+      doc.querySelector('meta[http-equiv="content-language"]')?.getAttribute('content') ||
+      null;
+
+    const detected = detectPageLanguage({
+      url: opts.url,
+      htmlLangAttr: rawLangAttr,
+      text: markdown,
+    });
+
     return {
       url: opts.url,
       title,
@@ -162,6 +176,7 @@ export class ScraperService {
       published_at: metaDate,
       description,
       markdown,
+      language: detected.code,
       word_count: wordCount,
       estimated_tokens: estimatedTokens,
       raw_content_bytes: rawBytes,

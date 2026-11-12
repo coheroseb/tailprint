@@ -1,6 +1,7 @@
 import { scraperService } from './scraper.js';
 import { browserService } from './browser.js';
 import { storageService } from './storage.js';
+import { detectPageLanguage, LANGUAGE_PROFILES } from './language.js';
 
 export interface ReelSlide {
   tag?: string;
@@ -18,6 +19,8 @@ export interface ReelScript {
   aspectRatio?: '9:16' | '1:1' | '16:9' | '4:5';
   screenrecordUrl?: string;
   screenrecordMode?: 'inset' | 'backdrop' | 'none';
+  language?: string;
+  languageLabel?: string;
   slides: ReelSlide[];
   cta: string;
   sourceUrl?: string;
@@ -69,7 +72,9 @@ export class ReelService {
   }
 
   /**
-   * Scrapes any public URL and synthesizes a punchy 4-5 slide vertical Reel / Story script.
+   * Scrapes any public URL and synthesizes a punchy 4-slide vertical Reel / Story script.
+   * Automatically detects the page language (da, en, de, etc.) and analyzes what the page
+   * is actually about to generate the most relevant, high-converting slides.
    * Optionally captures a live scrolling screen recording of the target website in parallel.
    */
   public async generateScriptFromUrl(url: string, includeScreenrecord = false): Promise<ReelScript> {
@@ -89,67 +94,367 @@ export class ReelService {
 
     const [scraped, screenrecord] = await Promise.all([scrapePromise, recordPromise]);
 
-    // Derive brand from domain
-    let brand = 'Insights';
+    // 1. Detect language
+    const detected = detectPageLanguage({
+      url,
+      htmlLangAttr: (scraped as any).language,
+      text: scraped.markdown,
+    });
+
+    // 2. Try LLM synthesis if API key is present
+    const aiScript = await this.trySynthesizeWithLLM(url, scraped, detected).catch(() => null);
+    if (aiScript) {
+      if (screenrecord) {
+        aiScript.screenrecordUrl = screenrecord.hostedUrl;
+        aiScript.screenrecordMode = 'inset';
+      }
+      return aiScript;
+    }
+
+    // 3. Built-in Semantic Relevance Analyzer
+    return this.synthesizeWithSemanticAnalyzer(url, scraped, detected, screenrecord);
+  }
+
+  /**
+   * Generates slides using an LLM (Gemini or OpenAI) if an API key is configured.
+   */
+  private async trySynthesizeWithLLM(
+    url: string,
+    scraped: any,
+    detected: { code: string; label: string; profile: any }
+  ): Promise<ReelScript | null> {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+
+    if (!geminiKey && !openaiKey) return null;
+
+    const prompt = `Analyze this webpage URL: ${url}
+Detected Language: ${detected.label} (${detected.code})
+Page Title: ${scraped.title || 'Untitled'}
+Page Description: ${scraped.description || ''}
+Page Content:
+${scraped.markdown.slice(0, 3500)}
+
+TASK:
+Synthesize a viral, punchy 4-slide social media Reel / TikTok / Short video script in ${detected.label}.
+Every single tag, headline, body text, and stat label MUST be written fluently in ${detected.label}.
+Focus strictly on what is most relevant and compelling about this specific webpage.
+
+Respond ONLY with valid JSON in this exact structure:
+{
+  "brand": "Brand Name",
+  "title": "Short Hook Headline",
+  "cta": "Call to action in ${detected.label}",
+  "slides": [
+    {
+      "tag": "Short 1-2 word uppercase tag in ${detected.label}",
+      "headline": "Punchy Hook Headline (max 50 chars)",
+      "body": "Clear 1-2 sentence hook (max 140 chars)"
+    },
+    {
+      "tag": "Problem Tag in ${detected.label}",
+      "headline": "The Hidden Bottleneck or Challenge",
+      "body": "Why current systems or manual work fail (max 140 chars)"
+    },
+    {
+      "tag": "Insight Tag in ${detected.label}",
+      "headline": "Key Differentiator or Breakthrough",
+      "body": "The evidence or unique mechanism (max 140 chars)",
+      "stat": "Numerical stat like 10x, 99.9%, 100%, 0 kr.",
+      "statLabel": "Uppercase Stat Label in ${detected.label}"
+    },
+    {
+      "tag": "Action Tag in ${detected.label}",
+      "headline": "Actionable Takeaway or Solution",
+      "body": "How to get started or the main benefit (max 140 chars)"
+    }
+  ]
+}`;
+
+    if (geminiKey) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+        }),
+        signal: AbortSignal.timeout(4500),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const raw = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.slides && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+            return {
+              title: parsed.title || scraped.title || 'Highlights',
+              brand: parsed.brand || detected.profile.defaultBrand,
+              handle: `@${(parsed.brand || 'brand').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
+              theme: 'gradient',
+              aspectRatio: '9:16',
+              language: detected.code,
+              languageLabel: detected.label,
+              slides: parsed.slides,
+              cta: parsed.cta || detected.profile.cta,
+              sourceUrl: url,
+            };
+          }
+        }
+      }
+    }
+
+    if (openaiKey) {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.2,
+        }),
+        signal: AbortSignal.timeout(4500),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const raw = json.choices?.[0]?.message?.content;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.slides && Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+            return {
+              title: parsed.title || scraped.title || 'Highlights',
+              brand: parsed.brand || detected.profile.defaultBrand,
+              handle: `@${(parsed.brand || 'brand').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
+              theme: 'gradient',
+              aspectRatio: '9:16',
+              language: detected.code,
+              languageLabel: detected.label,
+              slides: parsed.slides,
+              cta: parsed.cta || detected.profile.cta,
+              sourceUrl: url,
+            };
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * High-accuracy semantic relevance and content extractor.
+   * Extracts relevant headings, sentences, statistics, and pain points in the target language.
+   */
+  private synthesizeWithSemanticAnalyzer(
+    url: string,
+    scraped: any,
+    detected: { code: string; label: string; profile: any },
+    screenrecord: any
+  ): ReelScript {
+    const profile = detected.profile;
+
+    // 1. Derive Brand name cleanly
+    let brand = profile.defaultBrand;
     try {
       const parsed = new URL(url);
-      brand = parsed.hostname.replace(/^www\./, '').split('.')[0];
-      brand = brand.charAt(0).toUpperCase() + brand.slice(1);
+      const hostPart = parsed.hostname.replace(/^www\./, '').split('.')[0];
+      brand = hostPart.charAt(0).toUpperCase() + hostPart.slice(1);
     } catch {}
 
-    const title = scraped.title || 'Breaking Industry Insights';
+    const rawTitle = (scraped.title || '').trim();
+    if (rawTitle) {
+      const separators = [' - ', ' | ', ' • ', ' — ', ': '];
+      for (const sep of separators) {
+        if (rawTitle.includes(sep)) {
+          const parts = rawTitle.split(sep).map((p: string) => p.trim());
+          const candidate = parts.find((p: string) => p.length >= 2 && p.length <= 25);
+          if (candidate && candidate.toLowerCase().replace(/[^a-z]/g, '') === brand.toLowerCase().replace(/[^a-z]/g, '')) {
+            brand = candidate;
+            break;
+          }
+        }
+      }
+    }
 
-    // Break markdown into key sentences/paragraphs
-    const rawLines = scraped.markdown
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l.length > 20 && !l.startsWith('#') && !l.startsWith('!'));
+    // 2. Extract Headings and clean sentences
+    const headings: string[] = [];
+    const lines = (scraped.markdown || '').split('\n');
+    for (const l of lines) {
+      const trimmed = l.trim();
+      if (trimmed.startsWith('#')) {
+        const text = trimmed.replace(/^#+\s*/, '').replace(/[*_`]/g, '').trim();
+        if (text.length >= 6 && text.length <= 75 && !/cookie|privatliv|gdpr|navigation|menu|vilkår|terms|log ind|sign in/i.test(text)) {
+          headings.push(text);
+        }
+      }
+    }
 
-    const slides: ReelSlide[] = [];
+    const cleanSentences: string[] = [];
+    const paragraphs = (scraped.markdown || '')
+      .split(/\n{2,}/)
+      .map((p: string) => p.trim())
+      .filter((p: string) => !p.startsWith('#') && !p.startsWith('!') && !p.startsWith('---'));
 
-    // Slide 1: Hook
-    slides.push({
-      tag: 'THE BREAKTHROUGH',
-      headline: title.length > 60 ? title.slice(0, 57) + '...' : title,
-      body: 'Here is what you need to know in under 30 seconds.',
+    for (const para of paragraphs) {
+      const cleanPara = para
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/^[\s*\-•]+/gm, '')
+        .replace(/[*_`]/g, '')
+        .trim();
+
+      const sents = cleanPara
+        .split(/(?<=[.!?])\s+/)
+        .map((s: string) => s.replace(/^[\s*\-•]+/, '').trim())
+        .filter((s: string) => s.length >= 25 && s.length <= 220);
+
+      for (const s of sents) {
+        if (!/cookie|privatliv|gdpr|terms of service|alle rettigheder|copyright|rights reserved/i.test(s)) {
+          cleanSentences.push(s);
+        }
+      }
+    }
+
+    // 3. Build Slide 1: The Core Hook / Promise
+    let hookHeadline = headings.length > 0 && headings[0].length <= 55 ? headings[0] : rawTitle;
+    if (hookHeadline.length > 55) {
+      // Clean brand suffix/prefix
+      const sepIdx = Math.max(hookHeadline.indexOf(' - '), hookHeadline.indexOf(' | '));
+      if (sepIdx > 0) {
+        hookHeadline = hookHeadline.slice(0, sepIdx).trim();
+      }
+    }
+    if (hookHeadline.length > 55) {
+      hookHeadline = hookHeadline.slice(0, 52) + '...';
+    }
+
+    let hookBody = scraped.description ? scraped.description.trim() : '';
+    if (hookBody.length < 20 || hookBody.length > 150) {
+      hookBody = cleanSentences[0]
+        ? cleanSentences[0].slice(0, 140)
+        : `${profile.slide1Hook} ${brand}.`;
+    } else if (hookBody.length > 140) {
+      hookBody = hookBody.slice(0, 137) + '...';
+    }
+
+    const tag1 = profile.code === 'da' ? 'GENNEMBRUDDET' : profile.code === 'de' ? 'DER DURCHBRUCH' : 'THE BREAKTHROUGH';
+
+    // 4. Build Slide 2: The Challenge / Problem / Bottleneck
+    const problemScores = cleanSentences.map((sent, idx) => {
+      let score = 0;
+      const lower = sent.toLowerCase();
+      for (const kw of profile.problemKeywords) {
+        if (lower.includes(kw)) score += 2;
+      }
+      return { sent, score, idx };
     });
+    problemScores.sort((a, b) => b.score - a.score);
 
-    // Slide 2: The Core Problem or Context
-    const line1 = rawLines[0] || 'Modern systems demand faster execution with zero maintenance overhead.';
-    slides.push({
-      tag: 'THE REALITY',
-      headline: 'The Hidden Bottleneck',
-      body: line1.slice(0, 160),
-    });
+    let problemSent = problemScores[0]?.score > 0 ? problemScores[0].sent : (cleanSentences[1] || profile.fallbackProblemBody);
+    if (problemSent.length > 140) {
+      problemSent = problemSent.slice(0, 137) + '...';
+    }
 
-    // Slide 3: Key Takeaway or Stat
-    const line2 = rawLines[1] || 'Teams spend over 40% of development hours maintaining fragile infrastructure.';
-    slides.push({
-      tag: 'KEY INSIGHT',
-      headline: 'The Turning Point',
-      body: line2.slice(0, 160),
-      stat: '90%+',
-      statLabel: 'Efficiency Boost',
-    });
+    const problemHeading = headings.find((h) => profile.problemKeywords.some((kw: string) => h.toLowerCase().includes(kw)))
+      || profile.problemHeadlineFallback;
 
-    // Slide 4: Actionable Tip
-    const line3 = rawLines[2] || 'Automate repetitive workflows with autonomous tools and modern APIs.';
-    slides.push({
-      tag: 'HOW TO WIN',
-      headline: 'Actionable Takeaway',
-      body: line3.slice(0, 160),
+    // 5. Build Slide 3: Key Insight & Metric / Stat
+    const statRegex = /(?:\b\d+(?:[.,]\d+)?\s*(?:%|x|ms|s|kr\.?|€|\$|k|M|GB)\b|\b100%\b|\b24\/7\b|\b\d{1,4}\s*(?:\+|brugere|kunder|users|clients)\b)/i;
+    let foundStat = profile.defaultStat;
+    let foundStatLabel = profile.defaultStatLabel;
+    let insightSent = cleanSentences[2] || profile.fallbackInsightBody;
+
+    for (const sent of cleanSentences) {
+      const match = sent.match(statRegex);
+      if (match && sent !== problemSent) {
+        foundStat = match[0].trim().toUpperCase();
+        insightSent = sent;
+
+        const lower = sent.toLowerCase();
+        if (lower.includes('gdpr') || lower.includes('sikker') || lower.includes('secure')) {
+          foundStatLabel = profile.code === 'da' ? 'GDPR-SIKRET' : 'VERIFIED';
+        } else if (lower.includes('tid') || lower.includes('hurtig') || lower.includes('speed') || lower.includes('ms')) {
+          foundStatLabel = profile.code === 'da' ? 'EFFEKT' : 'SPEED';
+        } else if (lower.includes('kr') || lower.includes('eur') || lower.includes('pris') || lower.includes('cost')) {
+          foundStatLabel = profile.code === 'da' ? 'PR. MÅNED' : 'PRICE';
+        } else if (lower.includes('vækst') || lower.includes('growth') || lower.includes('kunder') || lower.includes('users')) {
+          foundStatLabel = profile.code === 'da' ? 'VÆKST' : 'GROWTH';
+        } else {
+          foundStatLabel = profile.statLabels[0];
+        }
+        break;
+      }
+    }
+    if (insightSent.length > 140) {
+      insightSent = insightSent.slice(0, 137) + '...';
+    }
+
+    const insightHeading = headings.find((h) => h !== hookHeadline && !profile.problemKeywords.some((kw: string) => h.toLowerCase().includes(kw)))
+      || profile.insightHeadlineFallback;
+
+    // 6. Build Slide 4: Actionable Takeaway / The Solution
+    const solutionScores = cleanSentences.map((sent, idx) => {
+      let score = 0;
+      if (sent === problemSent || sent === insightSent) return { sent, score: -10, idx };
+      const lower = sent.toLowerCase();
+      for (const kw of profile.solutionKeywords) {
+        if (lower.includes(kw)) score += 2;
+      }
+      return { sent, score, idx };
     });
+    solutionScores.sort((a, b) => b.score - a.score);
+
+    let solutionSent = solutionScores[0]?.score > 0 ? solutionScores[0].sent : (cleanSentences[3] || profile.fallbackActionBody);
+    if (solutionSent.length > 140) {
+      solutionSent = solutionSent.slice(0, 137) + '...';
+    }
+
+    const solutionHeading = headings.find((h) => profile.solutionKeywords.some((kw: string) => h.toLowerCase().includes(kw)))
+      || profile.actionHeadlineFallback;
+
+    // Assemble structured slides
+    const slides: ReelSlide[] = [
+      {
+        tag: tag1,
+        headline: hookHeadline,
+        body: hookBody,
+      },
+      {
+        tag: profile.problemTag,
+        headline: problemHeading,
+        body: problemSent,
+      },
+      {
+        tag: profile.insightTag,
+        headline: insightHeading,
+        body: insightSent,
+        stat: foundStat,
+        statLabel: foundStatLabel,
+      },
+      {
+        tag: profile.actionTag,
+        headline: solutionHeading,
+        body: solutionSent,
+      },
+    ];
 
     return {
-      title,
+      title: hookHeadline,
       brand,
-      handle: `@${brand.toLowerCase()}`,
+      handle: `@${brand.toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
       theme: 'gradient',
       aspectRatio: '9:16',
       screenrecordUrl: screenrecord?.hostedUrl,
       screenrecordMode: screenrecord ? 'inset' : 'none',
+      language: detected.code,
+      languageLabel: detected.label,
       slides,
-      cta: 'Follow for more • Link in bio',
+      cta: profile.cta,
       sourceUrl: url,
     };
   }
