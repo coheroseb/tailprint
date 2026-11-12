@@ -146,8 +146,8 @@ export class RedisService {
       const devRecord: ApiKeyRecord = {
         key_prefix: env.DEV_DEFAULT_API_KEY.slice(0, 12),
         customer_id: 'cus_dev_sandbox',
-        plan: 'starter',
-        monthly_limit: PLANS.starter.monthlyLimit,
+        plan: 'enterprise',
+        monthly_limit: 1000000,
         status: 'active',
         created_at: new Date().toISOString(),
       };
