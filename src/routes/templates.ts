@@ -134,18 +134,20 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     return reply.code(404).send({ error: 'OG image not found' });
   });
 
-  // GET /tailprint-logo.svg - Official Vector Brand Wordmark
-  fastify.get('/tailprint-logo.svg', { schema: { hide: true } }, async (_request, reply) => {
-    const logoPath = path.join(process.cwd(), 'assets', 'tailprint-logo.svg');
+  // GET /logo.svg & /tailprint-logo.svg - Official Vector Brand Wordmark
+  const serveLogoSvg = async (_request: any, reply: any) => {
+    const logoPath = path.join(process.cwd(), 'assets', 'logo.svg');
     if (fs.existsSync(logoPath)) {
       const svg = fs.readFileSync(logoPath, 'utf8');
       return reply
         .header('Content-Type', 'image/svg+xml; charset=utf-8')
-        .header('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
+        .header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
         .send(svg);
     }
     return reply.code(404).send({ error: 'Logo SVG not found' });
-  });
+  };
+  fastify.get('/logo.svg', { schema: { hide: true } }, serveLogoSvg);
+  fastify.get('/tailprint-logo.svg', { schema: { hide: true } }, serveLogoSvg);
 
   // GET /tailprint-favicon.svg - Official Vector Favicon
   fastify.get('/tailprint-favicon.svg', { schema: { hide: true } }, async (_request, reply) => {

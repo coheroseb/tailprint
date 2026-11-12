@@ -309,6 +309,7 @@ export class AnalyticsService {
       cleanPath === '/admin' ||
       cleanPath === '/favicon.ico' ||
       cleanPath === '/og-image.png' ||
+      cleanPath === '/logo.svg' ||
       cleanPath === '/tailprint-logo.svg' ||
       cleanPath === '/tailprint-favicon.svg'
     ) {

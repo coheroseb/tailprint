@@ -22,10 +22,10 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
   <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/85 border-b border-slate-800/80 shrink-0">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       
-      <!-- Brand Logo (tailprint-logo.svg without leading icon) & Main Navigation -->
+      <!-- Brand Logo (logo.svg without leading icon) & Main Navigation -->
       <div class="flex items-center space-x-8">
         <a href="/" class="flex items-center group transition hover:opacity-90 shrink-0" aria-label="Tailprint Home">
-          <img src="/tailprint-logo.svg" alt="Tailprint" class="h-8 sm:h-9 w-auto select-none" />
+          <img src="/logo.svg" alt="Tailprint" class="h-7 sm:h-8 w-auto select-none" />
         </a>
 
         <!-- Main Product Links (Desktop) -->

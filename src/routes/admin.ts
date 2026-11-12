@@ -87,7 +87,7 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-4">
         <a href="/" class="flex items-center group transition hover:opacity-90">
-          <img src="/tailprint-logo.svg" alt="Tailprint" class="h-8 sm:h-9 w-auto select-none" />
+          <img src="/logo.svg" alt="Tailprint" class="h-7 sm:h-8 w-auto select-none" />
         </a>
         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 flex items-center space-x-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>

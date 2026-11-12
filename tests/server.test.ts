@@ -40,7 +40,7 @@ describe('Tailprint Test Suite', () => {
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('text/html');
       expect(response.body).toContain('Tailprint');
-      expect(response.body).toContain('/tailprint-logo.svg');
+      expect(response.body).toContain('/logo.svg');
       expect(response.body).toContain('Invoice');
       expect(response.body).toContain('Certificate');
 
