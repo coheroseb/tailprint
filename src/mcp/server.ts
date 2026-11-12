@@ -48,7 +48,7 @@ const TEMPLATE_IDS = [
 export function createMcpServer(options: McpServerOptions = {}): McpServer {
   const server = new McpServer({
     name: options.name || 'tailprint-mcp',
-    version: options.version || '1.1.0',
+    version: options.version || '1.1.1',
   });
 
   // ==========================================
