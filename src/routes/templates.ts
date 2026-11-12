@@ -213,13 +213,15 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   fastify.get('/llms.txt', { schema: { hide: true } }, async (_request, reply) => {
     const llms = `# Tailprint — Tailwind-Native Render & PDF Engine + AI Web Scraper
 
-> High-performance developer API and Model Context Protocol (MCP) server for converting Tailwind CSS HTML into vector PDFs and cached Open Graph preview images in under 500ms.
+> High-performance developer API and Model Context Protocol (MCP) server for converting Tailwind CSS HTML into vector PDFs, EU Factur-X e-invoices, cached Open Graph preview images, and token-efficient LLM Markdown in under 500ms.
 
 ## Core Capabilities
 - **Tailwind-Native PDF Engine**: Submits raw HTML styled with arbitrary Tailwind CSS classes (including JIT syntax like \`w-[350px]\` and dynamic grids) and generates vector-sharp, print-ready PDF documents without build steps or headless browser maintenance.
+- **European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)**: Generates legally compliant hybrid PDF/A-3 invoices with embedded CrossIndustryInvoice XML for automated ERP ingestion (DATEV, SAP, Dinero, Billy, Chorus Pro).
 - **Open Graph Card Generator**: Renders social preview cards (PNG/JPEG) with automatic SHA-256 caching and sub-400ms cached delivery.
 - **LLM Web Scraper**: Scrapes public URLs, strips ads, scripts, and clutter with Mozilla Readability, and outputs token-efficient structured Markdown saving 90%+ context window tokens.
-- **Model Context Protocol (MCP)**: Native Remote SSE and stdio CLI integration for Claude Desktop, Cursor, Windsurf, and autonomous AI agents.
+- **Model Context Protocol (MCP)**: Native Remote SSE and stdio CLI integration for Claude Desktop, Cursor, Windsurf, and autonomous AI agents exposing 22 production tools.
+- **Developer Tools**: LinkedIn Carousel generator, 3D Device Mockup maker, and Visual Regression diff heatmap.
 
 ## Quick API Reference
 - Base URL: https://tailprint.com
@@ -229,27 +231,34 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
 ### Key Endpoints
 - POST /v1/render/pdf : Compiles raw HTML + Tailwind CSS to vector PDF
+- POST /v1/render/einvoice : Generates EU-compliant Factur-X hybrid PDF/A-3 invoice with embedded XML
 - POST /v1/render/image : Compiles raw HTML + Tailwind CSS to 1200x630 PNG/JPEG
 - POST /v1/scrape/markdown : Scrapes public URL to clean LLM-ready Markdown
-- POST /v1/auth/claim-free-key : Claim instant free developer API key
+- POST /v1/tools/carousel : Generates 1080x1350 multi-page PDF & cover from Markdown
+- POST /v1/tools/visual-diff : Compares before/after URLs and returns visual diff heatmap
+- POST /v1/tools/mockup : 3D MacBook Pro + iPhone mockup generator
+- POST /v1/auth/claim-free-key : Claim instant free developer API key (100 renders/mo)
+- GET /v1/usage : Real-time quota and monthly billing cycle check
 
-## Model Context Protocol (MCP) Setup
+## Model Context Protocol (MCP) Setup (22 Tools)
+Tailprint includes 22 native tools: \`render_pdf\`, \`render_image\`, \`generate_einvoice\`, \`scrape_markdown\`, \`render_chart\`, \`generate_qr\`, \`render_device_mockup\`, \`stamp_pdf\`, \`compare_snapshots\`, \`render_carousel\`, \`merge_pdfs\`, \`split_pdf\`, \`fill_pdf_form\`, \`compress_pdf\`, \`render_mermaid\`, \`render_presentation\`, \`generate_social_card\`, \`extract_tables_from_url\`, \`audit_webpage\`, \`list_templates\`, \`render_template\`, \`get_template_source\`.
+
 Claude Desktop (\`claude_desktop_config.json\`):
 \`\`\`json
 {
   "mcpServers": {
     "tailprint": {
-      "url": "https://tailprint.com/v1/mcp/sse",
-      "headers": {
-        "Authorization": "Bearer YOUR_API_KEY"
+      "command": "npx",
+      "args": ["-y", "tailprint"],
+      "env": {
+        "TAILPRINT_API_KEY": "YOUR_API_KEY"
       }
     }
   }
 }
 \`\`\`
 
-Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
-- Name: tailprint
+Cursor IDE & Windsurf:
 - Type: sse
 - URL: https://tailprint.com/v1/mcp/sse?api_key=YOUR_API_KEY
 `;
@@ -920,13 +929,13 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
 
       </div>
 
-      <h1 class="text-5xl sm:text-6xl font-black tracking-tight text-white leading-tight">
+      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
         Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML</span>.<br>
-        Receive Pixel-Perfect <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">PDFs & OG Images</span>.
+        Receive Pixel-Perfect <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">PDFs, Visuals &amp; E-Invoices</span>.
       </h1>
 
-      <p class="mt-6 text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-        Eliminate complex browser infrastructure and build steps. Submit raw HTML with arbitrary utility classes and generate print-ready PDFs or cached social preview banners in under 500ms.
+      <p class="mt-6 text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+        The complete document &amp; graphic engine for modern developers and AI agents. Generate vector PDFs with <strong>Smart Pagination Shield</strong>, hybrid Factur-X e-invoices, presentations, and social media assets in under 500ms — backed by <strong>22 native MCP tools</strong> and complete GDPR zero-retention privacy.
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-3.5">
@@ -934,30 +943,140 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
           <span>⚡ Claim 100 Free Renders</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-200 font-bold uppercase tracking-wider">No CC</span>
         </button>
-        <a href="#playground" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 font-semibold transition flex items-center justify-center space-x-2">
-          <span>Try Live Sandbox</span>
-          <span class="text-slate-400">→</span>
+        <a href="/studio" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20">
+          <span>🎨 Open Interactive Studio</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 font-mono">/studio</span>
+        </a>
+        <a href="#mcp" class="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 font-semibold transition flex items-center justify-center space-x-2">
+          <span>🤖 22 MCP Tools</span>
         </a>
       </div>
-      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • 100% serverless</p>
+      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • 22 MCP tools for Claude &amp; Cursor</p>
 
       <!-- System Stats -->
-      <div class="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto text-left">
-        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+      <div class="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
           <p class="text-xs text-slate-400">Response Latency</p>
           <p class="text-2xl font-black text-emerald-400 mt-1">&lt; 500 ms</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Pre-warmed Chromium</p>
         </div>
-        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <p class="text-xs text-slate-400">Tailwind Engine</p>
-          <p class="text-2xl font-black text-indigo-400 mt-1">v3 & v4</p>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
+          <p class="text-xs text-slate-400">AI MCP Integration</p>
+          <p class="text-2xl font-black text-purple-400 mt-1">22 Tools</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Claude Desktop &amp; Cursor</p>
         </div>
-        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <p class="text-xs text-slate-400">Sandboxing</p>
-          <p class="text-2xl font-black text-purple-400 mt-1">SSRF Blocked</p>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
+          <p class="text-xs text-slate-400">Smart Pagination</p>
+          <p class="text-2xl font-black text-indigo-400 mt-1">Shield Active</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Repeating thead, no row cuts</p>
         </div>
-        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <p class="text-xs text-slate-400">Cache Layer</p>
-          <p class="text-2xl font-black text-cyan-400 mt-1">SHA-256</p>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
+          <p class="text-xs text-slate-400">Compliance &amp; GDPR</p>
+          <p class="text-2xl font-black text-cyan-400 mt-1">Zero-Retention</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Transient memory only</p>
+        </div>
+      </div>
+
+      <!-- Complete Tailprint Ecosystem Showcase (6 Pillars) -->
+      <div class="mt-16 text-left">
+        <div class="text-center max-w-2xl mx-auto mb-8">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/70 border border-indigo-800/50 px-3 py-1 rounded-full">Complete Platform Architecture</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3">Everything Modern Developers &amp; AI Agents Need</h2>
+          <p class="text-slate-400 text-sm mt-1">From raw Tailwind styling to compliant European e-invoicing and autonomous LLM tooling.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          
+          <!-- Pillar 1: Tailwind PDF Engine -->
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 transition shadow-lg group">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
+              ⚡
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-indigo-300 transition">Tailwind-Native PDF Engine</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Compile raw HTML with Tailwind CSS v3 and v4 JIT utility classes directly into crisp, 100% vector PDFs in under 500ms. Supports arbitrary values, custom margins, dynamic header/footer page numbering, and AES-256 encryption.
+            </p>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <span>POST /v1/render/pdf</span>
+              <span class="text-indigo-400 font-semibold">Vector PDF</span>
+            </div>
+          </div>
+
+          <!-- Pillar 2: Smart Pagination Shield -->
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 transition shadow-lg group">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
+              🛡️
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-emerald-300 transition">Smart Pagination &amp; Table Shield</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Eliminates the classic multi-page PDF nightmare. Table headers (<code class="text-emerald-300">&lt;thead&gt;</code>) repeat automatically on every page, rows never slice in half, orphan headings are prevented, and headless tables are auto-wrapped.
+            </p>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <span>smart_pagination: true</span>
+              <span class="text-emerald-400 font-semibold">Zero Cutoffs</span>
+            </div>
+          </div>
+
+          <!-- Pillar 3: Interactive Template Studio -->
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/50 transition shadow-lg group">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
+              🎨
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-purple-300 transition">Live Template Studio (/studio)</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Full browser-based IDE with split-screen real-time Tailwind JIT preview, canvas sizing (A4, Letter, 16:9 Presentation, OG Card), dynamic JSON variable substitution, visual page break guides, and instant cURL/SDK code export.
+            </p>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <span>/studio • /tools/studio</span>
+              <span class="text-purple-400 font-semibold">Live IDE</span>
+            </div>
+          </div>
+
+          <!-- Pillar 4: 22 Native MCP Tools -->
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/50 transition shadow-lg group">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
+              🤖
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-cyan-300 transition">22 Native AI MCP Tools</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Equip Claude Desktop, Cursor, and autonomous agents with complete document generation, PDF merging/splitting/form-filling, Mermaid diagramming, 16:9 presentations, web scraping, and automated SEO/a11y webpage audits.
+            </p>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <span>npx tailprint • SSE Stream</span>
+              <span class="text-cyan-400 font-semibold">22 Tools</span>
+            </div>
+          </div>
+
+          <!-- Pillar 5: Zero-Retention GDPR Privacy -->
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-rose-500/50 transition shadow-lg group">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
+              🔒
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-rose-300 transition">Zero-Retention Mode (GDPR/HIPAA)</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              When processing highly confidential healthcare, financial, or legal documents, enable <code class="text-rose-300">no_store: true</code>. Renders entirely in volatile RAM, bypasses CDN disk persistence, and omits caching.
+            </p>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <span>no_store: true</span>
+              <span class="text-rose-400 font-semibold">100% Private</span>
+            </div>
+          </div>
+
+          <!-- Pillar 6: EU Factur-X / PEPPOL E-Invoicing -->
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 transition shadow-lg group">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition duration-200">
+              🇪🇺
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-amber-300 transition">EU Hybrid E-Invoicing (Factur-X)</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Generate legally compliant European electronic invoices (EN 16931 / ZUGFeRD 2.2). Combines a human-readable Tailwind A4 PDF with embedded machine-readable <code class="text-amber-300">factur-x.xml</code> for SAP, DATEV, Dinero &amp; Chorus Pro.
+            </p>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <span>POST /v1/render/einvoice</span>
+              <span class="text-amber-400 font-semibold">PEPPOL / EN 16931</span>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1134,7 +1253,253 @@ Cursor IDE (\`Settings > Features > MCP Servers > Add\`):
     </div>
   </section>
 
-  <!-- LLM Scraper Live Demo Section -->
+  <!-- Live Interactive Template Studio Spotlight Section -->
+  <section id="studio-showcase" class="py-20 border-t border-slate-800/80 bg-gradient-to-b from-slate-950 via-slate-900/60 to-slate-950 relative overflow-hidden">
+    <!-- Ambient glow -->
+    <div class="absolute -top-32 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left: Copy & Key Features (6 cols) -->
+        <div class="lg:col-span-6 space-y-6">
+          <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-purple-950/70 border border-purple-800/60 text-purple-300 text-xs font-semibold backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+            <span>Live Interactive Editor • Free Developer Tool</span>
+          </div>
+
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            Design &amp; Debug Directly in Your Browser with <span class="bg-gradient-to-r from-purple-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">Template Studio</span>
+          </h2>
+
+          <p class="text-slate-300 text-base leading-relaxed">
+            Stop guessing how your Tailwind classes will look in printed vector PDF or Open Graph images. Template Studio gives you an interactive split-screen IDE with real-time Tailwind JIT compiling, true-to-scale page canvases, and dynamic JSON variables.
+          </p>
+
+          <div class="space-y-3.5 pt-2">
+            <div class="flex items-start space-x-3">
+              <div class="w-7 h-7 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-500/30 text-xs">⚡</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Instant Tailwind JIT Split Preview</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Write arbitrary Tailwind utility classes on the left and see vector rendering update on the right in real time.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start space-x-3">
+              <div class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 border border-purple-500/30 text-xs">📐</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Multi-Format Paper Canvas &amp; Visual Break Guides</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Toggle between A4 Portrait, A4 Landscape, US Letter, 16:9 Presentation Slides, and 1200×630 OpenGraph cards with exact visual page break lines.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start space-x-3">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/30 text-xs">🛡️</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Live Smart Pagination Shield Verification</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Test multi-page documents and inspect how table headers automatically repeat and rows are prevented from splitting.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start space-x-3">
+              <div class="w-7 h-7 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5 border border-cyan-500/30 text-xs">💻</div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Instant cURL, Node.js &amp; Python Code Generation</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Once satisfied with your template, copy ready-to-run API snippets or download the vector PDF directly.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 flex flex-col sm:flex-row items-center gap-3.5">
+            <a href="/studio" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-500 text-white font-bold transition shadow-lg shadow-purple-600/25 flex items-center justify-center space-x-2">
+              <span>🎨 Open Live Template Studio</span>
+              <span class="text-purple-200">→</span>
+            </a>
+            <span class="text-xs text-slate-400">Available at <code class="text-indigo-300 font-mono">/studio</code> or <code class="text-indigo-300 font-mono">/editor</code></span>
+          </div>
+        </div>
+
+        <!-- Right: Studio Visual Showcase Card (6 cols) -->
+        <div class="lg:col-span-6">
+          <div class="rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-4 relative overflow-hidden group hover:border-purple-500/40 transition duration-300">
+            <!-- Studio Header Bar Mockup -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+              <div class="flex items-center space-x-2">
+                <div class="flex space-x-1.5">
+                  <div class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                </div>
+                <span class="text-[11px] font-mono font-semibold text-slate-300 ml-2">tailprint.com/studio</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold font-mono">Shield Active</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-600 text-white font-bold">A4 Portrait</span>
+              </div>
+            </div>
+
+            <!-- Studio UI Split Representation -->
+            <div class="grid grid-cols-2 gap-3 min-h-[300px]">
+              <!-- Left side: Code View -->
+              <div class="bg-slate-950 rounded-xl p-3 border border-slate-800/80 font-mono text-[10px] text-slate-300 space-y-1.5 overflow-hidden">
+                <div class="text-slate-500 pb-1 border-b border-slate-800 flex justify-between">
+                  <span>HTML + Tailwind</span>
+                  <span class="text-indigo-400 font-bold">Live JIT</span>
+                </div>
+                <p><span class="text-purple-400">&lt;div</span> <span class="text-indigo-400">class=</span><span class="text-emerald-300">"p-8 bg-white"</span><span class="text-purple-400">&gt;</span></p>
+                <p class="pl-2"><span class="text-purple-400">&lt;table</span> <span class="text-indigo-400">class=</span><span class="text-emerald-300">"w-full text-sm"</span><span class="text-purple-400">&gt;</span></p>
+                <p class="pl-4 text-emerald-400">&lt;!-- Repeats across pages --&gt;</p>
+                <p class="pl-4"><span class="text-purple-400">&lt;thead</span> <span class="text-indigo-400">class=</span><span class="text-emerald-300">"bg-slate-900"</span><span class="text-purple-400">&gt;</span></p>
+                <p class="pl-6"><span class="text-purple-400">&lt;tr&gt;</span></p>
+                <p class="pl-8"><span class="text-purple-400">&lt;th&gt;</span>Description<span class="text-purple-400">&lt;/th&gt;</span></p>
+                <p class="pl-8"><span class="text-purple-400">&lt;th&gt;</span>Amount<span class="text-purple-400">&lt;/th&gt;</span></p>
+                <p class="pl-6"><span class="text-purple-400">&lt;/tr&gt;</span></p>
+                <p class="pl-4"><span class="text-purple-400">&lt;/thead&gt;</span></p>
+                <p class="pl-4"><span class="text-purple-400">&lt;tbody&gt;</span></p>
+                <p class="pl-6 text-slate-500">&#123;&#123;line_items&#125;&#125;</p>
+                <p class="pl-4"><span class="text-purple-400">&lt;/tbody&gt;</span></p>
+                <p class="pl-2"><span class="text-purple-400">&lt;/table&gt;</span></p>
+                <p><span class="text-purple-400">&lt;/div&gt;</span></p>
+              </div>
+
+              <!-- Right side: Vector Paper Canvas Mockup -->
+              <div class="bg-slate-950 rounded-xl p-3 border border-slate-800/80 flex flex-col justify-between items-center relative overflow-hidden">
+                <div class="w-full text-slate-500 pb-1 border-b border-slate-800 flex justify-between text-[10px] font-mono">
+                  <span>Paper Canvas</span>
+                  <span class="text-emerald-400 font-bold">794 × 1123px</span>
+                </div>
+                
+                <div class="w-full my-auto p-4 rounded-lg bg-white text-slate-900 shadow-xl border border-slate-200 text-left scale-95 origin-center">
+                  <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
+                    <span class="font-bold text-xs text-indigo-900">INVOICE #2026-042</span>
+                    <span class="text-[9px] font-mono text-emerald-600 font-bold">$1,450.00</span>
+                  </div>
+                  <div class="space-y-1 text-[8px] text-slate-600">
+                    <div class="flex justify-between py-0.5 border-b border-slate-100">
+                      <span>API Infrastructure Engineering</span>
+                      <span class="font-mono font-bold">$1,200.00</span>
+                    </div>
+                    <div class="flex justify-between py-0.5 border-b border-slate-100">
+                      <span>Chromium Concurrency Setup</span>
+                      <span class="font-mono font-bold">$250.00</span>
+                    </div>
+                  </div>
+                  <div class="mt-3 pt-1 border-t border-dashed border-slate-300 flex justify-between text-[8px] text-slate-800 font-bold">
+                    <span>Total Due</span>
+                    <span class="font-mono text-indigo-700">$1,450.00</span>
+                  </div>
+                </div>
+
+                <div class="w-full flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-800">
+                  <span>Zoom: 100%</span>
+                  <a href="/studio" class="text-indigo-400 font-bold hover:underline">Open Full Studio ↗</a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Smart Pagination Shield & Zero-Retention Deep Dive Section -->
+  <section id="pagination-shield" class="py-20 border-t border-slate-800/80 bg-slate-900/40">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 text-xs font-semibold mb-3">
+          <span>🛡️ The Classic PDF Page Break Nightmare Solved</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Smart Pagination Shield &amp; Zero-Retention Privacy
+        </h2>
+        <p class="text-slate-300 mt-3 text-sm sm:text-base leading-relaxed">
+          Anyone who has ever generated multi-page PDFs with Puppeteer or wkhtmltopdf knows the frustration of table headers disappearing after page 1, rows cut horizontally across margins, and orphan headings. Tailprint eliminates this entirely with automated DOM heuristics.
+        </p>
+      </div>
+
+      <!-- Before vs After Comparison Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+        
+        <!-- The Problem: Standard Puppeteer / Chromium -->
+        <div class="p-8 rounded-2xl bg-rose-950/20 border border-rose-900/40 shadow-xl flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-lg border border-rose-500/30">✕</div>
+              <div>
+                <h3 class="text-base font-bold text-white">Standard Headless Chrome &amp; Puppeteer</h3>
+                <p class="text-xs text-rose-300">What happens with raw tools without Tailprint</p>
+              </div>
+            </div>
+
+            <ul class="space-y-3 text-xs text-slate-300 pt-3">
+              <li class="flex items-start space-x-2.5">
+                <span class="text-rose-400 font-bold shrink-0">✕</span>
+                <span><strong>Disappearing Headers:</strong> Table headers (<code class="text-rose-300">&lt;thead&gt;</code>) vanish on pages 2, 3, and 4, leaving pages unreadable without context.</span>
+              </li>
+              <li class="flex items-start space-x-2.5">
+                <span class="text-rose-400 font-bold shrink-0">✕</span>
+                <span><strong>Horizontally Sliced Rows:</strong> Table rows (<code class="text-rose-300">&lt;tr&gt;</code>) get sliced mid-sentence across page breaks, splitting text in two.</span>
+              </li>
+              <li class="flex items-start space-x-2.5">
+                <span class="text-rose-400 font-bold shrink-0">✕</span>
+                <span><strong>Orphan Headings:</strong> Section headers (<code class="text-rose-300">&lt;h2&gt;</code>) sit isolated at the very bottom of a page while content starts on the next.</span>
+              </li>
+              <li class="flex items-start space-x-2.5">
+                <span class="text-rose-400 font-bold shrink-0">✕</span>
+                <span><strong>Privacy Risk:</strong> Generated customer PDFs often persist indefinitely on disk, violating GDPR / HIPAA compliance.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-rose-900/30 text-[11px] text-rose-300 font-mono">
+            Outcome: Broken customer invoices &amp; hours wasted on manual CSS hacks.
+          </div>
+        </div>
+
+        <!-- The Solution: Tailprint Smart Shield -->
+        <div class="p-8 rounded-2xl bg-emerald-950/20 border border-emerald-900/40 shadow-xl flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg border border-emerald-500/30">✓</div>
+              <div>
+                <h3 class="text-base font-bold text-white">Tailprint Smart Pagination Shield</h3>
+                <p class="text-xs text-emerald-300">Enabled automatically on every render request</p>
+              </div>
+            </div>
+
+            <ul class="space-y-3 text-xs text-slate-300 pt-3">
+              <li class="flex items-start space-x-2.5">
+                <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                <span><strong>Repeating Table Headers:</strong> Automatically injects <code class="text-emerald-300">display: table-header-group;</code> so <code class="text-emerald-300">&lt;thead&gt;</code> repeats cleanly on every single printed page.</span>
+              </li>
+              <li class="flex items-start space-x-2.5">
+                <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                <span><strong>Row Split Shield:</strong> Injects <code class="text-emerald-300">break-inside: avoid;</code> across all table rows, keeping cells and numbers 100% intact.</span>
+              </li>
+              <li class="flex items-start space-x-2.5">
+                <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                <span><strong>Headless Table Auto-Detection:</strong> Tables without a semantic <code class="text-emerald-300">&lt;thead&gt;</code> are detected on-the-fly and auto-wrapped in headers.</span>
+              </li>
+              <li class="flex items-start space-x-2.5">
+                <span class="text-emerald-400 font-bold shrink-0">✓</span>
+                <span><strong>Zero-Retention Mode (<code class="text-emerald-300">no_store: true</code>):</strong> Transient memory rendering only. Bypasses disk storage &amp; caching for complete GDPR and HIPAA peace of mind.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-emerald-900/30 text-[11px] text-emerald-300 font-mono flex items-center justify-between">
+            <span>Enabled by default in API &amp; MCP</span>
+            <span class="font-bold">X-Tailprint-Zero-Retention: active</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
   <section id="scraper" class="py-16 bg-slate-900/60 border-t border-slate-800/80">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center max-w-2xl mx-auto mb-10">
@@ -1646,6 +2011,126 @@ This domain is for use in documentation examples without needing permission. Thi
             </div>
           </div>
 
+          <!-- Use Case 12: Mermaid Architecture Diagrams -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-indigo-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 text-lg">📐</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-indigo-400 transition">12. Mermaid Architecture &amp; Sequence Diagrams</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/40">render_mermaid</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-indigo-400 font-bold">You to Cursor:</span> "Render a sequence diagram showing client OAuth2 JWT handshake, Fastify auth guard, and Postgres session verification as vector SVG and PNG."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Executes Mermaid JIT in Chromium, rendering vector SVG, crisp 1200x800 PNG, or PDF with dark/forest themes.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Eliminate manual diagram tools. Render architecture flowcharts and system designs in chat in 1 second.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 13: Widescreen 16:9 Presentation Slides -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-purple-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-purple-500/10 text-purple-400 text-lg">📽️</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-purple-400 transition">13. Widescreen 16:9 Presentation Slide Decks</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/40">render_presentation</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-purple-400 font-bold">You to Claude:</span> "Turn this quarterly product roadmap and user metrics into a 5-slide dark 16:9 vector presentation PDF with slide numbers."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Converts Markdown separated by <code class="text-purple-300">---</code> into a 1920×1080 full-bleed vector PDF and streams an inline cover preview.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Produce beautiful board decks and tech talks without opening Keynote, PowerPoint, or Google Slides.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 14: PDF Merge, Split, Form-Fill & Compression -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-cyan-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 text-lg">📑</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-cyan-400 transition">14. PDF Merging, Splitting &amp; AcroForm Filling</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/40">pdf operations</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-cyan-400 font-bold">You to Claude:</span> "Fill this PDF employment contract form with employee details, flatten it, merge with our NDA, and compress the file size."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Uses <code class="text-cyan-300">fill_pdf_form</code>, <code class="text-cyan-300">merge_pdfs</code>, and <code class="text-cyan-300">compress_pdf</code> with internal object stream compaction.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Full programmatic control over existing PDF files without expensive enterprise Adobe Acrobat licenses.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Case 15: Web Table Extraction & Technical Audit -->
+          <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-amber-500/50 transition shadow-lg group">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400 text-lg">🔍</span>
+                  <h4 class="text-sm font-bold text-white group-hover:text-amber-400 transition">15. Web Table Ingestion &amp; Technical SEO/A11y Audit</h4>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/40">audit + tables</span>
+              </div>
+
+              <!-- Prompt Snippet -->
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
+                <span class="text-amber-400 font-bold">You to Cursor:</span> "Audit https://tailprint.com for technical SEO and accessibility compliance, and extract all pricing tables into markdown."
+              </div>
+
+              <!-- How Tailprint Works & Business Value -->
+              <div class="space-y-2 text-xs text-slate-400">
+                <p class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong class="text-slate-200">What happens:</strong> Calls <code class="text-amber-300">audit_webpage</code> (returns 0-100 score + diagnostics) and <code class="text-amber-300">extract_tables_from_url</code> for structured data.</span>
+                </p>
+                <p class="flex items-start space-x-2">
+                  <span class="text-purple-400 font-bold">💎</span>
+                  <span><strong class="text-purple-300">Business Value:</strong> Automates technical audits and tabular data ingestion for market research and competitive benchmarking.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1666,24 +2151,24 @@ This domain is for use in documentation examples without needing permission. Thi
             <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
               <span class="text-base">🛠️</span>
               <div>
-                <h4 class="text-xs font-bold text-white">13 Native Tools</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">render_pdf, render_image, render_chart, generate_qr, render_device_mockup, stamp_pdf, compare_snapshots, render_carousel, generate_einvoice, scrape_markdown, render_template, list_templates, get_template_source.</p>
+                <h4 class="text-xs font-bold text-white">22 Native Tools</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">render_pdf, render_image, render_template, merge_pdfs, split_pdf, fill_pdf_form, compress_pdf, render_mermaid, render_presentation, generate_social_card, render_chart, generate_qr, render_device_mockup, stamp_pdf, compare_snapshots, render_carousel, generate_einvoice, scrape_markdown, extract_tables_from_url, audit_webpage, list_templates, get_template_source.</p>
               </div>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
               <span class="text-base">📚</span>
               <div>
-                <h4 class="text-xs font-bold text-white">10 Resources (Context URI)</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">tailprint://templates/catalog, tailprint://docs/tailwind-guide, and static HTML templates directly readable into context.</p>
+                <h4 class="text-xs font-bold text-white">12 Resources (Context URIs)</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">tailprint://templates/catalog, tailprint://templates/all, tailprint://docs/tailwind-guide, tailprint://docs/smart-pagination, and all HTML templates directly readable into LLM context.</p>
               </div>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start space-x-3">
               <span class="text-base">💬</span>
               <div>
-                <h4 class="text-xs font-bold text-white">3 Prompts (1-Click Workflows)</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">generate_invoice, summarize_url_to_pdf, create_social_card prompts pre-configured for Claude.</p>
+                <h4 class="text-xs font-bold text-white">5 Prompts (Automated Workflows)</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">generate_invoice, generate_b2b_invoice, summarize_url_to_pdf, create_social_card, visual_regression_audit workflows pre-configured for Claude.</p>
               </div>
             </div>
           </div>
@@ -1720,6 +2205,126 @@ This domain is for use in documentation examples without needing permission. Thi
 
           <pre id="mcp-code-block" class="p-4 bg-slate-950 rounded-xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed border border-slate-800/80 max-h-80 whitespace-pre"></pre>
           <p id="mcp-hint" class="text-[11px] text-slate-400 leading-relaxed"></p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Free Developer Tools Showcase Section -->
+  <section id="tools" class="py-20 border-b border-slate-800/80 bg-slate-900/30">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+        <div>
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 text-xs font-semibold mb-3">
+            <span>🛠️ Suite of 5 Free Browser Tools</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Interactive Developer Tools Hub</h2>
+          <p class="text-slate-400 mt-2 text-sm max-w-xl">Zero signup required. Run high-performance Chromium rendering and conversion workflows directly in your browser.</p>
+        </div>
+        <a href="/tools" class="mt-4 md:mt-0 text-sm font-bold text-indigo-400 hover:text-indigo-300 flex items-center space-x-1.5 transition">
+          <span>Explore All Developer Tools</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Tool 1: Interactive Template Studio -->
+        <a href="/studio" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-purple-500/50 transition shadow-xl group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 text-xl border border-purple-500/20 group-hover:scale-110 transition duration-200">⚡</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">NEW</span>
+            </div>
+            <h3 class="text-lg font-bold text-white group-hover:text-purple-300 transition">Interactive Template Studio</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Browser-based IDE with real-time Tailwind JIT preview, canvas sizing (A4, 16:9 Presentation, OG Card), and Smart Pagination Shield.</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-purple-400 font-semibold">
+            <span>Launch Studio</span>
+            <span class="group-hover:translate-x-1 transition duration-200">/studio →</span>
+          </div>
+        </a>
+
+        <!-- Tool 2: LinkedIn Carousel Maker -->
+        <a href="/tools/carousel" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500/50 transition shadow-xl group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 text-xl border border-blue-500/20 group-hover:scale-110 transition duration-200">📱</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40">1080×1350</span>
+            </div>
+            <h3 class="text-lg font-bold text-white group-hover:text-blue-300 transition">LinkedIn Carousel Maker</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Turn Markdown into viral 1080×1350 portrait slide decks for LinkedIn (multi-page PDF) and Instagram/Twitter (PNG previews).</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-blue-400 font-semibold">
+            <span>Create Carousel</span>
+            <span class="group-hover:translate-x-1 transition duration-200">/carousel →</span>
+          </div>
+        </a>
+
+        <!-- Tool 3: EU Factur-X / PEPPOL E-Invoice Generator -->
+        <a href="/tools/factur-x" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 transition shadow-xl group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xl border border-emerald-500/20 group-hover:scale-110 transition duration-200">🇪🇺</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">EN 16931</span>
+            </div>
+            <h3 class="text-lg font-bold text-white group-hover:text-emerald-300 transition">Factur-X &amp; ZUGFeRD Generator</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Generate compliant European hybrid e-invoices with embedded XML (factur-x.xml) readable by ERPs like DATEV, SAP, Dinero, and Billy.</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-emerald-400 font-semibold">
+            <span>Issue E-Invoice</span>
+            <span class="group-hover:translate-x-1 transition duration-200">/factur-x →</span>
+          </div>
+        </a>
+
+        <!-- Tool 4: Multi-Device Studio Mockups -->
+        <a href="/tools/mockup" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 transition shadow-xl group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 text-xl border border-amber-500/20 group-hover:scale-110 transition duration-200">📸</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">1600×1000</span>
+            </div>
+            <h3 class="text-lg font-bold text-white group-hover:text-amber-300 transition">Device Mockup Generator</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Capture any public URL and composite it into a photorealistic MacBook Pro + floating iPhone responsive presentation mockup.</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-amber-400 font-semibold">
+            <span>Generate Mockup</span>
+            <span class="group-hover:translate-x-1 transition duration-200">/mockup →</span>
+          </div>
+        </a>
+
+        <!-- Tool 5: Visual Regression Diff Heatmap -->
+        <a href="/tools/visual-diff" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-pink-500/50 transition shadow-xl group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="p-2.5 rounded-xl bg-pink-500/10 text-pink-400 text-xl border border-pink-500/20 group-hover:scale-110 transition duration-200">🔍</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40">Pixelmatch</span>
+            </div>
+            <h3 class="text-lg font-bold text-white group-hover:text-pink-300 transition">Visual Regression Diff</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Compare two URLs or HTML snippets pixel-by-pixel with pixelmatch and generate an instant side-by-side studio canvas with diff heatmap.</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-pink-400 font-semibold">
+            <span>Compare Pages</span>
+            <span class="group-hover:translate-x-1 transition duration-200">/visual-diff →</span>
+          </div>
+        </a>
+
+        <!-- All Tools Card -->
+        <div class="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900 border border-indigo-800/40 flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xl mb-4 border border-indigo-500/30">
+              ⚡
+            </div>
+            <h3 class="text-lg font-bold text-white">Full Cloud API &amp; SDK</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Every tool is powered by the same underlying Tailprint REST API and MCP protocol server. Integrate them in cURL, Node.js, Python, or AI agents.</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-indigo-800/40 flex items-center justify-between text-xs">
+            <a href="/docs" target="_blank" class="text-indigo-400 hover:text-white font-semibold transition">View API Reference ↗</a>
+            <button onclick="startCheckout('free')" class="text-emerald-400 hover:text-emerald-300 font-bold transition">Get API Key ⚡</button>
+          </div>
         </div>
 
       </div>
@@ -1923,6 +2528,50 @@ This domain is for use in documentation examples without needing permission. Thi
             Yes. Tailprint offers a <strong>Developer Free Sandbox</strong> granting 100 free monthly renders with zero credit card required. You can claim an instant API key directly from the homepage and start using it with cURL, Node.js, Python, or MCP immediately.
           </p>
         </details>
+
+        <!-- Q6: Smart Pagination -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>How does the Smart Pagination &amp; Table Split Shield prevent broken PDFs?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            By default (<code class="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">smart_pagination: true</code>), Tailprint inspects the DOM before Chromium page printing and injects critical CSS rules: table headers (<code class="text-emerald-300">&lt;thead&gt;</code>) are assigned <code class="text-slate-300">display: table-header-group;</code> so they cleanly repeat at the top of every subsequent printed page. Table rows (<code class="text-slate-300">&lt;tr&gt;</code>, <code class="text-slate-300">&lt;td&gt;</code>, <code class="text-slate-300">&lt;th&gt;</code>) are shielded with <code class="text-slate-300">break-inside: avoid;</code> to prevent mid-row horizontal cuts, and headings (<code class="text-slate-300">&lt;h1&gt;</code> to <code class="text-slate-300">&lt;h6&gt;</code>) are locked to their following content with <code class="text-slate-300">break-after: avoid;</code>. Headless tables without a header are even auto-wrapped into semantic <code class="text-emerald-300">&lt;thead&gt;</code> tags.
+          </p>
+        </details>
+
+        <!-- Q7: Zero-Retention GDPR -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>What is Zero-Retention Mode and how does it guarantee GDPR &amp; HIPAA privacy?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            When you pass <code class="text-rose-400 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">no_store: true</code> in your API request, Tailprint renders your document strictly in volatile, transient Chromium memory and streams the binary buffer directly back in the HTTP response. No file is saved to disk, no file is stored on the CDN, and the Redis SHA-256 cache layer is completely bypassed. The server returns an <code class="text-rose-300 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">X-Tailprint-Zero-Retention: active</code> header confirming zero persistence.
+          </p>
+        </details>
+
+        <!-- Q8: 22 MCP Tools -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>What capabilities do the 22 tools on the Tailprint MCP server provide?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            The Tailprint MCP server equips AI assistants (Claude Desktop, Cursor, ChatGPT Actions) with 22 native tools: <strong>Document generation</strong> (<code class="text-indigo-300">render_pdf</code>, <code class="text-indigo-300">render_image</code>, <code class="text-indigo-300">render_template</code>), <strong>PDF Toolkit operations</strong> (<code class="text-indigo-300">merge_pdfs</code>, <code class="text-indigo-300">split_pdf</code>, <code class="text-indigo-300">fill_pdf_form</code>, <code class="text-indigo-300">compress_pdf</code>, <code class="text-indigo-300">stamp_pdf</code>), <strong>Visuals &amp; Diagrams</strong> (<code class="text-indigo-300">render_mermaid</code>, <code class="text-indigo-300">render_chart</code>, <code class="text-indigo-300">generate_qr</code>, <code class="text-indigo-300">render_device_mockup</code>), <strong>Presentations &amp; Social</strong> (<code class="text-indigo-300">render_presentation</code>, <code class="text-indigo-300">render_carousel</code>, <code class="text-indigo-300">generate_social_card</code>), <strong>European Compliance</strong> (<code class="text-indigo-300">generate_einvoice</code>), and <strong>AI Data Ingestion</strong> (<code class="text-indigo-300">scrape_markdown</code>, <code class="text-indigo-300">extract_tables_from_url</code>, <code class="text-indigo-300">audit_webpage</code>, <code class="text-indigo-300">compare_snapshots</code>).
+          </p>
+        </details>
+
+        <!-- Q9: EU Factur-X / PEPPOL -->
+        <details class="group rounded-2xl bg-slate-900/70 border border-slate-800 p-6 transition duration-200 open:border-indigo-500/50 open:bg-slate-900/90">
+          <summary class="flex items-center justify-between font-bold text-white cursor-pointer list-none text-base">
+            <span>How does Tailprint handle EU Factur-X / ZUGFeRD / EN 16931 compliance?</span>
+            <span class="text-indigo-400 text-lg group-open:rotate-180 transition-transform duration-200">↓</span>
+          </summary>
+          <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+            Via <code class="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">POST /v1/render/einvoice</code> or the MCP tool <code class="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">generate_einvoice</code>, Tailprint generates a hybrid PDF document compliant with the European Standard EN 16931. It renders an A4 vector visual invoice using Tailwind CSS and embeds a machine-readable <code class="text-emerald-300">factur-x.xml</code> (CrossIndustryInvoice) file into the PDF document catalog dictionary (<code class="text-slate-400 text-xs font-mono">/EmbeddedFiles</code>). This is directly readable by ERP systems such as DATEV, SAP, Chorus Pro, Dinero, and Billy.
+          </p>
+        </details>
       </div>
     </div>
   </section>
@@ -2028,11 +2677,13 @@ This domain is for use in documentation examples without needing permission. Thi
     // Interactive Avatar Mascot Easter Eggs & Tips
     const botTips = [
       "⚡ Ultra-fast rendering: Sub-500ms execution from Tailwind HTML to vector PDF!",
-      "🤖 MCP Server Ready: Connect Claude Desktop, Cursor, or Windsurf directly via /v1/mcp/sse.",
-      "🎨 100% Tailwind Native: Arbitrary utility classes like w-[340px] and grid-cols-12 supported out of the box.",
-      "🔒 Enterprise Security: Automatic SSRF blocking and pre-warmed isolated Chromium sandboxes.",
-      "🚀 Zero headless browser setup: Just send a POST request or prompt your AI agent.",
-      "📄 Try the interactive live playground right below to test your markup ⬇️"
+      "🤖 22 Native MCP Tools: Connect Claude Desktop, Cursor, or Windsurf directly via /v1/mcp/sse.",
+      "🛡️ Smart Pagination Shield: Repeating thead across pages and zero sliced table rows!",
+      "🎨 Live Template Studio: Design and test Tailwind templates directly in your browser at /studio.",
+      "🇪🇺 EU Factur-X & PEPPOL: Generate hybrid PDFs with embedded XML for DATEV, SAP, Dinero & Billy.",
+      "🔒 Zero-Retention Mode: 100% GDPR/HIPAA privacy with transient volatile memory rendering.",
+      "📐 Mermaid & 16:9 Slides: Convert architecture diagrams and markdown into presentation decks.",
+      "🚀 Zero headless browser setup: Just send a POST request or prompt your AI agent."
     ];
     let tipIdx = 0;
     window.cycleAvatarTip = function() {

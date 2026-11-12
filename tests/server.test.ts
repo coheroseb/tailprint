@@ -206,6 +206,7 @@ describe('Tailprint Test Suite', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/v1/tools/carousel',
+        remoteAddress: `10.42.1.${Math.floor(Math.random() * 200) + 1}`,
         payload: {
           author_name: 'Test Author',
           theme: 'dark',
@@ -482,6 +483,7 @@ describe('Tailprint Test Suite', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/v1/render/playground',
+        remoteAddress: `10.42.2.${Math.floor(Math.random() * 200) + 1}`,
         payload: {
           html: '<div class="p-8 bg-blue-600 text-white font-bold">Playground Live Test</div>',
           format: 'A4',

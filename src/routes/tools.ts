@@ -1256,19 +1256,36 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   // FREE API ENDPOINTS (IP Rate-limited)
   // ==========================================
 
+  const ErrorResponseSchema = z.object({
+    statusCode: z.number(),
+    error: z.string(),
+    message: z.string(),
+  });
+
   // 1. POST /v1/tools/carousel
   fastify.post(
     '/v1/tools/carousel',
     {
       schema: {
-        hide: true,
+        tags: ['Tools'],
+        summary: 'Generate LinkedIn / Instagram Carousel PDF',
+        description: 'Generates a multi-slide 1080x1350 px portrait document from Markdown slides (separated by "---") with custom branding and themes. Returns a hosted PDF link and cover image URL.',
         body: z.object({
-          author_name: z.string().optional().default('Tailprint Insights'),
-          author_handle: z.string().optional().default('@tailprint'),
-          author_role: z.string().optional().default('High-Performance Engine'),
-          theme: z.enum(['dark', 'light', 'emerald', 'gradient']).optional().default('dark'),
-          markdown: z.string().min(5),
+          author_name: z.string().optional().default('Tailprint Insights').describe('Author name to brand each slide'),
+          author_handle: z.string().optional().default('@tailprint').describe('Author social handle (e.g. @company)'),
+          author_role: z.string().optional().default('High-Performance Engine').describe('Author title or subtitle'),
+          theme: z.enum(['dark', 'light', 'emerald', 'gradient']).optional().default('dark').describe('Visual slide theme'),
+          markdown: z.string().min(5).describe('Markdown slide content separated by ---'),
         }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            pdfUrl: z.string().optional().describe('Direct CDN URL to multi-page carousel PDF'),
+            previewUrl: z.string().optional().describe('Direct CDN URL to slide 1 cover PNG'),
+            slideCount: z.number().describe('Total slides generated'),
+          }),
+          429: ErrorResponseSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -1307,36 +1324,48 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/factur-x',
     {
       schema: {
-        hide: true,
+        tags: ['Tools'],
+        summary: 'Generate Factur-X / PEPPOL Hybrid E-Invoice',
+        description: 'Generates an EU-compliant hybrid electronic invoice conforming to EN 16931 / Factur-X / ZUGFeRD 2.2 with embedded XML and visual PDF layout.',
         body: z.object({
-          invoiceNumber: z.string().min(1),
-          currency: z.string().length(3).default('EUR'),
-          dueDate: z.string().optional(),
+          invoiceNumber: z.string().min(1).describe('Unique invoice identifier'),
+          currency: z.string().length(3).default('EUR').describe('3-letter ISO currency code (e.g. EUR, DKK, USD)'),
+          dueDate: z.string().optional().describe('Payment due date in YYYY-MM-DD'),
           seller: z.object({
-            name: z.string().min(1),
-            vatId: z.string().optional(),
+            name: z.string().min(1).describe('Supplier/seller company name'),
+            vatId: z.string().optional().describe('Supplier VAT / CVR number'),
             street: z.string().optional(),
             city: z.string().optional(),
-            country: z.string().length(2).default('DK'),
+            country: z.string().length(2).default('DK').describe('2-letter ISO country code'),
           }),
           buyer: z.object({
-            name: z.string().min(1),
-            vatId: z.string().optional(),
+            name: z.string().min(1).describe('Buyer company name'),
+            vatId: z.string().optional().describe('Buyer VAT number'),
             street: z.string().optional(),
             city: z.string().optional(),
-            country: z.string().length(2).default('DE'),
+            country: z.string().length(2).default('DE').describe('2-letter ISO country code'),
           }),
           lineItems: z.array(
             z.object({
-              name: z.string(),
-              quantity: z.number().positive(),
-              unitPrice: z.number().nonnegative(),
-              vatRate: z.number().nonnegative().default(25),
+              name: z.string().describe('Item or service description'),
+              quantity: z.number().positive().describe('Quantity billed'),
+              unitPrice: z.number().nonnegative().describe('Unit price excluding VAT'),
+              vatRate: z.number().nonnegative().default(25).describe('VAT rate percentage (e.g. 25 for 25%)'),
             })
           ),
-          paymentIban: z.string().optional(),
-          paymentBic: z.string().optional(),
+          paymentIban: z.string().optional().describe('Bank IBAN for wire transfer'),
+          paymentBic: z.string().optional().describe('Bank SWIFT/BIC code'),
         }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            pdfUrl: z.string().optional().describe('Hosted hybrid PDF link'),
+            xmlSnippet: z.string().describe('Snippet of embedded CrossIndustryInvoice XML'),
+            grossTotal: z.number().describe('Total invoice amount including VAT'),
+            currency: z.string().describe('Invoice currency'),
+          }),
+          429: ErrorResponseSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -1377,11 +1406,22 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/visual-diff',
     {
       schema: {
-        hide: true,
+        tags: ['Tools'],
+        summary: 'Generate Visual Regression Diff Heatmap',
+        description: 'Captures two public URLs and generates a 3-panel comparison image (Baseline, Modified, Diff Overlay) highlighting visual changes in neon-pink.',
         body: z.object({
-          before_url: z.string().url(),
-          after_url: z.string().url(),
+          before_url: z.string().url().describe('Baseline URL before code or styling changes'),
+          after_url: z.string().url().describe('Target URL after changes'),
         }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            diffImageUrl: z.string().describe('Hosted URL of the 3-panel diff heatmap image'),
+            diffPixels: z.number().describe('Number of mismatched pixels'),
+            diffPercentage: z.number().describe('Percentage of visual deviation'),
+          }),
+          429: ErrorResponseSchema,
+        },
       },
     },
     async (request, reply) => {
@@ -1423,12 +1463,23 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/mockup',
     {
       schema: {
-        hide: true,
+        tags: ['Tools'],
+        summary: 'Generate 3D Device Mockup (MacBook & iPhone)',
+        description: 'Captures any public web URL and renders a photorealistic 3D presentation scene containing a MacBook Pro and floating iPhone on a studio gradient canvas.',
         body: z.object({
-          url: z.string().url(),
-          title: z.string().optional(),
-          delay_ms: z.number().min(0).max(10000).optional().default(500),
+          url: z.string().url().describe('Public web URL to render inside the device frames'),
+          title: z.string().optional().describe('Headline text displayed at the top of the canvas'),
+          delay_ms: z.number().min(0).max(10000).optional().default(500).describe('Render wait time in milliseconds'),
         }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            mockupUrl: z.string().describe('Hosted URL of the generated 1600x1000 mockup PNG'),
+            width: z.number(),
+            height: z.number(),
+          }),
+          429: ErrorResponseSchema,
+        },
       },
     },
     async (request, reply) => {
