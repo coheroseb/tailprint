@@ -157,4 +157,67 @@ export const scrapeRoutes: FastifyPluginAsyncZod = async (fastify) => {
       });
     }
   );
+
+  // Public Interactive Scraper Playground for the Landing Page
+  fastify.post(
+    '/v1/scrape/playground',
+    {
+      schema: {
+        hide: true,
+        body: ScrapeMarkdownRequestSchema,
+        response: {
+          200: ScrapeMarkdownResponseSchema,
+          400: ErrorResponseSchema,
+          429: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const clientIp = request.ip || 'anonymous';
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const isExempt = cookieHeader.includes('tailprint_ignore_me=1');
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp, 60, isExempt);
+
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Playground rate limit exceeded (max 60 scrapes/hour). Claim 100 free monthly operations or upgrade.',
+        });
+      }
+
+      const { url, strip_images } = request.body;
+      const cacheHash = redisService.generateScrapeCacheHash({
+        url,
+        strip_images,
+      });
+
+      const cached = await redisService.getCachedScrape(cacheHash);
+      if (cached) {
+        reply.header('X-Cache', 'HIT');
+        return reply.code(200).send({
+          ...cached,
+          cached: true,
+        });
+      }
+
+      try {
+        const result = await scraperService.scrapeUrl(request.body);
+        await redisService.setCachedScrape(cacheHash, result, 86400);
+
+        reply.header('X-Cache', 'MISS');
+        return reply.code(200).send({
+          ...result,
+          cached: false,
+        });
+      } catch (err: any) {
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Scrape Failed',
+          message: err.message || 'Failed to extract content from URL',
+        });
+      }
+    }
+  );
 };

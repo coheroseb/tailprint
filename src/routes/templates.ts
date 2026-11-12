@@ -2942,7 +2942,7 @@ This domain is for use in documentation examples without needing permission. Thi
       btn.innerText = 'Extracting...';
 
       try {
-        const res = await fetch('/v1/scrape/markdown', {
+        const res = await fetch('/v1/scrape/playground', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: input.value, strip_images: true })
