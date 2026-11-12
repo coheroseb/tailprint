@@ -7,6 +7,7 @@ import { eInvoiceService } from '../services/eInvoice.js';
 import { visualDiffService } from '../services/visualDiff.js';
 import { mockupService } from '../services/mockup.js';
 import { reelService } from '../services/reel.js';
+import { canvaLogoService } from '../services/canvaLogo.js';
 import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
 import { qrService } from '../services/qr.js';
@@ -105,6 +106,19 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
                       Visual Regression Diff
                     </div>
                     <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Pixelmatch diff heatmap & visual comparison canvas</p>
+                  </div>
+                </a>
+
+                <a href="/tools/canva-logo" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'AI Logo til Canva' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+                    🎨
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-cyan-300 flex items-center space-x-1.5">
+                      <span>AI Logo → Canva Vektor</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-semibold">SVG + PDF</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Gør flade AI-logoer 100% redigerbare i Canva (farvelag &amp; tekst)</p>
                   </div>
                 </a>
 
@@ -4484,4 +4498,879 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
   fastify.get('/tools/reel/p/:slug', { schema: { hide: true } }, mobilePlayerHandler);
   fastify.get('/tools/reel/view', { schema: { hide: true } }, mobilePlayerHandler);
+
+  // ============================================================================
+  // 8. AI LOGO -> CANVA VECTOR & LAYER STUDIO (/tools/canva-logo)
+  // ============================================================================
+  fastify.post(
+    '/v1/tools/canva-logo',
+    {
+      schema: {
+        tags: ['Free Tools'],
+        summary: 'Convert an AI-generated raster logo (or prompt) into 100% Canva-editable SVG color layers and an Editable Vector PDF with separated text boxes.',
+      },
+    },
+    async (request: any, reply: any) => {
+      const clientIp = request.ip || 'anonymous';
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Free tool rate limit exceeded (max 25 renders/hour).',
+        });
+      }
+
+      const body = (request.body || {}) as {
+        imageDataUrl?: string;
+        imageUrl?: string;
+        prompt?: string;
+        maxColors?: number;
+        separateText?: boolean;
+        customState?: any;
+      };
+
+      try {
+        const result = body.prompt && !body.imageDataUrl && !body.imageUrl && !body.customState
+          ? await canvaLogoService.generateAiLogoFromPrompt(body.prompt)
+          : await canvaLogoService.convertLogoForCanva({
+              imageDataUrl: body.imageDataUrl,
+              imageUrl: body.imageUrl,
+              maxColors: body.maxColors,
+              separateText: body.separateText,
+              customState: body.customState,
+            });
+
+        return reply.code(200).send({
+          success: true,
+          state: result.state,
+          iconSvg: result.iconSvg,
+          combinedSvg: result.combinedSvg,
+          iconSvgUrl: result.iconSvgUrl,
+          combinedSvgUrl: result.combinedSvgUrl,
+          canvaPdfUrl: result.canvaPdfUrl,
+          canvaPdfDownloadUrl: result.canvaPdfDownloadUrl,
+        });
+      } catch (err: any) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: err.message || 'Kunne ikke konvertere logo til Canva-format',
+        });
+      }
+    }
+  );
+
+  fastify.get('/tools/canva-logo', { schema: { hide: true } }, async (_request, reply) => {
+    const html = `<!DOCTYPE html>
+<html lang="da" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Logo → Redigerbar Canva Vektor &amp; Lag Studio — Tailprint</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@600;700;800;900&family=Playfair+Display:wght@700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .checkerboard {
+      background-color: #0f172a;
+      background-image:
+        linear-gradient(45deg, #1e293b 25%, transparent 25%),
+        linear-gradient(-45deg, #1e293b 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1e293b 75%),
+        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  ${renderHeader('AI Logo til Canva')}
+
+  <main class="max-w-7xl mx-auto px-6 py-8 flex-1 w-full">
+    <!-- Hero Header -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-3">
+          <span>🎨 AI Logo Deconstructor</span>
+          <span>•</span>
+          <span>Canva Vektor-Lag + Redigerbar Tekst</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white">
+          Gør ethvert AI-Logo <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">100% Redigerbart i Canva</span>
+        </h1>
+        <p class="text-slate-400 text-sm mt-1.5 max-w-2xl">
+          Upload et fladt AI-genereret logo (fra Midjourney, ChatGPT, Ideogram m.fl.). Vores motor fjerner baggrunden, adskiller teksten til en <strong>ægte redigerbar tekstboks</strong> og splitter ikonet op i <strong>individuelle vektor-farvelag</strong>, du kan farvelægge og flytte frit i Canva.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="loadDemoAiLogo('nova')" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center space-x-1.5">
+          <span>🧪</span><span>Prøv Demo 1 (Tech Ræv)</span>
+        </button>
+        <button onclick="loadDemoAiLogo('aurora')" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center space-x-1.5">
+          <span>🌿</span><span>Prøv Demo 2 (Eco Leaf)</span>
+        </button>
+        <button onclick="loadDemoAiLogo('crown')" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center space-x-1.5">
+          <span>👑</span><span>Prøv Demo 3 (Luxury)</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- LEFT COLUMN (7 cols): Upload, AI Generator & Layer/Typography Controls -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- 1. Upload AI Logo or Generate with AI -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">1. Upload dit AI-Logo (PNG, JPG, WebP) eller Generer med AI</span>
+            <span id="status-pill" class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">Klar ✨</span>
+          </div>
+
+          <!-- Drag & Drop Zone -->
+          <div
+            id="drop-zone"
+            onclick="document.getElementById('logo-file-input').click()"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event)"
+            class="border-2 border-dashed border-slate-700 hover:border-cyan-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-950/60 hover:bg-slate-950 group"
+          >
+            <input id="logo-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" onchange="handleFileSelect(event)" />
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl group-hover:scale-105 transition">
+                📤
+              </div>
+              <div class="text-left">
+                <div class="text-sm font-bold text-white group-hover:text-cyan-300 transition">
+                  Træk dit AI-logo herind, eller klik for at vælge fil
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Understøtter PNG, JPG og WebP fra Midjourney, DALL-E / ChatGPT, Ideogram &amp; Leonardo
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Options Row before/during vectorization -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5">
+              <div>
+                <div class="text-xs font-bold text-slate-200">✂️ Adskil AI-Tekst Automatisk</div>
+                <div class="text-[10px] text-slate-500">Fjerner flad tekst fra ikonet &amp; laver ægte tekstboks</div>
+              </div>
+              <input id="opt-separate-text" type="checkbox" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer" onchange="retraceIfUploaded()" />
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5">
+              <div>
+                <div class="text-xs font-bold text-slate-200">🎨 Antal Vektor-Farvelag</div>
+                <div class="text-[10px] text-slate-500">Hvert lag kan skifte farve i Canva</div>
+              </div>
+              <select id="opt-max-colors" onchange="retraceIfUploaded()" class="bg-slate-900 border border-slate-700 text-white text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500">
+                <option value="2">2 Farver (Minimal)</option>
+                <option value="3">3 Farver</option>
+                <option value="4" selected>4 Farver (Anbefalet)</option>
+                <option value="5">5 Farver</option>
+                <option value="6">6 Farver (Detaljeret)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Or Generate fresh AI Logo from Prompt -->
+          <div class="pt-3 border-t border-slate-800/80">
+            <label class="block text-[11px] text-slate-400 font-semibold mb-1.5">Eller beskriv et nyt logo (Gemini 3.8 Flash bygger det direkte i Canva-vektorlag):</label>
+            <div class="flex gap-2">
+              <input
+                id="ai-logo-prompt"
+                type="text"
+                placeholder="f.eks. 'VALKYRIE CLOUD - geometrisk skandinavisk vinge i cyan og elektrisk indigo'"
+                class="flex-1 bg-slate-950 text-slate-100 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-cyan-500"
+              />
+              <button
+                id="btn-generate-prompt"
+                onclick="generateFromPrompt()"
+                class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-cyan-600/20 whitespace-nowrap"
+              >
+                ✨ Generer Vektor-Logo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Individual Vector Color Layers Editor -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">2. Vektor-Farvelag i Ikonet (Canva Color Swatches)</span>
+              <p class="text-[11px] text-slate-400 mt-0.5">Klik på en farve for at teste farveskift live — i Canva vises præcis disse farvefelter øverst, når du klikker på logoet.</p>
+            </div>
+            <span id="layer-count-badge" class="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300">3 Lag</span>
+          </div>
+
+          <div id="vector-layers-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 3. Separated Editable Text & Layout Controls -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-400">3. Adskilt Redigerbar Tekst &amp; Layout (Canva Tekstbokse)</span>
+              <p class="text-[11px] text-slate-400 mt-0.5">Når du åbner den eksporterede PDF i Canva, er firmanavn og slogan 100% redigerbare tekstbokse.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Firmanavn (Hovedtekst)</label>
+              <input id="input-brand-name" type="text" value="NOVAFLOW" oninput="onTextControlChange()" class="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-purple-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Tagline / Slogan (Undertekst)</label>
+              <input id="input-tagline" type="text" value="INTELLIGENT CLOUD SYSTEMS" oninput="onTextControlChange()" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Skrifttype (Canva-kompatibel)</label>
+              <select id="input-font-family" onchange="onTextControlChange()" class="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-purple-500">
+                <option value="Montserrat">Montserrat (Geometric Bold)</option>
+                <option value="Space Grotesk" selected>Space Grotesk (Modern Tech)</option>
+                <option value="Outfit">Outfit (Clean Startup)</option>
+                <option value="Plus Jakarta Sans">Plus Jakarta Sans (Corporate)</option>
+                <option value="Playfair Display">Playfair Display (Editorial Serif)</option>
+                <option value="Cinzel">Cinzel (Luxury / Classic)</option>
+                <option value="JetBrains Mono">JetBrains Mono (Developer)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Logo-Opstilling</label>
+              <select id="input-layout" onchange="onTextControlChange()" class="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-purple-500">
+                <option value="stacked" selected>Stakket (Ikon over tekst)</option>
+                <option value="horizontal">Horisontal (Ikon + tekst)</option>
+                <option value="icon-only">Kun Ikon (Uden tekst)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Bogstav-Afstand (Tracking)</label>
+              <input id="input-letter-spacing" type="range" min="0" max="0.25" step="0.02" value="0.10" oninput="onTextControlChange()" class="w-full accent-purple-500 mt-2" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+              <span class="text-[11px] text-slate-400 font-medium">Tekstfarve</span>
+              <input id="input-text-color" type="color" value="#ffffff" oninput="onTextControlChange()" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+              <span class="text-[11px] text-slate-400 font-medium">Tagline-farve</span>
+              <input id="input-tagline-color" type="color" value="#38bdf8" oninput="onTextControlChange()" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+              <span class="text-[11px] text-slate-400 font-medium">Baggrund</span>
+              <input id="input-bg-color" type="color" value="#0b0f19" oninput="onTextControlChange()" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+              <span class="text-[11px] text-slate-400 font-medium">Transparent SVG</span>
+              <input id="input-transparent-bg" type="checkbox" checked onchange="onTextControlChange()" class="w-4 h-4 accent-cyan-500 rounded cursor-pointer" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN (5 cols): Live Vector Preview & Canva Export Suite -->
+      <div class="lg:col-span-5 space-y-5 lg:sticky lg:top-24">
+
+        <!-- Preview Mode Switcher -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Vektor- &amp; Lag-Preview</span>
+            <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px]">
+              <button id="tab-preview-combined" onclick="setPreviewTab('combined')" class="px-2.5 py-1 rounded-lg font-bold bg-cyan-600 text-white transition">Komplet Logo</button>
+              <button id="tab-preview-icon" onclick="setPreviewTab('icon')" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Kun Vektor-Ikon</button>
+              <button id="tab-preview-compare" onclick="setPreviewTab('compare')" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Før / Efter</button>
+            </div>
+          </div>
+
+          <!-- Main Interactive Vector Stage -->
+          <div id="vector-stage-wrapper" class="relative w-full h-[380px] rounded-2xl checkerboard border border-slate-800 flex items-center justify-center overflow-hidden p-6 transition-all">
+            <div id="vector-stage-content" class="w-full h-full flex items-center justify-center">
+              <!-- Live SVG Injected Here -->
+            </div>
+
+            <!-- Compare Before/After Overlay (Only visible in 'compare' tab) -->
+            <div id="compare-stage-content" class="hidden w-full h-full grid grid-cols-2 gap-4 items-center">
+              <div class="flex flex-col items-center justify-center h-full bg-slate-950/80 rounded-xl p-3 border border-slate-800">
+                <span class="text-[10px] font-mono uppercase text-rose-400 font-bold mb-2">Før: Fladt Raster-Billede</span>
+                <img id="original-raster-img" src="" class="max-h-[260px] object-contain rounded-lg" alt="Original AI Logo" />
+              </div>
+              <div class="flex flex-col items-center justify-center h-full bg-slate-950/80 rounded-xl p-3 border border-cyan-500/40">
+                <span class="text-[10px] font-mono uppercase text-cyan-400 font-bold mb-2">Efter: Redigerbar Vektor</span>
+                <div id="compare-vector-box" class="w-full h-[260px] flex items-center justify-center"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary Canva Export Actions -->
+          <div class="space-y-2.5 pt-1">
+            <button
+              id="btn-download-canva-pdf"
+              onclick="downloadEditableCanvaPdf()"
+              class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-black text-xs shadow-xl shadow-indigo-600/25 flex items-center justify-between transition border border-white/20"
+            >
+              <div class="flex items-center space-x-2.5">
+                <span class="text-base">📄</span>
+                <div class="text-left">
+                  <div id="pdf-btn-title">Download Fuldt Redigerbar Canva-PDF (.PDF)</div>
+                  <div class="text-[10px] font-normal text-cyan-100/90">Vektor-ikon + redigerbare tekstbokse + horisontalt banner</div>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono">Anbefalet</span>
+            </button>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <button
+                onclick="downloadCanvaIconSvg()"
+                class="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition"
+              >
+                <span>🎨</span>
+                <span>Download Ikon .SVG (Farvelag)</span>
+              </button>
+
+              <button
+                onclick="downloadCombinedSvg()"
+                class="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition"
+              >
+                <span>📐</span>
+                <span>Download Komplet .SVG</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- How to use in Canva Guide Box -->
+          <div class="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 space-y-2 text-xs">
+            <div class="font-bold text-indigo-200 flex items-center space-x-1.5">
+              <span>💡</span>
+              <span>Sådan redigerer du logoet 100% i Canva:</span>
+            </div>
+            <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-300 leading-relaxed">
+              <li>Klik på <strong>Download Fuldt Redigerbar Canva-PDF</strong> ovenfor (eller <strong>Ikon .SVG</strong>).</li>
+              <li>Åbn <strong>Canva</strong> og træk filen direkte ind i dit projekt eller under <em>Uploads</em>.</li>
+              <li>Klik på <strong>logo-ikonet</strong> i Canva → nu vises alle farvelag øverst i Canva, så du kan skifte farve på hver enkelt del!</li>
+              <li>Dobbeltklik på <strong>firmanavnet eller sloganet</strong> i PDF'en → nu kan du rette teksten og skifte til enhver Canva-skrifttype.</li>
+            </ol>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentUploadedDataUrl = null;
+    let previewTab = 'combined';
+
+    let logoState = {
+      brandName: 'NOVAFLOW',
+      tagline: 'INTELLIGENT CLOUD SYSTEMS',
+      fontFamily: 'Space Grotesk',
+      uppercase: true,
+      letterSpacingEm: 0.10,
+      layout: 'stacked',
+      backgroundColor: '#0b0f19',
+      transparentBg: true,
+      textColor: '#ffffff',
+      taglineColor: '#38bdf8',
+      viewBoxSize: 500,
+      layers: [
+        {
+          id: 'layer_1',
+          name: 'Farvelag 1',
+          color: '#4f46e5',
+          pathData: 'M 250 55 L 420 152 L 420 348 L 250 445 L 80 348 L 80 152 Z M 250 115 L 135 182 L 135 318 L 250 385 L 365 318 L 365 182 Z',
+          areaRatio: 0.35
+        },
+        {
+          id: 'layer_2',
+          name: 'Farvelag 2',
+          color: '#38bdf8',
+          pathData: 'M 250 135 L 345 190 L 250 245 L 155 190 Z M 250 265 L 345 210 L 345 310 L 250 365 Z',
+          areaRatio: 0.22
+        },
+        {
+          id: 'layer_3',
+          name: 'Farvelag 3',
+          color: '#f43f5e',
+          pathData: 'M 155 210 L 235 256 L 235 356 L 155 310 Z',
+          areaRatio: 0.12
+        }
+      ]
+    };
+
+    function escapeXml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function buildClientIconSvg(forPreview) {
+      const size = logoState.viewBoxSize || 500;
+      const showBg = !logoState.transparentBg && logoState.backgroundColor;
+      const bgRect = showBg
+        ? '<rect width="' + size + '" height="' + size + '" rx="48" fill="' + logoState.backgroundColor + '" />'
+        : '';
+      const paths = logoState.layers.map(l =>
+        '<path id="' + l.id + '" fill="' + l.color + '" fill-rule="evenodd" d="' + l.pathData + '" />'
+      ).join('\\n');
+      const dimAttr = forPreview ? 'class="w-full h-full max-h-[320px]"' : 'width="1000" height="1000"';
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '" ' + dimAttr + '>' + bgRect + paths + '</svg>';
+    }
+
+    function buildClientCombinedSvg(forPreview) {
+      const hasBrand = Boolean(logoState.brandName && logoState.brandName.trim());
+      if (!hasBrand || logoState.layout === 'icon-only') {
+        return buildClientIconSvg(forPreview);
+      }
+
+      const displayBrand = logoState.uppercase ? logoState.brandName.toUpperCase() : logoState.brandName;
+      const displayTag = logoState.tagline ? (logoState.uppercase ? logoState.tagline.toUpperCase() : logoState.tagline) : '';
+      const letterSpacingPx = Math.round((logoState.letterSpacingEm || 0.08) * 64);
+      const paths = logoState.layers.map(l =>
+        '<path fill="' + l.color + '" fill-rule="evenodd" d="' + l.pathData + '" />'
+      ).join('\\n');
+
+      if (logoState.layout === 'horizontal') {
+        const W = 1200, H = 500;
+        const bgRect = (!logoState.transparentBg && logoState.backgroundColor)
+          ? '<rect width="' + W + '" height="' + H + '" rx="44" fill="' + logoState.backgroundColor + '" />'
+          : '';
+        const dimAttr = forPreview ? 'class="w-full h-full max-h-[320px]"' : 'width="' + W + '" height="' + H + '"';
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" ' + dimAttr + '>' +
+          bgRect +
+          '<g transform="translate(40, 25) scale(0.9)">' + paths + '</g>' +
+          '<text x="520" y="' + (displayTag ? 235 : 270) + '" fill="' + logoState.textColor + '" font-family="\\'' + escapeXml(logoState.fontFamily) + '\\', sans-serif" font-size="76" font-weight="800" letter-spacing="' + letterSpacingPx + '">' + escapeXml(displayBrand) + '</text>' +
+          (displayTag ? '<text x="524" y="305" fill="' + logoState.taglineColor + '" font-family="\\'' + escapeXml(logoState.fontFamily) + '\\', sans-serif" font-size="28" font-weight="600" letter-spacing="' + Math.round(letterSpacingPx * 1.4) + '">' + escapeXml(displayTag) + '</text>' : '') +
+        '</svg>';
+      }
+
+      const W = 800, H = 860;
+      const bgRect = (!logoState.transparentBg && logoState.backgroundColor)
+        ? '<rect width="' + W + '" height="' + H + '" rx="56" fill="' + logoState.backgroundColor + '" />'
+        : '';
+      const dimAttr = forPreview ? 'class="w-full h-full max-h-[330px]"' : 'width="' + W + '" height="' + H + '"';
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" ' + dimAttr + '>' +
+        bgRect +
+        '<g transform="translate(150, 45)">' + paths + '</g>' +
+        '<text x="' + (W / 2) + '" y="650" text-anchor="middle" fill="' + logoState.textColor + '" font-family="\\'' + escapeXml(logoState.fontFamily) + '\\', sans-serif" font-size="74" font-weight="800" letter-spacing="' + letterSpacingPx + '">' + escapeXml(displayBrand) + '</text>' +
+        (displayTag ? '<text x="' + (W / 2) + '" y="720" text-anchor="middle" fill="' + logoState.taglineColor + '" font-family="\\'' + escapeXml(logoState.fontFamily) + '\\', sans-serif" font-size="28" font-weight="600" letter-spacing="' + Math.round(letterSpacingPx * 1.5) + '">' + escapeXml(displayTag) + '</text>' : '') +
+      '</svg>';
+    }
+
+    function renderLayersEditor() {
+      const list = document.getElementById('vector-layers-list');
+      const badge = document.getElementById('layer-count-badge');
+      badge.textContent = logoState.layers.length + ' Farvelag';
+
+      list.innerHTML = logoState.layers.map((layer, idx) => {
+        return '<div class="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition">' +
+          '<div class="flex items-center space-x-3">' +
+            '<input type="color" value="' + layer.color + '" data-idx="' + idx + '" oninput="onLayerColorChange(this)" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0" />' +
+            '<div>' +
+              '<div class="text-xs font-bold text-white">' + escapeXml(layer.name || ('Farvelag ' + (idx + 1))) + '</div>' +
+              '<input type="text" value="' + layer.color.toUpperCase() + '" data-idx="' + idx + '" onchange="onLayerHexInput(this)" class="w-20 bg-transparent text-[11px] font-mono text-cyan-400 focus:outline-none" />' +
+            '</div>' +
+          '</div>' +
+          (logoState.layers.length > 1
+            ? '<button onclick="removeLayer(' + idx + ')" class="text-[11px] text-slate-500 hover:text-rose-400 px-2 py-1 rounded transition" title="Fjern dette lag">✕</button>'
+            : '') +
+        '</div>';
+      }).join('');
+    }
+
+    function onLayerColorChange(el) {
+      const idx = parseInt(el.getAttribute('data-idx'), 10);
+      if (logoState.layers[idx]) {
+        logoState.layers[idx].color = el.value;
+        renderLayersEditor();
+        renderStage();
+      }
+    }
+
+    function onLayerHexInput(el) {
+      const idx = parseInt(el.getAttribute('data-idx'), 10);
+      const val = el.value.trim();
+      if (logoState.layers[idx] && /^#[0-9a-fA-F]{6}$/.test(val)) {
+        logoState.layers[idx].color = val.toLowerCase();
+        renderLayersEditor();
+        renderStage();
+      }
+    }
+
+    function removeLayer(idx) {
+      if (logoState.layers.length <= 1) return;
+      logoState.layers.splice(idx, 1);
+      renderLayersEditor();
+      renderStage();
+    }
+
+    function syncInputsFromState() {
+      document.getElementById('input-brand-name').value = logoState.brandName || '';
+      document.getElementById('input-tagline').value = logoState.tagline || '';
+      document.getElementById('input-font-family').value = logoState.fontFamily || 'Montserrat';
+      document.getElementById('input-layout').value = logoState.layout || 'stacked';
+      document.getElementById('input-letter-spacing').value = logoState.letterSpacingEm ?? 0.08;
+      document.getElementById('input-text-color').value = logoState.textColor || '#ffffff';
+      document.getElementById('input-tagline-color').value = logoState.taglineColor || '#94a3b8';
+      document.getElementById('input-bg-color').value = logoState.backgroundColor || '#0b0f19';
+      document.getElementById('input-transparent-bg').checked = logoState.transparentBg !== false;
+    }
+
+    function onTextControlChange() {
+      logoState.brandName = document.getElementById('input-brand-name').value;
+      logoState.tagline = document.getElementById('input-tagline').value;
+      logoState.fontFamily = document.getElementById('input-font-family').value;
+      logoState.layout = document.getElementById('input-layout').value;
+      logoState.letterSpacingEm = parseFloat(document.getElementById('input-letter-spacing').value) || 0;
+      logoState.textColor = document.getElementById('input-text-color').value;
+      logoState.taglineColor = document.getElementById('input-tagline-color').value;
+      logoState.backgroundColor = document.getElementById('input-bg-color').value;
+      logoState.transparentBg = document.getElementById('input-transparent-bg').checked;
+      renderStage();
+    }
+
+    function setPreviewTab(tab) {
+      previewTab = tab;
+      ['combined', 'icon', 'compare'].forEach(t => {
+        const btn = document.getElementById('tab-preview-' + t);
+        if (btn) {
+          btn.className = t === tab
+            ? 'px-2.5 py-1 rounded-lg font-bold bg-cyan-600 text-white transition'
+            : 'px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition';
+        }
+      });
+      renderStage();
+    }
+
+    function renderStage() {
+      const stageWrapper = document.getElementById('vector-stage-wrapper');
+      const stageContent = document.getElementById('vector-stage-content');
+      const compareContent = document.getElementById('compare-stage-content');
+      const compareVectorBox = document.getElementById('compare-vector-box');
+
+      if (!logoState.transparentBg && logoState.backgroundColor) {
+        stageWrapper.style.background = logoState.backgroundColor;
+        stageWrapper.classList.remove('checkerboard');
+      } else {
+        stageWrapper.style.background = '';
+        stageWrapper.classList.add('checkerboard');
+      }
+
+      if (previewTab === 'compare' && currentUploadedDataUrl) {
+        stageContent.classList.add('hidden');
+        compareContent.classList.remove('hidden');
+        document.getElementById('original-raster-img').src = currentUploadedDataUrl;
+        compareVectorBox.innerHTML = buildClientCombinedSvg(true);
+      } else {
+        compareContent.classList.add('hidden');
+        stageContent.classList.remove('hidden');
+        stageContent.innerHTML = previewTab === 'icon'
+          ? buildClientIconSvg(true)
+          : buildClientCombinedSvg(true);
+      }
+    }
+
+    function setStatus(text, isBusy) {
+      const pill = document.getElementById('status-pill');
+      if (!pill) return;
+      pill.textContent = text;
+      pill.className = isBusy
+        ? 'text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold animate-pulse'
+        : 'text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold';
+    }
+
+    async function processDataUrl(dataUrl) {
+      currentUploadedDataUrl = dataUrl;
+      setStatus('Analyserer & Vektoriserer med Gemini 3.8 Flash...', true);
+      const separateText = document.getElementById('opt-separate-text').checked;
+      const maxColors = parseInt(document.getElementById('opt-max-colors').value, 10) || 4;
+
+      try {
+        const res = await fetch('/v1/tools/canva-logo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageDataUrl: dataUrl,
+            maxColors,
+            separateText
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.state) {
+          throw new Error(data.message || 'Fejl under vektorisering');
+        }
+        logoState = data.state;
+        syncInputsFromState();
+        renderLayersEditor();
+        renderStage();
+        setStatus('Vektoriseret (' + logoState.layers.length + ' lag) ✓', false);
+      } catch (err) {
+        alert('Fejl: ' + err.message);
+        setStatus('Fejl', false);
+      }
+    }
+
+    function retraceIfUploaded() {
+      if (currentUploadedDataUrl) {
+        processDataUrl(currentUploadedDataUrl);
+      }
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('drop-zone').classList.add('border-cyan-400', 'bg-cyan-950/20');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('drop-zone').classList.remove('border-cyan-400', 'bg-cyan-950/20');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('drop-zone').classList.remove('border-cyan-400', 'bg-cyan-950/20');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) readAndProcessFile(file);
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target?.files?.[0];
+      if (file) readAndProcessFile(file);
+    }
+
+    function readAndProcessFile(file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          processDataUrl(ev.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function generateFromPrompt() {
+      const input = document.getElementById('ai-logo-prompt');
+      const prompt = input.value.trim() || 'VALKYRIE CLOUD - geometrisk vinge i cyan og indigo';
+      const btn = document.getElementById('btn-generate-prompt');
+      btn.disabled = true;
+      btn.textContent = 'Genererer...';
+      setStatus('Gemini 3.8 Flash designer vektor-logo...', true);
+
+      try {
+        const res = await fetch('/v1/tools/canva-logo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.state) throw new Error(data.message || 'Kunne ikke generere logo');
+        currentUploadedDataUrl = null;
+        logoState = data.state;
+        syncInputsFromState();
+        renderLayersEditor();
+        if (previewTab === 'compare') previewTab = 'combined';
+        renderStage();
+        setStatus('AI Vektor-Logo Klar ✓', false);
+      } catch (err) {
+        alert('Fejl: ' + err.message);
+        setStatus('Fejl', false);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✨ Generer Vektor-Logo';
+      }
+    }
+
+    // Generates a realistic flat raster AI logo on an HTML5 canvas (with baked-in text & background)
+    // and runs it through the real AI Vision + Multi-Color Vectorizer pipeline!
+    function loadDemoAiLogo(preset) {
+      const c = document.createElement('canvas');
+      c.width = 600;
+      c.height = 600;
+      const ctx = c.getContext('2d');
+
+      if (preset === 'nova') {
+        ctx.fillStyle = '#0b0f19';
+        ctx.fillRect(0, 0, 600, 600);
+        // Outer hexagon
+        ctx.fillStyle = '#4f46e5';
+        ctx.beginPath();
+        ctx.moveTo(300, 70); ctx.lineTo(460, 160); ctx.lineTo(460, 340);
+        ctx.lineTo(300, 430); ctx.lineTo(140, 340); ctx.lineTo(140, 160);
+        ctx.closePath(); ctx.fill();
+        // Inner cutout
+        ctx.fillStyle = '#0b0f19';
+        ctx.beginPath();
+        ctx.moveTo(300, 125); ctx.lineTo(410, 188); ctx.lineTo(410, 312);
+        ctx.lineTo(300, 375); ctx.lineTo(190, 312); ctx.lineTo(190, 188);
+        ctx.closePath(); ctx.fill();
+        // Cyan lightning / prism
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.moveTo(300, 145); ctx.lineTo(390, 200); ctx.lineTo(300, 255); ctx.lineTo(210, 200);
+        ctx.closePath(); ctx.fill();
+        // Rose accent wing
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.moveTo(210, 225); ctx.lineTo(290, 270); ctx.lineTo(290, 355); ctx.lineTo(210, 310);
+        ctx.closePath(); ctx.fill();
+        // Baked-in raster text at bottom
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 54px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('NOVAFLOW', 300, 510);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '700 22px sans-serif';
+        ctx.fillText('AI CLOUD ENGINE', 300, 550);
+      } else if (preset === 'aurora') {
+        ctx.fillStyle = '#052e16';
+        ctx.fillRect(0, 0, 600, 600);
+        // Emerald circle badge
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(300, 235, 155, 0, Math.PI * 2);
+        ctx.fill();
+        // Inner dark cutout
+        ctx.fillStyle = '#052e16';
+        ctx.beginPath();
+        ctx.arc(300, 235, 115, 0, Math.PI * 2);
+        ctx.fill();
+        // Golden sun / leaf core
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(300, 210, 58, 0, Math.PI * 2);
+        ctx.fill();
+        // Teal wave
+        ctx.fillStyle = '#2dd4bf';
+        ctx.beginPath();
+        ctx.moveTo(195, 275); ctx.quadraticCurveTo(300, 215, 405, 275);
+        ctx.quadraticCurveTo(300, 355, 195, 275);
+        ctx.fill();
+        // Baked-in raster text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 52px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('VERDANT', 300, 495);
+        ctx.fillStyle = '#6ee7b7';
+        ctx.font = '700 22px sans-serif';
+        ctx.fillText('NORDIC BIO TECH', 300, 540);
+      } else {
+        ctx.fillStyle = '#09090b';
+        ctx.fillRect(0, 0, 600, 600);
+        // Gold crown / diamond
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(140, 330); ctx.lineTo(185, 150); ctx.lineTo(300, 245);
+        ctx.lineTo(415, 150); ctx.lineTo(460, 330);
+        ctx.closePath(); ctx.fill();
+        // Center jewel
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.moveTo(300, 110); ctx.lineTo(345, 205); ctx.lineTo(300, 300); ctx.lineTo(255, 205);
+        ctx.closePath(); ctx.fill();
+        // Base bar
+        ctx.fillStyle = '#e11d48';
+        ctx.fillRect(150, 350, 300, 28);
+        // Baked-in raster text
+        ctx.fillStyle = '#fef08a';
+        ctx.font = '800 50px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('AURELIA', 300, 485);
+        ctx.fillStyle = '#a1a1aa';
+        ctx.font = '600 21px sans-serif';
+        ctx.fillText('COPENHAGEN ATELIER', 300, 535);
+      }
+
+      const dataUrl = c.toDataURL('image/png');
+      previewTab = 'compare';
+      setPreviewTab('compare');
+      processDataUrl(dataUrl);
+    }
+
+    function downloadCanvaIconSvg() {
+      const svg = buildClientIconSvg(false);
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = ((logoState.brandName || 'logo').toLowerCase().replace(/[^a-z0-9]/g, '') || 'logo') + '-canva-ikon.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadCombinedSvg() {
+      const svg = buildClientCombinedSvg(false);
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = ((logoState.brandName || 'logo').toLowerCase().replace(/[^a-z0-9]/g, '') || 'logo') + '-komplet.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function downloadEditableCanvaPdf() {
+      const btn = document.getElementById('btn-download-canva-pdf');
+      const titleEl = document.getElementById('pdf-btn-title');
+      btn.disabled = true;
+      titleEl.textContent = 'Bygger Redigerbar Canva-PDF...';
+
+      try {
+        const res = await fetch('/v1/tools/canva-logo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customState: logoState })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.canvaPdfDownloadUrl) {
+          throw new Error(data.message || 'Kunne ikke generere Canva-PDF');
+        }
+        const a = document.createElement('a');
+        a.href = data.canvaPdfDownloadUrl;
+        a.download = ((logoState.brandName || 'logo').toLowerCase().replace(/[^a-z0-9]/g, '') || 'logo') + '-canva-editable.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        titleEl.textContent = 'Canva-PDF Hentet ✓';
+      } catch (err) {
+        alert('Fejl ved PDF-eksport: ' + err.message);
+        titleEl.textContent = 'Download Fuldt Redigerbar Canva-PDF (.PDF)';
+      } finally {
+        setTimeout(() => {
+          titleEl.textContent = 'Download Fuldt Redigerbar Canva-PDF (.PDF)';
+          btn.disabled = false;
+        }, 2200);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      syncInputsFromState();
+      renderLayersEditor();
+      renderStage();
+    });
+  </script>
+</body>
+</html>`;
+
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
+  });
 };

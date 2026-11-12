@@ -15,6 +15,7 @@ import { diagramService } from '../services/diagram.js';
 import { presentationService } from '../services/presentation.js';
 import { socialCardService } from '../services/socialCard.js';
 import { webAuditService } from '../services/webAudit.js';
+import { canvaLogoService } from '../services/canvaLogo.js';
 import { TEMPLATES } from '../config/templates.js';
 
 export interface McpServerOptions {
@@ -590,10 +591,10 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   // Tool 10: stamp_pdf (PDF Watermark & Status Overlay)
   server.tool(
     'stamp_pdf',
-    'Applies a diagonal semi-transparent watermark or status stamp (e.g. "CONFIDENTIAL", "DRAFT", "FORTROLIGT", "TILBUD") across all pages of an existing vector PDF using pdf-lib.',
+    'Applies a diagonal semi-transparent watermark or status stamp (e.g. "CONFIDENTIAL", "DRAFT", "PROPRIETARY") across all pages of an existing vector PDF using pdf-lib.',
     {
       pdf_base64: z.string().describe('Base64-encoded PDF string (e.g. output from render_pdf or render_template)'),
-      watermark_text: z.string().describe('Watermark text to stamp diagonally across each page (e.g. "CONFIDENTIAL", "DRAFT", "FORTROLIGT", "TILBUD")'),
+      watermark_text: z.string().describe('Watermark text to stamp diagonally across each page (e.g. "CONFIDENTIAL", "DRAFT", "PROPRIETARY")'),
       opacity: z.number().optional().default(0.15).describe('Watermark opacity from 0.05 (subtle) to 0.5 (prominent) - default: 0.15'),
       color: z.enum(['red', 'gray', 'blue']).optional().default('red').describe('Watermark color: "red", "gray", or "blue" (default: "red")'),
       font_size: z.number().optional().default(54).describe('Font size of watermark text in points (default: 54)'),
@@ -1535,6 +1536,64 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             {
               type: 'text',
               text: `Error auditing web page "${url}": ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 23: convert_logo_for_canva
+  server.tool(
+    'convert_logo_for_canva',
+    'Converts an AI-generated raster logo image (or generates one from a text prompt) into 100% Canva-editable vector files: a multi-layer SVG (with distinct fill="#HEX" paths so Canva allows full color editing) and an Editable Canva Vector PDF (where the icon is a movable vector graphic and the brand name/tagline are real editable Canva text boxes).',
+    {
+      image_url: z.string().url().optional().describe('Public HTTP/HTTPS URL of the AI-generated raster logo image (PNG, JPG, WebP)'),
+      image_base64: z.string().optional().describe('Base64 data URI (data:image/png;base64,...) of the AI-generated logo'),
+      prompt: z.string().optional().describe('Optional text prompt to generate a fresh AI vector logo if no image is provided'),
+      max_colors: z.number().int().min(2).max(6).optional().default(4).describe('Number of distinct vector color layers to extract (2 to 6, default: 4)'),
+      separate_text: z.boolean().optional().default(true).describe('Automatically strip baked-in raster text from the icon and rebuild it as real editable Canva text boxes (default: true)'),
+    },
+    async ({ image_url, image_base64, prompt, max_colors, separate_text }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('convert_logo_for_canva');
+        }
+
+        const result = prompt && !image_url && !image_base64
+          ? await canvaLogoService.generateAiLogoFromPrompt(prompt)
+          : await canvaLogoService.convertLogoForCanva({
+              imageUrl: image_url,
+              imageDataUrl: image_base64,
+              maxColors: max_colors ?? 4,
+              separateText: separate_text ?? true,
+            });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `✅ **AI Logo Converted to 100% Editable Canva Vector & Layer Files!**`,
+                `- **Detected Brand Name:** ${result.state.brandName || '(Icon Only)'}`,
+                `- **Detected Tagline:** ${result.state.tagline || '(None)'}`,
+                `- **Font Family:** ${result.state.fontFamily}`,
+                `- **Vector Color Layers (${result.state.layers.length}):** ${result.state.layers.map((l) => l.color.toUpperCase()).join(', ')}`,
+                ``,
+                `📄 **Editable Canva PDF (Vector Icon + Editable Text Boxes):** [${result.canvaPdfDownloadUrl}](${result.canvaPdfDownloadUrl})`,
+                `🎨 **Canva-Ready Icon SVG (Color-Editable Layers):** [${result.iconSvgUrl}](${result.iconSvgUrl})`,
+                `📐 **Combined Full SVG:** [${result.combinedSvgUrl}](${result.combinedSvgUrl})`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error converting logo for Canva: ${err.message || 'Unknown error'}`,
             },
           ],
         };
