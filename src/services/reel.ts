@@ -26,6 +26,7 @@ export interface ReelScript {
   aspectRatio?: '9:16' | '1:1' | '16:9' | '4:5';
   screenrecordUrl?: string;
   screenrecordMode?: 'inset' | 'backdrop' | 'none';
+  cleanExport?: boolean;
   language?: string;
   languageLabel?: string;
   slides: ReelSlide[];
@@ -604,16 +605,19 @@ Respond ONLY with valid JSON in this exact structure:
           <div class="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-indigo-500/20 blur-3xl pointer-events-none"></div>
           <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-purple-500/20 blur-3xl pointer-events-none"></div>
 
-          <!-- Top Progress Bar (Reel Style) -->
+          <!-- Top Progress Bar (Reel Style, optional) -->
+          ${script.cleanExport === false ? `
           <div class="z-10">
             <div class="flex items-center space-x-2 w-full mb-6">
               ${Array.from({ length: total })
                 .map((_, i) => `<div class="h-1.5 flex-1 rounded-full ${i <= idx ? 'bg-white' : 'bg-white/20'}"></div>`)
                 .join('')}
             </div>
+          </div>
+          ` : ''}
 
-            <!-- Author & Brand Header -->
-            <div class="flex items-center justify-between border-b border-white/10 pb-5">
+          <!-- Author & Brand Header -->
+          <div class="z-10 flex items-center justify-between border-b border-white/10 pb-5">
               <div class="flex items-center space-x-4">
                 ${
                   script.logoUrl
@@ -685,14 +689,16 @@ Respond ONLY with valid JSON in this exact structure:
           }
 
           <!-- Footer / CTA -->
-          <div class="z-10 flex items-center justify-between border-t border-white/10 pt-6">
-            <div class="flex items-center space-x-3 text-base font-bold text-white">
+          <div class="z-10 flex items-center justify-between ${script.cleanExport === false ? 'border-t border-white/10 pt-6' : ''}">
+            <div class="flex items-center space-x-3 text-base font-bold text-white px-4 py-2 rounded-2xl bg-white/10 border border-white/20">
               <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>${script.cta}</span>
             </div>
+            ${script.cleanExport === false ? `
             <div class="text-sm font-mono font-bold ${currentTheme.subtext}">
               Slide ${slideNum} / ${total}
             </div>
+            ` : ''}
           </div>
         </div>
       `;

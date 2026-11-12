@@ -1452,6 +1452,20 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               <span id="karaoke-toggle-status">Active 🔥</span>
             </button>
           </div>
+
+          <!-- Clean Video Export Toggle (Omits story tabs & slide counter from download) -->
+          <div class="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800">
+            <div class="flex items-center space-x-2">
+              <span class="text-base">🎬</span>
+              <div>
+                <span class="font-bold text-slate-200">Renset Video Download</span>
+                <p class="text-[10px] text-slate-500">Skjuler story progress-tabs &amp; '3/4' for ren TikTok &amp; Reels video</p>
+              </div>
+            </div>
+            <button id="clean-export-toggle-btn" onclick="toggleCleanExport()" class="px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30">
+              <span id="clean-export-toggle-status">Renset Video ✨</span>
+            </button>
+          </div>
         </div>
 
         <!-- Slides List Editor -->
@@ -1732,6 +1746,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       screenrecordUrl: null,
       screenrecordMode: "inset",
       karaoke: true,
+      cleanExport: true,
       sourceUrl: "https://tailprint.com",
       cta: "Follow for daily insights • Link in bio",
       duration: 3000,
@@ -1914,6 +1929,22 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
       }
       updatePreviewDisplay();
+      debouncedSyncToMobile();
+    }
+
+    function toggleCleanExport() {
+      reelState.cleanExport = reelState.cleanExport === false ? true : false;
+      const btn = document.getElementById('clean-export-toggle-btn');
+      const status = document.getElementById('clean-export-toggle-status');
+      if (btn && status) {
+        if (reelState.cleanExport !== false) {
+          btn.className = 'px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30';
+          status.textContent = 'Renset Video ✨';
+        } else {
+          btn.className = 'px-3 py-1 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 bg-slate-950 text-slate-400 border border-slate-800 hover:text-white';
+          status.textContent = 'Story Tabs Aktiv';
+        }
+      }
       debouncedSyncToMobile();
     }
 
@@ -2637,33 +2668,39 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         ctx.fillRect(0, 0, W, H);
       }
 
-      // 2. Progress bars
+      // 2. Progress bars (Skipped in clean video export mode)
+      const isClean = reelState.cleanExport !== false;
       const barMargin = aspect === '1:1' ? 60 : aspect === '4:5' ? 70 : 80;
-      const barTop = aspect === '9:16' ? 90 : aspect === '4:5' ? 60 : 50;
-      const barHeight = aspect === '1:1' ? 7 : 8;
-      const barSpacing = 16;
-      const totalBarWidth = W - (barMargin * 2);
-      const singleBarWidth = (totalBarWidth - (barSpacing * (totalSlides - 1))) / totalSlides;
 
-      for (let i = 0; i < totalSlides; i++) {
-        const x = barMargin + i * (singleBarWidth + barSpacing);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        roundRect(ctx, x, barTop, singleBarWidth, barHeight, 4, true, false);
+      if (!isClean) {
+        const barTop = aspect === '9:16' ? 90 : aspect === '4:5' ? 60 : 50;
+        const barHeight = aspect === '1:1' ? 7 : 8;
+        const barSpacing = 16;
+        const totalBarWidth = W - (barMargin * 2);
+        const singleBarWidth = (totalBarWidth - (barSpacing * (totalSlides - 1))) / totalSlides;
 
-        let fillW = 0;
-        if (i < slideIdx) {
-          fillW = singleBarWidth;
-        } else if (i === slideIdx) {
-          fillW = singleBarWidth * slideProgress;
-        }
-        if (fillW > 0) {
-          ctx.fillStyle = '#ffffff';
-          roundRect(ctx, x, barTop, fillW, barHeight, 4, true, false);
+        for (let i = 0; i < totalSlides; i++) {
+          const x = barMargin + i * (singleBarWidth + barSpacing);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+          roundRect(ctx, x, barTop, singleBarWidth, barHeight, 4, true, false);
+
+          let fillW = 0;
+          if (i < slideIdx) {
+            fillW = singleBarWidth;
+          } else if (i === slideIdx) {
+            fillW = singleBarWidth * slideProgress;
+          }
+          if (fillW > 0) {
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, barTop, fillW, barHeight, 4, true, false);
+          }
         }
       }
 
       // 3. Header: Brand Avatar & Name
-      const headerY = aspect === '9:16' ? 160 : aspect === '4:5' ? 120 : 100;
+      const headerY = isClean
+        ? (aspect === '9:16' ? 100 : aspect === '4:5' ? 80 : 70)
+        : (aspect === '9:16' ? 160 : aspect === '4:5' ? 120 : 100);
       const avatarSize = aspect === '9:16' ? 80 : 70;
       
       // Avatar or Brand Logo
@@ -2721,12 +2758,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           roundRect(ctx, barMargin, 580, 820, 140, 28, true, false);
 
           ctx.font = '900 78px system-ui, -apple-system, sans-serif';
+          const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, barMargin + 40, 680);
 
           ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
           ctx.fillStyle = theme.text;
-          ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), barMargin + 40 + ctx.measureText(slide.stat).width + 30, 670);
+          ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), barMargin + 40 + statW + 30, 670);
         }
 
         // Right Column Body Text
@@ -2745,12 +2783,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           roundRect(ctx, barMargin, 430, W - (barMargin * 2), 125, 24, true, false);
 
           ctx.font = '900 70px system-ui, -apple-system, sans-serif';
+          const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, barMargin + 35, 520);
 
           ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
           ctx.fillStyle = theme.text;
-          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + ctx.measureText(slide.stat).width + 25, 510);
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + statW + 25, 510);
 
           bodyY = 620;
         }
@@ -2770,12 +2809,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           roundRect(ctx, barMargin, 530, W - (barMargin * 2), 135, 28, true, false);
 
           ctx.font = '900 76px system-ui, -apple-system, sans-serif';
+          const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, barMargin + 35, 625);
 
           ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
           ctx.fillStyle = theme.text;
-          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + ctx.measureText(slide.stat).width + 30, 615);
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + statW + 30, 615);
 
           bodyY = 740;
         }
@@ -2795,12 +2835,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           roundRect(ctx, barMargin, 800, W - (barMargin * 2), 150, 32, true, false);
 
           ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+          const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, barMargin + 40, 905);
 
           ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
           ctx.fillStyle = theme.text;
-          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 40 + ctx.measureText(slide.stat).width + 40, 895);
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 40 + statW + 40, 895);
 
           bodyY = 1040;
         }
@@ -2811,27 +2852,61 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       // 5. Footer CTA
       const footerY = aspect === '16:9' ? H - 70 : aspect === '1:1' ? H - 70 : aspect === '4:5' ? H - 90 : H - 120;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(barMargin, footerY - 40);
-      ctx.lineTo(W - barMargin, footerY - 40);
-      ctx.stroke();
 
-      ctx.fillStyle = '#10b981';
-      ctx.beginPath();
-      ctx.arc(barMargin + 15, footerY, 12, 0, Math.PI * 2);
-      ctx.fill();
+      if (!isClean) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(barMargin, footerY - 40);
+        ctx.lineTo(W - barMargin, footerY - 40);
+        ctx.stroke();
 
-      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = theme.text;
-      ctx.textAlign = 'left';
-      ctx.fillText(reelState.cta, barMargin + 40, footerY + 10);
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(barMargin + 15, footerY, 12, 0, Math.PI * 2);
+        ctx.fill();
 
-      ctx.textAlign = 'right';
-      ctx.font = 'bold 26px monospace';
-      ctx.fillStyle = theme.subtext;
-      ctx.fillText((slideIdx + 1) + ' / ' + totalSlides, W - barMargin, footerY + 10);
+        ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = theme.text;
+        ctx.textAlign = 'left';
+        ctx.fillText(reelState.cta, barMargin + 40, footerY + 10);
+
+        ctx.textAlign = 'right';
+        ctx.font = 'bold 26px monospace';
+        ctx.fillStyle = theme.subtext;
+        ctx.fillText((slideIdx + 1) + ' / ' + totalSlides, W - barMargin, footerY + 10);
+      } else {
+        // Clean professional video footer: Floating glass pill without horizontal line and without slide number
+        if (reelState.cta) {
+          ctx.save();
+          const ctaText = reelState.cta;
+          ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+          const textW = ctx.measureText(ctaText).width;
+          const pillH = 58;
+          const pillW = Math.min(W - (barMargin * 2), textW + 68);
+          const pillX = barMargin;
+          const pillY = footerY - 26;
+
+          // Frosted glass background pill
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+          roundRect(ctx, pillX, pillY, pillW, pillH, 29, true, false);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+          ctx.lineWidth = 1.5;
+          roundRect(ctx, pillX, pillY, pillW, pillH, 29, false, true);
+
+          // Green live dot
+          ctx.fillStyle = '#10b981';
+          ctx.beginPath();
+          ctx.arc(pillX + 26, pillY + pillH / 2, 8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // CTA text
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'left';
+          ctx.fillText(ctaText, pillX + 46, pillY + 39);
+          ctx.restore();
+        }
+      }
     }
 
     // Canvas drawKaraokeText helper with word-by-word kinetic highlight pill
@@ -3455,6 +3530,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           aspectRatio: z.enum(['9:16', '1:1', '16:9', '4:5']).optional().default('9:16'),
           screenrecordUrl: z.string().optional(),
           screenrecordMode: z.enum(['inset', 'backdrop', 'none']).optional().default('inset'),
+          cleanExport: z.boolean().optional().default(true),
           slides: z
             .array(
               z.object({
