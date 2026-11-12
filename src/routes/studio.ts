@@ -526,6 +526,8 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     var SMART_PAGINATION_CSS = [
       '<style id="smart-pagination-shield">',
       '@media print, screen {',
+      '  @page { margin-top: 20mm; margin-bottom: 15mm; }',
+      '  @page :first { margin-top: 0mm; }',
       '  thead { display: table-header-group !important; }',
       '  tfoot { display: table-footer-group !important; }',
       '  table { border-collapse: collapse !important; }',

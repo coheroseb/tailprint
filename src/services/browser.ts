@@ -299,6 +299,14 @@ export class BrowserService {
       .addStyleTag({
         content: `
         @media print, screen {
+          /* Breathing room on subsequent pages when content flows over */
+          @page {
+            margin-top: 20mm;
+            margin-bottom: 15mm;
+          }
+          @page :first {
+            margin-top: 0mm;
+          }
           /* Repeat table header on every printed page */
           thead {
             display: table-header-group !important;
