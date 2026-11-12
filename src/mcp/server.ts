@@ -16,6 +16,7 @@ import { presentationService } from '../services/presentation.js';
 import { socialCardService } from '../services/socialCard.js';
 import { webAuditService } from '../services/webAudit.js';
 import { canvaLogoService } from '../services/canvaLogo.js';
+import { reelService, ReelScript } from '../services/reel.js';
 import { TEMPLATES } from '../config/templates.js';
 
 export interface McpServerOptions {
@@ -1601,6 +1602,144 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
     }
   );
 
+  // Tool 24: create_social_reel
+  server.tool(
+    'create_social_reel',
+    'Generates a high-converting 9:16 vertical video reel (MP4) with dynamic kinetic captions, a multi-slide carousel PDF, and formatted Instagram/TikTok caption with hashtags. Can automatically scrape any public URL (e.g. blog post, documentation, changelog) or accept custom topic/slides.',
+    {
+      url: z.string().url().optional().describe('Public web URL to transform into an Instagram/TikTok Reel. Tailprint will scrape and synthesize the hook, body, and CTA.'),
+      topic: z.string().optional().describe('Optional topic or theme if no URL is provided (e.g. "5 Docker Tips for Next.js Developers")'),
+      slides: z
+        .array(
+          z.object({
+            tag: z.string().optional().describe('Pill badge tag (e.g. "HOOK", "01", "TIP")'),
+            headline: z.string().describe('Bold slide headline'),
+            body: z.string().describe('Concise 1-2 sentence explanation'),
+            stat: z.string().optional().describe('Big visual metric (e.g. "<800ms", "100%", "$0")'),
+            statLabel: z.string().optional().describe('Metric label (e.g. "RENDER TIME", "FREE")'),
+          })
+        )
+        .optional()
+        .describe('Optional custom array of 3-5 structured slides'),
+      aspect_ratio: z
+        .enum(['9:16', '1:1', '16:9', '4:5'])
+        .optional()
+        .default('9:16')
+        .describe('Aspect ratio: 9:16 for Reels/Shorts/TikTok, 1:1 for square feed, 4:5 for Instagram portrait, 16:9 for YouTube/landscape'),
+      layout: z
+        .enum(['classic', 'split', 'iphone', 'editorial'])
+        .optional()
+        .default('classic')
+        .describe('Visual layout style: "classic", "split" (cinema split-screen), "iphone" (mockup), or "editorial" (large typography)'),
+      theme: z
+        .enum(['brand', 'gradient', 'cyberpunk', 'midnight', 'sunset', 'clean'])
+        .optional()
+        .default('brand')
+        .describe('Color theme (default: "brand")'),
+      brand: z.string().optional().describe('Brand name displayed in the reel header (default: "Tailprint")'),
+      handle: z.string().optional().describe('Social handle (e.g. "@tailprint")'),
+      record_video: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe('Whether to capture a live scrolling screen recording of the target URL inside the reel (default: false for fast rendering)'),
+    },
+    async ({ url, topic, slides, aspect_ratio, layout, theme, brand, handle, record_video }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('create_social_reel');
+        }
+
+        let script: ReelScript;
+        if (url) {
+          script = await reelService.generateScriptFromUrl(url, record_video === true);
+          if (topic) script.title = topic;
+        } else {
+          const fallbackSlides =
+            slides && slides.length > 0
+              ? slides
+              : [
+                  { tag: '01', headline: topic || 'Key Insights', body: 'Discover how this solution streamlines your development workflow.' },
+                  { tag: '02', headline: 'The Bottleneck', body: 'Traditional approaches suffer from slow setups and unpredictable latency.' },
+                  { tag: '03', headline: 'The Solution', body: 'Native execution with real-time feedback and sub-second execution.', stat: '<800ms', statLabel: 'RENDER TIME' },
+                  { tag: '04', headline: 'Get Started', body: 'Automate your pipelines today with zero infrastructure overhead.' },
+                ];
+          script = {
+            title: topic || 'Quick Highlights',
+            brand: brand || 'Tailprint',
+            handle: handle || '@tailprint',
+            logoUrl: 'https://tailprint.com/logo.svg',
+            aspectRatio: aspect_ratio || '9:16',
+            layout: layout || 'classic',
+            theme: theme || 'brand',
+            duration: 15,
+            slides: fallbackSlides,
+            cta: 'Build faster at tailprint.com',
+            sourceUrl: url || undefined,
+          };
+        }
+
+        if (aspect_ratio) script.aspectRatio = aspect_ratio;
+        if (layout) script.layout = layout;
+        if (theme) script.theme = theme;
+        if (brand) script.brand = brand;
+        if (handle) script.handle = handle;
+
+        const [videoResult, deckResult] = await Promise.all([
+          reelService.renderReelVideoMp4(script),
+          reelService.renderReelDeck(script).catch(() => null),
+        ]);
+
+        const caption = reelService.formatInstagramCaption(script);
+        const coverBase64 = deckResult?.previewStored
+          ? (await storageService.getFile(deckResult.previewStored.fileId))?.buffer.toString('base64')
+          : null;
+
+        const contentBlocks: any[] = [];
+        if (coverBase64) {
+          contentBlocks.push({
+            type: 'image',
+            data: coverBase64,
+            mimeType: 'image/png',
+          });
+        }
+
+        contentBlocks.push({
+          type: 'text',
+          text: [
+            `🎬 **Social Reel & Video Generated!** (${script.aspectRatio || '9:16'} MP4, ~${videoResult.durationSec || 15}s)`,
+            `- **Title:** "${script.title}"`,
+            `- **Brand:** ${script.brand} (${script.handle || '@tailprint'})`,
+            `- **Layout:** ${script.layout} | **Theme:** ${script.theme}`,
+            `- **Slides (${script.slides.length}):** ${script.slides.map((s) => s.headline).join(' → ')}`,
+            ``,
+            `🎥 **Play / Download 9:16 MP4 Video:** [${videoResult.videoStored.hostedUrl}](${videoResult.videoStored.hostedUrl})`,
+            deckResult?.pdfStored ? `📄 **Multi-Slide Carousel PDF:** [${deckResult.pdfStored.hostedUrl}](${deckResult.pdfStored.hostedUrl})` : '',
+            ``,
+            `📋 **Formatted Instagram / TikTok Caption:**`,
+            '```text',
+            caption,
+            '```',
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        });
+
+        return { content: contentBlocks };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error generating social reel: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
   // ==========================================
   // MCP RESOURCES
   // ==========================================
@@ -1856,6 +1995,29 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             content: {
               type: 'text',
               text: `Please perform a pixel-level visual regression audit between:\n- Baseline URL: "${before_url}"\n- Staging URL: "${after_url}"\n\nUse the Tailprint "compare_snapshots" tool to capture both viewports and generate a diff heatmap. Then use the "audit_webpage" tool to check for SEO and accessibility regressions.`,
+            },
+          },
+        ],
+      };
+    }
+  );
+
+  // Prompt 6: Create Social Video Reel
+  server.prompt(
+    'create_social_reel',
+    'Interactively generate a high-converting 9:16 vertical video reel with kinetic captions, carousel PDF, and formatted caption from a URL or topic',
+    {
+      url_or_topic: z.string().describe('Public web URL or topic idea to create a Reel from'),
+      target_platform: z.enum(['instagram', 'tiktok', 'linkedin', 'youtube_shorts']).optional().default('instagram').describe('Target social platform'),
+    },
+    async ({ url_or_topic, target_platform }) => {
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Please generate an engaging, high-converting social media reel for ${target_platform || 'Instagram'} based on: "${url_or_topic}".\n1. If this is a URL, call the 'create_social_reel' tool with the url parameter.\n2. If this is a topic, structure 4 punchy slides (Hook, Problem, Solution, CTA) with bold headlines and key metrics, then call 'create_social_reel'.\n3. Present the resulting 9:16 MP4 video link, carousel PDF, and the formatted caption with hashtags so I can publish it immediately.`,
             },
           },
         ],

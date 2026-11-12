@@ -53,7 +53,8 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('extract_tables_from_url');
     expect(toolNames).toContain('audit_webpage');
     expect(toolNames).toContain('convert_logo_for_canva');
-    expect(toolNames.length).toBe(23);
+    expect(toolNames).toContain('create_social_reel');
+    expect(toolNames.length).toBe(24);
 
     await client.close();
     await server.close();
@@ -417,7 +418,7 @@ Takeaway: 90% token savings.
     await server.close();
   }, 25000);
 
-  it('GET /v1/mcp/tools returns catalog of all 22 tools', async () => {
+  it('GET /v1/mcp/tools returns catalog of all 24 tools', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/v1/mcp/tools',
@@ -425,13 +426,14 @@ Takeaway: 90% token savings.
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body);
-    expect(body.totalTools).toBe(22);
-    expect(body.tools.length).toBe(22);
+    expect(body.totalTools).toBe(24);
+    expect(body.tools.length).toBe(24);
     const names = body.tools.map((t: any) => t.name);
     expect(names).toContain('merge_pdfs');
     expect(names).toContain('split_pdf');
     expect(names).toContain('render_mermaid');
     expect(names).toContain('render_presentation');
+    expect(names).toContain('create_social_reel');
     expect(names).toContain('generate_social_card');
     expect(names).toContain('extract_tables_from_url');
     expect(names).toContain('audit_webpage');

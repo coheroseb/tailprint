@@ -930,7 +930,7 @@ describe('Tailprint Test Suite', () => {
       expect(response.headers['x-invoice-total']).toBe('12500');
     }, 25000);
 
-    it('GET /v1/mcp/tools returns catalog of 22 registered tools including generate_einvoice and new additions', async () => {
+    it('GET /v1/mcp/tools returns catalog of 24 registered tools including generate_einvoice and new additions', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/v1/mcp/tools',
@@ -938,7 +938,7 @@ describe('Tailprint Test Suite', () => {
 
       expect(response.statusCode).toBe(200);
       const data = JSON.parse(response.body);
-      expect(data.totalTools).toBe(22);
+      expect(data.totalTools).toBe(24);
       const names = data.tools.map((t: any) => t.name);
       expect(names).toContain('generate_einvoice');
       expect(names).toContain('render_carousel');

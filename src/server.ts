@@ -19,6 +19,7 @@ import { usageRoutes } from './routes/usage.js';
 import { toolsRoutes } from './routes/tools.js';
 import { studioRoutes } from './routes/studio.js';
 import { guidesRoutes } from './routes/guides.js';
+import { showcaseRoutes } from './routes/showcase.js';
 import { adminRoutes } from './routes/admin.js';
 import { browserService, RenderTimeoutError } from './services/browser.js';
 import { redisService } from './services/redis.js';
@@ -488,6 +489,7 @@ curl -X GET https://tailprint.com/v1/usage \\
   await fastify.register(toolsRoutes);
   await fastify.register(studioRoutes);
   await fastify.register(guidesRoutes);
+  await fastify.register(showcaseRoutes);
   await fastify.register(adminRoutes);
   await fastify.register(webhookRoutes);
 

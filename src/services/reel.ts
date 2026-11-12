@@ -527,6 +527,29 @@ Respond ONLY with valid JSON in this exact structure:
   }
 
   /**
+   * Formats a structured ReelScript into an engaging, high-converting social caption with bullets and hashtags.
+   */
+  public formatInstagramCaption(script: ReelScript): string {
+    const lines: string[] = [`🚀 ${script.title}`, ''];
+    if (Array.isArray(script.slides)) {
+      script.slides.slice(0, 5).forEach((s, idx) => {
+        const tag = s.tag ? `[${s.tag}] ` : '';
+        lines.push(`${idx + 1}. ${tag}${s.headline}`);
+        if (s.body) lines.push(`   ${s.body}`);
+      });
+      lines.push('');
+    }
+    lines.push(`👉 ${script.cta || 'Link in bio for full article & code!'}`);
+    if (script.sourceUrl) {
+      lines.push('');
+      lines.push(`🔗 ${script.sourceUrl}`);
+    }
+    lines.push('');
+    lines.push('#webdev #tailwindcss #programming #fullstack #saas #automation #coding #frontend #reels');
+    return lines.join('\n');
+  }
+
+  /**
    * Generates a 9:16 vertical (1080x1920) multi-page PDF story deck and cover preview.
    */
   public async renderReelDeck(script: ReelScript): Promise<RenderReelResult> {

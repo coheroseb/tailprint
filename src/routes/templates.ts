@@ -220,6 +220,12 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://tailprint.com/showcase</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://tailprint.com/guides</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
@@ -457,6 +463,7 @@ Cursor IDE & Windsurf:
 - URL: https://tailprint.com/v1/mcp/sse?api_key=YOUR_API_KEY
 
 ## Technical Guides & Architecture
+- Customer Stories & Showcase: https://tailprint.com/showcase
 - Next.js Tailwind to PDF: https://tailprint.com/guides/tailwind-html-to-pdf-nextjs
 - European Factur-X & ZUGFeRD E-Invoicing API: https://tailprint.com/guides/factur-x-zugferd-pdf-api
 - Why Puppeteer in Serverless Fails (And Alternatives): https://tailprint.com/guides/puppeteer-serverless-pdf-alternatives

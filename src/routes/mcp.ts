@@ -420,6 +420,37 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
       examplePrompt: 'Run a technical SEO, accessibility, and DOM audit on https://tailprint.com and give me prioritized recommendations.',
     },
+    {
+      name: 'convert_logo_for_canva',
+      category: 'Design & Vector Graphics',
+      description: 'Converts an AI-generated raster logo image into 100% Canva-editable vector files: multi-layer SVG with distinct color fills and Editable Canva Vector PDF.',
+      outputType: 'application/json (Canva PDF URL, SVG URLs, color layer metadata)',
+      arguments: {
+        image_url: 'string (optional) - Public HTTP/HTTPS URL of raster logo',
+        image_base64: 'string (optional) - Base64 data URI of logo image',
+        prompt: 'string (optional) - Text prompt to generate fresh AI logo',
+        max_colors: 'number (2-6, default: 4) - Number of distinct color layers',
+        separate_text: 'boolean (default: true) - Strip baked-in text and rebuild as editable Canva text',
+      },
+      examplePrompt: 'Convert this AI generated logo into Canva editable vector layers.',
+    },
+    {
+      name: 'create_social_reel',
+      category: 'Social Media & Video Automation',
+      description: 'Generates a high-converting 9:16 vertical video reel (MP4) with dynamic kinetic captions, multi-slide carousel PDF, and formatted Instagram/TikTok caption with hashtags from a URL or topic.',
+      outputType: 'video/mp4 (hosted link) + image/png (cover preview) + text/markdown',
+      arguments: {
+        url: 'string (optional) - Public web URL to scrape and turn into a video reel',
+        topic: 'string (optional) - Topic idea if no URL provided',
+        aspect_ratio: '"9:16" | "1:1" | "16:9" | "4:5" (default: "9:16")',
+        layout: '"classic" | "split" | "iphone" | "editorial" (default: "classic")',
+        theme: '"brand" | "gradient" | "cyberpunk" | "midnight" | "sunset" | "clean" (default: "brand")',
+        brand: 'string (default: "Tailprint") - Brand name in reel header',
+        handle: 'string (default: "@tailprint") - Social handle',
+        record_video: 'boolean (default: false) - Capture live screen recording of target URL',
+      },
+      examplePrompt: 'Turn this article https://tailprint.com/guides/tailwind-html-to-pdf-nextjs into a 9:16 Instagram Reel video and caption.',
+    },
   ];
 
   // GET /v1/mcp/tools - Comprehensive Tool Catalog & Documentation
@@ -428,8 +459,8 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       schema: {
         tags: ['MCP'],
-        summary: 'List All 22 Model Context Protocol (MCP) Tools & Schemas',
-        description: 'Returns the full catalog of 22 native MCP tools supported by Tailprint, including argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
+        summary: 'List All 24 Model Context Protocol (MCP) Tools & Schemas',
+        description: 'Returns the full catalog of 24 native MCP tools supported by Tailprint, including argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
         response: {
           200: z.object({
             totalTools: z.number().describe('Number of registered tools'),

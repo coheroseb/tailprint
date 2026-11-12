@@ -1,5 +1,5 @@
 export interface NavbarOptions {
-  activeSection?: 'product' | 'templates' | 'tools' | 'pricing' | 'guides' | 'resources' | 'dashboard';
+  activeSection?: 'product' | 'templates' | 'tools' | 'pricing' | 'guides' | 'resources' | 'dashboard' | 'showcase';
   activeTool?: string;
   templatesCount?: number;
   rightExtraHtml?: string;
@@ -15,6 +15,7 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
 
   const isToolsActive = activeSection === 'tools' || Boolean(activeTool);
   const isGuidesActive = activeSection === 'guides';
+  const isShowcaseActive = activeSection === 'showcase';
   const isDashboardActive = activeSection === 'dashboard';
 
   return `
@@ -212,6 +213,12 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             Guides
           </a>
 
+          <!-- Showcase Link -->
+          <a href="/showcase" class="px-3 py-1.5 rounded-lg ${isShowcaseActive ? 'bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-900/80'} transition flex items-center space-x-1.5">
+            <span>Showcase</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">New</span>
+          </a>
+
           <!-- Resources Dropdown -->
           <div class="relative group">
             <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
@@ -221,6 +228,19 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             <div class="absolute right-0 md:left-0 top-full pt-2 w-[280px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
                 
+                <a href="/showcase" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                    🚀
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1">
+                      <span>Showcase &amp; Stories</span>
+                      <span class="text-[9px] px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono font-semibold">New</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Social pipelines, MCP &amp; SaaS stories</p>
+                  </div>
+                </a>
+
                 <a href="/docs" target="_blank" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
                     📖
@@ -361,6 +381,10 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
       <div class="pt-2 border-t border-slate-800/60">
         <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Library &amp; Resources</p>
         <div class="space-y-1">
+          <a href="/showcase" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium ${isShowcaseActive ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
+            <span>Showcase &amp; Customer Stories</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">New</span>
+          </a>
           <a href="/#templates" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
             <span>Templates Library</span>
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">${templatesCount}</span>
