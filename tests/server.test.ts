@@ -132,10 +132,8 @@ describe('Tailprint Test Suite', () => {
       });
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('text/html');
-      expect(response.body).toContain('Multi-Slide Carousel Maker');
+      expect(response.body).toContain('Interactive Template Studio');
       expect(response.body).toContain('Factur-X E-Invoice Generator');
-      expect(response.body).toContain('Visual Regression Diff Heatmap');
-      expect(response.body).toContain('Instant Device Mockup Generator');
     });
 
     it('GET /tools/mockup and /mockup render the device mockup generator tool page', async () => {

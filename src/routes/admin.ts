@@ -338,13 +338,13 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </div>
 
       <!-- Growth KPI Micro-cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5 my-6">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-6">
         <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
           <span class="text-[11px] font-semibold text-slate-400">Target Leads</span>
           <div id="growth-kpi-leads" class="text-2xl font-black text-white mt-1">0</div>
         </div>
         <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-          <span class="text-[11px] font-semibold text-slate-400">Branded Demos</span>
+          <span class="text-[11px] font-semibold text-slate-400">Branded PDF Demos</span>
           <div id="growth-kpi-demos" class="text-2xl font-black text-indigo-400 mt-1">0</div>
         </div>
         <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
@@ -355,7 +355,7 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <span class="text-[11px] font-semibold text-slate-400">Community Threads</span>
           <div id="growth-kpi-social" class="text-2xl font-black text-orange-400 mt-1">0</div>
         </div>
-        <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+        <div class="hidden p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
           <span class="text-[11px] font-semibold text-slate-400">Carousels Ready</span>
           <div id="growth-kpi-content" class="text-2xl font-black text-purple-400 mt-1">0</div>
         </div>
@@ -364,13 +364,13 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       <!-- Leads, Social Radar & Content Tabs -->
       <div class="border-b border-slate-800 flex items-center space-x-4 mb-4">
         <button id="growth-tab-leads-btn" onclick="setGrowthTab('leads')" class="pb-2 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 transition">
-          🎯 B2B Target Leads & Demos
+          🎯 B2B Target Leads & PDF Demos
         </button>
         <button id="growth-tab-social-btn" onclick="setGrowthTab('social')" class="pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition flex items-center space-x-1.5">
           <span>💬 Community Radar (Reddit, HN & StackOverflow)</span>
           <span id="growth-badge-social-count" class="hidden px-1.5 py-0.2 rounded-full bg-orange-500/20 text-orange-400 font-bold text-[10px]">0</span>
         </button>
-        <button id="growth-tab-content-btn" onclick="setGrowthTab('content')" class="pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition">
+        <button id="growth-tab-content-btn" onclick="setGrowthTab('content')" class="hidden pb-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-white transition">
           📄 Generated LinkedIn Carousels
         </button>
       </div>
@@ -669,12 +669,10 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       // Feature Breakdown
       const u = d.usage || {};
       const features = [
-        { label: '🎮 Playground & Free Tools', count: u.playground || 0, color: 'bg-sky-500' },
+        { label: '🎮 PDF Studio & Playground', count: u.playground || 0, color: 'bg-sky-500' },
         { label: '📄 API PDF Renders', count: u.pdf || 0, color: 'bg-indigo-500' },
-        { label: '🖼️ API OG Image Renders', count: u.image || 0, color: 'bg-purple-500' },
         { label: '🇪🇺 Factur-X E-Invoices', count: u.einvoice || 0, color: 'bg-emerald-500' },
-        { label: '🕷️ LLM Web Scrapes', count: u.scrape || 0, color: 'bg-amber-500' },
-        { label: '🤖 MCP Agent Calls', count: u.mcp || 0, color: 'bg-pink-500' },
+        { label: '🤖 MCP PDF Agent Calls', count: u.mcp || 0, color: 'bg-purple-500' },
       ];
       const maxFeat = Math.max(1, ...features.map(f => f.count));
       document.getElementById('feature-breakdown').innerHTML = features.map(f => {

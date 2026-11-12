@@ -33,7 +33,7 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
         <!-- Main Product Links (Desktop) -->
         <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
           
-          <!-- Product Dropdown (Organized by 3 Core Pillars) -->
+          <!-- Product Dropdown (100% Document & PDF Focused) -->
           <div class="relative group">
             <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
               <span>Product</span>
@@ -42,51 +42,51 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             <div class="absolute left-0 top-full pt-2 w-[390px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2.5 space-y-1.5">
                 
-                <!-- Pillar 1: Documents & Compliance -->
+                <!-- Pillar 1: HTML-to-PDF Engine -->
                 <a href="/#documents" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-indigo-500/20">
                     📄
                   </div>
                   <div>
                     <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1.5">
-                      <span>Documents &amp; E-Invoicing</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono font-semibold">Factur-X</span>
+                      <span>Tailwind HTML-to-PDF Engine</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono font-semibold">&lt;500ms</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Tailwind vector PDFs, hybrid EU e-invoices &amp; pagination shield</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Sub-500ms vector PDFs with Smart Pagination Shield &amp; repeating table headers</p>
                   </div>
                 </a>
 
-                <!-- Pillar 2: Visual & Media Engine -->
-                <a href="/studio" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-pink-500/20">
-                    🎨
+                <!-- Pillar 2: EU E-Invoicing & Compliance -->
+                <a href="/#einvoice" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-emerald-500/20">
+                    🇪🇺
                   </div>
                   <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-pink-300 flex items-center space-x-1.5">
-                      <span>Visual &amp; Media Engine</span>
-                      <span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span>
+                    <div class="text-xs font-bold text-white group-hover/item:text-emerald-300 flex items-center space-x-1.5">
+                      <span>EU Factur-X &amp; ZUGFeRD</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-semibold">EN 16931</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Interactive Studio IDE, OG social cards, charts &amp; 3D mockups</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Legal hybrid PDF/A-3 invoices with embedded XML for SAP, DATEV &amp; Dinero</p>
                   </div>
                 </a>
 
-                <!-- Pillar 3: AI & Agent Runtime -->
+                <!-- Pillar 3: PDF Toolkit & MCP Server -->
                 <a href="/#mcp" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-purple-500/20">
                     🤖
                   </div>
                   <div>
                     <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
-                      <span>AI Agent Infrastructure</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono font-semibold">22 MCP Tools</span>
+                      <span>PDF Toolkit &amp; MCP Server</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono font-semibold">Claude &amp; Cursor</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Model Context Protocol for Claude &amp; Cursor + Web Scraper</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Merge, split, fill AcroForms, stamp &amp; generate PDFs from AI agents</p>
                   </div>
                 </a>
 
                 <div class="pt-2 mt-1 border-t border-slate-800/70 px-2.5 pb-1 flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Sub-500ms Chromium engine</span>
-                  <span class="text-indigo-400 font-semibold font-mono">Zero-Retention Mode</span>
+                  <span>Pre-warmed Chromium pool</span>
+                  <span class="text-indigo-400 font-semibold font-mono">Zero-Retention GDPR</span>
                 </div>
 
               </div>
@@ -99,11 +99,10 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-mono leading-none">${templatesCount}</span>
           </a>
 
-          <!-- Free Tools Dropdown -->
+          <!-- PDF Tools Dropdown -->
           <div class="relative group">
             <button type="button" class="px-3 py-1.5 rounded-lg ${isToolsActive ? 'bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-900/80'} transition flex items-center space-x-1.5 focus:outline-none">
-              <span>${activeTool || 'Free Tools'}</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase tracking-wider leading-none">New</span>
+              <span>${activeTool || 'PDF Tools'}</span>
               <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div class="absolute left-0 top-full pt-2 w-[350px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
@@ -115,35 +114,10 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
                   </div>
                   <div>
                     <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
-                      <span>Interactive Template Studio</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono font-semibold">New</span>
+                      <span>Interactive PDF Studio</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono font-semibold">Live IDE</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Visual Tailwind code editor with Smart Pagination Shield</p>
-                  </div>
-                </a>
-
-                <a href="/tools/carousel" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'LinkedIn Carousel' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-blue-500/20">
-                    📱
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-blue-300 flex items-center space-x-1.5">
-                      <span>LinkedIn Carousel Maker</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Markdown to 1080×1350 multi-page PDF &amp; PNG covers</p>
-                  </div>
-                </a>
-
-                <a href="/tools/reel" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'Social Reel Maker' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-rose-500/20">
-                    🎬
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1.5">
-                      <span>Social Reel &amp; Short Maker</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-semibold">9:16</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Turn any URL into a 9:16 vertical Reel / Story video</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Visual Tailwind HTML-to-PDF editor with Smart Pagination Shield</p>
                   </div>
                 </a>
 
@@ -156,50 +130,13 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
                       <span>Factur-X &amp; PEPPOL Generator</span>
                       <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-semibold">EN 16931</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Hybrid PDF/A-3 invoices with embedded XML</p>
-                  </div>
-                </a>
-
-                <a href="/tools/visual-diff" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'Visual Regression Diff' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-pink-500/20">
-                    🔍
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-pink-300">
-                      Visual Regression Diff
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Pixelmatch diff heatmap &amp; visual comparison canvas</p>
-                  </div>
-                </a>
-
-                <a href="/tools/canva-logo" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'AI Logo til Canva' || activeTool === 'AI Logo to Canva' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-cyan-500/20">
-                    🎨
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-cyan-300 flex items-center space-x-1.5">
-                      <span>AI Logo to Canva Vector</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-semibold">SVG + PDF</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Convert flat AI logos into editable Canva color layers</p>
-                  </div>
-                </a>
-
-                <a href="/tools/mockup" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'Device Mockup' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-amber-500/20">
-                    📸
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-amber-300">
-                      Device Mockup Generator
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Turn any URL into a 3D MacBook &amp; iPhone scene</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Hybrid PDF/A-3 invoices with embedded CrossIndustryInvoice XML</p>
                   </div>
                 </a>
 
                 <div class="pt-1.5 mt-1 border-t border-slate-800/70 p-1">
                   <a href="/tools" class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 text-xs font-semibold text-indigo-300 hover:text-white transition">
-                    <span>Browse All Free Developer Tools</span>
+                    <span>Browse All PDF Tools</span>
                     <span>→</span>
                   </a>
                 </div>
@@ -227,16 +164,15 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             <div class="absolute right-0 md:left-0 top-full pt-2 w-[280px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
                 
-                <a href="/showcase" class="flex items-start space-x-3 p-2 rounded-xl ${isShowcaseActive ? 'bg-slate-800/80 text-rose-300' : 'hover:bg-slate-800/60'} transition group/item">
-                  <div class="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
-                    🚀
+                <a href="/showcase" class="flex items-start space-x-3 p-2 rounded-xl ${isShowcaseActive ? 'bg-slate-800/80 text-indigo-300' : 'hover:bg-slate-800/60'} transition group/item">
+                  <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+                    📄
                   </div>
                   <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1">
+                    <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1">
                       <span>Showcase &amp; Stories</span>
-                      <span class="text-[9px] px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono font-semibold">New</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Social pipelines, MCP &amp; SaaS stories</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">SaaS PDF engines, Factur-X &amp; MCP workflows</p>
                   </div>
                 </a>
 
@@ -336,38 +272,23 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
         </div>
       </div>
 
-      <!-- Free Tools Group -->
+      <!-- PDF Tools Group -->
       <div class="pt-2 border-t border-slate-800/60">
         <div class="flex items-center justify-between mb-2">
-          <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Free Developer Tools</p>
+          <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500">PDF &amp; Document Tools</p>
           <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold uppercase">No Login</span>
         </div>
         <div class="space-y-1">
           <a href="/studio" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Template Studio' ? 'bg-indigo-600 text-white' : 'text-purple-300 hover:bg-slate-900'}">
-            <span>⚡ Interactive Template Studio</span>
-            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-bold ml-auto">New</span>
-          </a>
-          <a href="/tools/carousel" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'LinkedIn Carousel' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
-            <span>📱 LinkedIn Carousel Maker</span>
-          </a>
-          <a href="/tools/reel" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Social Reel Maker' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
-            <span>🎬 Social Reel &amp; Short Maker</span>
-          </a>
-          <a href="/tools/canva-logo" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'AI Logo to Canva' ? 'bg-indigo-600 text-white' : 'text-cyan-300 hover:bg-slate-900'}">
-            <span>🎨 AI Logo to Canva Vector</span>
-            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-bold ml-auto">New</span>
+            <span>⚡ Interactive PDF Studio</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-bold ml-auto">Live IDE</span>
           </a>
           <a href="/tools/factur-x" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Factur-X E-Invoice' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
             <span>🇪🇺 EU Factur-X &amp; PEPPOL</span>
-          </a>
-          <a href="/tools/visual-diff" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Visual Regression Diff' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
-            <span>🔍 Visual Regression Diff</span>
-          </a>
-          <a href="/tools/mockup" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Device Mockup' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
-            <span>📸 Device Mockup Generator</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold ml-auto">EN 16931</span>
           </a>
           <a href="/tools" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-indigo-400 hover:bg-slate-900">
-            <span>View All Free Tools Hub</span>
+            <span>View All PDF Tools</span>
             <span>→</span>
           </a>
         </div>

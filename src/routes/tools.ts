@@ -70,8 +70,8 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Free Developer Tools - Tailprint</title>
-  <meta name="description" content="Free online tools powered by Tailprint API: LinkedIn Carousel Generator, EU Factur-X & PEPPOL E-Invoice Creator, and Visual Regression Diff Heatmap." />
+  <title>Free PDF &amp; Document Tools - Tailprint</title>
+  <meta name="description" content="Free online PDF and document tools powered by Tailprint API: Interactive Tailwind PDF Template Studio and EU Factur-X & PEPPOL E-Invoice Generator." />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #030712; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
@@ -83,107 +83,36 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <main class="max-w-6xl mx-auto px-6 py-16 flex-1 w-full space-y-16">
     <div class="text-center max-w-3xl mx-auto space-y-4">
       <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold">
-        <span>100% Free Online Utilities • No Account Required</span>
+        <span>100% Free Online PDF Utilities • No Account Required</span>
       </div>
       <h1 class="text-4xl sm:text-5xl font-black text-white tracking-tight">
-        Free Document &amp; Testing <span class="bg-gradient-to-r from-purple-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">Superpowers</span>
+        Free PDF &amp; Document <span class="bg-gradient-to-r from-purple-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">Tools</span>
       </h1>
       <p class="text-slate-400 text-base leading-relaxed">
-        High-utility developer and creator tools running directly on Tailprint's Chromium engine. Try them in the browser or automate them via our native MCP server and REST API.
+        Design, test, and export production-grade vector PDFs and EU Factur-X electronic invoices directly in your browser — or automate them via our REST API and AI MCP Server.
       </p>
     </div>
 
-    <!-- 5 Core Tools Grid -->
+    <!-- Focused PDF & Document Tools Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
-      <!-- Tool Card 0: Live Interactive Template Studio (Featured Banner) -->
-      <a href="/studio" class="md:col-span-2 p-8 rounded-3xl bg-gradient-to-r from-purple-950/70 via-slate-900 to-indigo-950/70 border border-purple-500/40 hover:border-purple-400 transition shadow-2xl group flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
-        <div class="space-y-4 max-w-xl">
-          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold">
-            <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
-            <span>Flagship Feature • Zero-Latency Live Preview</span>
+      <!-- Tool Card 1: Live Interactive Template Studio -->
+      <a href="/studio" class="p-8 rounded-3xl bg-gradient-to-br from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-500/40 hover:border-purple-400 transition shadow-2xl group flex flex-col justify-between relative overflow-hidden">
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-2xl border border-purple-500/30 group-hover:scale-110 transition">
+            ⚡
           </div>
           <div>
-            <h2 class="text-2xl sm:text-3xl font-black text-white group-hover:text-purple-300 transition">Interactive Template Studio</h2>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800/40 uppercase">Flagship PDF Editor</span>
+            <h2 class="text-2xl font-black text-white mt-2 group-hover:text-purple-300 transition">Interactive Template Studio</h2>
             <p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
-              In-browser visual Tailwind CSS code editor with instant live canvas preview. Features the <strong>Smart Pagination Shield</strong> to eliminate broken table rows, repeat <code>&lt;thead&gt;</code> headers on multi-page PDFs, and export instant vector PDFs, PNGs, and API code.
-            </p>
-          </div>
-          <div class="flex items-center space-x-3 text-xs font-bold text-purple-400 pt-2">
-            <span>Launch Studio Workspace</span>
-            <span class="group-hover:translate-x-1.5 transition">→</span>
-          </div>
-        </div>
-        <div class="mt-6 md:mt-0 px-6 py-5 rounded-2xl bg-slate-950/80 border border-purple-500/30 text-center shrink-0">
-          <span class="text-4xl">⚡</span>
-          <p class="text-sm font-bold text-white mt-2">43 Templates</p>
-          <p class="text-[11px] text-purple-300 font-medium">Smart Pagination Ready</p>
-        </div>
-      </a>
-
-      <!-- Tool Card 1: LinkedIn Carousel -->
-      <a href="/tools/carousel" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
-        <div class="space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-2xl border border-indigo-500/20 group-hover:scale-110 transition">
-            📱
-          </div>
-          <div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/40 uppercase">LinkedIn &amp; Instagram</span>
-            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-indigo-400 transition">Multi-Slide Carousel Maker</h2>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Transform simple Markdown bullet points into a high-converting 1080x1350 px portrait multi-page PDF ready to upload directly to LinkedIn.
+              In-browser visual Tailwind CSS code editor with instant live canvas preview. Features the <strong>Smart Pagination Shield</strong> to eliminate broken table rows, repeat <code>&lt;thead&gt;</code> headers on multi-page PDFs, and export instant vector PDFs and API code.
             </p>
           </div>
         </div>
-        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-indigo-400">
-          <span>Open Carousel Maker</span>
-          <span class="group-hover:translate-x-1 transition">→</span>
-        </div>
-      </a>
-
-      <!-- Tool Card 1.5: AI Social Reel & Short Video Maker -->
-      <a href="/tools/reel" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-rose-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
-        <div class="space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-2xl border border-rose-500/20 group-hover:scale-110 transition">
-            🎬
-          </div>
-          <div>
-            <div class="flex items-center space-x-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800/40 uppercase">Reels, TikTok &amp; Shorts</span>
-              <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">NEW</span>
-            </div>
-            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-rose-400 transition">AI Social Reel &amp; Video Maker</h2>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Paste any URL or article and convert it into a vertical 9:16 (1080×1920) animated Reel / Story with live screen recordings, visual layouts, and instant MP4 download.
-            </p>
-          </div>
-        </div>
-        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-rose-400">
-          <span>Create 9:16 Reel</span>
-          <span class="group-hover:translate-x-1 transition">→</span>
-        </div>
-      </a>
-
-      <!-- Tool Card 1.8: AI Logo to Canva Vector Studio -->
-      <a href="/tools/canva-logo" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
-        <div class="space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-2xl border border-cyan-500/20 group-hover:scale-110 transition">
-            🎨
-          </div>
-          <div>
-            <div class="flex items-center space-x-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/40 uppercase">Canva &amp; Brand Design</span>
-              <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold">NEW</span>
-            </div>
-            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-cyan-400 transition">AI Logo to Canva Vector Studio</h2>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Convert any flat AI-generated logo (Midjourney, ChatGPT, Ideogram) into 100% editable Canva vector color layers and real double-clickable text boxes.
-            </p>
-          </div>
-        </div>
-        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-cyan-400">
-          <span>Vectorize Logo for Canva</span>
-          <span class="group-hover:translate-x-1 transition">→</span>
+        <div class="mt-8 pt-4 border-t border-purple-500/20 flex items-center justify-between text-xs font-bold text-purple-400">
+          <span>Launch PDF Studio Workspace</span>
+          <span class="group-hover:translate-x-1.5 transition">→</span>
         </div>
       </a>
 
@@ -195,54 +124,14 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
           </div>
           <div>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/40 uppercase">EN 16931 Standard</span>
-            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-emerald-400 transition">Factur-X E-Invoice Generator</h2>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Create official European hybrid electronic invoices with embedded CrossIndustryInvoice XML. Legally compliant and auto-ingestible by DATEV, SAP &amp; Dinero.
+            <h2 class="text-2xl font-black text-white mt-2 group-hover:text-emerald-400 transition">Factur-X E-Invoice Generator</h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
+              Create official European hybrid electronic invoices with embedded CrossIndustryInvoice XML. Legally compliant with Germany's B2B mandate and auto-ingestible by DATEV, SAP, Lexoffice &amp; Dinero.
             </p>
           </div>
         </div>
         <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-emerald-400">
           <span>Create Factur-X Invoice</span>
-          <span class="group-hover:translate-x-1 transition">→</span>
-        </div>
-      </a>
-
-      <!-- Tool Card 3: Visual Diff -->
-      <a href="/tools/visual-diff" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-pink-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
-        <div class="space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-pink-500/10 text-pink-400 flex items-center justify-center text-2xl border border-pink-500/20 group-hover:scale-110 transition">
-            🔍
-          </div>
-          <div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-pink-950 text-pink-300 border border-pink-800/40 uppercase">QA &amp; CI/CD</span>
-            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-pink-400 transition">Visual Regression Diff Heatmap</h2>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Compare two live web URLs or staging environments pixel-by-pixel with pixelmatch. Spot unintended CSS layout shifts with a neon-pink diff heatmap.
-            </p>
-          </div>
-        </div>
-        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-pink-400">
-          <span>Launch Visual Diff</span>
-          <span class="group-hover:translate-x-1 transition">→</span>
-        </div>
-      </a>
-
-      <!-- Tool Card 4: Device Mockup Generator -->
-      <a href="/tools/mockup" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-amber-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
-        <div class="space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl border border-amber-500/20 group-hover:scale-110 transition">
-            📸
-          </div>
-          <div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/40 uppercase">Founders &amp; Marketers</span>
-            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-amber-400 transition">Instant Device Mockup Generator</h2>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Transform any website URL into a multi-device presentation scene with 3D MacBook Pro &amp; iPhone frames. Perfect for Product Hunt, pitch decks &amp; Twitter.
-            </p>
-          </div>
-        </div>
-        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-amber-400">
-          <span>Create Device Mockup</span>
           <span class="group-hover:translate-x-1 transition">→</span>
         </div>
       </a>

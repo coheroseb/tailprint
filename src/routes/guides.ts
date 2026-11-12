@@ -1248,7 +1248,13 @@ export const guidesRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
   // 1. GET /guides - Knowledge Hub Listing
   fastify.get('/guides', { schema: { hide: true } }, async (_request, reply) => {
-    const articles = Object.values(GUIDE_ARTICLES);
+    const corePdfGuideSlugs = new Set([
+      'tailwind-html-to-pdf-nextjs',
+      'factur-x-zugferd-pdf-api',
+      'puppeteer-serverless-pdf-alternatives',
+      'best-mcp-servers-claude-cursor',
+    ]);
+    const articles = Object.values(GUIDE_ARTICLES).filter((a) => corePdfGuideSlugs.has(a.slug));
 
     const html = `<!DOCTYPE html>
 <html lang="en" class="dark scroll-smooth">

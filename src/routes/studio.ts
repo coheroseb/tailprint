@@ -112,10 +112,11 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // GET /studio & /tools/studio - Interactive Template Studio UI
   const studioHandler = async (request: any, reply: any) => {
     const requestedTemplate = (request.query?.template as string) || 'invoice';
-    const categories = Array.from(new Set(TEMPLATES.map((t) => t.category)));
+    const studioTemplates = TEMPLATES.filter((t) => t.id !== 'og-card');
+    const categories = Array.from(new Set(studioTemplates.map((t) => t.category)));
 
     const templatesJson = JSON.stringify(
-      TEMPLATES.map((t) => ({
+      studioTemplates.map((t) => ({
         id: t.id,
         title: t.title,
         category: t.category,
@@ -132,8 +133,8 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Interactive Template Studio — Tailwind PDF &amp; Image Editor | Tailprint</title>
-  <meta name="description" content="Design, preview, and export high-fidelity Tailwind CSS PDFs and OpenGraph social cards in real-time with Smart Pagination Shield and zero-latency preview." />
+  <title>Live Interactive Template Studio — Tailwind PDF Document Editor | Tailprint</title>
+  <meta name="description" content="Design, preview, and export high-fidelity Tailwind CSS PDFs and multi-page documents in real-time with Smart Pagination Shield and zero-latency preview." />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E" />
   
   <script>
@@ -246,7 +247,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
             .map(
               (cat) => `
             <optgroup label="${cat}">
-              ${TEMPLATES.filter((t) => t.category === cat)
+              ${studioTemplates.filter((t) => t.category === cat)
                 .map(
                   (t) =>
                     `<option value="${t.id}" ${t.id === requestedTemplate ? 'selected' : ''}>${t.title} (${t.format}${t.landscape ? ' Land' : ''})</option>`
@@ -264,8 +265,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <option value="A4-portrait">📄 A4 Portrait</option>
           <option value="A4-landscape">📄 A4 Landscape</option>
           <option value="Letter-portrait">📑 US Letter</option>
-          <option value="og-card">🖼️ OG Card (1200×630)</option>
-          <option value="slide">🖥️ Presentation (16:9)</option>
+          <option value="slide">🖥️ Presentation PDF (16:9)</option>
         </select>
       </div>
     </div>
@@ -289,11 +289,6 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       <button onclick="openApiModal()" type="button" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition">
         <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
         <span class="hidden sm:inline">API Code</span>
-      </button>
-
-      <!-- Download PNG Button -->
-      <button onclick="downloadImage()" type="button" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition">
-        <span>🖼️ PNG</span>
       </button>
 
       <!-- Primary Download PDF Button -->
