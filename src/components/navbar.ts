@@ -42,16 +42,16 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             <div class="absolute left-0 top-full pt-2 w-[340px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
                 
-                <a href="/#playground" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
+                <a href="/studio" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-indigo-500/20">
                     ⚡
                   </div>
                   <div>
                     <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1.5">
-                      <span>Live Sandbox</span>
+                      <span>Template Studio</span>
                       <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Interactive HTML to PDF &amp; PNG playground in browser</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Interactive split-screen IDE with real-time Tailwind JIT</p>
                   </div>
                 </a>
 
@@ -322,8 +322,8 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
       <div>
         <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Product &amp; Engine</p>
         <div class="space-y-1">
-          <a href="/#playground" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-900">
-            <span>⚡ Live Playground</span>
+          <a href="/studio" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-900">
+            <span>⚡ Interactive Studio</span>
           </a>
           <a href="/#mcp" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
             <span>🤖 AI MCP Server</span>
