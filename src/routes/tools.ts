@@ -1513,18 +1513,18 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               </div>
 
               <!-- Brand Bar -->
-              <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                <div class="flex items-center space-x-2.5">
-                  <img id="preview-logo-img" src="" class="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md" />
-                  <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md">
+              <div class="flex items-center justify-between border-b border-white/10 pb-3 gap-2">
+                <div class="flex items-center space-x-2 min-w-0">
+                  <img id="preview-logo-img" src="" class="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md flex-shrink-0" />
+                  <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md flex-shrink-0">
                     TP
                   </div>
-                  <div>
-                    <div id="preview-brand" class="font-extrabold text-xs text-white leading-none">Tailprint</div>
-                    <div id="preview-handle" class="text-[10px] text-slate-400 font-mono mt-0.5">@tailprint</div>
+                  <div class="truncate">
+                    <div id="preview-brand" class="font-extrabold text-xs text-white leading-none truncate">Tailprint</div>
+                    <div id="preview-handle" class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">@tailprint</div>
                   </div>
                 </div>
-                <div class="flex items-center space-x-1.5">
+                <div class="flex items-center space-x-1.5 flex-shrink-0">
                   <span id="preview-karaoke-badge" class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
                     🔥 KARAOKE
                   </span>
@@ -2033,8 +2033,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const bodyEl = document.getElementById('preview-body');
 
       if (reelState.karaoke) {
-        const hWords = (slide.headline || '').split(/\s+/).filter(Boolean);
-        const bWords = (slide.body || '').split(/\s+/).filter(Boolean);
+        const hWords = (slide.headline || '').split(' ').filter(Boolean);
+        const bWords = (slide.body || '').split(' ').filter(Boolean);
         headlineEl.innerHTML = hWords.map((w, i) => '<span class="karaoke-word transition-all duration-100 inline-block mr-1.5" data-word-idx="' + i + '">' + escapeHtml(w) + '</span>').join('');
         bodyEl.innerHTML = bWords.map((w, i) => '<span class="karaoke-word transition-all duration-100 inline-block mr-1" data-word-idx="' + (hWords.length + i) + '">' + escapeHtml(w) + '</span>').join('');
         applyKaraokeHighlight(isPlaying ? 0 : 1.0, hWords.length + bWords.length);
@@ -2195,8 +2195,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         if (reelState.karaoke) {
           const slide = reelState.slides[currentSlideIdx];
           if (slide) {
-            const hCount = (slide.headline || '').split(/\s+/).filter(Boolean).length;
-            const bCount = (slide.body || '').split(/\s+/).filter(Boolean).length;
+            const hCount = (slide.headline || '').split(' ').filter(Boolean).length;
+            const bCount = (slide.body || '').split(' ').filter(Boolean).length;
             applyKaraokeHighlight(progress, hCount + bCount);
           }
         }
@@ -2626,8 +2626,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       ctx.fillText(tagText, W - barMargin - tagWidth / 2, headerY + 43);
 
       // 4. Content Area adapted to Aspect Ratio
-      const hWords = (slide.headline || '').split(/\s+/).filter(Boolean).length;
-      const bWords = (slide.body || '').split(/\s+/).filter(Boolean).length;
+      const hWords = (slide.headline || '').split(' ').filter(Boolean).length;
+      const bWords = (slide.body || '').split(' ').filter(Boolean).length;
       const totalW = hWords + bWords;
 
       if (aspect === '16:9') {
@@ -2757,7 +2757,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     // Canvas drawKaraokeText helper with word-by-word kinetic highlight pill
     function drawKaraokeText(ctx, text, startX, startY, maxWidth, lineHeight, wordOffset, totalWords, slideProgress, theme, enabled) {
       if (!text) return { endY: startY, wordCount: 0 };
-      const words = text.split(/\s+/).filter(Boolean);
+      const words = text.split(' ').filter(Boolean);
       if (words.length === 0) return { endY: startY, wordCount: 0 };
 
       const fontMatch = ctx.font.match(/(\d+)px/);
