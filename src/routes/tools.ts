@@ -1,6 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import crypto from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import { carouselService } from '../services/carousel.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { visualDiffService } from '../services/visualDiff.js';
@@ -10,6 +11,9 @@ import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
 import { qrService } from '../services/qr.js';
 import { env } from '../config/env.js';
+
+const reelSessionEmitter = new EventEmitter();
+reelSessionEmitter.setMaxListeners(200);
 
 export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // Shared Header & Navigation Component
@@ -1597,11 +1601,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           <button
             id="btn-open-qr-modal"
             onclick="openMobilePreviewModal()"
-            class="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-rose-600 hover:from-violet-500 hover:to-rose-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 border border-white/20"
+            class="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-rose-600 hover:from-violet-500 hover:to-rose-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-between px-3 border border-white/20"
           >
-            <span class="text-sm">📱</span>
-            <span>Live Preview på Telefon (Scan QR)</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/25 font-black uppercase tracking-wider">Live</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm">📱</span>
+              <span>Live Preview på Telefon (Scan QR)</span>
+            </div>
+            <span id="btn-mobile-live-badge" class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/25 font-black uppercase tracking-wider">Live</span>
           </button>
 
           <!-- Video Export (Canvas MediaRecorder) -->
@@ -1678,6 +1684,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <div class="space-y-1">
           <h3 class="text-lg font-black text-white">Live Preview på Mobil</h3>
           <p class="text-xs text-slate-400 leading-relaxed">Scan QR-koden med dit mobilkamera for at se videoen i fuld skærm på din telefon med live touch og kinetic karaoke.</p>
+        </div>
+
+        <div class="flex items-center justify-center space-x-2 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 py-1.5 px-3 rounded-xl border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>Live Sync Aktiv • Opdaterer ved enhver ændring</span>
         </div>
 
         <!-- QR Code Container -->
@@ -1761,6 +1772,29 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     let slideTimer = null;
     let progressStartTime = 0;
     let progressAnimFrame = null;
+    let activeSessionSlug = null;
+    let syncDebounceTimer = null;
+
+    function debouncedSyncToMobile() {
+      if (!activeSessionSlug) return;
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(async () => {
+        try {
+          await fetch('/v1/tools/reel/session/' + activeSessionSlug, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reelState)
+          });
+          const badge = document.getElementById('btn-mobile-live-badge');
+          if (badge) {
+            badge.classList.add('bg-emerald-500', 'text-white');
+            setTimeout(() => {
+              badge.classList.remove('bg-emerald-500', 'text-white');
+            }, 350);
+          }
+        } catch (err) {}
+      }, 150);
+    }
 
     // Theme CSS maps
     const themeMaps = {
@@ -1842,16 +1876,19 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     function updateScriptBrand() {
       reelState.brand = document.getElementById('reel-brand').value || 'Brand';
       updatePreviewDisplay();
+      debouncedSyncToMobile();
     }
 
     function updateScriptHandle() {
       reelState.handle = document.getElementById('reel-handle').value || '@brand';
       updatePreviewDisplay();
+      debouncedSyncToMobile();
     }
 
     function updateScriptCta() {
       reelState.cta = document.getElementById('reel-cta').value || 'Link in bio';
       updatePreviewDisplay();
+      debouncedSyncToMobile();
     }
 
     function escapeHtml(str) {
@@ -1877,6 +1914,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
       }
       updatePreviewDisplay();
+      debouncedSyncToMobile();
     }
 
     function applyKaraokeHighlight(progress, totalWords) {
@@ -1927,6 +1965,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       if (isPlaying) {
         restartCurrentSlide();
       }
+      debouncedSyncToMobile();
     }
 
     function setReelTheme(themeName) {
@@ -1944,6 +1983,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
       });
       updatePreviewDisplay();
+      debouncedSyncToMobile();
     }
 
     function renderSlidesEditor() {
@@ -1995,6 +2035,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         if (currentSlideIdx === idx) {
           updatePreviewDisplay();
         }
+        debouncedSyncToMobile();
       }
     }
 
@@ -2008,6 +2049,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       });
       renderSlidesEditor();
       jumpToSlide(reelState.slides.length - 1);
+      debouncedSyncToMobile();
     }
 
     function deleteSlide(idx) {
@@ -2019,6 +2061,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       renderSlidesEditor();
       updatePreviewDisplay();
       restartCurrentSlide();
+      debouncedSyncToMobile();
     }
 
     function updatePreviewDisplay() {
@@ -2101,6 +2144,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       // Render top progress bar segments
       renderProgressBars();
       updateScreenrecordDisplay();
+      debouncedSyncToMobile();
     }
 
     function setScreenrecordMode(mode) {
@@ -2116,6 +2160,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         }
       });
       updateScreenrecordDisplay();
+      debouncedSyncToMobile();
     }
 
     function updateScreenrecordDisplay() {
@@ -2339,6 +2384,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           renderSlidesEditor();
           updatePreviewDisplay();
           startPlayback();
+          debouncedSyncToMobile();
         }
       } catch (err) {
         alert('Failed to generate reel: ' + err.message);
@@ -2432,6 +2478,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       canvas.height = dim.h;
 
       updatePreviewDisplay();
+      debouncedSyncToMobile();
     }
 
     // 1. Export Reel Video using HTML5 Canvas & MediaRecorder (Supports 9:16, 1:1, 16:9, 4:5)
@@ -2947,23 +2994,29 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       modal.classList.remove('hidden');
       const display = document.getElementById('qr-code-display');
       const urlInput = document.getElementById('qr-share-url-input');
-      display.innerHTML = '<div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>';
 
-      try {
-        const res = await fetch('/v1/tools/reel/share', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reelState)
-        });
-        const data = await res.json();
-        if (data.qrSvg && data.previewUrl) {
-          display.innerHTML = data.qrSvg;
-          urlInput.value = data.previewUrl;
-        } else {
-          throw new Error('Failed to generate QR code');
+      if (!activeSessionSlug) {
+        display.innerHTML = '<div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>';
+
+        try {
+          const res = await fetch('/v1/tools/reel/share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reelState)
+          });
+          const data = await res.json();
+          if (data.qrSvg && data.previewUrl) {
+            activeSessionSlug = data.slug;
+            display.innerHTML = data.qrSvg;
+            urlInput.value = data.previewUrl;
+          } else {
+            throw new Error('Failed to generate QR code');
+          }
+        } catch (err) {
+          display.innerHTML = '<div class="text-xs text-rose-500 font-bold p-4">Kunne ikke generere QR: ' + err.message + '</div>';
         }
-      } catch (err) {
-        display.innerHTML = '<div class="text-xs text-rose-500 font-bold p-4">Kunne ikke generere QR: ' + err.message + '</div>';
+      } else {
+        debouncedSyncToMobile();
       }
     }
 
@@ -3453,12 +3506,14 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     '/v1/tools/reel/share',
     async (request: any, reply: any) => {
       const state = request.body || {};
-      const slug = crypto.randomBytes(4).toString('hex');
+      const slug = state.slug || crypto.randomBytes(4).toString('hex');
       const baseUrl = env.APP_URL || 'https://tailprint.com';
       const previewUrl = `${baseUrl}/tools/reel/p/${slug}`;
 
+      state.updatedAt = Date.now();
       // Save to Redis with 24-hour expiration (86400s)
       await redisService.setJson(`reel_preview:${slug}`, state, 86400);
+      reelSessionEmitter.emit(`update:${slug}`, state);
 
       // Generate SVG QR Code (high-DPI, dark on white for crisp phone camera scanning)
       const qrSvg = await qrService.generateSvg({
@@ -3474,6 +3529,76 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         slug,
         previewUrl,
         qrSvg,
+      });
+    }
+  );
+
+  // PUT /v1/tools/reel/session/:slug (Desktop Live State Push)
+  fastify.put(
+    '/v1/tools/reel/session/:slug',
+    async (request: any, reply: any) => {
+      const slug = (request.params as any)?.slug;
+      if (!slug) return reply.code(400).send({ error: 'Missing session slug' });
+      const state = request.body || {};
+      state.updatedAt = Date.now();
+      await redisService.setJson(`reel_preview:${slug}`, state, 86400);
+      reelSessionEmitter.emit(`update:${slug}`, state);
+      return reply.code(200).send({ success: true, slug, updatedAt: state.updatedAt });
+    }
+  );
+
+  // GET /v1/tools/reel/session/:slug (State Fetch Fallback)
+  fastify.get(
+    '/v1/tools/reel/session/:slug',
+    async (request: any, reply: any) => {
+      const slug = (request.params as any)?.slug;
+      if (!slug) return reply.code(400).send({ error: 'Missing session slug' });
+      const session = await redisService.getJson(`reel_preview:${slug}`);
+      if (!session) return reply.code(404).send({ error: 'Session not found' });
+      return reply.code(200).send({ success: true, session });
+    }
+  );
+
+  // GET /v1/tools/reel/stream/:slug (Live SSE Push Stream)
+  fastify.get(
+    '/v1/tools/reel/stream/:slug',
+    async (request: any, reply: any) => {
+      const slug = (request.params as any)?.slug;
+      if (!slug) return reply.code(400).send({ error: 'Missing session slug' });
+
+      reply.raw.setHeader('Content-Type', 'text/event-stream');
+      reply.raw.setHeader('Cache-Control', 'no-cache, no-transform');
+      reply.raw.setHeader('Connection', 'keep-alive');
+      reply.raw.setHeader('Access-Control-Allow-Origin', '*');
+      reply.raw.setHeader('X-Accel-Buffering', 'no');
+
+      // Send initial connected event with state from Redis
+      const session = await redisService.getJson(`reel_preview:${slug}`);
+      if (session) {
+        reply.raw.write(`event: init\ndata: ${JSON.stringify(session)}\n\n`);
+      } else {
+        reply.raw.write(`event: ping\ndata: {}\n\n`);
+      }
+
+      const onUpdate = (updatedState: any) => {
+        try {
+          reply.raw.write(`event: update\ndata: ${JSON.stringify(updatedState)}\n\n`);
+        } catch (err) {}
+      };
+
+      reelSessionEmitter.on(`update:${slug}`, onUpdate);
+
+      const pingTimer = setInterval(() => {
+        try {
+          reply.raw.write(`: ping\n\n`);
+        } catch (err) {
+          clearInterval(pingTimer);
+        }
+      }, 15000);
+
+      request.raw.on('close', () => {
+        reelSessionEmitter.off(`update:${slug}`, onUpdate);
+        clearInterval(pingTimer);
       });
     }
   );
@@ -3569,6 +3694,12 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
   <!-- Ambient Glow -->
   <div id="mobile-screen-glow" class="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-indigo-500/30 blur-3xl ambient-glow pointer-events-none"></div>
+
+  <!-- Live Sync Status Pill -->
+  <div id="sync-toast-pill" class="fixed top-3 right-3 z-50 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-black flex items-center space-x-1.5 shadow-2xl backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 transform -translate-y-1">
+    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+    <span>SYNC LIVE</span>
+  </div>
 
   <!-- Top Area: Instagram Story Progress Bars & Brand Header -->
   <header class="w-full z-40 space-y-3 pt-[calc(env(safe-area-inset-top,0px)+12px)] px-5">
@@ -3668,6 +3799,67 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     let touchStartTime = 0;
     let touchStartX = 0;
     let touchStartY = 0;
+
+    function applyLiveSync(updatedState) {
+      if (!updatedState || !updatedState.slides || !updatedState.slides.length) return;
+      reelState = updatedState;
+      if (currentSlideIdx >= reelState.slides.length) {
+        currentSlideIdx = 0;
+      }
+      updateDisplay();
+      if (isPlaying) restartCurrentSlide();
+
+      const pill = document.getElementById('sync-toast-pill');
+      if (pill) {
+        pill.classList.remove('opacity-0', '-translate-y-1');
+        setTimeout(() => {
+          pill.classList.add('opacity-0', '-translate-y-1');
+        }, 1200);
+      }
+    }
+
+    function connectLiveStream(slug) {
+      if (!slug) return;
+      let es = null;
+      try {
+        es = new EventSource('/v1/tools/reel/stream/' + slug);
+        es.addEventListener('update', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            applyLiveSync(data);
+          } catch (err) {}
+        });
+        es.addEventListener('init', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            applyLiveSync(data);
+          } catch (err) {}
+        });
+        es.onerror = () => {
+          try { es.close(); } catch (e) {}
+          startPolling(slug);
+        };
+      } catch (err) {
+        startPolling(slug);
+      }
+    }
+
+    let pollInterval = null;
+    let lastUpdateTs = 0;
+    function startPolling(slug) {
+      if (pollInterval) return;
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/v1/tools/reel/session/' + slug);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data && data.session && data.session.updatedAt && data.session.updatedAt !== lastUpdateTs) {
+            lastUpdateTs = data.session.updatedAt;
+            applyLiveSync(data.session);
+          }
+        } catch (err) {}
+      }, 1500);
+    }
 
     const themeMaps = {
       brand: {
@@ -4012,6 +4204,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     window.addEventListener('DOMContentLoaded', () => {
       updateDisplay();
       startPlayback();
+      const currentSlug = '${slug}';
+      if (currentSlug) {
+        connectLiveStream(currentSlug);
+      }
     });
   </script>
 </body>
