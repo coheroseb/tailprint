@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process';
-import { readFile, unlink } from 'node:fs/promises';
+import { spawn, execFile } from 'node:child_process';
+import { readFile, writeFile, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { scraperService } from './scraper.js';
 import { browserService } from './browser.js';
@@ -1329,14 +1329,51 @@ Respond ONLY with valid JSON in this exact structure:
     tmpFiles.push(videoOutPath);
 
     try {
-      // 1. Resolve screenrecordUrl to in-memory data URI if hosted locally in storageService
+      // 1. Resolve screenrecordUrl to an intra-frame (-g 1) MP4 data URI for instant, frame-accurate seeking
       let resolvedScreenrecordUrl = script.screenrecordUrl || '';
       if (resolvedScreenrecordUrl) {
         const match = resolvedScreenrecordUrl.match(/\/d\/(f_[a-zA-Z0-9_.-]+)/);
         if (match && match[1]) {
           const storedVideo = await storageService.getFile(match[1]);
           if (storedVideo) {
-            resolvedScreenrecordUrl = `data:${storedVideo.metadata.mimeType || 'video/webm'};base64,${storedVideo.buffer.toString('base64')}`;
+            const rawInPath = `/tmp/reel_${jobId}_src_in.webm`;
+            const normOutPath = `/tmp/reel_${jobId}_src_norm.mp4`;
+            tmpFiles.push(rawInPath, normOutPath);
+            await writeFile(rawInPath, storedVideo.buffer);
+
+            await new Promise<void>((resolve) => {
+              execFile(
+                'ffmpeg',
+                [
+                  '-y',
+                  '-i',
+                  rawInPath,
+                  '-c:v',
+                  'libx264',
+                  '-preset',
+                  'ultrafast',
+                  '-crf',
+                  '20',
+                  '-g',
+                  '1',
+                  '-pix_fmt',
+                  'yuv420p',
+                  '-movflags',
+                  '+faststart',
+                  '-an',
+                  normOutPath,
+                ],
+                { timeout: 10000 },
+                () => resolve()
+              );
+            });
+
+            const normBuf = await readFile(normOutPath).catch(() => null);
+            if (normBuf && normBuf.length > 1000) {
+              resolvedScreenrecordUrl = `data:video/mp4;base64,${normBuf.toString('base64')}`;
+            } else {
+              resolvedScreenrecordUrl = `data:${storedVideo.metadata.mimeType || 'video/webm'};base64,${storedVideo.buffer.toString('base64')}`;
+            }
           }
         }
       }
@@ -1423,22 +1460,40 @@ Respond ONLY with valid JSON in this exact structure:
             });
           }
 
-          // Preload screenrecord video if present
+          // Preload screenrecord video if present (attached to DOM + offscreen frame cache so it never blinks)
           if (st.screenrecordUrl && st.screenrecordMode !== 'none') {
             await new Promise<void>((resolve) => {
               const vid = document.createElement('video');
               vid.muted = true;
               vid.loop = true;
               vid.playsInline = true;
+              vid.preload = 'auto';
               vid.crossOrigin = 'anonymous';
+              vid.style.cssText = 'position:fixed;top:0;left:0;width:4px;height:4px;opacity:0.01;pointer-events:none;z-index:-1;';
+              document.body.appendChild(vid);
+
+              const cacheCanvas = document.createElement('canvas');
+              cacheCanvas.width = 720;
+              cacheCanvas.height = 1280;
+              (window as any).__bgVideoCache = cacheCanvas;
+              (window as any).__bgVideoCacheReady = false;
+
               vid.onloadeddata = () => {
                 (window as any).__bgVideo = vid;
-                vid.play().catch(() => {});
+                try {
+                  cacheCanvas.width = vid.videoWidth || 720;
+                  cacheCanvas.height = vid.videoHeight || 1280;
+                  const cctx = cacheCanvas.getContext('2d');
+                  if (cctx) {
+                    cctx.drawImage(vid, 0, 0, cacheCanvas.width, cacheCanvas.height);
+                    (window as any).__bgVideoCacheReady = true;
+                  }
+                } catch {}
                 resolve();
               };
               vid.onerror = () => resolve();
               vid.src = st.screenrecordUrl;
-              setTimeout(resolve, 2500);
+              setTimeout(resolve, 3500);
             });
           }
 
@@ -1846,13 +1901,77 @@ Respond ONLY with valid JSON in this exact structure:
             ctx.fillRect(0, 0, W, H);
 
             const bgVid = (window as any).__bgVideo as HTMLVideoElement | undefined;
-            const videoReady = !!(bgVid && bgVid.readyState >= 2);
+            const bgCache = (window as any).__bgVideoCache as HTMLCanvasElement | undefined;
+            if (bgVid && bgVid.readyState >= 2 && bgCache) {
+              try {
+                const cctx = bgCache.getContext('2d');
+                if (cctx) {
+                  cctx.drawImage(bgVid, 0, 0, bgCache.width, bgCache.height);
+                  (window as any).__bgVideoCacheReady = true;
+                }
+              } catch {}
+            }
+            const videoSource: HTMLVideoElement | HTMLCanvasElement | undefined =
+              bgVid && bgVid.readyState >= 2
+                ? bgVid
+                : (window as any).__bgVideoCacheReady && bgCache
+                  ? bgCache
+                  : undefined;
+            const videoReady = !!videoSource;
 
-            if (videoReady && st.screenrecordMode === 'backdrop' && layout === 'classic') {
+            function drawVideoCover(targetX: number, targetY: number, targetW: number, targetH: number, anchorTop = false) {
+              if (!videoSource) return;
+              const vW = (bgVid && bgVid.videoWidth) || (bgCache && bgCache.width) || 720;
+              const vH = (bgVid && bgVid.videoHeight) || (bgCache && bgCache.height) || 1280;
+              const vScale = Math.max(targetW / vW, targetH / vH);
+              const sW = targetW / vScale;
+              const sH = targetH / vScale;
+              const sx = (vW - sW) / 2;
+              const sy = anchorTop ? Math.max(0, Math.min(vH - sH, (vH - sH) * 0.12)) : (vH - sH) / 2;
+              ctx.drawImage(videoSource, sx, sy, sW, sH, targetX, targetY, targetW, targetH);
+            }
+
+            function drawBrowserInsetCard(winX: number, winY: number, winW: number, winH: number) {
               ctx.save();
-              ctx.globalAlpha = 0.34;
-              ctx.drawImage(bgVid!, 0, 0, W, H);
-              ctx.fillStyle = isLight ? 'rgba(248, 250, 252, 0.72)' : 'rgba(9, 13, 22, 0.58)';
+              ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+              roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
+              ctx.fill();
+              ctx.strokeStyle = t.accent + '66';
+              ctx.lineWidth = themeKey === 'brutalist' ? 4 : 2;
+              roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
+              ctx.stroke();
+
+              roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
+              ctx.clip();
+
+              ctx.fillStyle = 'rgba(30, 41, 59, 0.96)';
+              ctx.fillRect(winX, winY, winW, 44);
+              ctx.fillStyle = '#f87171';
+              ctx.beginPath(); ctx.arc(winX + 24, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#fbbf24';
+              ctx.beginPath(); ctx.arc(winX + 46, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#34d399';
+              ctx.beginPath(); ctx.arc(winX + 68, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
+
+              let hostText = (st.brand || 'tailprint.com').toLowerCase();
+              if (st.sourceUrl) {
+                try { hostText = new URL(st.sourceUrl).hostname.replace(/^www\./, ''); } catch {}
+              }
+              ctx.fillStyle = '#94a3b8';
+              ctx.font = `600 20px ${t.fontBody}`;
+              const hw = ctx.measureText(hostText).width;
+              ctx.fillText(hostText, winX + winW - hw - 24, winY + 29);
+
+              drawVideoCover(winX, winY + 44, winW, winH - 44, true);
+              ctx.restore();
+            }
+
+            if (videoReady && st.screenrecordMode === 'backdrop') {
+              ctx.save();
+              ctx.globalAlpha = 0.46;
+              drawVideoCover(0, 0, W, H, false);
+              ctx.globalAlpha = 1.0;
+              ctx.fillStyle = isLight ? 'rgba(248, 250, 252, 0.56)' : 'rgba(9, 13, 22, 0.44)';
               ctx.fillRect(0, 0, W, H);
               ctx.restore();
             }
@@ -1869,7 +1988,7 @@ Respond ONLY with valid JSON in this exact structure:
               ctx.rect(0, 0, W, splitY);
               ctx.clip();
               if (videoReady) {
-                ctx.drawImage(bgVid!, 0, 0, W, splitY);
+                drawVideoCover(0, 0, W, splitY, true);
                 const topVig = ctx.createLinearGradient(0, 0, 0, splitY);
                 topVig.addColorStop(0, 'rgba(9,13,22,0.72)');
                 topVig.addColorStop(0.4, 'rgba(9,13,22,0.18)');
@@ -2080,7 +2199,7 @@ Respond ONLY with valid JSON in this exact structure:
               ctx.clip();
 
               if (videoReady) {
-                ctx.drawImage(bgVid!, phoneX + 8, phoneY + 8, phoneW - 16, phoneH - 16);
+                drawVideoCover(phoneX + 8, phoneY + 8, phoneW - 16, phoneH - 16, true);
               } else {
                 const screenGrad = ctx.createLinearGradient(phoneX, phoneY, phoneX, phoneY + phoneH);
                 screenGrad.addColorStop(0, '#0f172a');
@@ -2114,6 +2233,7 @@ Respond ONLY with valid JSON in this exact structure:
 
             } else if (layout === 'editorial') {
               // Giant background watermark stat/number + editorial framing + vertical accent bar
+              const hasInsetVideo = videoReady && st.screenrecordMode === 'inset' && !isLandscape;
               const watermark = slide.stat || `0${slideIdx + 1}`;
               ctx.save();
               ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.055)' : 'rgba(255, 255, 255, 0.055)';
@@ -2123,7 +2243,7 @@ Respond ONLY with valid JSON in this exact structure:
 
               const editX = padX + 44;
               const editW = W - editX - padX;
-              let curY = isSquare ? 280 : (isLandscape ? 280 : 440);
+              let curY = hasInsetVideo ? headerY + 175 : (isSquare ? 280 : (isLandscape ? 280 : 440));
 
               if (themeKey === 'nordic') {
                 ctx.save();
@@ -2145,31 +2265,38 @@ Respond ONLY with valid JSON in this exact structure:
                 ctx.fillText('“', editX - 8, curY - 28);
               }
 
-              const headFont = isSquare ? 52 : (isLandscape ? 58 : 70);
-              const headLineH = isSquare ? 64 : (isLandscape ? 70 : 84);
+              const headFont = hasInsetVideo ? 52 : (isSquare ? 52 : (isLandscape ? 58 : 70));
+              const headLineH = hasInsetVideo ? 64 : (isSquare ? 64 : (isLandscape ? 70 : 84));
               const barStartY = curY - headFont;
               curY = drawHighlightedHeadline(slide.headline || '', editX, curY, editW, headLineH, headFont);
 
               if (slide.stat) {
-                curY += 20;
-                drawArchetypeCard(editX, curY, editW, 134, false);
+                curY += 16;
+                const statBoxH = hasInsetVideo ? 118 : 134;
+                drawArchetypeCard(editX, curY, editW, statBoxH, false);
                 ctx.fillStyle = t.accent;
-                ctx.font = `900 78px ${t.fontHead}`;
+                ctx.font = `900 ${hasInsetVideo ? 62 : 78}px ${t.fontHead}`;
                 const sw = ctx.measureText(slide.stat).width;
-                ctx.fillText(slide.stat, editX + 28, curY + 90);
+                ctx.fillText(slide.stat, editX + 28, curY + (hasInsetVideo ? 82 : 90));
                 ctx.fillStyle = t.text;
-                ctx.font = `bold 28px ${t.fontBody}`;
-                ctx.fillText((slide.statLabel || '').toUpperCase(), editX + 28 + sw + 24, curY + 78);
-                curY += 170;
+                ctx.font = `bold 26px ${t.fontBody}`;
+                ctx.fillText((slide.statLabel || '').toUpperCase(), editX + 28 + sw + 24, curY + (hasInsetVideo ? 72 : 78));
+                curY += statBoxH + 28;
               } else {
-                curY += 32;
+                curY += 24;
               }
 
-              const bodyFont = isSquare ? 34 : 42;
-              const bodyLineH = isSquare ? 50 : 62;
+              if (hasInsetVideo) {
+                const winH = isSquare ? 240 : 370;
+                drawBrowserInsetCard(editX, curY, editW, winH);
+                curY += winH + 38;
+              }
+
+              const bodyFont = hasInsetVideo ? 36 : (isSquare ? 34 : 42);
+              const bodyLineH = hasInsetVideo ? 52 : (isSquare ? 50 : 62);
               const endY = drawKaraokeText(slide.body || '', editX, curY, editW, bodyLineH, slideProgress, bodyFont);
 
-              if (slideType === 'cta') {
+              if (slideType === 'cta' && !hasInsetVideo) {
                 const btnY = Math.min(H - 360, endY + 26);
                 const btnW = Math.min(editW, 560);
                 ctx.save();
@@ -2207,67 +2334,30 @@ Respond ONLY with valid JSON in this exact structure:
               const contentW = W - (padX + innerPad) * 2;
               curY = drawHighlightedHeadline(slide.headline || '', contentX, curY, contentW, headLineH, headFont, slideType === 'cta' && !hasInsetVideo);
 
-              if (hasInsetVideo) {
-                curY += 12;
-                const winW = W - padX * 2;
-                const winH = isSquare ? 250 : 400;
-                const winX = padX;
-                const winY = curY;
-
-                ctx.save();
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-                roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
-                ctx.fill();
-                ctx.strokeStyle = t.accent + '66';
-                ctx.lineWidth = themeKey === 'brutalist' ? 4 : 2;
-                roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
-                ctx.stroke();
-
-                roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
-                ctx.clip();
-
-                // Browser top bar
-                ctx.fillStyle = 'rgba(30, 41, 59, 0.95)';
-                ctx.fillRect(winX, winY, winW, 44);
-                ctx.fillStyle = '#f87171';
-                ctx.beginPath(); ctx.arc(winX + 24, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#fbbf24';
-                ctx.beginPath(); ctx.arc(winX + 46, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#34d399';
-                ctx.beginPath(); ctx.arc(winX + 68, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
-
-                const vW = (bgVid as any).videoWidth || 720;
-                const vH = (bgVid as any).videoHeight || 1280;
-                const contentH = winH - 44;
-                const vScale = Math.max(winW / vW, contentH / vH);
-                const sW = winW / vScale;
-                const sH = contentH / vScale;
-                const sx = (vW - sW) / 2;
-                const sy = Math.max(0, Math.min(vH - sH, (vH - sH) * 0.15));
-
-                ctx.drawImage(bgVid!, sx, sy, sW, sH, winX, winY + 44, winW, contentH);
-                ctx.restore();
-
-                curY += winH + 42;
-              }
-
               if (slide.stat) {
-                curY += 16;
-                const statBoxH = hasInsetVideo ? 124 : 160;
+                curY += 14;
+                const statBoxH = hasInsetVideo ? 118 : 156;
                 drawArchetypeCard(contentX, curY, contentW, statBoxH, false);
 
                 ctx.fillStyle = t.accent;
-                ctx.font = `900 ${hasInsetVideo ? 64 : 80}px ${t.fontHead}`;
+                ctx.font = `900 ${hasInsetVideo ? 62 : 80}px ${t.fontHead}`;
                 const statW = ctx.measureText(slide.stat).width;
-                ctx.fillText(slide.stat, contentX + 36, curY + (hasInsetVideo ? 86 : 108));
+                ctx.fillText(slide.stat, contentX + 36, curY + (hasInsetVideo ? 82 : 106));
 
                 ctx.fillStyle = t.text;
-                ctx.font = `bold 28px ${t.fontBody}`;
-                ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), contentX + 36 + statW + 28, curY + (hasInsetVideo ? 76 : 96));
+                ctx.font = `bold 26px ${t.fontBody}`;
+                ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), contentX + 36 + statW + 28, curY + (hasInsetVideo ? 72 : 94));
 
-                curY += statBoxH + 42;
+                curY += statBoxH + (hasInsetVideo ? 22 : 40);
               } else {
-                curY += 28;
+                curY += 20;
+              }
+
+              if (hasInsetVideo) {
+                const winW = W - padX * 2;
+                const winH = isSquare ? 250 : 390;
+                drawBrowserInsetCard(padX, curY, winW, winH);
+                curY += winH + 40;
               }
 
               const bodyFont = hasInsetVideo ? 36 : (isSquare ? 34 : 44);
@@ -2380,9 +2470,11 @@ Respond ONLY with valid JSON in this exact structure:
                 const bgVid = (window as any).__bgVideo as HTMLVideoElement | undefined;
                 if (bgVid && bgVid.readyState >= 1 && Number.isFinite(bgVid.duration) && bgVid.duration > 0) {
                   bgVid.pause();
-                  const targetFrac = 0.12 + ((idx + prog * 0.9) / Math.max(1, total)) * 0.86;
-                  const targetTime = Math.min(bgVid.duration - 0.05, Math.max(0, bgVid.duration * targetFrac));
-                  if (Math.abs(bgVid.currentTime - targetTime) > 0.04) {
+                  const baseStart = bgVid.duration > 6.5 ? 0.28 : 0.02;
+                  const baseSpan = bgVid.duration > 6.5 ? 0.70 : 0.96;
+                  const targetFrac = baseStart + ((idx + prog * 0.9) / Math.max(1, total)) * baseSpan;
+                  const targetTime = Math.min(bgVid.duration - 0.04, Math.max(0, bgVid.duration * targetFrac));
+                  if (Math.abs(bgVid.currentTime - targetTime) > 0.03) {
                     await new Promise<void>((res) => {
                       const onSeek = () => {
                         bgVid.removeEventListener('seeked', onSeek);
@@ -2393,7 +2485,7 @@ Respond ONLY with valid JSON in this exact structure:
                       setTimeout(() => {
                         bgVid.removeEventListener('seeked', onSeek);
                         res();
-                      }, 35);
+                      }, 220);
                     });
                   }
                 }

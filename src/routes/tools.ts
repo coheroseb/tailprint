@@ -2337,15 +2337,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     function syncPreviewVideoToSlide(vid) {
       if (!vid) return;
       const total = Math.max(1, (reelState.slides && reelState.slides.length) ? reelState.slides.length : 4);
-      const startFrac = 0.12 + (currentSlideIdx / total) * 0.86;
       const applySeek = () => {
         if (Number.isFinite(vid.duration) && vid.duration > 0.5) {
+          const baseStart = vid.duration > 6.5 ? 0.28 : 0.02;
+          const baseSpan = vid.duration > 6.5 ? 0.70 : 0.96;
+          const startFrac = baseStart + (currentSlideIdx / total) * baseSpan;
           const targetTime = Math.min(vid.duration - 0.1, Math.max(0, vid.duration * startFrac));
           if (vid.dataset.lastSlideIdx !== String(currentSlideIdx) || Math.abs(vid.currentTime - targetTime) > (vid.duration / total) * 1.15) {
             vid.dataset.lastSlideIdx = String(currentSlideIdx);
             try { vid.currentTime = targetTime; } catch (e) {}
           }
-          const shotDur = (vid.duration * 0.86) / total;
+          const shotDur = (vid.duration * baseSpan) / total;
           const slideSec = Math.max(1.5, (reelState.duration || 3500) / 1000);
           try { vid.playbackRate = Math.max(0.35, Math.min(1.75, shotDur / slideSec)); } catch (e) {}
         }
@@ -5107,9 +5109,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       function syncMobileVideoShot(vid) {
         if (!vid) return;
         const total = Math.max(1, (reelState.slides && reelState.slides.length) ? reelState.slides.length : 4);
-        const startFrac = 0.12 + (currentSlideIdx / total) * 0.86;
         const applySeek = () => {
           if (Number.isFinite(vid.duration) && vid.duration > 0.5) {
+            const baseStart = vid.duration > 6.5 ? 0.28 : 0.02;
+            const baseSpan = vid.duration > 6.5 ? 0.70 : 0.96;
+            const startFrac = baseStart + (currentSlideIdx / total) * baseSpan;
             const targetTime = Math.min(vid.duration - 0.1, Math.max(0, vid.duration * startFrac));
             if (vid.dataset.lastSlideIdx !== String(currentSlideIdx) || Math.abs(vid.currentTime - targetTime) > (vid.duration / total) * 1.15) {
               vid.dataset.lastSlideIdx = String(currentSlideIdx);

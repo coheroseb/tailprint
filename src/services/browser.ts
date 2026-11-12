@@ -2,6 +2,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from 'playwrig
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { execFile } from 'node:child_process';
 import pLimit from 'p-limit';
 import { encryptPDF } from 'cryptpdf';
 import { env } from '../config/env.js';
@@ -538,6 +539,7 @@ export class BrowserService {
       let page: Page | null = null;
 
       try {
+        const contextStartedAt = Date.now();
         context = await this.browser!.newContext({
           viewport: { width, height },
           deviceScaleFactor: 1.5,
@@ -552,24 +554,64 @@ export class BrowserService {
         // Suppress cookie popups
         await this.suppressPopupsAndBanners(page);
 
-        // Navigate with timeout
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        // Navigate and wait for SPA bundles / networkidle (with fallback to domcontentloaded)
+        await page
+          .goto(url, { waitUntil: 'networkidle', timeout: 8500 })
+          .catch(() => page!.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 }));
 
-        // Let page settle & dismiss any dynamic banner overlays
-        await page.waitForTimeout(350);
+        // Wait until any SPA loading screen ("Indlæser...", "Loading...") disappears
+        await page
+          .waitForFunction(
+            () => {
+              const text = (document.body?.innerText || '').trim();
+              if (text.length < 160 && /indlæser|loading|please wait/i.test(text)) {
+                return false;
+              }
+              return text.length > 80 || document.querySelectorAll('section, main, h1, h2').length >= 2;
+            },
+            { timeout: 3000 }
+          )
+          .catch(() => {});
+
+        await page.waitForTimeout(250);
         await this.suppressPopupsAndBanners(page);
 
-        // Pre-warm lazy images & scroll-reveal IntersectionObservers across the page,
-        // then record 4 distinct, spread-out camera shots down the webpage (one per Reel slide)
+        // 1. Pre-warm lazy images & scroll-reveal IntersectionObservers BEFORE the recorded shots begin
+        await page.evaluate(async () => {
+          try {
+            document.querySelectorAll('img[loading="lazy"]').forEach((img) => {
+              img.setAttribute('loading', 'eager');
+            });
+          } catch {}
+
+          const getMaxScroll = () =>
+            Math.max(
+              0,
+              Math.max(
+                document.body?.scrollHeight || 0,
+                document.documentElement?.scrollHeight || 0
+              ) - window.innerHeight
+            );
+
+          const initialMax = getMaxScroll();
+          if (initialMax > 400) {
+            for (const frac of [0.3, 0.6, 0.88, 0]) {
+              window.scrollTo(0, Math.round(initialMax * frac));
+              await new Promise((r) => setTimeout(r, 40));
+            }
+          }
+          window.scrollTo(0, 0);
+        });
+
+        await page.waitForTimeout(180);
+
+        // Exact timestamp when Shot 1 begins so we can trim off page-load & pre-warm via FFmpeg
+        const shotsStartedAt = Date.now();
+        const trimStartSec = Math.max(0.1, (shotsStartedAt - contextStartedAt) / 1000);
+
+        // 2. Record 4 distinct, spread-out camera shots down the webpage (one per Reel slide)
         await page.evaluate(
           async ({ totalDuration }: { totalDuration: number }) => {
-            // 1. Force eager loading on lazy images & reveal hidden scroll-animated blocks
-            try {
-              document.querySelectorAll('img[loading="lazy"]').forEach((img) => {
-                img.setAttribute('loading', 'eager');
-              });
-            } catch {}
-
             const getMaxScroll = () =>
               Math.max(
                 0,
@@ -579,18 +621,8 @@ export class BrowserService {
                 ) - window.innerHeight
               );
 
-            // Quick 140ms pre-warm pass to trigger IntersectionObservers on long pages
-            const initialMax = getMaxScroll();
-            if (initialMax > 400) {
-              for (const frac of [0.3, 0.6, 0.88, 0]) {
-                window.scrollTo(0, Math.round(initialMax * frac));
-                await new Promise((r) => setTimeout(r, 30));
-              }
-            }
-
             const maxScroll = getMaxScroll();
 
-            // 2. Discover meaningful visual section landmarks (or spread evenly across page height)
             const candidates: number[] = [];
             const els = Array.from(
               document.querySelectorAll('section, main > div, article, [class*="feature" i], [class*="bento" i], [class*="pricing" i], h2')
@@ -618,7 +650,6 @@ export class BrowserService {
               return Math.max(0, Math.min(maxScroll, Math.round(best)));
             };
 
-            // 4 spread-out camera shot starting Y positions across the webpage
             const shotStarts = maxScroll > 600
               ? [
                   0,
@@ -642,7 +673,6 @@ export class BrowserService {
                 function step(now: number) {
                   const elapsed = now - shotStartTs;
                   const progress = Math.min(1, elapsed / shotDuration);
-                  // Smooth cubic ease-in-out pan within this shot
                   const ease =
                     progress < 0.5
                       ? 4 * progress * progress * progress
@@ -676,7 +706,51 @@ export class BrowserService {
         }
 
         const videoPath = await video.path();
-        const buffer = await fs.readFile(videoPath);
+        const trimmedPath = path.join(tmpDir, 'trimmed-shots.webm');
+
+        // Trim page-load/pre-warm phase and inject frequent keyframes (-g 4) so per-slide seeking is instant
+        await new Promise<void>((resolve) => {
+          execFile(
+            'ffmpeg',
+            [
+              '-y',
+              '-ss',
+              trimStartSec.toFixed(2),
+              '-i',
+              videoPath,
+              '-c:v',
+              'libvpx',
+              '-b:v',
+              '2.5M',
+              '-crf',
+              '18',
+              '-g',
+              '4',
+              '-keyint_min',
+              '4',
+              '-deadline',
+              'realtime',
+              '-cpu-used',
+              '6',
+              '-an',
+              trimmedPath,
+            ],
+            { timeout: 12000 },
+            (err) => {
+              if (err) {
+                console.warn('[BrowserService] FFmpeg trim skipped, falling back to raw WebM:', err.message);
+              }
+              resolve();
+            }
+          );
+        });
+
+        const finalPath = await fs
+          .stat(trimmedPath)
+          .then((st) => (st.size > 1000 ? trimmedPath : videoPath))
+          .catch(() => videoPath);
+
+        const buffer = await fs.readFile(finalPath);
         return buffer;
       } finally {
         if (page) await (page as Page).close().catch(() => {});
