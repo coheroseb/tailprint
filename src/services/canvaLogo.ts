@@ -666,7 +666,7 @@ Rules:
             const hex = toHex(r, g, b);
             layersOut.push({
               id: `layer_${k + 1}`,
-              name: `Farvelag ${k + 1}`,
+              name: `Color Layer ${k + 1}`,
               color: hex,
               pathData,
               areaRatio: Number((count / totalPixels).toFixed(4)),
@@ -677,7 +677,7 @@ Rules:
           layersOut.sort((a, b) => b.areaRatio - a.areaRatio);
           layersOut.forEach((l, idx) => {
             l.id = `layer_${idx + 1}`;
-            l.name = `Farvelag ${idx + 1}`;
+            l.name = `Color Layer ${idx + 1}`;
           });
 
           return { layers: layersOut, detectedBgHex };
@@ -1059,21 +1059,21 @@ ${displayTag ? `  <text x="${W / 2}" y="730" text-anchor="middle" fill="${state.
       layers: [
         {
           id: 'layer_1',
-          name: 'Farvelag 1',
+          name: 'Color Layer 1',
           color: '#4f46e5',
           pathData: 'M 250 55 L 420 152 L 420 348 L 250 445 L 80 348 L 80 152 Z M 250 115 L 135 182 L 135 318 L 250 385 L 365 318 L 365 182 Z',
           areaRatio: 0.35,
         },
         {
           id: 'layer_2',
-          name: 'Farvelag 2',
+          name: 'Color Layer 2',
           color: '#38bdf8',
           pathData: 'M 250 135 L 345 190 L 250 245 L 155 190 Z M 250 265 L 345 210 L 345 310 L 250 365 Z',
           areaRatio: 0.22,
         },
         {
           id: 'layer_3',
-          name: 'Farvelag 3',
+          name: 'Color Layer 3',
           color: '#f43f5e',
           pathData: 'M 155 210 L 235 256 L 235 356 L 155 310 Z',
           areaRatio: 0.12,
@@ -1099,19 +1099,19 @@ Return ONLY a valid JSON object matching this exact schema:
   "layers": [
     {
       "id": "layer_1",
-      "name": "Farvelag 1",
+      "name": "Color Layer 1",
       "color": "#HEX1",
       "pathData": "Valid SVG <path d='...'> commands (M, L, C, Q, Z) inside 60..440 coordinate range"
     },
     {
       "id": "layer_2",
-      "name": "Farvelag 2",
+      "name": "Color Layer 2",
       "color": "#HEX2",
       "pathData": "Valid SVG <path d='...'> commands for secondary geometric accent/symbol"
     },
     {
       "id": "layer_3",
-      "name": "Farvelag 3",
+      "name": "Color Layer 3",
       "color": "#HEX3",
       "pathData": "Valid SVG <path d='...'> commands for center highlight/detail"
     }
@@ -1162,7 +1162,7 @@ Rules:
                 taglineColor: /^#[0-9a-fA-F]{6}$/.test(parsed.taglineColor) ? parsed.taglineColor : '#94a3b8',
                 layers: parsed.layers.map((l: any, idx: number) => ({
                   id: `layer_${idx + 1}`,
-                  name: l.name || `Farvelag ${idx + 1}`,
+                  name: l.name && !String(l.name).startsWith('Farvelag') ? l.name : `Color Layer ${idx + 1}`,
                   color: /^#[0-9a-fA-F]{6}$/.test(l.color) ? l.color : '#6366f1',
                   pathData: String(l.pathData || '').trim(),
                   areaRatio: Number((0.3 / (idx + 1)).toFixed(3)),

@@ -932,6 +932,130 @@ export async function generateMetadata({ params }: Props): Promise&lt;Metadata&g
       </section>
     `,
   },
+
+  'convert-ai-logo-to-editable-canva-vector': {
+    slug: 'convert-ai-logo-to-editable-canva-vector',
+    title: 'How to Convert an AI-Generated Logo (Midjourney, ChatGPT, Ideogram) into a 100% Editable Canva Vector & Layer File',
+    seoTitle: 'Convert AI Logo to Editable Canva Vector Layers & Text Boxes — Tailprint Guide',
+    description: 'Learn how to deconstruct flat raster AI logos from Midjourney, DALL-E, or Ideogram into multi-color Canva SVG vector layers and double-clickable editable text boxes.',
+    category: 'Design & Vector Engineering',
+    readTime: '6 min read',
+    datePublished: '2026-11-12T10:00:00Z',
+    dateModified: '2026-11-12T14:00:00Z',
+    keywords: 'convert ai logo to canva, edit midjourney logo in canva, vectorize ai logo for canva, editable canva svg layers, separate text from ai logo, canva vector pdf import',
+    relatedTool: {
+      name: 'Open AI Logo to Canva Vector Studio',
+      url: '/tools/canva-logo',
+    },
+    contentHtml: `
+      <section class="space-y-6">
+        <p class="text-lg text-slate-300 leading-relaxed">
+          Generative AI models like <strong>Midjourney</strong>, <strong>ChatGPT (DALL-E 3)</strong>, <strong>Ideogram</strong>, and <strong>Leonardo</strong> are extraordinary at brainstorming visual brand identities. Within seconds, you can generate a striking geometric emblem or minimalist startup mark. However, the moment you upload that PNG or JPG into <strong>Canva</strong> to build your brand kit, pitch deck, or website header, you hit a wall: <strong>it is a flat, uneditable raster image.</strong>
+        </p>
+
+        <h2 class="text-2xl font-bold text-white pt-4">Why Raw AI Logos Fail Inside Canva</h2>
+        <p class="text-slate-300 leading-relaxed">
+          When an image diffusion model outputs a logo, every visual element is baked into a single grid of pixels:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 text-slate-300 text-sm">
+          <li><strong>No Color Swatches:</strong> Clicking the image in Canva treats it as a photo—you cannot click an individual wing, prism, or geometric shape to change its hex color.</li>
+          <li><strong>Baked-In Raster Typography:</strong> The brand name and tagline are painted as pixels. You cannot double-click the text to fix a typo, adjust letter-spacing, or swap the font family.</li>
+          <li><strong>Opaque Background &amp; Anti-Aliasing Halos:</strong> Simple background removers leave jagged 1-pixel color fringes around the edges and fail to separate internal negative-space cutouts cleanly.</li>
+          <li><strong>Pixelation at Print &amp; High-DPI Scales:</strong> Scaling a 1024×1024 raster PNG onto a trade-show banner or high-DPI PDF presentation produces blurry edges.</li>
+        </ul>
+
+        <h2 class="text-2xl font-bold text-white pt-6">How Canva's Vector &amp; PDF Import Engine Actually Works</h2>
+        <p class="text-slate-300 leading-relaxed">
+          To make an AI logo behave like a native Canva template element—where color tiles appear in the top toolbar and text boxes can be double-clicked—the file must satisfy two strict architectural rules that Canva's importer enforces:
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+          <div class="p-5 rounded-2xl bg-slate-900 border border-cyan-500/30 space-y-2">
+            <div class="text-xs font-mono font-bold text-cyan-400 uppercase">1. Multi-Color Vector Swatches (.SVG / .PDF)</div>
+            <h3 class="text-base font-bold text-white">Explicit Inline Fill Paths</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Canva unlocks its multi-color palette bar when vector shapes are grouped into clean <code>&lt;path fill="#HEX" fill-rule="evenodd" d="..." /&gt;</code> layers with no CSS classes, external stylesheets, or raster <code>&lt;image&gt;</code> tags, and with fewer than 6 distinct color groups.
+            </p>
+          </div>
+          <div class="p-5 rounded-2xl bg-slate-900 border border-purple-500/30 space-y-2">
+            <div class="text-xs font-mono font-bold text-purple-400 uppercase">2. Double-Clickable Typography (.PDF)</div>
+            <h3 class="text-base font-bold text-white">Native Vector PDF Text Streams</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              When you import a standalone <code>.SVG</code> into Canva, Canva flattens <code>&lt;text&gt;</code> nodes into uneditable outlines. However, when you import a <strong>Vector PDF</strong> containing true Chromium text streams alongside SVG paths, Canva converts the text into <strong>native editable text boxes</strong>!
+            </p>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-white pt-6">Inside Tailprint's AI Logo Deconstructor Pipeline</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Our free <a href="/tools/canva-logo" class="text-cyan-400 underline hover:text-cyan-300">AI Logo to Canva Vector Studio</a> automates this entire deconstruction in four stages:
+        </p>
+
+        <ol class="list-decimal pl-6 space-y-3 text-slate-300 text-sm leading-relaxed">
+          <li>
+            <strong>Gemini 3.8 Flash Vision OCR &amp; Bounding-Box Isolation:</strong>
+            The uploaded logo is analyzed to extract the exact <code>brandName</code>, <code>tagline</code>, closest Google/Canva font match (e.g., <em>Space Grotesk</em>, <em>Montserrat</em>, <em>Outfit</em>, <em>Cinzel</em>), and normalized <code>0..1000</code> bounding coordinates separating the graphic icon from the baked-in raster text.
+          </li>
+          <li>
+            <strong>Background Removal &amp; Raster Text Masking:</strong>
+            Corner and edge sampling detects the outer background color, while the <code>textBox</code> region is masked out of the raster canvas so baked-in pixel letters never pollute your clean vector icon.
+          </li>
+          <li>
+            <strong>K-Means Color Quantization &amp; Morphological Smoothing:</strong>
+            Foreground pixels are clustered into <code>2..6</code> crisp brand color layers using K-Means clustering followed by a 2-pass <code>3×3</code> majority filter that eliminates anti-aliasing halos between adjacent colors.
+          </li>
+          <li>
+            <strong>Closed Contour Tracing &amp; Quadratic Bezier Fitting:</strong>
+            Each color cluster is traced into directed boundary loops (preserving inner holes via <code>fill-rule="evenodd"</code>), simplified with Ramer-Douglas-Peucker, and fitted with smooth Quadratic Bezier (<code>M ... Q ... L ... Z</code>) SVG paths.
+          </li>
+        </ol>
+
+        <h2 class="text-2xl font-bold text-white pt-6">Programmatic API &amp; MCP Integration</h2>
+        <p class="text-slate-300 leading-relaxed">
+          In addition to the interactive browser studio at <a href="/tools/canva-logo" class="text-cyan-400 underline">/tools/canva-logo</a>, you can automate AI logo vectorization via REST API (<code>POST /v1/tools/canva-logo</code>) or directly inside Claude Desktop and Cursor using the <code>convert_logo_for_canva</code> MCP tool:
+        </p>
+
+        <pre class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 font-mono text-xs overflow-x-auto"><code>curl -X POST https://tailprint.com/v1/tools/canva-logo \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "imageUrl": "https://your-cdn.com/midjourney-logo.png",
+    "maxColors": 4,
+    "separateText": true
+  }'</code></pre>
+
+        <p class="text-slate-300 text-sm leading-relaxed">
+          The endpoint returns the structured vector layers, extracted typography metadata, standalone multi-layer <code>.SVG</code> files, and the 2-page <strong>Canva-Editable Vector PDF</strong>:
+        </p>
+
+        <pre class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-xs overflow-x-auto"><code>{
+  "success": true,
+  "iconSvgUrl": "https://tailprint.com/d/novaflow-canva-icon.svg",
+  "combinedSvgUrl": "https://tailprint.com/d/novaflow-canva-full.svg",
+  "canvaPdfDownloadUrl": "https://tailprint.com/d/novaflow-canva-editable.pdf?download=true",
+  "state": {
+    "brandName": "NOVAFLOW",
+    "tagline": "AI CLOUD ENGINE",
+    "fontFamily": "Space Grotesk",
+    "layers": [
+      { "id": "layer_1", "name": "Color Layer 1", "color": "#4f46e5" },
+      { "id": "layer_2", "name": "Color Layer 2", "color": "#38bdf8" },
+      { "id": "layer_3", "name": "Color Layer 3", "color": "#f43f5e" }
+    ]
+  }
+}</code></pre>
+
+        <div class="mt-8 p-6 rounded-2xl bg-gradient-to-r from-cyan-950/80 via-indigo-950/80 to-purple-950/80 border border-cyan-500/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 class="text-white font-bold text-lg">Convert Your AI Logo for Canva Now</h3>
+            <p class="text-slate-300 text-xs mt-1">Upload any PNG, JPG, or WebP logo — or generate a new multi-layer vector logo with AI for free.</p>
+          </div>
+          <a href="/tools/canva-logo" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-sm transition shrink-0 shadow-lg shadow-cyan-600/30">
+            Launch Canva Logo Studio →
+          </a>
+        </div>
+      </section>
+    `,
+  },
 };
 
 export const guidesRoutes: FastifyPluginAsyncZod = async (fastify) => {

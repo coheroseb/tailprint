@@ -337,6 +337,10 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
           <a href="/tools/reel" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Social Reel Maker' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
             <span>🎬 Social Reel &amp; Short Maker</span>
           </a>
+          <a href="/tools/canva-logo" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'AI Logo to Canva' ? 'bg-indigo-600 text-white' : 'text-cyan-300 hover:bg-slate-900'}">
+            <span>🎨 AI Logo to Canva Vector</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-bold ml-auto">New</span>
+          </a>
           <a href="/tools/factur-x" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'Factur-X E-Invoice' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-900'}">
             <span>🇪🇺 EU Factur-X &amp; PEPPOL</span>
           </a>

@@ -265,6 +265,18 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://tailprint.com/guides/convert-ai-logo-to-editable-canva-vector</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools/canva-logo</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://tailprint.com/tools/reel</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
@@ -2024,7 +2036,7 @@ This domain is for use in documentation examples without needing permission. Thi
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
         <div>
           <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 text-xs font-semibold mb-3">
-            <span>🛠️ Suite of 6 Free Browser Tools</span>
+            <span>🛠️ Suite of 7 Free Browser Tools</span>
           </div>
           <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Interactive Developer Tools Hub</h2>
           <p class="text-slate-400 mt-2 text-sm max-w-xl">Zero signup required. Run high-performance Chromium rendering and conversion workflows directly in your browser.</p>
@@ -2061,11 +2073,27 @@ This domain is for use in documentation examples without needing permission. Thi
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-800/40">9:16 REELS</span>
             </div>
             <h3 class="text-lg font-bold text-white group-hover:text-rose-300 transition">Social Reel &amp; Short Video Maker</h3>
-            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Paste any URL or article to generate vertical 9:16 animated Stories/Reels with kinetic typography, progress bars, and instant video download.</p>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Paste any URL or article to generate vertical 9:16 animated Stories/Reels with live screen recordings, visual layouts, and instant MP4 download.</p>
           </div>
           <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-rose-400 font-semibold">
             <span>Create 9:16 Reel</span>
             <span class="group-hover:translate-x-1 transition duration-200">/tools/reel →</span>
+          </div>
+        </a>
+
+        <!-- Tool 1.8: AI Logo to Canva Vector Studio -->
+        <a href="/tools/canva-logo" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 transition shadow-xl group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 text-xl border border-cyan-500/20 group-hover:scale-110 transition duration-200">🎨</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-800/40">CANVA VECTOR</span>
+            </div>
+            <h3 class="text-lg font-bold text-white group-hover:text-cyan-300 transition">AI Logo to Canva Vector Studio</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">Convert flat AI-generated logos (Midjourney, ChatGPT, Ideogram) into 100% editable Canva vector color layers and real double-clickable text boxes.</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-cyan-400 font-semibold">
+            <span>Vectorize Logo</span>
+            <span class="group-hover:translate-x-1 transition duration-200">/tools/canva-logo →</span>
           </div>
         </a>
 

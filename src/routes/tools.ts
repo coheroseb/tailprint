@@ -154,12 +154,35 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
             </div>
             <h2 class="text-xl font-bold text-white mt-2 group-hover:text-rose-400 transition">AI Social Reel &amp; Video Maker</h2>
             <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-              Paste any URL or article and convert it into a vertical 9:16 (1080×1920) animated Reel / Story with kinetic typography, progress bars, and instant video download.
+              Paste any URL or article and convert it into a vertical 9:16 (1080×1920) animated Reel / Story with live screen recordings, visual layouts, and instant MP4 download.
             </p>
           </div>
         </div>
         <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-rose-400">
           <span>Create 9:16 Reel</span>
+          <span class="group-hover:translate-x-1 transition">→</span>
+        </div>
+      </a>
+
+      <!-- Tool Card 1.8: AI Logo to Canva Vector Studio -->
+      <a href="/tools/canva-logo" class="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500 transition shadow-xl group flex flex-col justify-between relative overflow-hidden">
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-2xl border border-cyan-500/20 group-hover:scale-110 transition">
+            🎨
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/40 uppercase">Canva &amp; Brand Design</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold">NEW</span>
+            </div>
+            <h2 class="text-xl font-bold text-white mt-2 group-hover:text-cyan-400 transition">AI Logo to Canva Vector Studio</h2>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Convert any flat AI-generated logo (Midjourney, ChatGPT, Ideogram) into 100% editable Canva vector color layers and real double-clickable text boxes.
+            </p>
+          </div>
+        </div>
+        <div class="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-cyan-400">
+          <span>Vectorize Logo for Canva</span>
           <span class="group-hover:translate-x-1 transition">→</span>
         </div>
       </a>
@@ -1229,12 +1252,12 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <div class="flex items-center space-x-2">
               <span class="text-base">🎬</span>
               <div>
-                <span class="font-bold text-slate-200">Renset Video Download</span>
-                <p class="text-[10px] text-slate-500">Skjuler story progress-tabs &amp; '3/4' for ren TikTok &amp; Reels video</p>
+                <span class="font-bold text-slate-200">Clean Video Export</span>
+                <p class="text-[10px] text-slate-500">Hides story progress bars &amp; '3/4' counter for clean TikTok &amp; Reels video</p>
               </div>
             </div>
             <button id="clean-export-toggle-btn" onclick="toggleCleanExport()" class="px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30">
-              <span id="clean-export-toggle-status">Renset Video ✨</span>
+              <span id="clean-export-toggle-status">Clean Video ✨</span>
             </button>
           </div>
         </div>
@@ -1393,7 +1416,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           >
             <div class="flex items-center space-x-2">
               <span class="text-sm">📱</span>
-              <span>Live Preview på Telefon (Scan QR)</span>
+              <span>Live Mobile Preview (Scan QR)</span>
             </div>
             <span id="btn-mobile-live-badge" class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/25 font-black uppercase tracking-wider">Live</span>
           </button>
@@ -1429,7 +1452,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <div id="recording-overlay" class="hidden w-full max-w-[360px] p-3 rounded-xl bg-slate-900 border border-rose-500/50 text-center space-y-2">
           <div class="flex items-center justify-center space-x-2 text-xs font-bold text-rose-400">
             <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></div>
-            <span id="recording-status-text">Rendering <span id="record-aspect-label">9:16</span> MP4 + AI Voiceover (<span id="record-percent">0%</span>)...</span>
+            <span id="recording-status-text">Rendering <span id="record-aspect-label">9:16</span> H.264 MP4 Video (<span id="record-percent">0%</span>)...</span>
           </div>
           <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
             <div id="record-progress-bar" class="bg-rose-500 h-full transition-all duration-150" style="width: 0%"></div>
@@ -1470,13 +1493,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         </div>
 
         <div class="space-y-1">
-          <h3 class="text-lg font-black text-white">Live Preview på Mobil</h3>
-          <p class="text-xs text-slate-400 leading-relaxed">Scan QR-koden med dit mobilkamera for at se videoen i fuld skærm på din telefon med live touch og kinetic karaoke.</p>
+          <h3 class="text-lg font-black text-white">Live Mobile Preview</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Scan the QR code with your phone camera to watch the video fullscreen on your mobile device with real-time live sync.</p>
         </div>
 
         <div class="flex items-center justify-center space-x-2 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 py-1.5 px-3 rounded-xl border border-emerald-500/20">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span>Live Sync Aktiv • Opdaterer ved enhver ændring</span>
+          <span>Live Sync Active • Updates instantly on any edit</span>
         </div>
 
         <!-- QR Code Container -->
@@ -1488,12 +1511,12 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <div class="flex items-center space-x-2 pt-1">
           <input id="qr-share-url-input" type="text" readonly class="w-full bg-slate-950 text-slate-300 border border-slate-800 rounded-xl px-3 py-2 text-[11px] font-mono focus:outline-none truncate" />
           <button id="btn-copy-share-url" onclick="copyShareUrl()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition flex-shrink-0">
-            Kopier
+            Copy
           </button>
         </div>
 
         <p class="text-[10px] text-slate-500 leading-tight">
-          💡 Tryk og hold fingeren på mobilskærmen for at pause, eller tryk i siderne for at skifte slide.
+          💡 Touch and hold the mobile screen to pause, or tap the left/right edges to switch slides.
         </p>
       </div>
     </div>
@@ -1697,10 +1720,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       if (btn && status) {
         if (reelState.cleanExport !== false) {
           btn.className = 'px-3 py-1 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30';
-          status.textContent = 'Renset Video ✨';
+          status.textContent = 'Clean Video ✨';
         } else {
           btn.className = 'px-3 py-1 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 bg-slate-950 text-slate-400 border border-slate-800 hover:text-white';
-          status.textContent = 'Story Tabs Aktiv';
+          status.textContent = 'Story Tabs On';
         }
       }
       debouncedSyncToMobile();
@@ -2945,7 +2968,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             throw new Error('Failed to generate QR code');
           }
         } catch (err) {
-          display.innerHTML = '<div class="text-xs text-rose-500 font-bold p-4">Kunne ikke generere QR: ' + err.message + '</div>';
+          display.innerHTML = '<div class="text-xs text-rose-500 font-bold p-4">Failed to generate QR: ' + err.message + '</div>';
         }
       } else {
         debouncedSyncToMobile();
@@ -2961,10 +2984,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       if (!urlInput || !urlInput.value) return;
       navigator.clipboard.writeText(urlInput.value);
       const btn = document.getElementById('btn-copy-share-url');
-      btn.textContent = 'Kopieret! ✓';
+      btn.textContent = 'Copied! ✓';
       btn.classList.add('bg-emerald-600');
       setTimeout(() => {
-        btn.textContent = 'Kopier';
+        btn.textContent = 'Copy';
         btn.classList.remove('bg-emerald-600');
       }, 2000);
     }
@@ -3682,7 +3705,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   <!-- Live Sync Status Pill -->
   <div id="sync-toast-pill" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-full bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 text-[10px] font-mono font-black flex items-center space-x-1.5 shadow-2xl backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 transform -translate-y-1">
     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-    <span>LIVE SYNKRONISERET</span>
+    <span>LIVE SYNCED</span>
   </div>
 
   <!-- Top Area: Instagram Story Progress Bars & Brand Header -->
@@ -3709,7 +3732,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <span id="mobile-tag" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">
           HOOK
         </span>
-        <button onclick="shareReel(event)" class="w-9 h-9 rounded-full bg-white/10 active:bg-white/25 border border-white/20 flex items-center justify-center text-white text-xs transition" title="Del Reel">
+        <button onclick="shareReel(event)" class="w-9 h-9 rounded-full bg-white/10 active:bg-white/25 border border-white/20 flex items-center justify-center text-white text-xs transition" title="Share Reel">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
         </button>
       </div>
@@ -3739,7 +3762,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       <video id="mobile-screenrecord-video" src="" autoplay loop muted playsinline class="w-full h-36 object-cover object-top"></video>
     </div>
 
-    <!-- Body with Kinetic Karaoke Spans -->
+    <!-- Body Text -->
     <p id="mobile-body" class="text-base sm:text-lg leading-relaxed text-slate-200 font-medium"></p>
   </main>
 
@@ -3750,7 +3773,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       <a id="mobile-cta-btn" href="#" target="_blank" class="col-span-7 py-3.5 px-4 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-[0.98] border border-white/30 backdrop-blur-xl flex items-center justify-between text-white font-extrabold text-xs shadow-2xl transition">
         <div class="flex items-center space-x-2 truncate">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-          <span id="mobile-cta-text" class="truncate">Link i bio</span>
+          <span id="mobile-cta-text" class="truncate">Link in bio</span>
         </div>
         <span class="text-slate-300 font-black ml-1">→</span>
       </a>
@@ -3758,15 +3781,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       <!-- Direct One-Tap MP4 Video Download / Save to Camera Roll -->
       <button id="btn-mobile-download-mp4" onclick="downloadMobileMp4(event)" class="col-span-5 py-3.5 px-3 rounded-2xl bg-gradient-to-r from-rose-600 to-indigo-600 active:scale-[0.98] border border-white/30 flex items-center justify-center space-x-1.5 text-white font-black text-xs shadow-2xl transition">
         <span>📲</span>
-        <span id="mobile-mp4-label">Gem MP4</span>
+        <span id="mobile-mp4-label">Save MP4</span>
       </button>
     </div>
 
     <!-- Slide Indicator & Tips -->
     <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
       <span id="mobile-slide-indicator" class="font-mono font-bold text-white/80">1 / 4</span>
-      <span class="text-white/40">• Tryk i siderne for at skifte</span>
-      <a href="/tools/reel" class="text-indigo-400 font-bold hover:underline">Lav din egen ⚡</a>
+      <span class="text-white/40">• Tap edges to switch slides</span>
+      <a href="/tools/reel" class="text-indigo-400 font-bold hover:underline">Create your own ⚡</a>
     </div>
   </footer>
 
@@ -3798,7 +3821,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const label = document.getElementById('mobile-mp4-label');
       if (!btn || !label) return;
       btn.disabled = true;
-      label.textContent = 'Renderer MP4...';
+      label.textContent = 'Rendering MP4...';
 
       try {
         const res = await fetch('/v1/tools/reel/video', {
@@ -3808,7 +3831,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         });
         const data = await res.json();
         if (!res.ok || (!data.downloadUrl && !data.videoUrl)) {
-          throw new Error(data.message || 'Kunne ikke generere MP4');
+          throw new Error(data.message || 'Failed to generate MP4');
         }
         const dlUrl = data.downloadUrl || (data.videoUrl + '?download=true');
 
@@ -3823,8 +3846,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                 files: [file],
                 title: reelState.title || reelState.brand,
               });
-              label.textContent = 'Gemt ✓';
-              setTimeout(() => { label.textContent = 'Gem MP4'; btn.disabled = false; }, 2000);
+              label.textContent = 'Saved ✓';
+              setTimeout(() => { label.textContent = 'Save MP4'; btn.disabled = false; }, 2000);
               return;
             }
           } catch (shareErr) {}
@@ -3837,13 +3860,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        label.textContent = 'Hentet ✓';
+        label.textContent = 'Downloaded ✓';
       } catch (err) {
-        alert('Fejl ved MP4 download: ' + err.message);
-        label.textContent = 'Gem MP4';
+        alert('MP4 download error: ' + err.message);
+        label.textContent = 'Save MP4';
       } finally {
         setTimeout(() => {
-          label.textContent = 'Gem MP4';
+          label.textContent = 'Save MP4';
           btn.disabled = false;
         }, 2500);
       }
@@ -4208,7 +4231,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       // CTA Button
       const ctaBtn = document.getElementById('mobile-cta-btn');
       const ctaText = document.getElementById('mobile-cta-text');
-      ctaText.textContent = reelState.cta || 'Link i bio';
+      ctaText.textContent = reelState.cta || 'Link in bio';
       ctaBtn.href = reelState.sourceUrl || '#';
 
       document.getElementById('mobile-slide-indicator').textContent = (currentSlideIdx + 1) + ' / ' + reelState.slides.length;
@@ -4227,7 +4250,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         } catch (err) {}
       } else {
         navigator.clipboard.writeText(window.location.href);
-        alert('Link kopieret!');
+        alert('Link copied!');
       }
     }
 
@@ -4305,7 +4328,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         return reply.code(400).send({
           statusCode: 400,
           error: 'Bad Request',
-          message: err.message || 'Kunne ikke konvertere logo til Canva-format',
+          message: err.message || 'Failed to convert logo to editable Canva format',
         });
       }
     }
@@ -4313,11 +4336,12 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
   fastify.get('/tools/canva-logo', { schema: { hide: true } }, async (_request, reply) => {
     const html = `<!DOCTYPE html>
-<html lang="da" class="dark">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Logo → Redigerbar Canva Vektor &amp; Lag Studio — Tailprint</title>
+  <title>AI Logo to Editable Canva Vector &amp; Layer Studio — Tailprint</title>
+  <meta name="description" content="Convert any flat AI-generated logo from Midjourney, ChatGPT/DALL-E, or Ideogram into 100% editable Canva vector color layers and real double-clickable text boxes." />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4338,7 +4362,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
-  ${renderHeader('AI Logo til Canva')}
+  ${renderHeader('AI Logo to Canva')}
 
   <main class="max-w-7xl mx-auto px-6 py-8 flex-1 w-full">
     <!-- Hero Header -->
@@ -4347,24 +4371,24 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-3">
           <span>🎨 AI Logo Deconstructor</span>
           <span>•</span>
-          <span>Canva Vektor-Lag + Redigerbar Tekst</span>
+          <span>Canva Vector Layers + Editable Text Boxes</span>
         </div>
         <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white">
-          Gør ethvert AI-Logo <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">100% Redigerbart i Canva</span>
+          Make Any AI Logo <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">100% Editable in Canva</span>
         </h1>
         <p class="text-slate-400 text-sm mt-1.5 max-w-2xl">
-          Upload et fladt AI-genereret logo (fra Midjourney, ChatGPT, Ideogram m.fl.). Vores motor fjerner baggrunden, adskiller teksten til en <strong>ægte redigerbar tekstboks</strong> og splitter ikonet op i <strong>individuelle vektor-farvelag</strong>, du kan farvelægge og flytte frit i Canva.
+          Upload a flat AI-generated logo (from Midjourney, ChatGPT, Ideogram, etc.). Our engine strips the background, separates baked-in text into a <strong>real editable text box</strong>, and splits the icon into <strong>individual vector color layers</strong> you can recolor and move freely in Canva.
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
         <button onclick="loadDemoAiLogo('nova')" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center space-x-1.5">
-          <span>🧪</span><span>Prøv Demo 1 (Tech Ræv)</span>
+          <span>🧪</span><span>Try Demo 1 (Tech Prism)</span>
         </button>
         <button onclick="loadDemoAiLogo('aurora')" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center space-x-1.5">
-          <span>🌿</span><span>Prøv Demo 2 (Eco Leaf)</span>
+          <span>🌿</span><span>Try Demo 2 (Eco Leaf)</span>
         </button>
         <button onclick="loadDemoAiLogo('crown')" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition flex items-center space-x-1.5">
-          <span>👑</span><span>Prøv Demo 3 (Luxury)</span>
+          <span>👑</span><span>Try Demo 3 (Luxury Crown)</span>
         </button>
       </div>
     </div>
@@ -4377,8 +4401,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <!-- 1. Upload AI Logo or Generate with AI -->
         <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-5">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">1. Upload dit AI-Logo (PNG, JPG, WebP) eller Generer med AI</span>
-            <span id="status-pill" class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">Klar ✨</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">1. Upload Your AI Logo (PNG, JPG, WebP) or Generate with AI</span>
+            <span id="status-pill" class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold">Ready ✨</span>
           </div>
 
           <!-- Drag & Drop Zone -->
@@ -4397,10 +4421,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               </div>
               <div class="text-left">
                 <div class="text-sm font-bold text-white group-hover:text-cyan-300 transition">
-                  Træk dit AI-logo herind, eller klik for at vælge fil
+                  Drag &amp; drop your AI logo here, or click to browse
                 </div>
                 <p class="text-xs text-slate-400 mt-0.5">
-                  Understøtter PNG, JPG og WebP fra Midjourney, DALL-E / ChatGPT, Ideogram &amp; Leonardo
+                  Supports PNG, JPG, and WebP from Midjourney, DALL-E / ChatGPT, Ideogram &amp; Leonardo
                 </p>
               </div>
             </div>
@@ -4410,35 +4434,35 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5">
               <div>
-                <div class="text-xs font-bold text-slate-200">✂️ Adskil AI-Tekst Automatisk</div>
-                <div class="text-[10px] text-slate-500">Fjerner flad tekst fra ikonet &amp; laver ægte tekstboks</div>
+                <div class="text-xs font-bold text-slate-200">✂️ Auto-Separate Baked-In Text</div>
+                <div class="text-[10px] text-slate-500">Strips raster text from icon &amp; creates editable text box</div>
               </div>
               <input id="opt-separate-text" type="checkbox" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer" onchange="retraceIfUploaded()" />
             </div>
 
             <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5">
               <div>
-                <div class="text-xs font-bold text-slate-200">🎨 Antal Vektor-Farvelag</div>
-                <div class="text-[10px] text-slate-500">Hvert lag kan skifte farve i Canva</div>
+                <div class="text-xs font-bold text-slate-200">🎨 Vector Color Layers</div>
+                <div class="text-[10px] text-slate-500">Each layer becomes a color swatch in Canva</div>
               </div>
               <select id="opt-max-colors" onchange="retraceIfUploaded()" class="bg-slate-900 border border-slate-700 text-white text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500">
-                <option value="2">2 Farver (Minimal)</option>
-                <option value="3">3 Farver</option>
-                <option value="4" selected>4 Farver (Anbefalet)</option>
-                <option value="5">5 Farver</option>
-                <option value="6">6 Farver (Detaljeret)</option>
+                <option value="2">2 Colors (Minimal)</option>
+                <option value="3">3 Colors</option>
+                <option value="4" selected>4 Colors (Recommended)</option>
+                <option value="5">5 Colors</option>
+                <option value="6">6 Colors (Detailed)</option>
               </select>
             </div>
           </div>
 
           <!-- Or Generate fresh AI Logo from Prompt -->
           <div class="pt-3 border-t border-slate-800/80">
-            <label class="block text-[11px] text-slate-400 font-semibold mb-1.5">Eller beskriv et nyt logo (Gemini 3.8 Flash bygger det direkte i Canva-vektorlag):</label>
+            <label class="block text-[11px] text-slate-400 font-semibold mb-1.5">Or describe a brand new logo (Gemini 3.8 Flash builds it directly as multi-layer Canva vectors):</label>
             <div class="flex gap-2">
               <input
                 id="ai-logo-prompt"
                 type="text"
-                placeholder="f.eks. 'VALKYRIE CLOUD - geometrisk skandinavisk vinge i cyan og elektrisk indigo'"
+                placeholder="e.g. 'VALKYRIE CLOUD - geometric Nordic wing in cyan and electric indigo'"
                 class="flex-1 bg-slate-950 text-slate-100 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-cyan-500"
               />
               <button
@@ -4446,7 +4470,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                 onclick="generateFromPrompt()"
                 class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-cyan-600/20 whitespace-nowrap"
               >
-                ✨ Generer Vektor-Logo
+                ✨ Generate Vector Logo
               </button>
             </div>
           </div>
@@ -4456,10 +4480,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">2. Vektor-Farvelag i Ikonet (Canva Color Swatches)</span>
-              <p class="text-[11px] text-slate-400 mt-0.5">Klik på en farve for at teste farveskift live — i Canva vises præcis disse farvefelter øverst, når du klikker på logoet.</p>
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">2. Vector Color Layers in Icon (Canva Color Swatches)</span>
+              <p class="text-[11px] text-slate-400 mt-0.5">Click any swatch to test live recoloring — these exact color tiles appear in Canva's top toolbar when you select the logo.</p>
             </div>
-            <span id="layer-count-badge" class="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300">3 Lag</span>
+            <span id="layer-count-badge" class="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300">3 Color Layers</span>
           </div>
 
           <div id="vector-layers-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -4471,25 +4495,25 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <span class="text-xs font-bold uppercase tracking-wider text-purple-400">3. Adskilt Redigerbar Tekst &amp; Layout (Canva Tekstbokse)</span>
-              <p class="text-[11px] text-slate-400 mt-0.5">Når du åbner den eksporterede PDF i Canva, er firmanavn og slogan 100% redigerbare tekstbokse.</p>
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-400">3. Separated Editable Text &amp; Layout (Canva Text Boxes)</span>
+              <p class="text-[11px] text-slate-400 mt-0.5">When you open the exported PDF in Canva, the brand name and tagline import as 100% double-clickable editable text boxes.</p>
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] text-slate-400 font-medium mb-1">Firmanavn (Hovedtekst)</label>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Brand Name (Primary Text)</label>
               <input id="input-brand-name" type="text" value="NOVAFLOW" oninput="onTextControlChange()" class="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-purple-500" />
             </div>
             <div>
-              <label class="block text-[11px] text-slate-400 font-medium mb-1">Tagline / Slogan (Undertekst)</label>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Tagline / Subtitle</label>
               <input id="input-tagline" type="text" value="INTELLIGENT CLOUD SYSTEMS" oninput="onTextControlChange()" class="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label class="block text-[11px] text-slate-400 font-medium mb-1">Skrifttype (Canva-kompatibel)</label>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Font Family (Canva Compatible)</label>
               <select id="input-font-family" onchange="onTextControlChange()" class="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-purple-500">
                 <option value="Montserrat">Montserrat (Geometric Bold)</option>
                 <option value="Space Grotesk" selected>Space Grotesk (Modern Tech)</option>
@@ -4502,31 +4526,31 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </div>
 
             <div>
-              <label class="block text-[11px] text-slate-400 font-medium mb-1">Logo-Opstilling</label>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Logo Lockup Layout</label>
               <select id="input-layout" onchange="onTextControlChange()" class="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-purple-500">
-                <option value="stacked" selected>Stakket (Ikon over tekst)</option>
-                <option value="horizontal">Horisontal (Ikon + tekst)</option>
-                <option value="icon-only">Kun Ikon (Uden tekst)</option>
+                <option value="stacked" selected>Stacked (Icon Above Text)</option>
+                <option value="horizontal">Horizontal (Icon + Text)</option>
+                <option value="icon-only">Icon Only (No Text)</option>
               </select>
             </div>
 
             <div>
-              <label class="block text-[11px] text-slate-400 font-medium mb-1">Bogstav-Afstand (Tracking)</label>
+              <label class="block text-[11px] text-slate-400 font-medium mb-1">Letter Spacing (Tracking)</label>
               <input id="input-letter-spacing" type="range" min="0" max="0.25" step="0.02" value="0.10" oninput="onTextControlChange()" class="w-full accent-purple-500 mt-2" />
             </div>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80">
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
-              <span class="text-[11px] text-slate-400 font-medium">Tekstfarve</span>
+              <span class="text-[11px] text-slate-400 font-medium">Text Color</span>
               <input id="input-text-color" type="color" value="#ffffff" oninput="onTextControlChange()" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
             </div>
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
-              <span class="text-[11px] text-slate-400 font-medium">Tagline-farve</span>
+              <span class="text-[11px] text-slate-400 font-medium">Tagline Color</span>
               <input id="input-tagline-color" type="color" value="#38bdf8" oninput="onTextControlChange()" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
             </div>
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
-              <span class="text-[11px] text-slate-400 font-medium">Baggrund</span>
+              <span class="text-[11px] text-slate-400 font-medium">Background</span>
               <input id="input-bg-color" type="color" value="#0b0f19" oninput="onTextControlChange()" class="w-7 h-7 rounded cursor-pointer bg-transparent border-0" />
             </div>
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
@@ -4544,11 +4568,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         <!-- Preview Mode Switcher -->
         <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-2xl space-y-4">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Vektor- &amp; Lag-Preview</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Live Vector &amp; Layer Preview</span>
             <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px]">
-              <button id="tab-preview-combined" onclick="setPreviewTab('combined')" class="px-2.5 py-1 rounded-lg font-bold bg-cyan-600 text-white transition">Komplet Logo</button>
-              <button id="tab-preview-icon" onclick="setPreviewTab('icon')" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Kun Vektor-Ikon</button>
-              <button id="tab-preview-compare" onclick="setPreviewTab('compare')" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Før / Efter</button>
+              <button id="tab-preview-combined" onclick="setPreviewTab('combined')" class="px-2.5 py-1 rounded-lg font-bold bg-cyan-600 text-white transition">Full Logo</button>
+              <button id="tab-preview-icon" onclick="setPreviewTab('icon')" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Vector Icon Only</button>
+              <button id="tab-preview-compare" onclick="setPreviewTab('compare')" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Before / After</button>
             </div>
           </div>
 
@@ -4561,11 +4585,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <!-- Compare Before/After Overlay (Only visible in 'compare' tab) -->
             <div id="compare-stage-content" class="hidden w-full h-full grid grid-cols-2 gap-4 items-center">
               <div class="flex flex-col items-center justify-center h-full bg-slate-950/80 rounded-xl p-3 border border-slate-800">
-                <span class="text-[10px] font-mono uppercase text-rose-400 font-bold mb-2">Før: Fladt Raster-Billede</span>
+                <span class="text-[10px] font-mono uppercase text-rose-400 font-bold mb-2">Before: Flat Raster Image</span>
                 <img id="original-raster-img" src="" class="max-h-[260px] object-contain rounded-lg" alt="Original AI Logo" />
               </div>
               <div class="flex flex-col items-center justify-center h-full bg-slate-950/80 rounded-xl p-3 border border-cyan-500/40">
-                <span class="text-[10px] font-mono uppercase text-cyan-400 font-bold mb-2">Efter: Redigerbar Vektor</span>
+                <span class="text-[10px] font-mono uppercase text-cyan-400 font-bold mb-2">After: Editable Vector</span>
                 <div id="compare-vector-box" class="w-full h-[260px] flex items-center justify-center"></div>
               </div>
             </div>
@@ -4581,11 +4605,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               <div class="flex items-center space-x-2.5">
                 <span class="text-base">📄</span>
                 <div class="text-left">
-                  <div id="pdf-btn-title">Download Fuldt Redigerbar Canva-PDF (.PDF)</div>
-                  <div class="text-[10px] font-normal text-cyan-100/90">Vektor-ikon + redigerbare tekstbokse + horisontalt banner</div>
+                  <div id="pdf-btn-title">Download Fully Editable Canva PDF (.PDF)</div>
+                  <div class="text-[10px] font-normal text-cyan-100/90">Vector icon layers + editable text boxes + horizontal banner</div>
                 </div>
               </div>
-              <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono">Anbefalet</span>
+              <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono">Recommended</span>
             </button>
 
             <div class="grid grid-cols-2 gap-2.5">
@@ -4594,7 +4618,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                 class="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition"
               >
                 <span>🎨</span>
-                <span>Download Ikon .SVG (Farvelag)</span>
+                <span>Download Icon .SVG (Color Layers)</span>
               </button>
 
               <button
@@ -4602,7 +4626,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                 class="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition"
               >
                 <span>📐</span>
-                <span>Download Komplet .SVG</span>
+                <span>Download Full .SVG</span>
               </button>
             </div>
           </div>
@@ -4611,20 +4635,40 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           <div class="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 space-y-2 text-xs">
             <div class="font-bold text-indigo-200 flex items-center space-x-1.5">
               <span>💡</span>
-              <span>Sådan redigerer du logoet 100% i Canva:</span>
+              <span>How to Edit Your Logo 100% in Canva:</span>
             </div>
             <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-300 leading-relaxed">
-              <li>Klik på <strong>Download Fuldt Redigerbar Canva-PDF</strong> ovenfor (eller <strong>Ikon .SVG</strong>).</li>
-              <li>Åbn <strong>Canva</strong> og træk filen direkte ind i dit projekt eller under <em>Uploads</em>.</li>
-              <li>Klik på <strong>logo-ikonet</strong> i Canva → nu vises alle farvelag øverst i Canva, så du kan skifte farve på hver enkelt del!</li>
-              <li>Dobbeltklik på <strong>firmanavnet eller sloganet</strong> i PDF'en → nu kan du rette teksten og skifte til enhver Canva-skrifttype.</li>
+              <li>Click <strong>Download Fully Editable Canva PDF</strong> above (or <strong>Icon .SVG</strong>).</li>
+              <li>Open <strong>Canva</strong> and drag the file directly onto your canvas or into <em>Uploads</em>.</li>
+              <li>Click the <strong>logo icon</strong> in Canva → all vector color swatches appear in the top toolbar so you can recolor any individual part!</li>
+              <li>Double-click the <strong>brand name or tagline</strong> in the PDF → edit the text and switch to any Canva font.</li>
             </ol>
+            <div class="pt-1">
+              <a href="/guides/convert-ai-logo-to-editable-canva-vector" class="text-[11px] font-bold text-cyan-400 hover:text-cyan-300 underline">
+                Read the full technical guide: Converting AI Logos to Editable Canva Vectors →
+              </a>
+            </div>
           </div>
         </div>
 
       </div>
     </div>
+
+    ${renderConversionCallout(
+      'AI Logo Vectorizer API',
+      'curl -X POST https://tailprint.com/v1/tools/canva-logo \\\n' +
+        '  -H "Content-Type: application/json" \\\n' +
+        '  -d \'{\n' +
+        '    "imageUrl": "https://example.com/ai-logo.png",\n' +
+        '    "maxColors": 4,\n' +
+        '    "separateText": true\n' +
+        '  }\''
+    )}
   </main>
+
+  <footer class="py-8 border-t border-slate-900 text-center text-xs text-slate-500">
+    <p>© 2026 Tailprint (tailprint.com). High-performance Chromium &amp; MCP Infrastructure.</p>
+  </footer>
 
   <script>
     let currentUploadedDataUrl = null;
@@ -4645,27 +4689,28 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       layers: [
         {
           id: 'layer_1',
-          name: 'Farvelag 1',
+          name: 'Color Layer 1',
           color: '#4f46e5',
           pathData: 'M 250 55 L 420 152 L 420 348 L 250 445 L 80 348 L 80 152 Z M 250 115 L 135 182 L 135 318 L 250 385 L 365 318 L 365 182 Z',
           areaRatio: 0.35
         },
         {
           id: 'layer_2',
-          name: 'Farvelag 2',
+          name: 'Color Layer 2',
           color: '#38bdf8',
           pathData: 'M 250 135 L 345 190 L 250 245 L 155 190 Z M 250 265 L 345 210 L 345 310 L 250 365 Z',
           areaRatio: 0.22
         },
         {
           id: 'layer_3',
-          name: 'Farvelag 3',
+          name: 'Color Layer 3',
           color: '#f43f5e',
           pathData: 'M 155 210 L 235 256 L 235 356 L 155 310 Z',
           areaRatio: 0.12
         }
       ]
     };
+    window.logoState = logoState;
 
     function escapeXml(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -4727,19 +4772,19 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     function renderLayersEditor() {
       const list = document.getElementById('vector-layers-list');
       const badge = document.getElementById('layer-count-badge');
-      badge.textContent = logoState.layers.length + ' Farvelag';
+      badge.textContent = logoState.layers.length + ' Color Layers';
 
       list.innerHTML = logoState.layers.map((layer, idx) => {
         return '<div class="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition">' +
           '<div class="flex items-center space-x-3">' +
             '<input type="color" value="' + layer.color + '" data-idx="' + idx + '" oninput="onLayerColorChange(this)" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0" />' +
             '<div>' +
-              '<div class="text-xs font-bold text-white">' + escapeXml(layer.name || ('Farvelag ' + (idx + 1))) + '</div>' +
+              '<div class="text-xs font-bold text-white">' + escapeXml(layer.name || ('Color Layer ' + (idx + 1))) + '</div>' +
               '<input type="text" value="' + layer.color.toUpperCase() + '" data-idx="' + idx + '" onchange="onLayerHexInput(this)" class="w-20 bg-transparent text-[11px] font-mono text-cyan-400 focus:outline-none" />' +
             '</div>' +
           '</div>' +
           (logoState.layers.length > 1
-            ? '<button onclick="removeLayer(' + idx + ')" class="text-[11px] text-slate-500 hover:text-rose-400 px-2 py-1 rounded transition" title="Fjern dette lag">✕</button>'
+            ? '<button onclick="removeLayer(' + idx + ')" class="text-[11px] text-slate-500 hover:text-rose-400 px-2 py-1 rounded transition" title="Remove this layer">✕</button>'
             : '') +
         '</div>';
       }).join('');
@@ -4848,7 +4893,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     async function processDataUrl(dataUrl) {
       currentUploadedDataUrl = dataUrl;
-      setStatus('Analyserer & Vektoriserer med Gemini 3.8 Flash...', true);
+      setStatus('Analyzing & Vectorizing with Gemini 3.8 Flash...', true);
       const separateText = document.getElementById('opt-separate-text').checked;
       const maxColors = parseInt(document.getElementById('opt-max-colors').value, 10) || 4;
 
@@ -4864,16 +4909,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         });
         const data = await res.json();
         if (!res.ok || !data.state) {
-          throw new Error(data.message || 'Fejl under vektorisering');
+          throw new Error(data.message || 'Vectorization failed');
         }
         logoState = data.state;
+        window.logoState = logoState;
         syncInputsFromState();
         renderLayersEditor();
         renderStage();
-        setStatus('Vektoriseret (' + logoState.layers.length + ' lag) ✓', false);
+        setStatus('Vectorized (' + logoState.layers.length + ' layers) ✓', false);
       } catch (err) {
-        alert('Fejl: ' + err.message);
-        setStatus('Fejl', false);
+        alert('Error: ' + err.message);
+        setStatus('Error', false);
       }
     }
 
@@ -4920,11 +4966,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     async function generateFromPrompt() {
       const input = document.getElementById('ai-logo-prompt');
-      const prompt = input.value.trim() || 'VALKYRIE CLOUD - geometrisk vinge i cyan og indigo';
+      const prompt = input.value.trim() || 'VALKYRIE CLOUD - geometric Nordic wing in cyan and electric indigo';
       const btn = document.getElementById('btn-generate-prompt');
       btn.disabled = true;
-      btn.textContent = 'Genererer...';
-      setStatus('Gemini 3.8 Flash designer vektor-logo...', true);
+      btn.textContent = 'Generating...';
+      setStatus('Gemini 3.8 Flash is designing vector logo...', true);
 
       try {
         const res = await fetch('/v1/tools/canva-logo', {
@@ -4933,20 +4979,21 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           body: JSON.stringify({ prompt })
         });
         const data = await res.json();
-        if (!res.ok || !data.state) throw new Error(data.message || 'Kunne ikke generere logo');
+        if (!res.ok || !data.state) throw new Error(data.message || 'Could not generate logo');
         currentUploadedDataUrl = null;
         logoState = data.state;
+        window.logoState = logoState;
         syncInputsFromState();
         renderLayersEditor();
         if (previewTab === 'compare') previewTab = 'combined';
         renderStage();
-        setStatus('AI Vektor-Logo Klar ✓', false);
+        setStatus('AI Vector Logo Ready ✓', false);
       } catch (err) {
-        alert('Fejl: ' + err.message);
-        setStatus('Fejl', false);
+        alert('Error: ' + err.message);
+        setStatus('Error', false);
       } finally {
         btn.disabled = false;
-        btn.textContent = '✨ Generer Vektor-Logo';
+        btn.textContent = '✨ Generate Vector Logo';
       }
     }
 
@@ -5062,7 +5109,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = ((logoState.brandName || 'logo').toLowerCase().replace(/[^a-z0-9]/g, '') || 'logo') + '-canva-ikon.svg';
+      a.download = ((logoState.brandName || 'logo').toLowerCase().replace(/[^a-z0-9]/g, '') || 'logo') + '-canva-icon.svg';
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -5073,7 +5120,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = ((logoState.brandName || 'logo').toLowerCase().replace(/[^a-z0-9]/g, '') || 'logo') + '-komplet.svg';
+      a.download = ((logoState.brandName || 'logo').toLowerCase().replace(/[^a-z0-9]/g, '') || 'logo') + '-canva-full.svg';
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -5082,7 +5129,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const btn = document.getElementById('btn-download-canva-pdf');
       const titleEl = document.getElementById('pdf-btn-title');
       btn.disabled = true;
-      titleEl.textContent = 'Bygger Redigerbar Canva-PDF...';
+      titleEl.textContent = 'Building Editable Canva PDF...';
 
       try {
         const res = await fetch('/v1/tools/canva-logo', {
@@ -5092,7 +5139,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         });
         const data = await res.json();
         if (!res.ok || !data.canvaPdfDownloadUrl) {
-          throw new Error(data.message || 'Kunne ikke generere Canva-PDF');
+          throw new Error(data.message || 'Could not generate Canva PDF');
         }
         const a = document.createElement('a');
         a.href = data.canvaPdfDownloadUrl;
@@ -5100,13 +5147,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        titleEl.textContent = 'Canva-PDF Hentet ✓';
+        titleEl.textContent = 'Canva PDF Downloaded ✓';
       } catch (err) {
-        alert('Fejl ved PDF-eksport: ' + err.message);
-        titleEl.textContent = 'Download Fuldt Redigerbar Canva-PDF (.PDF)';
+        alert('PDF export error: ' + err.message);
+        titleEl.textContent = 'Download Fully Editable Canva PDF (.PDF)';
       } finally {
         setTimeout(() => {
-          titleEl.textContent = 'Download Fuldt Redigerbar Canva-PDF (.PDF)';
+          titleEl.textContent = 'Download Fully Editable Canva PDF (.PDF)';
           btn.disabled = false;
         }, 2200);
       }
