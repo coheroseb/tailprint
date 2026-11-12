@@ -39,7 +39,7 @@ Tailprint provides an official, 100% spec-compliant MCP server exposing **22 Nat
 | `render_chart` | Data Visuals | Inline PNG + CDN Link | High-DPI bar, line, radar, doughnut, and pie charts with Chart.js. |
 | `generate_qr` | Utilities | Inline PNG + CDN Link | Mathematically verified scan-ready QR codes and barcodes. |
 | `render_device_mockup` | Marketing | Inline PNG + CDN Link | Wraps any URL into a MacBook Pro + floating iPhone 16 studio canvas. |
-| `stamp_pdf` | Security | PDF Link + Base64 | Stamps diagonal watermarks (CONFIDENTIAL, DRAFT, FORTROLIGT). |
+| `stamp_pdf` | Security | PDF Link + Base64 | Stamps diagonal watermarks (e.g. CONFIDENTIAL, DRAFT). |
 | `compare_snapshots` | QA / Testing | Inline PNG + CDN Link | 3-panel visual regression diff heatmap highlighting layout shifts. |
 | `render_carousel` | Social Media | LinkedIn PDF + PNG Cover | Multi-slide 1080x1350 px portrait carousels for LinkedIn and Instagram. |
 | `merge_pdfs` | Document Ops | PDF Link + Base64 | Merges two or more PDFs into a single unified vector PDF. |

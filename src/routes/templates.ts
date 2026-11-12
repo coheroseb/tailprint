@@ -7,6 +7,7 @@ import { PLANS } from '../config/plans.js';
 import { browserService } from '../services/browser.js';
 import { stripeService } from '../services/stripe.js';
 import { env } from '../config/env.js';
+import { renderGlobalNavbar } from '../components/navbar.js';
 
 export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // GET /templates - Return JSON catalog of templates
@@ -133,6 +134,32 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     return reply.code(404).send({ error: 'OG image not found' });
   });
 
+  // GET /tailprint-logo.svg - Official Vector Brand Wordmark
+  fastify.get('/tailprint-logo.svg', { schema: { hide: true } }, async (_request, reply) => {
+    const logoPath = path.join(process.cwd(), 'assets', 'tailprint-logo.svg');
+    if (fs.existsSync(logoPath)) {
+      const svg = fs.readFileSync(logoPath, 'utf8');
+      return reply
+        .header('Content-Type', 'image/svg+xml; charset=utf-8')
+        .header('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
+        .send(svg);
+    }
+    return reply.code(404).send({ error: 'Logo SVG not found' });
+  });
+
+  // GET /tailprint-favicon.svg - Official Vector Favicon
+  fastify.get('/tailprint-favicon.svg', { schema: { hide: true } }, async (_request, reply) => {
+    const favPath = path.join(process.cwd(), 'assets', 'tailprint-favicon.svg');
+    if (fs.existsSync(favPath)) {
+      const svg = fs.readFileSync(favPath, 'utf8');
+      return reply
+        .header('Content-Type', 'image/svg+xml; charset=utf-8')
+        .header('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
+        .send(svg);
+    }
+    return reply.code(404).send({ error: 'Favicon SVG not found' });
+  });
+
   // GET /robots.txt - Search & AI Crawler Directives (SEO & GEO)
   fastify.get('/robots.txt', { schema: { hide: true } }, async (_request, reply) => {
     const robots = [
@@ -190,6 +217,96 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://tailprint.com/guides</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/tailwind-html-to-pdf-nextjs</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/factur-x-zugferd-pdf-api</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/puppeteer-serverless-pdf-alternatives</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/best-mcp-servers-claude-cursor</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/dynamic-open-graph-images-tailwind</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/automate-social-media-content-from-blog-url</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/url-to-video-reels-api</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools/reel</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/studio</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools/carousel</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools/factur-x</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools/visual-diff</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/tools/mockup</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://tailprint.com/dashboard</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
@@ -221,7 +338,7 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
 - **Open Graph Card Generator**: Renders social preview cards (PNG/JPEG) with automatic SHA-256 caching and sub-400ms cached delivery.
 - **LLM Web Scraper**: Scrapes public URLs, strips ads, scripts, and clutter with Mozilla Readability, and outputs token-efficient structured Markdown saving 90%+ context window tokens.
 - **Model Context Protocol (MCP)**: Native Remote SSE and stdio CLI integration for Claude Desktop, Cursor, Windsurf, and autonomous AI agents exposing 22 production tools.
-- **Developer Tools**: LinkedIn Carousel generator, 3D Device Mockup maker, and Visual Regression diff heatmap.
+- **Developer Tools**: LinkedIn Carousel generator, 3D Device Mockup maker, Visual Regression diff heatmap, and URL-to-Video Reel synthesizer.
 
 ## Quick API Reference
 - Base URL: https://tailprint.com
@@ -237,6 +354,8 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
 - POST /v1/tools/carousel : Generates 1080x1350 multi-page PDF & cover from Markdown
 - POST /v1/tools/visual-diff : Compares before/after URLs and returns visual diff heatmap
 - POST /v1/tools/mockup : 3D MacBook Pro + iPhone mockup generator
+- POST /v1/tools/reel/script : AI storyboard script & mobile screenrecord video from any article URL
+- POST /v1/tools/reel : Renders 9:16 vertical decks, 4:5 carousels, or 16:9 presentations
 - POST /v1/auth/claim-free-key : Claim instant free developer API key (100 renders/mo)
 - GET /v1/usage : Real-time quota and monthly billing cycle check
 
@@ -261,6 +380,17 @@ Claude Desktop (\`claude_desktop_config.json\`):
 Cursor IDE & Windsurf:
 - Type: sse
 - URL: https://tailprint.com/v1/mcp/sse?api_key=YOUR_API_KEY
+
+## Technical Guides & Architecture
+- Next.js Tailwind to PDF: https://tailprint.com/guides/tailwind-html-to-pdf-nextjs
+- European Factur-X & ZUGFeRD E-Invoicing API: https://tailprint.com/guides/factur-x-zugferd-pdf-api
+- Why Puppeteer in Serverless Fails (And Alternatives): https://tailprint.com/guides/puppeteer-serverless-pdf-alternatives
+- Best MCP Servers for Claude & Cursor (2026): https://tailprint.com/guides/best-mcp-servers-claude-cursor
+- Dynamic Open Graph Images with Tailwind & Edge Caching: https://tailprint.com/guides/dynamic-open-graph-images-tailwind
+- Automate Social Media Content from Blog URLs: https://tailprint.com/guides/automate-social-media-content-from-blog-url
+- Turn Any Article URL into Short-Form Video & Reels: https://tailprint.com/guides/url-to-video-reels-api
+- Interactive Reel Maker Tool: https://tailprint.com/tools/reel
+- Guides Knowledge Hub: https://tailprint.com/guides
 `;
 
     return reply
@@ -483,345 +613,7 @@ Cursor IDE & Windsurf:
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white">
 
-  <!-- Navigation -->
-  <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/85 border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      
-      <!-- Brand Logo & Main Navigation -->
-      <div class="flex items-center space-x-8">
-        <a href="/" class="flex items-center group transition hover:opacity-90">
-          <span class="font-extrabold text-2xl tracking-tight text-white flex items-center">
-            <span class="text-indigo-400 font-mono font-bold mr-1">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-1">/&gt;</span>
-          </span>
-        </a>
-
-        <!-- Main Product Links (Desktop) -->
-        <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
-          
-          <!-- Product Dropdown -->
-          <div class="relative group">
-            <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
-              <span>Product</span>
-              <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="absolute left-0 top-full pt-2 w-[340px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
-              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
-                
-                <a href="#playground" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-indigo-500/20">
-                    ⚡
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1.5">
-                      <span>Live Sandbox</span>
-                      <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Interactive HTML to PDF & PNG playground in browser</p>
-                  </div>
-                </a>
-
-                <a href="#mcp" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-purple-500/20">
-                    🤖
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
-                      <span>AI MCP Server</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono font-semibold">npx tailprint</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Model Context Protocol for Claude & Cursor agents</p>
-                  </div>
-                </a>
-
-                <a href="#scraper" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-cyan-500/20">
-                    🌐
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-cyan-300">
-                      Web to Markdown
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Clean web pages into LLM markdown with token savings</p>
-                  </div>
-                </a>
-
-                <div class="pt-2 mt-1 border-t border-slate-800/70 px-2.5 pb-1 flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Sub-500ms Chromium engine</span>
-                  <span class="text-indigo-400 font-semibold font-mono">Tailwind v3/v4</span>
-                </div>
-
-              </div>
-            </div>
-          </div>
-
-          <!-- Templates Direct Link -->
-          <a href="#templates" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5">
-            <span>Templates</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-mono leading-none">${TEMPLATES.length}</span>
-          </a>
-
-          <!-- Free Tools Dropdown -->
-          <div class="relative group">
-            <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
-              <span>Free Tools</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase tracking-wider leading-none">New</span>
-              <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="absolute left-0 top-full pt-2 w-[350px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
-              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
-                
-                <a href="/studio" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-purple-500/20">
-                    ⚡
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1.5">
-                      <span>Interactive Template Studio</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono font-semibold">New</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Visual Tailwind code editor with Smart Pagination Shield</p>
-                  </div>
-                </a>
-
-                <a href="/tools/carousel" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-blue-500/20">
-                    📱
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-blue-300 flex items-center space-x-1.5">
-                      <span>LinkedIn Carousel Maker</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Markdown to 1080×1350 multi-page PDF & PNG covers</p>
-                  </div>
-                </a>
-
-                <a href="/tools/reel" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-rose-500/20">
-                    🎬
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1.5">
-                      <span>Social Reel &amp; Short Maker</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-semibold">9:16</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Turn any URL into a 9:16 vertical Reel / Story video</p>
-                  </div>
-                </a>
-
-                <a href="/tools/factur-x" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-emerald-500/20">
-                    🇪🇺
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-emerald-300 flex items-center space-x-1.5">
-                      <span>Factur-X & PEPPOL Generator</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-semibold">EN 16931</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Hybrid PDF/A-3 invoices with embedded XML</p>
-                  </div>
-                </a>
-
-                <a href="/tools/visual-diff" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-pink-500/20">
-                    🔍
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-pink-300">
-                      Visual Regression Diff
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Pixelmatch diff heatmap & visual comparison canvas</p>
-                  </div>
-                </a>
-
-                <a href="/tools/mockup" class="flex items-start space-x-3 p-2.5 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-amber-500/20">
-                    📸
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-amber-300">
-                      Device Mockup Generator
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Turn any URL into a 3D MacBook &amp; iPhone scene</p>
-                  </div>
-                </a>
-
-                <div class="pt-1.5 mt-1 border-t border-slate-800/70 p-1">
-                  <a href="/tools" class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 text-xs font-semibold text-indigo-300 hover:text-white transition">
-                    <span>Browse All Free Developer Tools</span>
-                    <span>→</span>
-                  </a>
-                </div>
-
-              </div>
-            </div>
-          </div>
-
-          <!-- Pricing Link -->
-          <a href="#pricing" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition">
-            Pricing
-          </a>
-
-          <!-- Resources Dropdown -->
-          <div class="relative group">
-            <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
-              <span>Resources</span>
-              <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="absolute right-0 md:left-0 top-full pt-2 w-[280px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
-              <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
-                
-                <a href="/docs" target="_blank" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
-                    📖
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-indigo-300 flex items-center space-x-1">
-                      <span>API Reference</span>
-                      <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Interactive Swagger / OpenAPI docs</p>
-                  </div>
-                </a>
-
-                <a href="https://www.npmjs.com/package/tailprint" target="_blank" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
-                    📦
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-rose-300 flex items-center space-x-1">
-                      <span>NPM Package</span>
-                      <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5">CLI & MCP server for Node.js</p>
-                  </div>
-                </a>
-
-                <a href="#faq" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
-                  <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                    💡
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-amber-300">
-                      FAQ & Architecture
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Caching, latency & self-hosting</p>
-                  </div>
-                </a>
-
-              </div>
-            </div>
-          </div>
-
-        </nav>
-      </div>
-
-      <!-- User Actions & CTA -->
-      <div class="flex items-center space-x-3">
-        <a href="/dashboard" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 transition">
-          Customer Portal
-        </a>
-        <button onclick="startCheckout('free')" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/20 flex items-center space-x-1.5">
-          <span class="text-xs">⚡</span>
-          <span>Claim Free Key</span>
-        </button>
-
-        <!-- Mobile Menu Toggle Button -->
-        <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800" aria-label="Toggle navigation">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
-      </div>
-
-    </div>
-
-    <!-- Mobile Slide-down Navigation -->
-    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800/80 bg-slate-950/98 backdrop-blur-2xl px-6 py-5 space-y-4 max-h-[85vh] overflow-y-auto">
-      
-      <!-- Product Group -->
-      <div>
-        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Product & Engine</p>
-        <div class="space-y-1">
-          <a href="#playground" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-900">
-            <span>⚡ Live Playground</span>
-          </a>
-          <a href="#mcp" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>🤖 AI MCP Server</span>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">Claude & Cursor</span>
-          </a>
-          <a href="#scraper" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>🌐 Web to Markdown Scraper</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Free Tools Group -->
-      <div class="pt-2 border-t border-slate-800/60">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Free Developer Tools</p>
-          <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold uppercase">No Login</span>
-        </div>
-        <div class="space-y-1">
-          <a href="/studio" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-purple-300 hover:bg-slate-900">
-            <span>⚡ Interactive Template Studio</span>
-            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-bold ml-auto">New</span>
-          </a>
-          <a href="/tools/carousel" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>📱 LinkedIn Carousel Maker</span>
-          </a>
-          <a href="/tools/factur-x" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>🇪🇺 EU Factur-X & PEPPOL</span>
-          </a>
-          <a href="/tools/visual-diff" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>🔍 Visual Regression Diff</span>
-          </a>
-          <a href="/tools/mockup" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>📸 Device Mockup Generator</span>
-          </a>
-          <a href="/tools" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-indigo-400 hover:bg-slate-900">
-            <span>View All Free Tools Hub</span>
-            <span>→</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Templates & Docs -->
-      <div class="pt-2 border-t border-slate-800/60">
-        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Library & Resources</p>
-        <div class="space-y-1">
-          <a href="#templates" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>Templates Library</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">${TEMPLATES.length}</span>
-          </a>
-          <a href="/docs" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>API Docs (Swagger)</span>
-            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
-          <a href="https://www.npmjs.com/package/tailprint" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>NPM Package (CLI & MCP)</span>
-            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
-          <a href="#pricing" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>Pricing Plans</span>
-          </a>
-          <a href="#faq" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">
-            <span>FAQ</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Portal & CTA -->
-      <div class="pt-3 border-t border-slate-800/80 space-y-2">
-        <a href="/dashboard" class="block w-full py-2.5 text-center rounded-xl bg-slate-900 border border-slate-800 text-sm font-semibold text-slate-200 hover:bg-slate-800">
-          Customer Portal
-        </a>
-        <button onclick="startCheckout('free')" class="w-full py-2.5 text-center rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30">
-          ⚡ Claim 100 Free Renders
-        </button>
-      </div>
-
-    </div>
-  </header>
+  ${renderGlobalNavbar({ templatesCount: TEMPLATES.length })}
 
   <!-- Hero Section -->
   <section class="relative pt-12 pb-20 overflow-hidden">
@@ -1917,7 +1709,7 @@ This domain is for use in documentation examples without needing permission. Thi
 
               <!-- Prompt Snippet -->
               <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-slate-300">
-                <span class="text-rose-400 font-bold">You to Claude:</span> "Stamp this PDF contract with a diagonal semi-transparent 'FORTROLIGT / CONFIDENTIAL' across all pages."
+                <span class="text-rose-400 font-bold">You to Claude:</span> "Stamp this PDF contract with a diagonal semi-transparent 'CONFIDENTIAL' watermark across all pages."
               </div>
 
               <!-- How Tailprint Works & Business Value -->
@@ -2211,7 +2003,7 @@ This domain is for use in documentation examples without needing permission. Thi
               <span id="mcp-key-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
               <span id="mcp-key-text" class="text-slate-400">Using placeholder key</span>
             </div>
-            <button onclick="openFreeKeyModal()" id="mcp-key-action-btn" class="text-indigo-400 hover:text-indigo-300 font-bold transition">
+            <button onclick="startCheckout('free')" id="mcp-key-action-btn" class="text-indigo-400 hover:text-indigo-300 font-bold transition">
               Get 100 free renders ⚡
             </button>
           </div>
@@ -3163,6 +2955,7 @@ This domain is for use in documentation examples without needing permission. Thi
 
     window.getMcpSnippets = function() {
       const apiKey = getStoredApiKey();
+      const nl = String.fromCharCode(10);
       return {
         claude: JSON.stringify({
           mcpServers: {
@@ -3182,11 +2975,14 @@ This domain is for use in documentation examples without needing permission. Thi
             }
           }
         }, null, 2),
-        sse: "# Remote MCP via Server-Sent Events (SSE)\n" +
-             "URL: " + window.location.origin + "/v1/mcp/sse?api_key=" + apiKey + "\n" +
-             "POST Messages: " + window.location.origin + "/v1/mcp/messages\n\n" +
-             "# Header Auth Option:\n" +
-             "Authorization: Bearer " + apiKey
+        sse: [
+          "# Remote MCP via Server-Sent Events (SSE)",
+          "URL: " + window.location.origin + "/v1/mcp/sse?api_key=" + apiKey,
+          "POST Messages: " + window.location.origin + "/v1/mcp/messages",
+          "",
+          "# Header Auth Option:",
+          "Authorization: Bearer " + apiKey
+        ].join(nl)
       };
     };
 
@@ -3222,7 +3018,7 @@ This domain is for use in documentation examples without needing permission. Thi
 
       if (type === 'claude') {
         block.innerText = snippets.claude;
-        hint.innerHTML = 'Add this snippet to <code class="text-indigo-300">~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS (or <code class="text-indigo-300">%APPDATA%\\Claude\\claude_desktop_config.json</code> on Windows).';
+        hint.innerHTML = 'Add this snippet to <code class="text-indigo-300">~/Library/Application Support/Claude/claude_desktop_config.json</code> on macOS (or <code class="text-indigo-300">%APPDATA%/Claude/claude_desktop_config.json</code> on Windows).';
       } else if (type === 'cursor') {
         block.innerText = snippets.cursor;
         hint.innerHTML = 'Add this snippet to your project root under <code class="text-indigo-300">.cursor/mcp.json</code> or open Cursor Settings &gt; MCP to add via Remote SSE.';
@@ -3247,11 +3043,11 @@ This domain is for use in documentation examples without needing permission. Thi
     };
 
     window.startCheckout = async function(planId) {
-      if (planId === 'free') {
-        if (typeof window.openFreeKeyModal === 'function') {
-          window.openFreeKeyModal();
-        }
-        return;
+      const activeBtn = (typeof event !== 'undefined' && event && event.currentTarget) ? event.currentTarget : null;
+      const origText = activeBtn ? activeBtn.innerHTML : '';
+      if (activeBtn) {
+        activeBtn.disabled = true;
+        activeBtn.innerHTML = '⏳ Redirecting to Stripe...';
       }
       try {
         const res = await fetch('/v1/billing/checkout', {
@@ -3263,9 +3059,17 @@ This domain is for use in documentation examples without needing permission. Thi
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         } else {
-          alert('Checkout session created: ' + data.sessionId);
+          if (activeBtn) {
+            activeBtn.disabled = false;
+            activeBtn.innerHTML = origText;
+          }
+          alert('Failed to start checkout: ' + (data.message || data.error || 'Unknown error'));
         }
       } catch (err) {
+        if (activeBtn) {
+          activeBtn.disabled = false;
+          activeBtn.innerHTML = origText;
+        }
         alert('Failed to initiate checkout: ' + err.message);
       }
     };
@@ -3294,12 +3098,16 @@ This domain is for use in documentation examples without needing permission. Thi
             keyEl.innerText = data.apiKey;
             keyEl.className = 'font-mono text-sm text-emerald-400 break-all bg-emerald-950/40 p-3 rounded-lg border border-emerald-500/40 font-bold';
             const sq = String.fromCharCode(39);
-            const demoPayload = '{"html":"<h1 class=\\"text-2xl font-bold text-indigo-600\\">Hello from Tailprint</h1>"}';
-            curlEl.innerText = 'curl -X POST ' + window.location.origin + '/v1/render/pdf \\\n' +
-              '  -H "Authorization: Bearer ' + data.apiKey + '" \\\n' +
-              '  -H "Content-Type: application/json" \\\n' +
-              '  -d ' + sq + demoPayload + sq + ' \\\n' +
-              '  --output test.pdf';
+            const bslash = String.fromCharCode(92);
+            const nl = String.fromCharCode(10);
+            const demoPayload = JSON.stringify({ html: '<h1 class="text-2xl font-bold text-indigo-600">Hello from Tailprint</h1>' });
+            curlEl.innerText = [
+              'curl -X POST ' + window.location.origin + '/v1/render/pdf ' + bslash,
+              '  -H "Authorization: Bearer ' + data.apiKey + '" ' + bslash,
+              '  -H "Content-Type: application/json" ' + bslash,
+              '  -d ' + sq + demoPayload + sq + ' ' + bslash,
+              '  --output test.pdf'
+            ].join(nl);
             return;
           }
         } catch {}
@@ -3332,14 +3140,7 @@ This domain is for use in documentation examples without needing permission. Thi
     };
 
     window.openFreeKeyModal = function() {
-      const modal = document.getElementById('free-key-modal');
-      const formView = document.getElementById('free-key-form-view');
-      const successView = document.getElementById('free-key-success-view');
-      const errEl = document.getElementById('free-key-error');
-      if (modal) modal.classList.remove('hidden');
-      if (formView) formView.classList.remove('hidden');
-      if (successView) successView.classList.add('hidden');
-      if (errEl) errEl.classList.add('hidden');
+      window.startCheckout('free');
     };
 
     window.closeFreeKeyModal = function() {
@@ -3386,12 +3187,16 @@ This domain is for use in documentation examples without needing permission. Thi
         }
 
         const sq = String.fromCharCode(39);
-        const demoPayload = '{"html":"<h1 class=\\"text-2xl font-bold text-indigo-600\\">Hello from Tailprint</h1>"}';
-        curlDisplay.innerText = 'curl -X POST ' + window.location.origin + '/v1/render/pdf \\\n' +
-          '  -H "Authorization: Bearer ' + data.apiKey + '" \\\n' +
-          '  -H "Content-Type: application/json" \\\n' +
-          '  -d ' + sq + demoPayload + sq + ' \\\n' +
-          '  --output invoice.pdf';
+        const bslash = String.fromCharCode(92);
+        const nl = String.fromCharCode(10);
+        const demoPayload = JSON.stringify({ html: '<h1 class="text-2xl font-bold text-indigo-600">Hello from Tailprint</h1>' });
+        curlDisplay.innerText = [
+          'curl -X POST ' + window.location.origin + '/v1/render/pdf ' + bslash,
+          '  -H "Authorization: Bearer ' + data.apiKey + '" ' + bslash,
+          '  -H "Content-Type: application/json" ' + bslash,
+          '  -d ' + sq + demoPayload + sq + ' ' + bslash,
+          '  --output invoice.pdf'
+        ].join(nl);
 
         formView.classList.add('hidden');
         successView.classList.remove('hidden');

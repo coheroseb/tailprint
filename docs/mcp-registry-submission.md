@@ -23,7 +23,7 @@ Add Tailprint MCP Server (Tailwind-to-PDF, Visual Diff Heatmap & EU Factur-X)
 - **Category:** Developer Tools / Document Generation / Quality Assurance
 
 ### Capabilities:
-Tailprint provides 13 high-performance native MCP tools:
+Tailprint provides 22 high-performance native MCP tools:
 1. `render_pdf`: Vector PDF generation from Tailwind CSS or URLs with Chromium header/footer page numbers and AES-256 encryption.
 2. `render_image`: High-res PNG/JPEG social share cards (Open Graph).
 3. `compare_snapshots`: Pixel-by-pixel visual regression testing with 3-panel diff heatmap overlay (pixelmatch).
@@ -34,7 +34,16 @@ Tailprint provides 13 high-performance native MCP tools:
 8. `render_device_mockup`: MacBook Pro + iPhone 16 device mockup studio canvas.
 9. `stamp_pdf`: Semi-transparent diagonal watermarking on existing vector PDFs.
 10. `scrape_markdown`: Ad/tracker-free web scraping with 90%+ context savings.
-11-13. Template automation: `render_template`, `list_templates`, `get_template_source`.
+11. `merge_pdfs`: Merging multiple vector PDFs into one unified document.
+12. `split_pdf`: Splitting or extracting specific pages from PDFs.
+13. `fill_pdf_form`: Populating and flattening AcroForms.
+14. `compress_pdf`: Compacting and shrinking PDF file sizes.
+15. `render_mermaid`: Diagram generation from Mermaid markup (PNG/SVG/PDF).
+16. `render_presentation`: Markdown to 16:9 presentation PDF conversion.
+17. `generate_social_card`: 1200x630 social card banner creation without HTML.
+18. `extract_tables_from_url`: Parsing HTML tables to JSON and Markdown.
+19. `audit_webpage`: Automated technical SEO, accessibility, and DOM auditing.
+20-22. Template automation: `render_template`, `list_templates`, `get_template_source`.
 
 ### Transport Support:
 - Local stdio: `npx -y tailprint`
@@ -79,5 +88,5 @@ Tailprint provides 13 high-performance native MCP tools:
 - **GitHub:** https://github.com/coheroseb/tailprint
 - **Description:**
   ```
-  Tailprint equips AI agents with 13 visual document & testing superpowers: Tailwind-to-PDF rendering, visual regression testing, multi-slide carousels, and automated EU Factur-X e-invoicing.
+  Tailprint equips AI agents with 22 visual document & testing superpowers: Tailwind-to-PDF rendering, visual regression testing, multi-slide carousels, and automated EU Factur-X e-invoicing.
   ```

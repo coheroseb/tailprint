@@ -4,6 +4,7 @@ import { TEMPLATES } from '../config/templates.js';
 import { browserService } from '../services/browser.js';
 import { redisService } from '../services/redis.js';
 import { env } from '../config/env.js';
+import { renderGlobalNavbar } from '../components/navbar.js';
 
 export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // POST /v1/tools/studio/render-pdf - Free Playground Render for Studio
@@ -204,20 +205,11 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 </head>
 <body class="h-full flex flex-col overflow-hidden bg-slate-950 text-slate-100">
 
-  <!-- TOP BAR -->
-  <header class="h-14 border-b border-slate-800/80 bg-slate-950 px-4 flex items-center justify-between z-40 shrink-0">
+  ${renderGlobalNavbar({ activeSection: 'tools', activeTool: 'Template Studio', templatesCount: TEMPLATES.length })}
+
+  <!-- STUDIO WORKSPACE TOOLBAR -->
+  <div class="h-12 border-b border-slate-800/80 bg-slate-900/60 px-4 flex items-center justify-between z-30 shrink-0">
     <div class="flex items-center space-x-3 sm:space-x-4">
-      <a href="/" class="flex items-center space-x-2 group">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white font-black text-xs shadow-md shadow-indigo-500/25 group-hover:scale-105 transition">
-          TP
-        </div>
-        <span class="text-sm font-black tracking-tight text-white hidden sm:inline">
-          <span class="text-indigo-400 font-mono font-bold mr-0.5">&lt;</span>tail<span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">print</span><span class="text-pink-400 font-mono font-bold ml-0.5">/&gt;</span>
-        </span>
-      </a>
-
-      <div class="h-4 w-px bg-slate-800"></div>
-
       <!-- Studio Mode Pill -->
       <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-purple-950/70 border border-purple-500/40 text-purple-300 text-xs font-semibold">
         <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
@@ -289,7 +281,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       </button>
 
     </div>
-  </header>
+  </div>
 
   <!-- MAIN SPLIT WORKSPACE -->
   <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">

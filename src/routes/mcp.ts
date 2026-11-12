@@ -198,7 +198,7 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       name: 'stamp_pdf',
       category: 'Compliance & Security',
-      description: 'Applies a diagonal semi-transparent watermark or compliance stamp (e.g. "CONFIDENTIAL", "DRAFT", "FORTROLIGT") across all pages of an existing vector PDF using pdf-lib.',
+      description: 'Applies a diagonal semi-transparent watermark or compliance stamp (e.g. "CONFIDENTIAL", "DRAFT", "PROPRIETARY") across all pages of an existing vector PDF using pdf-lib.',
       outputType: 'application/pdf (hosted URL + base64)',
       arguments: {
         pdf_base64: 'string - Base64 encoded PDF string',
@@ -207,7 +207,7 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
         color: '"red" | "gray" | "blue" (default: "red")',
         font_size: 'number (default: 54)',
       },
-      examplePrompt: 'Stamp this contract PDF with a diagonal semi-transparent "FORTROLIGT / CONFIDENTIAL" watermark.',
+      examplePrompt: 'Stamp this contract PDF with a diagonal semi-transparent "CONFIDENTIAL" watermark.',
     },
     {
       name: 'compare_snapshots',

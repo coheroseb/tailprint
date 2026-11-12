@@ -86,14 +86,8 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-4">
-        <a href="/" class="flex items-center group">
-          <svg class="h-8 w-auto" viewBox="0 0 540 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M48 34 L20 60 L48 86" stroke="#38bdf8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="68" y="81" font-family="'Inter', sans-serif" font-weight="900" font-size="64" letter-spacing="-2.5" fill="#ffffff">tail</text>
-            <text x="172" y="81" font-family="'Inter', sans-serif" font-weight="900" font-size="64" letter-spacing="-2.5" fill="#c084fc">print</text>
-            <path d="M358 88 L382 32" stroke="#ec4899" stroke-width="9" stroke-linecap="round"/>
-            <path d="M402 34 L430 60 L402 86" stroke="#f43f5e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+        <a href="/" class="flex items-center group transition hover:opacity-90">
+          <img src="/tailprint-logo.svg" alt="Tailprint" class="h-8 sm:h-9 w-auto select-none" />
         </a>
         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 flex items-center space-x-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>

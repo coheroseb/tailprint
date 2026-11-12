@@ -299,14 +299,14 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
       name: 'stamp_pdf',
       arguments: {
         pdf_base64: samplePdf.toString('base64'),
-        watermark_text: 'FORTROLIGT',
+        watermark_text: 'CONFIDENTIAL',
         opacity: 0.2,
         color: 'red',
       },
     })) as any;
 
     expect(stampRes.isError).toBeFalsy();
-    expect(stampRes.content[0].text).toContain('FORTROLIGT');
+    expect(stampRes.content[0].text).toContain('CONFIDENTIAL');
     expect(stampRes.content[0].text).toContain('data:application/pdf;base64,');
 
     await client.close();

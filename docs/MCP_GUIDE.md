@@ -4,18 +4,18 @@
 
 ---
 
-## 🤖 Oversigt / Overview
+## 🤖 Overview
 
-Tailprint stiller en 100% spec-kompatibel Model Context Protocol (MCP) server til rådighed med **22 native tools**. Serveren kan tilgås på to måder:
-1. **Lokal stdio (CLI):** Kør via `npx -y tailprint`
-2. **Fjern-SSE (Server-Sent Events):** Forbind direkte til `https://tailprint.com/v1/mcp/sse?api_key=sec_live_...`
+Tailprint provides a 100% spec-compliant Model Context Protocol (MCP) server exposing **22 native tools**. The server can be connected via two methods:
+1. **Local stdio (CLI):** Run via `npx -y tailprint`
+2. **Remote Cloud SSE (Server-Sent Events):** Connect directly to `https://tailprint.com/v1/mcp/sse?api_key=sec_live_...`
 
 ---
 
-## ⚙️ Klient-konfigurationer / Client Setup
+## ⚙️ Client Configurations
 
 ### 1. Claude Desktop
-Filplacering:
+Config file location:
 - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
@@ -26,7 +26,7 @@ Filplacering:
       "command": "npx",
       "args": ["-y", "tailprint"],
       "env": {
-        "TAILPRINT_API_KEY": "sec_live_din_nøgle_her"
+        "TAILPRINT_API_KEY": "sec_live_your_key_here"
       }
     }
   }
@@ -34,20 +34,20 @@ Filplacering:
 ```
 
 ### 2. Cursor IDE
-1. Gå til **Settings** ➔ **Features** ➔ **MCP Servers**
-2. Klik **Add New MCP Server**
-3. Udfyld felterne:
+1. Open **Settings** ➔ **Features** ➔ **MCP Servers**
+2. Click **Add New MCP Server**
+3. Configure the fields:
    - **Name:** `tailprint`
    - **Type:** `sse`
-   - **URL:** `https://tailprint.com/v1/mcp/sse?api_key=sec_live_din_nøgle_her`
+   - **URL:** `https://tailprint.com/v1/mcp/sse?api_key=sec_live_your_key_here`
 
 ### 3. Windsurf
-Redigér `~/.codeium/windsurf/mcp_config.json`:
+Edit `~/.codeium/windsurf/mcp_config.json`:
 ```json
 {
   "mcpServers": {
     "tailprint": {
-      "serverUrl": "https://tailprint.com/v1/mcp/sse?api_key=sec_live_din_nøgle_her"
+      "serverUrl": "https://tailprint.com/v1/mcp/sse?api_key=sec_live_your_key_here"
     }
   }
 }
@@ -55,56 +55,56 @@ Redigér `~/.codeium/windsurf/mcp_config.json`:
 
 ---
 
-## 📋 De 22 Native MCP Værktøjer / Complete Tools Catalog
+## 📋 The 22 Native MCP Tools Catalog
 
-### Dokument- & PDF-generering
-1. `render_pdf`: Genererer print-klare vektor-PDF'er fra Tailwind HTML eller URL med headers/footers, margener og kryptering.
-2. `render_template`: Renderer prædefinerede Tailwind skabeloner (faktura, certifikat, rapport, resume m.fl.) med dynamisk dataindsættelse.
-3. `list_templates`: Returnerer et katalog over tilgængelige dokumentskabeloner.
-4. `get_template_source`: Henter den fulde Tailwind HTML kildekode for en given skabelon, så en AI agent kan tilpasse den.
+### Document & PDF Generation
+1. `render_pdf`: Generates print-ready vector PDFs from Tailwind HTML or URLs with headers, footers, margins, and encryption.
+2. `render_template`: Renders pre-designed Tailwind templates (invoices, certificates, reports, resumes) with dynamic variable injection.
+3. `list_templates`: Returns a catalog of available document templates.
+4. `get_template_source`: Retrieves the full Tailwind HTML source code of a template for inspection or modification by an AI agent.
 
-### Compliance & Europæisk E-Fakturering
-5. `generate_einvoice`: Genererer en juridisk gyldig hybrid e-faktura (Factur-X / ZUGFeRD 2.2 / EN 16931) med indlejret CrossIndustryInvoice XML.
+### Compliance & European E-Invoicing
+5. `generate_einvoice`: Generates legally compliant hybrid electronic invoices (Factur-X / ZUGFeRD 2.2 / EN 16931) with embedded CrossIndustryInvoice XML.
 
-### PDF Operationer & Håndtering
-6. `merge_pdfs`: Sammenfletter to eller flere PDF'er (base64 eller URLs) til ét samlet PDF dokument.
-7. `split_pdf`: Udtrækker specifikke sider eller sideintervaller (f.eks. "1-3, 5, 8-10") til en ny PDF.
-8. `fill_pdf_form`: Udfylder interaktive PDF-formularer (AcroForms) med tekst, tal eller afkrydsningsfelter samt valgfri flattening.
-9. `compress_pdf`: Komprimerer og reducerer PDF-filstørrelse via objektstrømsoptimering.
-10. `stamp_pdf`: Påfører diagonale vandmærker eller stempler (f.eks. "FORTROLIGT", "DRAFT", "CONFIDENTIAL") på tværs af alle sider.
+### PDF Operations & Utilities
+6. `merge_pdfs`: Merges two or more PDF documents (base64 or public URLs) into a single unified vector PDF.
+7. `split_pdf`: Extracts specific pages or page ranges (e.g. "1-3, 5, 8-10") from an existing PDF into a new PDF.
+8. `fill_pdf_form`: Fills interactive PDF forms (AcroForms) with text, numbers, or checkboxes, with optional flattening.
+9. `compress_pdf`: Compacts and shrinks PDF file size via stream object bundling and structure optimization.
+10. `stamp_pdf`: Applies diagonal watermarks or status stamps (e.g. "CONFIDENTIAL", "DRAFT") across all PDF pages.
 
-### Grafik & Open Graph Billeder
-11. `render_image`: Renderer 1200×630 Open Graph preview billeder i høj opløsning (PNG/JPEG) med SHA-256 caching.
-12. `generate_social_card`: Skaber konverterende 1200×630 sociale bannere med moderne typografi og gradienter uden rå HTML.
-13. `render_carousel`: Genererer multi-slide 1080×1350 portræt karruseller til LinkedIn (PDF) og Instagram (PNG) fra Markdown.
-14. `render_device_mockup`: Omdanner enhver URL til en 3D MacBook Pro + iPhone præsentationsscene.
+### Graphics & Open Graph Images
+11. `render_image`: Renders 1200×630 Open Graph preview images (PNG/JPEG) with SHA-256 deduplication caching.
+12. `generate_social_card`: Generates 1200×630 social preview banners with typography, badges, and gradients without raw HTML.
+13. `render_carousel`: Generates multi-slide 1080×1350 portrait carousels for LinkedIn (PDF) and Instagram (PNG) from Markdown.
+14. `render_device_mockup`: Wraps any web URL into a photorealistic 3D MacBook Pro + iPhone presentation scene.
 
-### Diagrammer & Data Visualisering
-15. `render_chart`: Renderer højopløselige diagrammer (søjle, linje, cirkel, radar, polar) via Chart.js med inline chat-visning.
-16. `render_mermaid`: Renderer Mermaid syntaks (flowcharts, sekvensdiagrammer, ER diagrammer, arkitektur) til PNG, SVG eller PDF.
-17. `render_presentation`: Konverterer Markdown slides (adskilt med `---`) til 16:9 præsentations-PDF (1920×1080).
-18. `generate_qr`: Genererer scanningsklare QR-koder og stregkoder til URLs, WiFi, betalinger og vCards.
+### Data Visualization & Diagrams
+15. `render_chart`: Renders high-DPI data visualizations (bar, line, pie, radar, polar) via Chart.js with inline chat display.
+16. `render_mermaid`: Renders Mermaid diagram definitions (flowcharts, sequence, ER diagrams, architecture) to PNG, SVG, or PDF.
+17. `render_presentation`: Converts Markdown slides (separated by `---`) into widescreen 16:9 presentation PDFs (1920×1080).
+18. `generate_qr`: Generates scannable QR codes and barcodes for URLs, Wi-Fi credentials, payment links, and vCards.
 
 ### AI Ingestion & Web Scraping
-19. `scrape_markdown`: Scraper offentlige URLs, fjerner støj med Mozilla Readability og returnerer ren GFM Markdown med 90%+ tokenbesparelse.
-20. `extract_tables_from_url`: Udtrækker alle `<table>` elementer fra en URL til strukturerede JSON arrays og Markdown tabeller.
+19. `scrape_markdown`: Scrapes public URLs, strips ads and navigation with Mozilla Readability, and returns clean GFM Markdown with 90%+ token savings.
+20. `extract_tables_from_url`: Extracts all HTML `<table>` elements from a URL into structured JSON arrays and Markdown tables.
 
-### Kvalitetssikring & Audit
-21. `compare_snapshots`: Laver pixelmatch visuel regressionstest mellem to URLs eller snippets med pink overlay heatmap.
-22. `audit_webpage`: Gennemfører teknisk SEO-, tilgængeligheds- og DOM-audit med samlet score (0-100) og anbefalinger.
+### Quality Assurance & Auditing
+21. `compare_snapshots`: Runs pixel-by-pixel visual regression tests between two URLs or HTML snippets, returning a diff heatmap.
+22. `audit_webpage`: Performs automated technical audits (SEO, accessibility, and DOM metrics) with a 0-100 score and action items.
 
 ---
 
-## 💡 Eksempler på AI Agent Prompts
+## 💡 Practical AI Agent Prompts
 
-### E-Faktura (Factur-X)
-> *"Opret en Factur-X e-faktura til Kunde ApS for 20 timers konsulentarbejde á 1.250 DKK/time med 25% moms og mit IBAN nummer."*
+### E-Invoice (Factur-X)
+> *"Generate a Factur-X electronic invoice to Acme Corp for 20 hours of cloud consulting at 150 EUR/hour with 25% VAT and my bank IBAN."*
 
-### Vektor-PDF Rapport
-> *"Brug disse kvartalstal og generér en moderne 2-siders PDF rapport i A4 format med et Chart.js søjlediagram og sideskift."*
+### Multi-Page Vector PDF Report
+> *"Using this quarterly dataset, generate a modern 2-page executive PDF report in A4 format with a Chart.js bar chart and clean page breaks."*
 
-### Social Card & LinkedIn Karrusel
-> *"Konverter denne blogpost om mikrotjenester til en 5-slides LinkedIn karrusel i mørkt tema og lav et 1200x630 Open Graph banner."*
+### Social Card & LinkedIn Carousel
+> *"Convert this technical blog post into a 5-slide LinkedIn carousel in dark mode, and produce a matching 1200x630 Open Graph card."*
 
-### PDF Sammenfletning & Vandmærke
-> *"Sammenflet dette tilbud med vores standard handelsbetingelser og stemple alle sider med 'FORTROLIGT'."*
+### PDF Operations & Watermarking
+> *"Merge this project proposal PDF with our master services agreement PDF, and apply a diagonal 'CONFIDENTIAL' watermark to all pages."*
