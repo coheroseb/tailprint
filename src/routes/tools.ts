@@ -1760,34 +1760,36 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' +
             '<div>' +
               '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Tag / Category</label>' +
-              '<input type="text" value="' + (s.tag || '') + '" oninput="updateSlideField(' + idx + ', \'tag\', this.value)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500" />' +
+              '<input type="text" value="' + (s.tag || '') + '" data-idx="' + idx + '" data-field="tag" oninput="onSlideInput(this)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500" />' +
             '</div>' +
             '<div>' +
               '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Headline</label>' +
-              '<input type="text" value="' + (s.headline || '') + '" oninput="updateSlideField(' + idx + ', \'headline\', this.value)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500 font-semibold" />' +
+              '<input type="text" value="' + (s.headline || '') + '" data-idx="' + idx + '" data-field="headline" oninput="onSlideInput(this)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500 font-semibold" />' +
             '</div>' +
           '</div>' +
           '<div>' +
             '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Body Description</label>' +
-            '<textarea rows="2" oninput="updateSlideField(' + idx + ', \'body\', this.value)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500 leading-relaxed">' + (s.body || '') + '</textarea>' +
+            '<textarea rows="2" data-idx="' + idx + '" data-field="body" oninput="onSlideInput(this)" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500 leading-relaxed">' + (s.body || '') + '</textarea>' +
           '</div>' +
           '<div class="grid grid-cols-2 gap-2">' +
             '<div>' +
               '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Stat Value (Optional)</label>' +
-              '<input type="text" value="' + (s.stat || '') + '" oninput="updateSlideField(' + idx + ', \'stat\', this.value)" placeholder="e.g. 99%+" class="w-full bg-slate-900 text-cyan-300 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-cyan-500" />' +
+              '<input type="text" value="' + (s.stat || '') + '" data-idx="' + idx + '" data-field="stat" oninput="onSlideInput(this)" placeholder="e.g. 99%+" class="w-full bg-slate-900 text-cyan-300 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-cyan-500" />' +
             '</div>' +
             '<div>' +
               '<label class="block text-[10px] text-slate-500 uppercase font-semibold mb-0.5">Stat Label (Optional)</label>' +
-              '<input type="text" value="' + (s.statLabel || '') + '" oninput="updateSlideField(' + idx + ', \'statLabel\', this.value)" placeholder="e.g. Efficiency" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500" />' +
+              '<input type="text" value="' + (s.statLabel || '') + '" data-idx="' + idx + '" data-field="statLabel" oninput="onSlideInput(this)" placeholder="e.g. Efficiency" class="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500" />' +
             '</div>' +
           '</div>' +
         '</div>';
       }).join('');
     }
 
-    function updateSlideField(idx, field, value) {
+    function onSlideInput(el) {
+      const idx = parseInt(el.getAttribute('data-idx'));
+      const field = el.getAttribute('data-field');
       if (reelState.slides[idx]) {
-        reelState.slides[idx][field] = value;
+        reelState.slides[idx][field] = el.value;
         if (currentSlideIdx === idx) {
           updatePreviewDisplay();
         }
