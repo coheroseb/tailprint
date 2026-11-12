@@ -17,6 +17,7 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
   const isGuidesActive = activeSection === 'guides';
   const isShowcaseActive = activeSection === 'showcase';
   const isDashboardActive = activeSection === 'dashboard';
+  const isResourcesActive = activeSection === 'resources' || isShowcaseActive;
 
   return `
   <!-- Unified Global Navigation -->
@@ -213,22 +214,16 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             Guides
           </a>
 
-          <!-- Showcase Link -->
-          <a href="/showcase" class="px-3 py-1.5 rounded-lg ${isShowcaseActive ? 'bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-900/80'} transition flex items-center space-x-1.5">
-            <span>Showcase</span>
-            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">New</span>
-          </a>
-
           <!-- Resources Dropdown -->
           <div class="relative group">
-            <button type="button" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900/80 transition flex items-center space-x-1.5 focus:outline-none">
+            <button type="button" class="px-3 py-1.5 rounded-lg ${isResourcesActive ? 'bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-900/80'} transition flex items-center space-x-1.5 focus:outline-none">
               <span>Resources</span>
               <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div class="absolute right-0 md:left-0 top-full pt-2 w-[280px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
                 
-                <a href="/showcase" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
+                <a href="/showcase" class="flex items-start space-x-3 p-2 rounded-xl ${isShowcaseActive ? 'bg-slate-800/80 text-rose-300' : 'hover:bg-slate-800/60'} transition group/item">
                   <div class="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
                     🚀
                   </div>
