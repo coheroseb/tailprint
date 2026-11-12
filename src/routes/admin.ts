@@ -406,6 +406,21 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
             </button>
           </div>
         </div>
+
+        <!-- Filter pills: All, Pending, Posted -->
+        <div class="flex items-center space-x-2 mb-3">
+          <span class="text-xs text-slate-400 font-semibold">Vis:</span>
+          <button id="social-filter-all" onclick="setSocialFilter(&apos;all&apos;)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white transition">
+            Alle (<span id="social-count-all">0</span>)
+          </button>
+          <button id="social-filter-pending" onclick="setSocialFilter(&apos;pending&apos;)" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 transition">
+            Afventer svar (<span id="social-count-pending">0</span>)
+          </button>
+          <button id="social-filter-posted" onclick="setSocialFilter(&apos;posted&apos;)" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-emerald-400 transition">
+            ✓ Kommenteret (<span id="social-count-posted">0</span>)
+          </button>
+        </div>
+
         <div id="growth-social-list" class="space-y-3.5">
           <!-- Populated by JS -->
         </div>
@@ -877,7 +892,16 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       // Render Community Social Radar
       const socialContainer = document.getElementById('growth-social-list');
       const social = data.social || [];
+      const totalCount = social.length;
       const pendingCount = social.filter(s => s.status === 'pending').length;
+      const postedCount = social.filter(s => s.status === 'posted').length;
+
+      const countAllEl = document.getElementById('social-count-all');
+      if (countAllEl) countAllEl.textContent = totalCount;
+      const countPendingEl = document.getElementById('social-count-pending');
+      if (countPendingEl) countPendingEl.textContent = pendingCount;
+      const countPostedEl = document.getElementById('social-count-posted');
+      if (countPostedEl) countPostedEl.textContent = postedCount;
 
       const badgeCount = document.getElementById('growth-badge-social-count');
       if (badgeCount) {
@@ -889,10 +913,32 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         }
       }
 
-      if (!social.length) {
-        socialContainer.innerHTML = '<div class="py-8 text-center text-slate-500">No community threads detected yet. Click "Scan Community Now" or paste a Reddit / HN link above!</div>';
+      // Filter tabs state
+      const filterBtns = {
+        all: document.getElementById('social-filter-all'),
+        pending: document.getElementById('social-filter-pending'),
+        posted: document.getElementById('social-filter-posted')
+      };
+      for (const key in filterBtns) {
+        const btn = filterBtns[key];
+        if (!btn) continue;
+        if (key === currentSocialFilter) {
+          btn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white transition';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-400 transition';
+        }
+      }
+
+      const filteredSocial = social.filter(s => {
+        if (currentSocialFilter === 'pending') return s.status === 'pending';
+        if (currentSocialFilter === 'posted') return s.status === 'posted';
+        return true;
+      });
+
+      if (!filteredSocial.length) {
+        socialContainer.innerHTML = '<div class="py-8 text-center text-slate-500">Ingen tråde i denne visning.</div>';
       } else {
-        socialContainer.innerHTML = social.map(s => {
+        socialContainer.innerHTML = filteredSocial.map(s => {
           let platformBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">FORUM</span>';
           if (s.platform === 'reddit') {
             platformBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">REDDIT</span>';
@@ -902,14 +948,32 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
             platformBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">STACKOVERFLOW</span>';
           }
 
-          let statusBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">Answer Ready</span>';
+          let statusBadge = '<span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold">💬 Svar klar</span>';
+          let cardBorder = 'border-slate-800/80 bg-slate-950/80';
+          let actionButtons = '';
+
           if (s.status === 'posted') {
-            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px]">✓ Marked as Posted</span>';
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center space-x-1"><span>✓</span><span>Kommenteret</span></span>';
+            cardBorder = 'border-emerald-500/40 bg-emerald-950/10';
+            actionButtons = 
+              '<button onclick="copySocialThreadById(&apos;' + s.id + '&apos;)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition">📋 Kopier svar igen</button>' +
+              '<button onclick="markSocialPending(&apos;' + s.id + '&apos;)" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-300 text-xs transition">↩ Fortryd / Sæt ubesvaret</button>';
           } else if (s.status === 'dismissed') {
-            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-900 text-slate-600 text-[10px]">Dismissed</span>';
+            statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-900 text-slate-600 text-[10px]">Afvist</span>';
+            cardBorder = 'border-slate-900 bg-slate-950/40 opacity-60';
+            actionButtons = '<button onclick="markSocialPending(&apos;' + s.id + '&apos;)" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs transition">Gendan</button>';
+          } else {
+            actionButtons = 
+              '<button onclick="dismissSocialThread(&apos;' + s.id + '&apos;)" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs transition">Afvis</button>' +
+              '<button onclick="copySocialThreadById(&apos;' + s.id + '&apos;)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs transition flex items-center space-x-1.5 border border-slate-700">' +
+                '<span>📋 Kopier svar & Åbn ↗</span>' +
+              '</button>' +
+              '<button onclick="markSocialPosted(&apos;' + s.id + '&apos;)" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center space-x-1.5 shadow-md shadow-emerald-600/25">' +
+                '<span>✓ Markér som kommenteret</span>' +
+              '</button>';
           }
 
-          return '<div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-3">' +
+          return '<div class="p-4 rounded-xl ' + cardBorder + ' border space-y-3 transition">' +
             '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">' +
               '<div class="flex items-center space-x-2">' +
                 platformBadge +
@@ -931,14 +995,9 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
               s.suggestedReplyMarkdown +
             '</div>' +
             '<div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/70">' +
-              '<div class="text-[11px] text-slate-500">Author: ' + (s.author || 'User') + '</div>' +
+              '<div class="text-[11px] text-slate-500">Forfatter: ' + (s.author || 'User') + '</div>' +
               '<div class="flex items-center space-x-2">' +
-                (s.status === 'pending'
-                  ? '<button onclick="dismissSocialThread(&apos;' + s.id + '&apos;)" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 text-xs">Dismiss</button>'
-                  : '') +
-                '<button onclick="copySocialThreadById(&apos;' + s.id + '&apos;)" class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs transition flex items-center space-x-1.5 shadow-md shadow-orange-600/20">' +
-                  '<span>📋 Copy Answer & Open Thread ↗</span>' +
-                '</button>' +
+                actionButtons +
               '</div>' +
             '</div>' +
           '</div>';
@@ -1005,6 +1064,12 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       }
     }
 
+    var currentSocialFilter = 'all';
+    function setSocialFilter(filter) {
+      currentSocialFilter = filter;
+      if (growthDataCache) renderGrowthUI(growthDataCache);
+    }
+
     async function copySocialThreadById(id) {
       if (!growthDataCache || !growthDataCache.social) return;
       const item = growthDataCache.social.find(s => s.id === id);
@@ -1012,6 +1077,14 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
       try {
         await navigator.clipboard.writeText(item.suggestedReplyMarkdown);
         window.open(item.url, '_blank');
+      } catch (err) {
+        alert('Svar kopieret! Åbner tråd: ' + item.url);
+        window.open(item.url, '_blank');
+      }
+    }
+
+    async function markSocialPosted(id) {
+      try {
         await fetch('/v1/admin/growth/social/' + id + '/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
@@ -1019,8 +1092,20 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
         fetchGrowthData();
       } catch (err) {
-        alert('Answer copied! Opening thread: ' + item.url);
-        window.open(item.url, '_blank');
+        console.error('Error marking as posted:', err);
+      }
+    }
+
+    async function markSocialPending(id) {
+      try {
+        await fetch('/v1/admin/growth/social/' + id + '/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
+          body: JSON.stringify({ status: 'pending' })
+        });
+        fetchGrowthData();
+      } catch (err) {
+        console.error('Error unmarking posted:', err);
       }
     }
 

@@ -363,6 +363,8 @@ The two main gotchas that usually cause visual divergence when moving to Puppete
     item.status = status;
     if (status === 'posted') {
       item.postedAt = new Date().toISOString();
+    } else if (status === 'pending') {
+      delete item.postedAt;
     }
     this.saveSocial(social);
     return item;
