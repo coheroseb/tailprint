@@ -1638,10 +1638,10 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
         .default('classic')
         .describe('Visual layout style: "classic", "split" (cinema split-screen), "iphone" (mockup), or "editorial" (large typography)'),
       theme: z
-        .enum(['brand', 'gradient', 'cyberpunk', 'midnight', 'sunset', 'clean'])
+        .enum(['brand', 'nordic', 'bento', 'brutalist', 'creator', 'terminal', 'gradient', 'cyberpunk', 'midnight', 'sunset', 'clean'])
         .optional()
         .default('brand')
-        .describe('Color theme (default: "brand")'),
+        .describe('Design archetype / aesthetic theme: "nordic" (editorial paper warmth & serif), "bento" (Linear glassmorphic SaaS), "brutalist" (high-contrast streetwear), "creator" (viral highlighter pop), "terminal" (developer IDE code), "brand" (auto brand gradient), "sunset", "midnight", "clean"'),
       brand: z.string().optional().describe('Brand name displayed in the reel header (default: "Tailprint")'),
       handle: z.string().optional().describe('Social handle (e.g. "@tailprint")'),
       record_video: z

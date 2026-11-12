@@ -349,8 +349,12 @@ describe('Tailprint Test Suite', () => {
       expect(data.success).toBe(true);
       expect(data.script.language).toBe('da');
       expect(data.script.languageLabel).toContain('Dansk');
+      expect(data.script.theme).toBe('nordic');
+      expect(['editorial', 'split', 'classic', 'iphone']).toContain(data.script.layout);
       expect(data.script.cta.length).toBeGreaterThan(2);
       expect(data.script.slides[0].tag.length).toBeGreaterThan(2);
+      expect(data.script.slides[0].slideType).toBe('hook');
+      expect(Array.isArray(data.script.slides[0].highlightWords)).toBe(true);
     }, 25000);
 
     it('POST /v1/tools/carousel renders a multi-slide carousel without API key (rate-limited)', async () => {

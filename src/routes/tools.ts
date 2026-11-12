@@ -1099,6 +1099,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   <title>AI Social Reel &amp; Short Video Maker (9:16) - Tailprint</title>
   <meta name="description" content="Turn any live URL, article, or topic into an animated 9:16 vertical Reel, TikTok, or YouTube Short in seconds. Auto-scraped slides, kinetic typography, and direct video export." />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&family=Plus+Jakarta+Sans:wght@500;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
   <style>
     body { background-color: #030712; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
     @keyframes pulseGlow {
@@ -1193,16 +1196,22 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </div>
           </div>
 
-          <!-- Theme Selector -->
+          <!-- Design Archetypes & Themes Selector -->
           <div>
-            <label class="block text-[11px] text-slate-400 font-medium mb-2">Visual Color Theme</label>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-[11px] text-slate-400 font-medium">Visual Design Archetype &amp; Aesthetic</label>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">Original Archetypes</span>
+            </div>
             <div class="flex flex-wrap gap-2">
-              <button onclick="setReelTheme('brand')" id="theme-btn-brand" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-500 to-indigo-600 text-white shadow-md border border-white/30 flex items-center space-x-1"><span>Brand Auto ✨</span></button>
-              <button onclick="setReelTheme('gradient')" id="theme-btn-gradient" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Gradient Glow</button>
-              <button onclick="setReelTheme('cyberpunk')" id="theme-btn-cyberpunk" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Cyberpunk Neon</button>
-              <button onclick="setReelTheme('midnight')" id="theme-btn-midnight" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Midnight Emerald</button>
-              <button onclick="setReelTheme('sunset')" id="theme-btn-sunset" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Sunset Amber</button>
-              <button onclick="setReelTheme('clean')" id="theme-btn-clean" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Clean Tech Light</button>
+              <button onclick="setReelTheme('nordic')" id="theme-btn-nordic" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm flex items-center space-x-1"><span>Nordic Editorial 🌿</span></button>
+              <button onclick="setReelTheme('bento')" id="theme-btn-bento" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center space-x-1"><span>Linear Bento 💎</span></button>
+              <button onclick="setReelTheme('brutalist')" id="theme-btn-brutalist" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center space-x-1"><span>Brutalist Impact ⚡</span></button>
+              <button onclick="setReelTheme('creator')" id="theme-btn-creator" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center space-x-1"><span>Creator Pop 🔥</span></button>
+              <button onclick="setReelTheme('terminal')" id="theme-btn-terminal" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center space-x-1"><span>Dev Terminal 💻</span></button>
+              <button onclick="setReelTheme('brand')" id="theme-btn-brand" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center space-x-1"><span>Brand Auto ✨</span></button>
+              <button onclick="setReelTheme('sunset')" id="theme-btn-sunset" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Sunset Amber 🌅</button>
+              <button onclick="setReelTheme('midnight')" id="theme-btn-midnight" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Midnight Emerald 🌑</button>
+              <button onclick="setReelTheme('clean')" id="theme-btn-clean" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Clean Light ⚪</button>
             </div>
           </div>
 
@@ -1316,6 +1325,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <!-- Live Screenrecord Ambient Video Backdrop (Only active in backdrop mode) -->
             <video id="preview-backdrop-video" src="" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none hidden transition-opacity duration-300"></video>
 
+            <!-- Archetype Stage Decor (Nordic hairline frame / Brutalist crosshairs / Terminal grid) -->
+            <div id="preview-archetype-decor" class="absolute inset-0 pointer-events-none z-10"></div>
+
             <!-- Editorial Giant Watermark (Only active in editorial layout) -->
             <div id="preview-editorial-watermark" class="hidden absolute top-1/3 left-3 text-7xl font-black text-white/10 pointer-events-none select-none tracking-tighter z-10">380ms</div>
 
@@ -1331,10 +1343,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               </div>
 
               <!-- Brand Bar -->
-              <div class="flex items-center justify-between border-b border-white/10 pb-3">
+              <div id="preview-header-bar" class="flex items-center justify-between border-b border-white/10 pb-3">
                 <div class="flex items-center space-x-2.5">
                   <img id="preview-logo-img" src="" class="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md" />
-                  <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs shadow-md">
+                  <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs text-white shadow-md">
                     TP
                   </div>
                   <div>
@@ -1348,38 +1360,50 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               </div>
             </div>
 
-            <!-- Main Slide Content (Center) -->
-            <div id="preview-content-container" class="my-auto z-20 space-y-3 py-2 transition-all duration-200">
-              <h2 id="preview-headline" class="text-xl font-black tracking-tight leading-tight text-white drop-shadow-md">
-                Sub-500ms Vector PDF Generation for Developers
-              </h2>
+            <!-- Main Slide Content (Center, adapts by Archetype + Slide Role) -->
+            <div id="preview-content-container" class="my-auto z-20 space-y-2.5 py-2 transition-all duration-200">
+              <div id="preview-kicker-bar" class="hidden"></div>
 
-              <div id="preview-stat-card" class="p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl flex items-center space-x-3 shadow-lg">
-                <span id="preview-stat" class="text-2xl font-black text-cyan-400">380ms</span>
-                <span id="preview-stat-label" class="text-[10px] font-bold uppercase text-white/90 tracking-wide">Average Render Time</span>
-              </div>
+              <div id="preview-stage-card" class="space-y-2.5 transition-all duration-200">
+                <h2 id="preview-headline" class="text-xl font-black tracking-tight leading-tight text-white drop-shadow-sm">
+                  Sub-500ms Vector PDF Generation for Developers
+                </h2>
 
-              <!-- Floating Live Screenrecord Browser Card (Active in inset / split / iphone mode) -->
-              <div id="preview-screenrecord-card" class="hidden rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300">
-                <div id="preview-browser-bar" class="px-2.5 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[8px]">
-                  <div class="flex items-center space-x-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  </div>
-                  <span id="preview-browser-url" class="font-mono text-slate-400 truncate max-w-[140px]">tailprint.com</span>
+                <div id="preview-stat-card" class="p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-between space-x-3 shadow-lg">
+                  <span id="preview-stat" class="text-2xl font-black text-cyan-400">380ms</span>
+                  <span id="preview-stat-label" class="text-[9px] font-bold uppercase text-white/90 tracking-wider text-right">Average Render Time</span>
                 </div>
-                <video id="preview-screenrecord-video" src="" autoplay loop muted playsinline class="w-full h-28 object-cover object-top"></video>
-              </div>
 
-              <p id="preview-body" class="text-xs leading-relaxed text-slate-200/90 font-medium">
-                Eliminate complex browser infrastructure. Render arbitrary Tailwind HTML classes directly into vector PDFs.
-              </p>
+                <!-- Floating Live Screenrecord Browser Card (Active in inset / split / iphone mode) -->
+                <div id="preview-screenrecord-card" class="hidden rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300">
+                  <div id="preview-browser-bar" class="px-2.5 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[8px]">
+                    <div class="flex items-center space-x-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    </div>
+                    <span id="preview-browser-url" class="font-mono text-slate-400 truncate max-w-[140px]">tailprint.com</span>
+                  </div>
+                  <video id="preview-screenrecord-video" src="" autoplay loop muted playsinline class="w-full h-28 object-cover object-top"></video>
+                </div>
+
+                <p id="preview-body" class="text-xs leading-relaxed text-slate-200/90 font-medium">
+                  Eliminate complex browser infrastructure. Render arbitrary Tailwind HTML classes directly into vector PDFs.
+                </p>
+
+                <!-- Slide 4 Climax CTA Button Card -->
+                <div id="preview-cta-card" class="hidden pt-1.5">
+                  <div id="preview-cta-button" class="w-full px-3.5 py-2.5 rounded-2xl bg-white text-slate-950 font-black text-[11px] shadow-xl flex items-center justify-between">
+                    <span id="preview-cta-button-text" class="truncate pr-2">Follow for more</span>
+                    <span class="text-sm font-black">→</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Bottom CTA Footer -->
-            <div class="z-20 border-t border-white/10 pt-3 flex items-center justify-between text-[10px]">
-              <div class="flex items-center space-x-1.5 font-bold text-white">
+            <div id="preview-footer-bar" class="z-20 border-t border-white/10 pt-3 flex items-center justify-between text-[10px]">
+              <div class="flex items-center space-x-1.5 font-bold" id="preview-footer-cta-wrap">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 <span id="preview-cta">Follow for more • Link in bio</span>
               </div>
@@ -1609,75 +1633,268 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }, 150);
     }
 
-    // Theme CSS maps
+    // Theme & Archetype CSS maps
     const themeMaps = {
+      nordic: {
+        id: 'nordic',
+        name: 'Nordic Editorial 🌿',
+        bg: "radial-gradient(circle at 80% 20%, rgba(217, 119, 6, 0.14), transparent 55%), radial-gradient(circle at 10% 80%, rgba(16, 185, 129, 0.08), transparent 55%), linear-gradient(165deg, #101726 0%, #0c111c 100%)",
+        cardBg: "rgba(16, 23, 38, 0.78)",
+        cardBorder: "rgba(217, 119, 6, 0.25)",
+        text: "#fef3c7",
+        subtext: "rgba(226, 232, 240, 0.88)",
+        fontHead: "'Playfair Display', Georgia, serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "rgba(245, 158, 11, 0.12)",
+        tagBorder: "rgba(245, 158, 11, 0.35)",
+        tagText: "#fcd34d",
+        statBg: "rgba(245, 158, 11, 0.08)",
+        statBorder: "rgba(245, 158, 11, 0.25)",
+        statColor: "#fbbf24",
+        buttonBg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+        buttonText: "#1c1917",
+        badgeIcon: "✦",
+        highlightClass: "bg-amber-400/20 text-amber-200 border-b-2 border-amber-400/60 px-1.5 py-0.5 rounded"
+      },
+      bento: {
+        id: 'bento',
+        name: 'Linear Bento 💎',
+        bg: "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.2), transparent 55%), linear-gradient(180deg, #070b14 0%, #030509 100%)",
+        cardBg: "rgba(255, 255, 255, 0.04)",
+        cardBorder: "rgba(255, 255, 255, 0.12)",
+        text: "#ffffff",
+        subtext: "rgba(203, 213, 225, 0.85)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Plus Jakarta Sans', system-ui, sans-serif",
+        tagBg: "rgba(56, 189, 248, 0.15)",
+        tagBorder: "rgba(56, 189, 248, 0.35)",
+        tagText: "#38bdf8",
+        statBg: "rgba(56, 189, 248, 0.08)",
+        statBorder: "rgba(56, 189, 248, 0.2)",
+        statColor: "#38bdf8",
+        buttonBg: "linear-gradient(135deg, #38bdf8 0%, #6366f1 100%)",
+        buttonText: "#ffffff",
+        badgeIcon: "●",
+        highlightClass: "bg-sky-500/20 text-sky-200 border border-sky-400/30 px-1.5 py-0.5 rounded-lg"
+      },
+      brutalist: {
+        id: 'brutalist',
+        name: 'Brutalist Impact ⚡',
+        bg: "#000000",
+        cardBg: "#09090b",
+        cardBorder: "#ffffff",
+        text: "#ffffff",
+        subtext: "#e4e4e7",
+        fontHead: "'Space Grotesk', monospace, sans-serif",
+        fontBody: "'Space Grotesk', monospace, sans-serif",
+        tagBg: "#facc15",
+        tagBorder: "#ffffff",
+        tagText: "#000000",
+        statBg: "#18181b",
+        statBorder: "#ffffff",
+        statColor: "#facc15",
+        buttonBg: "#facc15",
+        buttonText: "#000000",
+        badgeIcon: "⚡",
+        highlightClass: "bg-yellow-400 text-black font-black px-1.5 py-0.5 -rotate-1 inline-block"
+      },
+      creator: {
+        id: 'creator',
+        name: 'Creator Pop 🔥',
+        bg: "radial-gradient(circle at 10% 20%, rgba(244, 63, 94, 0.25), transparent 45%), radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.25), transparent 45%), linear-gradient(135deg, #180828 0%, #080310 100%)",
+        cardBg: "rgba(30, 15, 45, 0.7)",
+        cardBorder: "rgba(244, 63, 94, 0.35)",
+        text: "#ffffff",
+        subtext: "rgba(254, 205, 211, 0.9)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "linear-gradient(90deg, #f43f5e 0%, #f59e0b 100%)",
+        tagBorder: "transparent",
+        tagText: "#ffffff",
+        statBg: "rgba(244, 63, 94, 0.12)",
+        statBorder: "rgba(244, 63, 94, 0.3)",
+        statColor: "#fbbf24",
+        buttonBg: "linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #f59e0b 100%)",
+        buttonText: "#ffffff",
+        badgeIcon: "🔥",
+        highlightClass: "bg-gradient-to-r from-rose-500/30 to-amber-500/30 text-amber-200 border border-amber-400/40 px-1.5 py-0.5 rounded-lg"
+      },
+      terminal: {
+        id: 'terminal',
+        name: 'Dev Terminal 💻',
+        bg: "#080c14",
+        cardBg: "rgba(10, 15, 26, 0.9)",
+        cardBorder: "rgba(52, 211, 153, 0.35)",
+        text: "#34d399",
+        subtext: "#94a3b8",
+        fontHead: "'JetBrains Mono', monospace",
+        fontBody: "'JetBrains Mono', monospace",
+        tagBg: "rgba(6, 78, 59, 0.8)",
+        tagBorder: "rgba(52, 211, 153, 0.4)",
+        tagText: "#34d399",
+        statBg: "rgba(6, 78, 59, 0.3)",
+        statBorder: "rgba(52, 211, 153, 0.3)",
+        statColor: "#34d399",
+        buttonBg: "#10b981",
+        buttonText: "#022c22",
+        badgeIcon: ">_",
+        highlightClass: "bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-500/30"
+      },
       brand: {
+        id: 'brand',
+        name: 'Brand Auto ✨',
         bg: "linear-gradient(135deg, #4f46e5 0%, #090d16 100%)",
+        cardBg: "rgba(255, 255, 255, 0.06)",
+        cardBorder: "rgba(255, 255, 255, 0.15)",
         text: "#ffffff",
         subtext: "rgba(226, 232, 240, 0.85)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         tagBg: "rgba(255, 255, 255, 0.12)",
         tagBorder: "rgba(255, 255, 255, 0.25)",
         tagText: "#ffffff",
         statBg: "rgba(255, 255, 255, 0.08)",
         statBorder: "rgba(255, 255, 255, 0.18)",
-        statColor: "#38bdf8"
+        statColor: "#38bdf8",
+        buttonBg: "#ffffff",
+        buttonText: "#020617",
+        badgeIcon: "✨",
+        highlightClass: "bg-white/15 text-white border-b-2 border-white/50 px-1.5 py-0.5 rounded"
       },
       gradient: {
+        id: 'gradient',
+        name: 'Gradient Glow ✨',
         bg: "linear-gradient(145deg, #1e1b4b 0%, #31104b 50%, #030712 100%)",
+        cardBg: "rgba(255, 255, 255, 0.06)",
+        cardBorder: "rgba(255, 255, 255, 0.12)",
         text: "#ffffff",
         subtext: "rgba(233, 213, 255, 0.85)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         tagBg: "rgba(99, 102, 241, 0.2)",
         tagBorder: "rgba(99, 102, 241, 0.4)",
         tagText: "#a5b4fc",
         statBg: "rgba(255, 255, 255, 0.08)",
         statBorder: "rgba(255, 255, 255, 0.15)",
-        statColor: "#38bdf8"
+        statColor: "#38bdf8",
+        buttonBg: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+        buttonText: "#ffffff",
+        badgeIcon: "✦",
+        highlightClass: "bg-indigo-500/25 text-cyan-300 border-b-2 border-cyan-400/60 px-1.5 py-0.5 rounded"
       },
       cyberpunk: {
+        id: 'cyberpunk',
+        name: 'Cyberpunk Neon ⚡',
         bg: "#09090b",
+        cardBg: "rgba(24, 24, 27, 0.85)",
+        cardBorder: "rgba(250, 204, 21, 0.35)",
         text: "#facc15",
         subtext: "#d4d4d8",
+        fontHead: "'Space Grotesk', monospace, sans-serif",
+        fontBody: "'JetBrains Mono', monospace",
         tagBg: "rgba(250, 204, 21, 0.15)",
         tagBorder: "rgba(250, 204, 21, 0.4)",
         tagText: "#fef08a",
         statBg: "rgba(250, 204, 21, 0.08)",
         statBorder: "rgba(250, 204, 21, 0.3)",
-        statColor: "#ec4899"
+        statColor: "#ec4899",
+        buttonBg: "#facc15",
+        buttonText: "#000000",
+        badgeIcon: "⚡",
+        highlightClass: "bg-yellow-400/20 text-yellow-300 border border-yellow-400/50 px-1.5 py-0.5 rounded"
       },
       midnight: {
-        bg: "#000000",
+        id: 'midnight',
+        name: 'Midnight Emerald 🌑',
+        bg: "radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15), transparent 60%), #040707",
+        cardBg: "rgba(8, 16, 14, 0.85)",
+        cardBorder: "rgba(16, 185, 129, 0.25)",
         text: "#fafafa",
         subtext: "#a1a1aa",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         tagBg: "rgba(16, 185, 129, 0.15)",
         tagBorder: "rgba(16, 185, 129, 0.3)",
         tagText: "#34d399",
         statBg: "rgba(16, 185, 129, 0.08)",
         statBorder: "rgba(16, 185, 129, 0.2)",
-        statColor: "#10b981"
+        statColor: "#10b981",
+        buttonBg: "#10b981",
+        buttonText: "#000000",
+        badgeIcon: "●",
+        highlightClass: "bg-emerald-500/20 text-emerald-300 border-b-2 border-emerald-400/60 px-1.5 py-0.5 rounded"
       },
       sunset: {
-        bg: "linear-gradient(180deg, #4c0519 0%, #030712 60%, #451a03 100%)",
+        id: 'sunset',
+        name: 'Sunset Amber 🌅',
+        bg: "radial-gradient(circle at 80% 10%, rgba(244, 63, 94, 0.3), transparent 50%), linear-gradient(180deg, #2a0b18 0%, #0f0714 50%, #201006 100%)",
+        cardBg: "rgba(30, 15, 25, 0.75)",
+        cardBorder: "rgba(251, 146, 60, 0.25)",
         text: "#ffffff",
         subtext: "rgba(254, 205, 211, 0.85)",
+        fontHead: "'Playfair Display', Georgia, serif",
+        fontBody: "'Inter', sans-serif",
         tagBg: "rgba(244, 63, 94, 0.2)",
         tagBorder: "rgba(244, 63, 94, 0.4)",
         tagText: "#fda4af",
         statBg: "rgba(244, 63, 94, 0.1)",
         statBorder: "rgba(244, 63, 94, 0.25)",
-        statColor: "#f59e0b"
+        statColor: "#f59e0b",
+        buttonBg: "linear-gradient(135deg, #f43f5e 0%, #f59e0b 100%)",
+        buttonText: "#ffffff",
+        badgeIcon: "🌅",
+        highlightClass: "bg-rose-500/20 text-rose-200 border-b-2 border-rose-400/60 px-1.5 py-0.5 rounded"
       },
       clean: {
-        bg: "#f8fafc",
+        id: 'clean',
+        name: 'Clean Light ⚪',
+        bg: "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
+        cardBg: "#ffffff",
+        cardBorder: "#cbd5e1",
         text: "#0f172a",
         subtext: "#475569",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         tagBg: "#dbeafe",
         tagBorder: "#bfdbfe",
         tagText: "#1d4ed8",
         statBg: "#ffffff",
         statBorder: "#cbd5e1",
-        statColor: "#2563eb"
+        statColor: "#2563eb",
+        buttonBg: "#0f172a",
+        buttonText: "#ffffff",
+        badgeIcon: "✦",
+        highlightClass: "bg-blue-100 text-blue-900 border-b-2 border-blue-400 px-1.5 py-0.5 rounded"
       }
     };
+
+    function formatHighlightedHtml(text, highlightWords, markClass) {
+      if (!text) return '';
+      let formatted = escapeHtml(text);
+      const cls = markClass || 'bg-amber-400/20 text-amber-200 px-1 rounded';
+      const escReg = new RegExp('[.*+?^' + '\\$' + '{}()|[\\]\\\\]', 'g');
+      const list = Array.isArray(highlightWords) ? highlightWords.slice() : [];
+      let matched = false;
+      for (const word of list) {
+        if (!word || String(word).trim().length < 2) continue;
+        const cleanWord = escapeHtml(String(word).trim()).replace(escReg, '\\\\$&');
+        const regex = new RegExp('(' + cleanWord + ')', 'gi');
+        if (regex.test(formatted)) {
+          formatted = formatted.replace(regex, '<mark class="' + cls + '">$1</mark>');
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        const words = escapeHtml(text).split(/\\s+/).map(w => w.replace(/[,.!?«»"']/g, '')).filter(w => w.length >= 6);
+        if (words.length > 0) {
+          const fallbackWord = words[words.length - 1].replace(escReg, '\\\\$&');
+          const regex = new RegExp('(' + fallbackWord + ')', 'i');
+          formatted = formatted.replace(regex, '<mark class="' + cls + '">$1</mark>');
+        }
+      }
+      return formatted;
+    }
 
     // Initialize UI
     window.addEventListener('DOMContentLoaded', () => {
@@ -1740,15 +1957,25 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     function setReelTheme(themeName) {
       reelState.theme = themeName;
-      ['brand', 'gradient', 'cyberpunk', 'midnight', 'sunset', 'clean'].forEach(t => {
+      ['nordic', 'bento', 'brutalist', 'creator', 'terminal', 'brand', 'sunset', 'midnight', 'clean', 'gradient', 'cyberpunk'].forEach((t) => {
         const btn = document.getElementById('theme-btn-' + t);
         if (btn) {
           if (t === themeName) {
-            btn.className = t === 'brand'
-              ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-500 to-indigo-600 text-white shadow-md border border-white/40'
-              : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-400/40';
+            btn.className = t === 'nordic'
+              ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/25 text-amber-200 border border-amber-500/50 shadow-md flex items-center space-x-1'
+              : t === 'bento'
+              ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500/25 text-sky-200 border border-sky-500/50 shadow-md flex items-center space-x-1'
+              : t === 'brutalist'
+              ? 'px-3 py-1.5 rounded-xl text-xs font-black bg-yellow-400 text-black border-2 border-white shadow-md flex items-center space-x-1'
+              : t === 'creator'
+              ? 'px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md flex items-center space-x-1'
+              : t === 'terminal'
+              ? 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-md flex items-center space-x-1'
+              : t === 'brand'
+              ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-500 to-indigo-600 text-white shadow-md border border-white/40 flex items-center space-x-1'
+              : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white border border-indigo-400/40 shadow-md flex items-center space-x-1';
           } else {
-            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800';
+            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center space-x-1';
           }
         }
       });
@@ -1856,16 +2083,56 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         themeMaps.brand.bg = "linear-gradient(135deg, " + reelState.brandColors.primary + " 0%, " + reelState.brandColors.secondary + " 100%)";
         themeMaps.brand.statColor = reelState.brandColors.accent;
       }
-      const theme = themeMaps[reelState.theme] || themeMaps.brand || themeMaps.gradient;
+      const themeKey = reelState.theme || 'brand';
+      const isLight = themeKey === 'clean';
+      const theme = themeMaps[themeKey] || themeMaps.brand || themeMaps.gradient;
+      const slideType = slide.slideType || (currentSlideIdx === 0 ? 'hook' : currentSlideIdx === 1 ? 'problem' : currentSlideIdx === 2 ? 'stat' : 'cta');
       const screen = document.getElementById('reel-screen');
 
-      // Apply theme background
+      // Apply theme background & base text color
       screen.style.background = theme.bg;
       screen.style.color = theme.text;
 
-      // Brand & Avatar
-      document.getElementById('preview-brand').textContent = reelState.brand;
-      document.getElementById('preview-handle').textContent = reelState.handle;
+      // Archetype Stage Decor (Nordic hairline border / Brutalist crosshairs / Terminal grid)
+      const decorEl = document.getElementById('preview-archetype-decor');
+      if (decorEl) {
+        if (themeKey === 'nordic') {
+          decorEl.innerHTML = '<div class="absolute inset-2.5 border border-amber-500/20 rounded-[30px]"></div>';
+        } else if (themeKey === 'brutalist') {
+          decorEl.innerHTML =
+            '<span class="absolute top-3 left-3 font-mono text-[10px] font-black text-white/60">+</span>' +
+            '<span class="absolute top-3 right-3 font-mono text-[10px] font-black text-white/60">+</span>' +
+            '<span class="absolute bottom-3 left-3 font-mono text-[10px] font-black text-white/60">+</span>' +
+            '<span class="absolute bottom-3 right-3 font-mono text-[10px] font-black text-white/60">+</span>';
+        } else {
+          decorEl.innerHTML = '';
+        }
+      }
+
+      // Brand & Avatar + Header/Footer contrast
+      const brandEl = document.getElementById('preview-brand');
+      const handleEl = document.getElementById('preview-handle');
+      const headerBar = document.getElementById('preview-header-bar');
+      const footerBar = document.getElementById('preview-footer-bar');
+      const footerCtaWrap = document.getElementById('preview-footer-cta-wrap');
+      if (brandEl) {
+        brandEl.textContent = reelState.brand;
+        brandEl.style.color = theme.text;
+        brandEl.style.fontFamily = theme.fontHead || 'system-ui, sans-serif';
+      }
+      if (handleEl) {
+        handleEl.textContent = reelState.handle;
+        handleEl.style.color = theme.subtext;
+      }
+      if (headerBar) {
+        headerBar.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.12)' : (themeKey === 'brutalist' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.12)');
+      }
+      if (footerBar) {
+        footerBar.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.12)' : (themeKey === 'brutalist' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.12)');
+      }
+      if (footerCtaWrap) {
+        footerCtaWrap.style.color = theme.text;
+      }
 
       const logoImg = document.getElementById('preview-logo-img');
       const avatarDiv = document.getElementById('preview-avatar');
@@ -1885,18 +2152,74 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       // Tag & Karaoke Badge
       const tagEl = document.getElementById('preview-tag');
-      tagEl.textContent = slide.tag || 'SLIDE ' + (currentSlideIdx + 1);
+      const badgeIcon = theme.badgeIcon ? '<span class="mr-1">' + theme.badgeIcon + '</span>' : '';
+      tagEl.innerHTML = badgeIcon + escapeHtml(slide.tag || ('0' + (currentSlideIdx + 1)));
       tagEl.style.backgroundColor = theme.tagBg;
       tagEl.style.borderColor = theme.tagBorder;
       tagEl.style.color = theme.tagText;
+      tagEl.style.borderRadius = themeKey === 'brutalist' ? '0px' : '9999px';
 
-      // Headline & Body
+      // Archetype Kicker Bar (Nordic chapter / Terminal window bar / Brutalist frame header)
+      const kickerBar = document.getElementById('preview-kicker-bar');
+      if (kickerBar) {
+        if (themeKey === 'terminal') {
+          const slugBrand = (reelState.brand || 'app').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+          kickerBar.className = 'flex items-center justify-between px-2.5 py-1.5 rounded-t-xl bg-slate-900/95 border border-b-0 border-emerald-500/40 font-mono text-[9px] text-emerald-400 -mb-2.5';
+          kickerBar.innerHTML =
+            '<div class="flex items-center space-x-1">' +
+              '<span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>' +
+              '<span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>' +
+              '<span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>' +
+              '<span class="ml-1.5 text-slate-400">~/' + escapeHtml(slugBrand) + '/0' + (currentSlideIdx + 1) + '.sh</span>' +
+            '</div>' +
+            '<span>[0' + (currentSlideIdx + 1) + '/0' + reelState.slides.length + ']</span>';
+        } else if (themeKey === 'nordic') {
+          kickerBar.className = 'flex items-center space-x-2 text-[10px] tracking-widest uppercase text-amber-300/90 mb-1';
+          kickerBar.innerHTML =
+            '<span class="italic font-serif lowercase text-xs text-amber-200">kap. 0' + (currentSlideIdx + 1) + '</span>' +
+            '<span class="h-px flex-1 bg-gradient-to-r from-amber-500/40 to-transparent"></span>';
+        } else if (themeKey === 'brutalist') {
+          kickerBar.className = 'flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-yellow-400 mb-1';
+          kickerBar.innerHTML =
+            '<span>+ ' + escapeHtml(slide.tag || 'RAW') + ' +</span>' +
+            '<span class="px-1.5 py-0.5 bg-white text-black">0' + (currentSlideIdx + 1) + '</span>';
+        } else {
+          kickerBar.className = 'hidden';
+          kickerBar.innerHTML = '';
+        }
+      }
+
+      // Headline & Body with Dynamic Archetype Typography & Keyword Highlighting
       const headlineEl = document.getElementById('preview-headline');
       const bodyEl = document.getElementById('preview-body');
-      headlineEl.textContent = slide.headline;
+      const stageCard = document.getElementById('preview-stage-card');
+      headlineEl.innerHTML = formatHighlightedHtml(slide.headline, slide.highlightWords, theme.highlightClass);
       headlineEl.style.color = theme.text;
-      bodyEl.textContent = slide.body;
+      headlineEl.style.fontFamily = theme.fontHead || 'system-ui, -apple-system, sans-serif';
+      headlineEl.style.textAlign = slideType === 'cta' ? 'center' : 'left';
+
+      bodyEl.textContent = (themeKey === 'terminal' ? '> ' : '') + (slide.body || '');
       bodyEl.style.color = theme.subtext;
+      bodyEl.style.fontFamily = theme.fontBody || 'system-ui, -apple-system, sans-serif';
+      bodyEl.style.textAlign = slideType === 'cta' ? 'center' : 'left';
+
+      // Per-Slide-Role & Archetype Stage Card Styling
+      if (stageCard) {
+        const shouldFrameStage = themeKey === 'terminal' || themeKey === 'brutalist' || slideType === 'problem' || (themeKey === 'bento' && slideType !== 'hook');
+        if (shouldFrameStage) {
+          stageCard.style.background = theme.cardBg || 'rgba(255,255,255,0.06)';
+          stageCard.style.border = theme.cardBorder || '1px solid rgba(255,255,255,0.14)';
+          stageCard.style.boxShadow = theme.cardShadow || 'none';
+          stageCard.style.padding = '12px';
+          stageCard.style.borderRadius = themeKey === 'brutalist' ? '0px' : (themeKey === 'terminal' ? '0 0 14px 14px' : '18px');
+        } else {
+          stageCard.style.background = 'transparent';
+          stageCard.style.border = 'none';
+          stageCard.style.boxShadow = 'none';
+          stageCard.style.padding = '0px';
+          stageCard.style.borderRadius = '0px';
+        }
+      }
 
       // Stat card
       const statCard = document.getElementById('preview-stat-card');
@@ -1907,11 +2230,31 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         statCard.classList.remove('hidden');
         statCard.style.backgroundColor = theme.statBg;
         statCard.style.borderColor = theme.statBorder;
+        statCard.style.borderRadius = themeKey === 'brutalist' ? '0px' : '16px';
         statVal.textContent = slide.stat;
         statVal.style.color = theme.statColor;
+        statVal.style.fontFamily = theme.fontHead || 'system-ui, -apple-system, sans-serif';
         statLabel.textContent = slide.statLabel || 'METRIC';
+        statLabel.style.color = theme.text;
       } else {
         statCard.classList.add('hidden');
+      }
+
+      // Climax CTA Card (Visible on Slide 4 / 'cta' slideType)
+      const ctaCard = document.getElementById('preview-cta-card');
+      const ctaBtn = document.getElementById('preview-cta-button');
+      const ctaBtnText = document.getElementById('preview-cta-button-text');
+      if (ctaCard && ctaBtn && ctaBtnText) {
+        if (slideType === 'cta') {
+          ctaCard.classList.remove('hidden');
+          ctaBtnText.textContent = reelState.cta || 'Learn more';
+          ctaBtn.style.borderRadius = themeKey === 'brutalist' ? '0px' : '16px';
+          ctaBtn.style.background = theme.statColor || '#38bdf8';
+          ctaBtn.style.color = (themeKey === 'brutalist' || themeKey === 'nordic' || themeKey === 'terminal' || themeKey === 'creator') ? '#090d16' : '#ffffff';
+          ctaBtn.style.border = themeKey === 'brutalist' ? '2px solid #ffffff' : 'none';
+        } else {
+          ctaCard.classList.add('hidden');
+        }
       }
 
       // Apply Visual Layout template styling (classic, split, iphone, editorial)
@@ -1924,6 +2267,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       if (watermark) {
         if (layout === 'editorial') {
           watermark.textContent = slide.stat || ('0' + (currentSlideIdx + 1));
+          watermark.style.fontFamily = theme.fontHead || 'serif';
+          watermark.style.color = isLight ? 'rgba(15, 23, 42, 0.07)' : 'rgba(255, 255, 255, 0.08)';
           watermark.classList.remove('hidden');
         } else {
           watermark.classList.add('hidden');
@@ -1932,15 +2277,17 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       if (contentBox) {
         if (layout === 'editorial') {
-          contentBox.style.borderLeft = '4px solid ' + (theme.statColor || '#38bdf8');
+          contentBox.style.borderLeft = (themeKey === 'brutalist' ? '5px solid ' : '3px solid ') + (theme.statColor || '#38bdf8');
           contentBox.style.paddingLeft = '12px';
           contentBox.style.background = 'transparent';
+          contentBox.style.borderTop = 'none';
+          contentBox.style.borderRadius = '0px';
         } else if (layout === 'split') {
           contentBox.style.borderLeft = 'none';
           contentBox.style.paddingLeft = '0px';
-          contentBox.style.background = 'rgba(9, 13, 22, 0.72)';
+          contentBox.style.background = isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(9, 13, 22, 0.72)';
           contentBox.style.padding = '12px';
-          contentBox.style.borderRadius = '16px';
+          contentBox.style.borderRadius = themeKey === 'brutalist' ? '0px' : '16px';
           contentBox.style.borderTop = '3px solid ' + (theme.statColor || '#38bdf8');
         } else {
           contentBox.style.borderLeft = 'none';
@@ -1956,7 +2303,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           srCard.className = 'mx-auto w-40 rounded-[26px] border-4 border-slate-600 bg-slate-950 shadow-2xl overflow-hidden transition-all duration-300';
           browserBar.innerHTML = '<div class="mx-auto w-12 h-2.5 bg-black rounded-full my-0.5"></div>';
         } else {
-          srCard.className = 'rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300';
+          srCard.className = (themeKey === 'brutalist' ? 'rounded-none border-2 border-white' : 'rounded-xl border border-white/20') + ' bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md transition-all duration-300';
           browserBar.innerHTML = '<div class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span></div><span id="preview-browser-url" class="font-mono text-slate-400 truncate max-w-[140px]">tailprint.com</span>';
         }
       }
@@ -2175,9 +2522,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           if (data.script.theme) {
             setReelTheme(data.script.theme);
           }
+          if (data.script.layout) {
+            setReelLayout(data.script.layout);
+          }
           if (data.script.screenrecordUrl) {
             reelState.screenrecordUrl = data.script.screenrecordUrl;
-            reelState.screenrecordMode = 'inset';
+            setScreenrecordMode(data.script.screenrecordMode || 'inset');
+          } else {
+            reelState.screenrecordUrl = '';
+            setScreenrecordMode('none');
           }
 
           document.getElementById('reel-brand').value = reelState.brand;
@@ -2454,7 +2807,24 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       } else {
         // Gradient
         const grad = ctx.createLinearGradient(0, 0, W, H);
-        if (reelState.theme === 'brand' && reelState.brandColors) {
+        if (reelState.theme === 'nordic') {
+          grad.addColorStop(0, '#101726');
+          grad.addColorStop(0.5, '#0e141f');
+          grad.addColorStop(1, '#080c14');
+        } else if (reelState.theme === 'bento') {
+          grad.addColorStop(0, '#070b14');
+          grad.addColorStop(1, '#020408');
+        } else if (reelState.theme === 'brutalist') {
+          grad.addColorStop(0, '#000000');
+          grad.addColorStop(1, '#000000');
+        } else if (reelState.theme === 'creator') {
+          grad.addColorStop(0, '#1c082c');
+          grad.addColorStop(0.5, '#120420');
+          grad.addColorStop(1, '#08020e');
+        } else if (reelState.theme === 'terminal') {
+          grad.addColorStop(0, '#080c14');
+          grad.addColorStop(1, '#04070a');
+        } else if (reelState.theme === 'brand' && reelState.brandColors) {
           grad.addColorStop(0, reelState.brandColors.primary);
           grad.addColorStop(1, reelState.brandColors.secondary);
         } else if (reelState.theme === 'cyberpunk') {
@@ -2479,11 +2849,80 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         ctx.fillRect(0, 0, W, H);
 
         // Radial glow
-        const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
-        radial.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
-        radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = radial;
-        ctx.fillRect(0, 0, W, H);
+        if (reelState.theme === 'nordic') {
+          const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
+          radial.addColorStop(0, 'rgba(217, 119, 6, 0.18)');
+          radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = radial;
+          ctx.fillRect(0, 0, W, H);
+        } else if (reelState.theme === 'bento') {
+          const radial = ctx.createRadialGradient(W * 0.5, H * 0.1, 50, W * 0.5, H * 0.1, 700);
+          radial.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+          radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = radial;
+          ctx.fillRect(0, 0, W, H);
+        } else if (reelState.theme === 'terminal') {
+          const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
+          radial.addColorStop(0, 'rgba(52, 211, 153, 0.2)');
+          radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = radial;
+          ctx.fillRect(0, 0, W, H);
+        } else if (reelState.theme === 'creator') {
+          const radial = ctx.createRadialGradient(W * 0.2, H * 0.2, 50, W * 0.2, H * 0.2, 600);
+          radial.addColorStop(0, 'rgba(244, 63, 94, 0.25)');
+          radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = radial;
+          ctx.fillRect(0, 0, W, H);
+        } else if (reelState.theme !== 'brutalist') {
+          const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
+          radial.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+          radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = radial;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+
+      const themeKey = reelState.theme || 'brand';
+      const isLight = themeKey === 'clean';
+      const fontHead = theme.fontHead || 'system-ui, -apple-system, sans-serif';
+      const fontBody = theme.fontBody || 'system-ui, -apple-system, sans-serif';
+      const slideType = slide.slideType || (slideIdx === 0 ? 'hook' : slideIdx === 1 ? 'problem' : slideIdx === 2 ? 'stat' : 'cta');
+      const cardRadius = themeKey === 'brutalist' ? 0 : 28;
+
+      // Archetype Stage Backdrop Chrome
+      if (themeKey === 'terminal') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(52, 211, 153, 0.05)';
+        ctx.lineWidth = 1;
+        for (let gx = 0; gx < W; gx += 40) {
+          ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+        }
+        for (let gy = 0; gy < H; gy += 40) {
+          ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+        }
+        ctx.restore();
+      } else if (themeKey === 'brutalist') {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.10)';
+        for (let gx = 24; gx < W; gx += 32) {
+          for (let gy = 24; gy < H; gy += 32) {
+            ctx.fillRect(gx, gy, 2, 2);
+          }
+        }
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.font = '900 30px ' + fontHead;
+        ctx.textAlign = 'left';
+        ctx.fillText('+', 34, 52);
+        ctx.fillText('+', W - 56, 52);
+        ctx.fillText('+', 34, H - 30);
+        ctx.fillText('+', W - 56, H - 30);
+        ctx.restore();
+      } else if (themeKey === 'nordic') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.18)';
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, 38, 38, W - 76, H - 76, 22, false, true);
+        ctx.restore();
       }
 
       // 2. Progress bars (Skipped in clean video export mode)
@@ -2499,8 +2938,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
         for (let i = 0; i < totalSlides; i++) {
           const x = barMargin + i * (singleBarWidth + barSpacing);
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-          roundRect(ctx, x, barTop, singleBarWidth, barHeight, 4, true, false);
+          ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.16)' : 'rgba(255, 255, 255, 0.2)';
+          roundRect(ctx, x, barTop, singleBarWidth, barHeight, themeKey === 'brutalist' ? 0 : 4, true, false);
 
           let fillW = 0;
           if (i < slideIdx) {
@@ -2509,8 +2948,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             fillW = singleBarWidth * slideProgress;
           }
           if (fillW > 0) {
-            ctx.fillStyle = '#ffffff';
-            roundRect(ctx, x, barTop, fillW, barHeight, 4, true, false);
+            ctx.fillStyle = themeKey === 'brutalist' ? '#facc15' : (isLight ? '#0f172a' : '#ffffff');
+            roundRect(ctx, x, barTop, fillW, barHeight, themeKey === 'brutalist' ? 0 : 4, true, false);
           }
         }
       }
@@ -2525,37 +2964,37 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const logoImg = document.getElementById('preview-logo-img');
       if (logoImg && logoImg.complete && logoImg.naturalWidth > 0 && !logoImg.classList.contains('hidden')) {
         ctx.save();
-        roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, 20, false, false);
+        roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, themeKey === 'brutalist' ? 0 : 20, false, false);
         ctx.clip();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.12)';
         ctx.fillRect(barMargin, headerY, avatarSize, avatarSize);
         ctx.drawImage(logoImg, barMargin, headerY, avatarSize, avatarSize);
         ctx.restore();
       } else {
-        ctx.fillStyle = '#6366f1';
-        roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, 22, true, false);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold ' + (avatarSize === 80 ? '36px' : '32px') + ' system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = themeKey === 'brutalist' ? '#facc15' : '#6366f1';
+        roundRect(ctx, barMargin, headerY, avatarSize, avatarSize, themeKey === 'brutalist' ? 0 : 22, true, false);
+        ctx.fillStyle = themeKey === 'brutalist' ? '#000000' : '#ffffff';
+        ctx.font = 'bold ' + (avatarSize === 80 ? '36px ' : '32px ') + fontHead;
         ctx.textAlign = 'center';
         ctx.fillText(reelState.brand.slice(0, 2).toUpperCase(), barMargin + avatarSize / 2, headerY + (avatarSize * 0.65));
       }
 
       // Brand text
       ctx.textAlign = 'left';
-      ctx.font = 'bold ' + (avatarSize === 80 ? '38px' : '34px') + ' system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold ' + (avatarSize === 80 ? '38px ' : '34px ') + fontHead;
       ctx.fillStyle = theme.text;
       ctx.fillText(reelState.brand, barMargin + avatarSize + 20, headerY + (avatarSize * 0.48));
 
-      ctx.font = '500 24px monospace';
+      ctx.font = '500 24px ' + fontBody;
       ctx.fillStyle = theme.subtext;
       ctx.fillText(reelState.handle, barMargin + avatarSize + 20, headerY + (avatarSize * 0.88));
 
       // Tag Pill
-      const tagText = (slide.tag || 'HOOK').toUpperCase();
-      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+      const tagText = (theme.badgeIcon ? theme.badgeIcon + ' ' : '') + (slide.tag || 'HOOK').toUpperCase();
+      ctx.font = 'bold 22px ' + fontBody;
       const tagWidth = ctx.measureText(tagText).width + 48;
       ctx.fillStyle = theme.tagBg;
-      roundRect(ctx, W - barMargin - tagWidth, headerY + 10, tagWidth, 50, 25, true, false);
+      roundRect(ctx, W - barMargin - tagWidth, headerY + 10, tagWidth, 50, themeKey === 'brutalist' ? 0 : 25, true, false);
       ctx.fillStyle = theme.tagText;
       ctx.textAlign = 'center';
       ctx.fillText(tagText, W - barMargin - tagWidth / 2, headerY + 43);
@@ -2566,12 +3005,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const totalW = hWords + bWords;
       const layout = reelState.layout || 'classic';
       const hasInsetVid = !!(reelState.screenrecordUrl && reelState.screenrecordMode === 'inset' && exportVid && exportVid.readyState >= 2);
+      const hiWords = Array.isArray(slide.highlightWords) ? slide.highlightWords : [];
 
       if (layout === 'editorial' && aspect === '9:16') {
         const watermark = slide.stat || ('0' + (slideIdx + 1));
         ctx.save();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-        ctx.font = '900 280px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.06)';
+        ctx.font = '900 280px ' + fontHead;
         ctx.textAlign = 'left';
         ctx.fillText(watermark, barMargin - 10, H * 0.45);
         ctx.restore();
@@ -2579,25 +3019,34 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         const editX = barMargin + 42;
         const editW = W - editX - barMargin;
         ctx.fillStyle = theme.statColor || '#38bdf8';
-        roundRect(ctx, barMargin, 410, 12, 680, 6, true, false);
+        roundRect(ctx, barMargin, 410, themeKey === 'brutalist' ? 16 : 12, 680, themeKey === 'brutalist' ? 0 : 6, true, false);
+
+        if (themeKey === 'nordic') {
+          ctx.save();
+          ctx.fillStyle = theme.statColor || '#fbbf24';
+          ctx.font = 'italic 600 26px ' + fontHead;
+          ctx.textAlign = 'left';
+          ctx.fillText('kap. 0' + (slideIdx + 1), editX, 415);
+          ctx.restore();
+        }
 
         ctx.textAlign = 'left';
-        ctx.font = '900 68px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.headline, editX, 480, editW, 86, 0, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '900 68px ' + fontHead;
+        drawKaraokeText(ctx, slide.headline, editX, 480, editW, 86, 0, totalW, slideProgress, theme, hiWords, themeKey);
 
         let bodyY = 820;
         if (slide.stat) {
-          ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+          ctx.font = '900 84px ' + fontHead;
           const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, editX, 895);
-          ctx.font = 'bold 30px system-ui, -apple-system, sans-serif';
+          ctx.font = 'bold 30px ' + fontBody;
           ctx.fillStyle = theme.text;
           ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), editX + statW + 30, 885);
           bodyY = 1010;
         }
-        ctx.font = '500 38px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.body, editX, bodyY, editW, 60, hWords, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '500 38px ' + fontBody;
+        drawKaraokeText(ctx, slide.body, editX, bodyY, editW, 60, hWords, totalW, slideProgress, theme, [], themeKey);
 
       } else if (layout === 'split' && aspect === '9:16') {
         const splitY = Math.round(H * 0.43);
@@ -2605,32 +3054,32 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         if (hasInsetVid) {
           ctx.drawImage(exportVid, 0, 220, W, splitY - 220);
         } else {
-          ctx.fillStyle = 'rgba(9, 13, 22, 0.35)';
+          ctx.fillStyle = isLight ? 'rgba(226, 232, 240, 0.7)' : 'rgba(9, 13, 22, 0.35)';
           ctx.fillRect(0, 220, W, splitY - 220);
           ctx.fillStyle = theme.statColor || '#38bdf8';
-          ctx.font = '900 120px system-ui, -apple-system, sans-serif';
+          ctx.font = '900 120px ' + fontHead;
           ctx.textAlign = 'center';
           ctx.fillText(slide.stat || ('0' + (slideIdx + 1)), W / 2, splitY - 190);
         }
         ctx.fillStyle = theme.statColor || '#38bdf8';
         ctx.fillRect(0, splitY - 3, W, 6);
-        ctx.fillStyle = 'rgba(9, 13, 22, 0.85)';
+        ctx.fillStyle = isLight ? 'rgba(248, 250, 252, 0.92)' : 'rgba(9, 13, 22, 0.85)';
         ctx.fillRect(0, splitY + 3, W, H - splitY);
         ctx.restore();
 
         ctx.textAlign = 'left';
-        ctx.font = '900 62px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.headline, barMargin, splitY + 110, W - (barMargin * 2), 78, 0, totalW, slideProgress, theme, reelState.karaoke);
-        ctx.font = '500 38px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.body, barMargin, splitY + 380, W - (barMargin * 2), 58, hWords, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '900 62px ' + fontHead;
+        drawKaraokeText(ctx, slide.headline, barMargin, splitY + 110, W - (barMargin * 2), 78, 0, totalW, slideProgress, theme, hiWords, themeKey);
+        ctx.font = '500 38px ' + fontBody;
+        drawKaraokeText(ctx, slide.body, barMargin, splitY + 380, W - (barMargin * 2), 58, hWords, totalW, slideProgress, theme, [], themeKey);
 
       } else if (layout === 'iphone' && aspect === '9:16') {
         ctx.textAlign = 'left';
-        ctx.font = '900 52px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.headline, barMargin, 285, W - (barMargin * 2), 66, 0, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '900 52px ' + fontHead;
+        drawKaraokeText(ctx, slide.headline, barMargin, 285, W - (barMargin * 2), 66, 0, totalW, slideProgress, theme, hiWords, themeKey);
 
         const pW = 440, pH = 740, pX = (W - pW) / 2, pY = 430;
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = themeKey === 'brutalist' ? '#facc15' : '#334155';
         roundRect(ctx, pX - 10, pY - 10, pW + 20, pH + 20, 64, true, false);
         ctx.fillStyle = '#090d16';
         roundRect(ctx, pX, pY, pW, pH, 54, true, false);
@@ -2642,7 +3091,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ctx.restore();
         } else {
           ctx.fillStyle = theme.statColor || '#38bdf8';
-          ctx.font = '900 84px system-ui, -apple-system, sans-serif';
+          ctx.font = '900 84px ' + fontHead;
           ctx.textAlign = 'center';
           ctx.fillText(slide.stat || ('0' + (slideIdx + 1)), W / 2, pY + pH * 0.5);
         }
@@ -2650,99 +3099,129 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         roundRect(ctx, W / 2 - 65, pY + 20, 130, 32, 16, true, false);
 
         ctx.textAlign = 'left';
-        ctx.font = '500 36px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.body, barMargin, pY + pH + 85, W - (barMargin * 2), 54, hWords, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '500 36px ' + fontBody;
+        drawKaraokeText(ctx, slide.body, barMargin, pY + pH + 85, W - (barMargin * 2), 54, hWords, totalW, slideProgress, theme, [], themeKey);
 
       } else if (aspect === '16:9') {
         // 2-Column Wide Cinematic Layout
         ctx.textAlign = 'left';
-        ctx.font = '900 58px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.headline, barMargin, 290, 820, 74, 0, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '900 58px ' + fontHead;
+        drawKaraokeText(ctx, slide.headline, barMargin, 290, 820, 74, 0, totalW, slideProgress, theme, hiWords, themeKey);
 
         if (slide.stat) {
           ctx.fillStyle = theme.statBg;
-          roundRect(ctx, barMargin, 580, 820, 140, 28, true, false);
+          roundRect(ctx, barMargin, 580, 820, 140, cardRadius, true, false);
 
-          ctx.font = '900 78px system-ui, -apple-system, sans-serif';
+          ctx.font = '900 78px ' + fontHead;
           const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, barMargin + 40, 680);
 
-          ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+          ctx.font = 'bold 28px ' + fontBody;
           ctx.fillStyle = theme.text;
           ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), barMargin + 40 + statW + 30, 670);
         }
 
         // Right Column Body Text
-        ctx.font = '500 36px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.body, W / 2 + 30, 310, W / 2 - barMargin - 40, 58, hWords, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '500 36px ' + fontBody;
+        drawKaraokeText(ctx, slide.body, W / 2 + 30, 310, W / 2 - barMargin - 40, 58, hWords, totalW, slideProgress, theme, [], themeKey);
 
       } else if (aspect === '1:1') {
         // Square Post Layout
         ctx.textAlign = 'left';
-        ctx.font = '900 52px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.headline, barMargin, 270, W - (barMargin * 2), 68, 0, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '900 52px ' + fontHead;
+        drawKaraokeText(ctx, slide.headline, barMargin, 270, W - (barMargin * 2), 68, 0, totalW, slideProgress, theme, hiWords, themeKey);
 
         let bodyY = 460;
         if (slide.stat) {
           ctx.fillStyle = theme.statBg;
-          roundRect(ctx, barMargin, 430, W - (barMargin * 2), 125, 24, true, false);
+          roundRect(ctx, barMargin, 430, W - (barMargin * 2), 125, cardRadius, true, false);
 
-          ctx.font = '900 70px system-ui, -apple-system, sans-serif';
+          ctx.font = '900 70px ' + fontHead;
           const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, barMargin + 35, 520);
 
-          ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+          ctx.font = 'bold 26px ' + fontBody;
           ctx.fillStyle = theme.text;
           ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + statW + 25, 510);
 
           bodyY = 620;
         }
 
-        ctx.font = '500 32px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 50, hWords, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '500 32px ' + fontBody;
+        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 50, hWords, totalW, slideProgress, theme, [], themeKey);
 
       } else if (aspect === '4:5') {
         // 4:5 Feed Portrait Layout
         ctx.textAlign = 'left';
-        ctx.font = '900 58px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.headline, barMargin, 320, W - (barMargin * 2), 76, 0, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '900 58px ' + fontHead;
+        drawKaraokeText(ctx, slide.headline, barMargin, 320, W - (barMargin * 2), 76, 0, totalW, slideProgress, theme, hiWords, themeKey);
 
         let bodyY = 540;
         if (slide.stat) {
           ctx.fillStyle = theme.statBg;
-          roundRect(ctx, barMargin, 530, W - (barMargin * 2), 135, 28, true, false);
+          roundRect(ctx, barMargin, 530, W - (barMargin * 2), 135, cardRadius, true, false);
 
-          ctx.font = '900 76px system-ui, -apple-system, sans-serif';
+          ctx.font = '900 76px ' + fontHead;
           const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
           ctx.fillText(slide.stat, barMargin + 35, 625);
 
-          ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+          ctx.font = 'bold 28px ' + fontBody;
           ctx.fillStyle = theme.text;
           ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 35 + statW + 30, 615);
 
           bodyY = 740;
         }
 
-        ctx.font = '500 34px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 54, hWords, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '500 34px ' + fontBody;
+        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 54, hWords, totalW, slideProgress, theme, [], themeKey);
 
       } else {
-        // 9:16 Full Vertical Reel (Classic Card with optional Inset Browser Window)
-        ctx.textAlign = 'left';
-        ctx.font = '900 ' + (hasInsetVid ? '58px' : '68px') + ' system-ui, -apple-system, sans-serif';
-        const hRes = drawKaraokeText(ctx, slide.headline, barMargin, hasInsetVid ? 320 : 480, W - (barMargin * 2), hasInsetVid ? 74 : 88, 0, totalW, slideProgress, theme, reelState.karaoke);
+        // 9:16 Full Vertical Reel (Classic Card with Archetype Chrome & Slide-Role Framing)
+        const shouldCardFrame = (themeKey === 'terminal' || themeKey === 'brutalist' || slideType === 'problem') && !hasInsetVid;
+        const innerPad = shouldCardFrame ? 36 : 0;
 
-        let curY = hasInsetVid ? Math.max(460, hRes.endY + 20) : 800;
+        if (shouldCardFrame) {
+          ctx.save();
+          if (themeKey === 'brutalist') {
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(barMargin + 10, 386, W - (barMargin * 2), 620);
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(barMargin, 376, W - (barMargin * 2), 620);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(barMargin, 376, W - (barMargin * 2), 620);
+          } else {
+            ctx.fillStyle = theme.cardBg || 'rgba(15, 23, 42, 0.85)';
+            roundRect(ctx, barMargin, 376, W - (barMargin * 2), 620, 28, true, false);
+            ctx.strokeStyle = theme.statBorder || 'rgba(255, 255, 255, 0.16)';
+            ctx.lineWidth = 2;
+            roundRect(ctx, barMargin, 376, W - (barMargin * 2), 620, 28, false, true);
+            if (themeKey === 'terminal') {
+              ctx.fillStyle = 'rgba(15, 23, 42, 0.98)';
+              roundRect(ctx, barMargin + 2, 378, W - (barMargin * 2) - 4, 42, 24, true, false);
+              ctx.fillStyle = '#f43f5e'; ctx.beginPath(); ctx.arc(barMargin + 26, 399, 6, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(barMargin + 46, 399, 6, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#34d399'; ctx.beginPath(); ctx.arc(barMargin + 66, 399, 6, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+          ctx.restore();
+        }
+
+        ctx.textAlign = 'left';
+        ctx.font = '900 ' + (hasInsetVid ? '58px ' : '68px ') + fontHead;
+        const hRes = drawKaraokeText(ctx, slide.headline, barMargin + innerPad, hasInsetVid ? 320 : 480, W - ((barMargin + innerPad) * 2), hasInsetVid ? 74 : 88, 0, totalW, slideProgress, theme, hiWords, themeKey);
+
+        let curY = hasInsetVid ? Math.max(460, hRes.endY + 20) : Math.max(760, hRes.endY + 24);
         if (hasInsetVid) {
           const winW = W - (barMargin * 2);
           const winH = 420;
           ctx.save();
           ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-          roundRect(ctx, barMargin, curY, winW, winH, 28, true, false);
-          roundRect(ctx, barMargin, curY, winW, winH, 28, false, false);
+          roundRect(ctx, barMargin, curY, winW, winH, cardRadius, true, false);
+          roundRect(ctx, barMargin, curY, winW, winH, cardRadius, false, false);
           ctx.clip();
           ctx.fillStyle = 'rgba(30, 41, 59, 0.95)';
           ctx.fillRect(barMargin, curY, winW, 42);
@@ -2755,29 +3234,29 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         if (slide.stat) {
           const boxH = hasInsetVid ? 128 : 150;
           ctx.fillStyle = theme.statBg;
-          roundRect(ctx, barMargin, curY, W - (barMargin * 2), boxH, 32, true, false);
+          roundRect(ctx, barMargin + innerPad, curY, W - ((barMargin + innerPad) * 2), boxH, cardRadius, true, false);
 
-          ctx.font = '900 ' + (hasInsetVid ? '70px' : '84px') + ' system-ui, -apple-system, sans-serif';
+          ctx.font = '900 ' + (hasInsetVid ? '70px ' : '84px ') + fontHead;
           const statW = ctx.measureText(slide.stat).width;
           ctx.fillStyle = theme.statColor;
-          ctx.fillText(slide.stat, barMargin + 40, curY + (hasInsetVid ? 90 : 105));
+          ctx.fillText(slide.stat, barMargin + innerPad + 40, curY + (hasInsetVid ? 90 : 105));
 
-          ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+          ctx.font = 'bold 32px ' + fontBody;
           ctx.fillStyle = theme.text;
-          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + 40 + statW + 40, curY + (hasInsetVid ? 80 : 95));
+          ctx.fillText((slide.statLabel || 'GROWTH').toUpperCase(), barMargin + innerPad + 40 + statW + 40, curY + (hasInsetVid ? 80 : 95));
 
           bodyY = curY + boxH + (hasInsetVid ? 70 : 90);
         }
 
-        ctx.font = '500 38px system-ui, -apple-system, sans-serif';
-        drawKaraokeText(ctx, slide.body, barMargin, bodyY, W - (barMargin * 2), 60, hWords, totalW, slideProgress, theme, reelState.karaoke);
+        ctx.font = '500 38px ' + fontBody;
+        drawKaraokeText(ctx, (themeKey === 'terminal' ? '> ' : '') + (slide.body || ''), barMargin + innerPad, bodyY, W - ((barMargin + innerPad) * 2), 60, hWords, totalW, slideProgress, theme, [], themeKey);
       }
 
       // 5. Footer CTA
       const footerY = aspect === '16:9' ? H - 70 : aspect === '1:1' ? H - 70 : aspect === '4:5' ? H - 90 : H - 120;
 
       if (!isClean) {
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.15)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(barMargin, footerY - 40);
@@ -2789,13 +3268,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         ctx.arc(barMargin + 15, footerY, 12, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 28px ' + fontBody;
         ctx.fillStyle = theme.text;
         ctx.textAlign = 'left';
         ctx.fillText(reelState.cta, barMargin + 40, footerY + 10);
 
         ctx.textAlign = 'right';
-        ctx.font = 'bold 26px monospace';
+        ctx.font = 'bold 26px ' + fontBody;
         ctx.fillStyle = theme.subtext;
         ctx.fillText((slideIdx + 1) + ' / ' + totalSlides, W - barMargin, footerY + 10);
       } else {
@@ -2803,28 +3282,28 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         if (reelState.cta) {
           ctx.save();
           const ctaText = reelState.cta;
-          ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+          ctx.font = 'bold 28px ' + fontBody;
           const textW = ctx.measureText(ctaText).width;
           const pillH = 58;
           const pillW = Math.min(W - (barMargin * 2), textW + 68);
           const pillX = barMargin;
           const pillY = footerY - 26;
+          const pillR = themeKey === 'brutalist' ? 0 : 29;
 
-          // Frosted glass background pill
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-          roundRect(ctx, pillX, pillY, pillW, pillH, 29, true, false);
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
-          ctx.lineWidth = 1.5;
-          roundRect(ctx, pillX, pillY, pillW, pillH, 29, false, true);
+          ctx.fillStyle = themeKey === 'brutalist' ? '#facc15' : (isLight ? '#0f172a' : 'rgba(255, 255, 255, 0.12)');
+          roundRect(ctx, pillX, pillY, pillW, pillH, pillR, true, false);
+          ctx.strokeStyle = themeKey === 'brutalist' ? '#ffffff' : (isLight ? '#0f172a' : 'rgba(255, 255, 255, 0.22)');
+          ctx.lineWidth = themeKey === 'brutalist' ? 3 : 1.5;
+          roundRect(ctx, pillX, pillY, pillW, pillH, pillR, false, true);
 
           // Green live dot
-          ctx.fillStyle = '#10b981';
+          ctx.fillStyle = themeKey === 'brutalist' ? '#000000' : '#10b981';
           ctx.beginPath();
           ctx.arc(pillX + 26, pillY + pillH / 2, 8, 0, Math.PI * 2);
           ctx.fill();
 
           // CTA text
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = themeKey === 'brutalist' ? '#000000' : '#ffffff';
           ctx.textAlign = 'left';
           ctx.fillText(ctaText, pillX + 46, pillY + 39);
           ctx.restore();
@@ -2832,16 +3311,26 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
     }
 
-    // Canvas drawKaraokeText helper (draws wrapped text cleanly without kinetic highlight)
-    function drawKaraokeText(ctx, text, startX, startY, maxWidth, lineHeight, wordOffset, totalWords, slideProgress, theme) {
+    // Canvas drawKaraokeText helper (supports keyword highlighting on headlines when highlightWords provided)
+    function drawKaraokeText(ctx, text, startX, startY, maxWidth, lineHeight, wordOffset, totalWords, slideProgress, theme, highlightWords, themeKey) {
       if (!text) return { endY: startY, wordCount: 0 };
       const words = text.split(' ').filter(Boolean);
       if (words.length === 0) return { endY: startY, wordCount: 0 };
 
+      const hiSet = new Set();
+      if (Array.isArray(highlightWords)) {
+        highlightWords.forEach(function(ph) {
+          String(ph || '').toLowerCase().split(/\s+/).forEach(function(w) {
+            const clean = w.replace(/[^a-zæøåäöü0-9-]/gi, '');
+            if (clean.length >= 3) hiSet.add(clean);
+          });
+        });
+      }
+
       let curX = startX;
       let curY = startY;
       const spaceWidth = ctx.measureText(' ').width;
-      ctx.fillStyle = wordOffset > 0 ? (theme.subtext || '#cbd5e1') : (theme.text || '#ffffff');
+      const baseColor = wordOffset > 0 ? (theme.subtext || '#cbd5e1') : (theme.text || '#ffffff');
 
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
@@ -2850,7 +3339,24 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           curX = startX;
           curY += lineHeight;
         }
-        ctx.fillText(word, curX, curY);
+        const cleanTok = word.toLowerCase().replace(/[^a-zæøåäöü0-9-]/gi, '');
+        if (wordOffset === 0 && cleanTok.length >= 3 && hiSet.has(cleanTok)) {
+          ctx.save();
+          if (themeKey === 'brutalist') {
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(curX - 6, curY - lineHeight * 0.68, wordWidth + 12, lineHeight * 0.85);
+            ctx.fillStyle = '#000000';
+          } else {
+            ctx.fillStyle = (theme.statColor || '#38bdf8') + '2e';
+            roundRect(ctx, curX - 6, curY - lineHeight * 0.68, wordWidth + 12, lineHeight * 0.85, 8, true, false);
+            ctx.fillStyle = themeKey === 'nordic' ? '#fde68a' : (themeKey === 'clean' ? (theme.statColor || '#2563eb') : '#ffffff');
+          }
+          ctx.fillText(word, curX, curY);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = baseColor;
+          ctx.fillText(word, curX, curY);
+        }
         curX += wordWidth + spaceWidth;
       }
 
@@ -2859,6 +3365,14 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     // Canvas roundRect helper
     function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      if (!radius || radius <= 0) {
+        ctx.beginPath();
+        ctx.rect(x, y, width, height);
+        ctx.closePath();
+        if (fill) ctx.fill();
+        if (stroke) ctx.stroke();
+        return;
+      }
       ctx.beginPath();
       ctx.moveTo(x + radius, y);
       ctx.lineTo(x + width - radius, y);
@@ -3336,6 +3850,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               brand: z.string(),
               handle: z.string().optional(),
               theme: z.string(),
+              layout: z.string().optional(),
               aspectRatio: z.string().optional(),
               screenrecordUrl: z.string().optional(),
               screenrecordMode: z.string().optional(),
@@ -3356,6 +3871,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                   body: z.string(),
                   stat: z.string().optional(),
                   statLabel: z.string().optional(),
+                  slideType: z.string().optional(),
+                  highlightWords: z.array(z.string()).optional(),
                 })
               ),
               cta: z.string(),
@@ -3484,7 +4001,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               accent: z.string(),
             })
             .optional(),
-          theme: z.enum(['brand', 'cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).default('brand'),
+          theme: z.enum(['brand', 'nordic', 'bento', 'brutalist', 'creator', 'terminal', 'cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).default('brand'),
           aspectRatio: z.enum(['9:16', '1:1', '16:9', '4:5']).optional().default('9:16'),
           screenrecordUrl: z.string().optional(),
           screenrecordMode: z.enum(['inset', 'backdrop', 'none']).optional().default('inset'),
@@ -3497,6 +4014,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
                 body: z.string(),
                 stat: z.string().optional(),
                 statLabel: z.string().optional(),
+                slideType: z.string().optional(),
+                highlightWords: z.array(z.string()).optional(),
               })
             )
             .min(1),
@@ -3878,6 +4397,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>${String(initialData.brand || 'Tailprint').replace(/</g, '&lt;').replace(/>/g, '&gt;')} - Live Reel Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&family=Plus+Jakarta+Sans:wght@500;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --sat: env(safe-area-inset-top, 0px);
@@ -4147,7 +4669,84 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     }
 
     const themeMaps = {
+      nordic: {
+        fontHead: "'Playfair Display', Georgia, serif",
+        fontBody: "'Inter', sans-serif",
+        bg: "radial-gradient(circle at 80% 20%, rgba(217, 119, 6, 0.14), transparent 55%), linear-gradient(165deg, #101726 0%, #0c111c 100%)",
+        text: "#fef3c7",
+        subtext: "#cbd5e1",
+        tagBg: "rgba(245, 158, 11, 0.14)",
+        tagBorder: "rgba(245, 158, 11, 0.35)",
+        tagText: "#fcd34d",
+        statBg: "rgba(16, 23, 38, 0.78)",
+        statBorder: "rgba(217, 119, 6, 0.35)",
+        statColor: "#fbbf24",
+        highlightClass: "bg-amber-400/20 text-amber-200 border-b-2 border-amber-400/70 px-1.5 py-0.5 rounded",
+        badgeIcon: "✦"
+      },
+      bento: {
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Plus Jakarta Sans', system-ui, sans-serif",
+        bg: "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.2), transparent 55%), linear-gradient(180deg, #070b14 0%, #030509 100%)",
+        text: "#ffffff",
+        subtext: "#cbd5e1",
+        tagBg: "rgba(14, 165, 233, 0.15)",
+        tagBorder: "rgba(56, 189, 248, 0.35)",
+        tagText: "#7dd3fc",
+        statBg: "rgba(255, 255, 255, 0.04)",
+        statBorder: "rgba(255, 255, 255, 0.14)",
+        statColor: "#38bdf8",
+        highlightClass: "bg-sky-500/20 text-sky-200 border border-sky-400/30 px-1.5 py-0.5 rounded-lg",
+        badgeIcon: "●"
+      },
+      brutalist: {
+        fontHead: "'Space Grotesk', monospace, sans-serif",
+        fontBody: "'Space Grotesk', monospace, sans-serif",
+        bg: "radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 0), #000000",
+        text: "#ffffff",
+        subtext: "#d4d4d8",
+        tagBg: "#facc15",
+        tagBorder: "#ffffff",
+        tagText: "#000000",
+        statBg: "#000000",
+        statBorder: "#ffffff",
+        statColor: "#facc15",
+        highlightClass: "bg-yellow-400 text-black font-black px-1.5 py-0.5 -rotate-1 inline-block",
+        badgeIcon: "⚡"
+      },
+      creator: {
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
+        bg: "radial-gradient(circle at 10% 20%, rgba(244, 63, 94, 0.25), transparent 45%), radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.25), transparent 45%), linear-gradient(135deg, #180828 0%, #080310 100%)",
+        text: "#ffffff",
+        subtext: "#fecdd3",
+        tagBg: "rgba(244, 63, 94, 0.25)",
+        tagBorder: "rgba(251, 146, 60, 0.5)",
+        tagText: "#fda4af",
+        statBg: "rgba(30, 15, 45, 0.75)",
+        statBorder: "rgba(244, 63, 94, 0.4)",
+        statColor: "#fbbf24",
+        highlightClass: "bg-gradient-to-r from-rose-500/30 to-amber-500/30 text-amber-200 border border-amber-400/40 rounded-lg px-1.5 py-0.5",
+        badgeIcon: "🔥"
+      },
+      terminal: {
+        fontHead: "'JetBrains Mono', monospace",
+        fontBody: "'JetBrains Mono', monospace",
+        bg: "linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px), #080c14",
+        text: "#34d399",
+        subtext: "#cbd5e1",
+        tagBg: "rgba(6, 78, 59, 0.85)",
+        tagBorder: "rgba(52, 211, 153, 0.45)",
+        tagText: "#34d399",
+        statBg: "rgba(10, 15, 26, 0.9)",
+        statBorder: "rgba(52, 211, 153, 0.35)",
+        statColor: "#34d399",
+        highlightClass: "bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-500/30",
+        badgeIcon: ">_"
+      },
       brand: {
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         bg: "linear-gradient(135deg, #4f46e5 0%, #090d16 100%)",
         text: "#ffffff",
         subtext: "rgba(226, 232, 240, 0.88)",
@@ -4156,9 +4755,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         tagText: "#ffffff",
         statBg: "rgba(255, 255, 255, 0.10)",
         statBorder: "rgba(255, 255, 255, 0.20)",
-        statColor: "#38bdf8"
+        statColor: "#38bdf8",
+        highlightClass: "bg-white/15 text-white border-b-2 border-white/50 px-1.5 py-0.5 rounded",
+        badgeIcon: "✨"
       },
       gradient: {
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         bg: "linear-gradient(135deg, #1e1b4b 0%, #2e1065 50%, #020617 100%)",
         text: "#ffffff",
         subtext: "rgba(233, 213, 255, 0.85)",
@@ -4167,9 +4770,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         tagText: "#a5b4fc",
         statBg: "rgba(99, 102, 241, 0.15)",
         statBorder: "rgba(99, 102, 241, 0.3)",
-        statColor: "#38bdf8"
+        statColor: "#38bdf8",
+        highlightClass: "bg-indigo-500/25 text-cyan-300 border-b-2 border-cyan-400/60 px-1.5 py-0.5 rounded",
+        badgeIcon: "✦"
       },
       cyberpunk: {
+        fontHead: "'Space Grotesk', monospace, sans-serif",
+        fontBody: "'JetBrains Mono', monospace",
         bg: "linear-gradient(135deg, #09090b 0%, #18181b 100%)",
         text: "#facc15",
         subtext: "#d4d4d8",
@@ -4178,9 +4785,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         tagText: "#fef08a",
         statBg: "rgba(24, 24, 27, 0.8)",
         statBorder: "rgba(250, 204, 21, 0.3)",
-        statColor: "#ec4899"
+        statColor: "#ec4899",
+        highlightClass: "bg-yellow-400/20 text-yellow-300 border border-yellow-400/50 px-1.5 py-0.5 rounded",
+        badgeIcon: "⚡"
       },
       midnight: {
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         bg: "linear-gradient(135deg, #022c22 0%, #000000 100%)",
         text: "#f0fdf4",
         subtext: "#86efac",
@@ -4189,9 +4800,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         tagText: "#6ee7b7",
         statBg: "rgba(0, 0, 0, 0.6)",
         statBorder: "rgba(16, 185, 129, 0.3)",
-        statColor: "#34d399"
+        statColor: "#34d399",
+        highlightClass: "bg-emerald-500/20 text-emerald-300 border-b-2 border-emerald-400/60 px-1.5 py-0.5 rounded",
+        badgeIcon: "●"
       },
       sunset: {
+        fontHead: "'Playfair Display', Georgia, serif",
+        fontBody: "'Inter', sans-serif",
         bg: "linear-gradient(135deg, #4c0519 0%, #030712 50%, #451a03 100%)",
         text: "#fff1f2",
         subtext: "#fecdd3",
@@ -4200,9 +4815,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         tagText: "#fda4af",
         statBg: "rgba(244, 63, 94, 0.15)",
         statBorder: "rgba(244, 63, 94, 0.3)",
-        statColor: "#fbbf24"
+        statColor: "#fbbf24",
+        highlightClass: "bg-rose-500/20 text-rose-200 border-b-2 border-rose-400/60 px-1.5 py-0.5 rounded",
+        badgeIcon: "🌅"
       },
       clean: {
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
         bg: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
         text: "#0f172a",
         subtext: "#475569",
@@ -4211,13 +4830,32 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         tagText: "#1d4ed8",
         statBg: "#ffffff",
         statBorder: "#cbd5e1",
-        statColor: "#2563eb"
+        statColor: "#2563eb",
+        highlightClass: "bg-blue-100 text-blue-900 border-b-2 border-blue-400 px-1.5 py-0.5 rounded",
+        badgeIcon: "✦"
       }
     };
 
     function escapeHtml(str) {
       if (!str) return '';
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function formatHighlightedHtml(text, highlightWords, markClass) {
+      if (!text) return '';
+      let formatted = escapeHtml(text);
+      const cls = markClass || 'bg-amber-400/20 text-amber-200 border-b-2 border-amber-400/60 px-1.5 py-0.5 rounded';
+      if (!highlightWords || !Array.isArray(highlightWords) || highlightWords.length === 0) return formatted;
+      for (let i = 0; i < highlightWords.length; i++) {
+        const word = highlightWords[i];
+        if (!word || String(word).trim().length < 2) continue;
+        const cleanWord = escapeHtml(String(word).trim()).replace(new RegExp('[.*+?^' + '\\$' + '{}()|[\\]\\\\]', 'g'), '\\$&');
+        try {
+          const regex = new RegExp('(\\\\b' + cleanWord + '\\\\b)', 'gi');
+          formatted = formatted.replace(regex, '<mark class="' + cls + '">$1</mark>');
+        } catch (e) {}
+      }
+      return formatted;
     }
 
     // Touch & Tap Gestures (Like Instagram Stories)
@@ -4347,17 +4985,20 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
 
       const tagEl = document.getElementById('mobile-tag');
-      tagEl.textContent = slide.tag || 'SLIDE ' + (currentSlideIdx + 1);
+      const badgeIcon = theme.badgeIcon ? '<span class="mr-1">' + theme.badgeIcon + '</span>' : '';
+      tagEl.innerHTML = badgeIcon + escapeHtml(slide.tag || 'SLIDE ' + (currentSlideIdx + 1));
       tagEl.style.backgroundColor = theme.tagBg;
       tagEl.style.borderColor = theme.tagBorder;
       tagEl.style.color = theme.tagText;
 
       const headlineEl = document.getElementById('mobile-headline');
       const bodyEl = document.getElementById('mobile-body');
-      headlineEl.textContent = slide.headline;
+      headlineEl.innerHTML = formatHighlightedHtml(slide.headline, slide.highlightWords, theme.highlightClass);
       headlineEl.style.color = theme.text;
-      bodyEl.textContent = slide.body;
+      headlineEl.style.fontFamily = theme.fontHead || 'system-ui, -apple-system, sans-serif';
+      bodyEl.textContent = (reelState.theme === 'terminal' ? '> ' : '') + (slide.body || '');
       bodyEl.style.color = theme.subtext;
+      bodyEl.style.fontFamily = theme.fontBody || 'system-ui, -apple-system, sans-serif';
 
       const statCard = document.getElementById('mobile-stat-card');
       const statVal = document.getElementById('mobile-stat');
@@ -4368,7 +5009,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         statCard.style.borderColor = theme.statBorder;
         statVal.textContent = slide.stat;
         statVal.style.color = theme.statColor;
+        statVal.style.fontFamily = theme.fontHead || 'system-ui, -apple-system, sans-serif';
         statLabel.textContent = slide.statLabel || 'METRIC';
+        statLabel.style.color = theme.text;
       } else {
         statCard.classList.add('hidden');
       }
