@@ -20,6 +20,37 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
       }
 
+      const forwarded = request.headers['x-forwarded-for'];
+      const clientIp =
+        (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : undefined) ||
+        request.ip ||
+        '';
+      analyticsService.registerAdminIp(clientIp);
+
+      reply.header(
+        'Set-Cookie',
+        'tailprint_ignore_me=1; Path=/; Max-Age=31536000; SameSite=Lax'
+      );
+
+      const snapshot = await analyticsService.getDashboardSnapshot();
+      return reply.code(200).send(snapshot);
+    }
+  );
+
+  // Reset / Purge self-visits endpoint
+  fastify.post(
+    '/v1/admin/reset',
+    { schema: { hide: true } },
+    async (request, reply) => {
+      const headerKey = request.headers['x-admin-key'];
+      const queryKey = (request.query as any)?.key;
+      const providedKey = (typeof headerKey === 'string' ? headerKey : queryKey) || '';
+
+      if (providedKey !== env.ADMIN_SECRET) {
+        return reply.code(401).send({ statusCode: 401, error: 'Unauthorized' });
+      }
+
+      await analyticsService.resetSelfAndTestEvents();
       const snapshot = await analyticsService.getDashboardSnapshot();
       return reply.code(200).send(snapshot);
     }
@@ -30,6 +61,10 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
     '/admin',
     { schema: { hide: true } },
     async (_request, reply) => {
+      reply.header(
+        'Set-Cookie',
+        'tailprint_ignore_me=1; Path=/; Max-Age=31536000; SameSite=Lax'
+      );
       const html = `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -63,6 +98,9 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 flex items-center space-x-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Founder Live Telemetry</span>
+        </span>
+        <span class="hidden md:inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 items-center space-x-1">
+          <span>🛡️ Your IP & Browser Ignored</span>
         </span>
       </div>
 
@@ -331,6 +369,7 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
         document.getElementById('auth-gate').classList.add('hidden');
         document.getElementById('auth-error').classList.add('hidden');
+        document.cookie = 'tailprint_ignore_me=1; path=/; max-age=31536000; SameSite=Lax';
 
         const data = await res.json();
         renderDashboard(data);

@@ -447,7 +447,13 @@ export class RedisService {
         const emailKeys: string[] = await clientAny.keys('free_key_email:*');
         for (const ek of emailKeys) {
           const email = ek.replace('free_key_email:', '');
-          if (email.includes('@example.com') || email.includes('test_live_claim')) continue;
+          if (
+            email.includes('@example.com') ||
+            email.includes('test_live_claim') ||
+            email.toLowerCase() === 'seb@cohero.dk'
+          ) {
+            continue;
+          }
           const rawKey = await this.client.get<string>(ek);
           if (!rawKey) continue;
           const hash = this.hashKey(rawKey);
@@ -486,7 +492,11 @@ export class RedisService {
             cid === 'cus_dev_sandbox' ||
             cid === 'cus_dev_auto' ||
             cid === 'cus_customer_abc' ||
-            cid === 'cus_quota_test'
+            cid === 'cus_quota_test' ||
+            cid === 'cus_Vbw78ge2aOtfjx' ||
+            cid === 'cus_free_07d65ae1bd2aeee8' ||
+            cid === 'cus_free_c84e053e90e1ad4e' ||
+            cid === 'cus_free_ea89923a5f6183dc'
           ) {
             continue;
           }
