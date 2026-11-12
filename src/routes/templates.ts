@@ -150,8 +150,8 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   fastify.get('/logo.svg', { schema: { hide: true } }, serveLogoSvg);
   fastify.get('/tailprint-logo.svg', { schema: { hide: true } }, serveLogoSvg);
 
-  // GET /tailprint-favicon.svg - Official Vector Favicon
-  fastify.get('/tailprint-favicon.svg', { schema: { hide: true } }, async (_request, reply) => {
+  // GET /favicon.ico & /tailprint-favicon.svg - Official Vector Favicon
+  const serveFavicon = async (_request: any, reply: any) => {
     const favPath = path.join(process.cwd(), 'assets', 'tailprint-favicon.svg');
     if (fs.existsSync(favPath)) {
       const svg = fs.readFileSync(favPath, 'utf8');
@@ -160,8 +160,10 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
         .header('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
         .send(svg);
     }
-    return reply.code(404).send({ error: 'Favicon SVG not found' });
-  });
+    return reply.code(204).send();
+  };
+  fastify.get('/favicon.ico', { schema: { hide: true } }, serveFavicon);
+  fastify.get('/tailprint-favicon.svg', { schema: { hide: true } }, serveFavicon);
 
   // GET /robots.txt - Search & AI Crawler Directives (SEO & GEO)
   fastify.get('/robots.txt', { schema: { hide: true } }, async (_request, reply) => {
@@ -636,11 +638,16 @@ Cursor IDE & Windsurf:
   }
   </script>
   <script>
-    const _warn = console.warn;
-    console.warn = function(...args) {
-      if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-      _warn.apply(console, args);
-    };
+    (function() {
+      var _w = console.warn;
+      console.warn = function() {
+        for (var i = 0; i < arguments.length; i++) {
+          var s = String(arguments[i] || '');
+          if (s.indexOf('tailwindcss.com') !== -1 || s.indexOf('should not be used in production') !== -1) return;
+        }
+        return _w.apply(console, arguments);
+      };
+    })();
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>

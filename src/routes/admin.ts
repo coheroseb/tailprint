@@ -157,13 +157,19 @@ export const adminRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Founder Analytics & Live Telemetry — Tailprint</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none'%3E%3Crect width='64' height='64' rx='16' fill='%23050814'/%3E%3Cpath d='M22 20L10 32L22 44' stroke='%2338bdf8' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M36 16L26 48' stroke='%23a855f7' stroke-width='4.5' stroke-linecap='round'/%3E%3Cpath d='M42 20L54 32L42 44' stroke='%23f43f5e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/tailprint-favicon.svg">
   <script>
     (function() {
-      const origWarn = console.warn;
-      console.warn = function(...args) {
-        if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-        origWarn.apply(console, args);
+      var _w = console.warn;
+      console.warn = function() {
+        for (var i = 0; i < arguments.length; i++) {
+          var s = String(arguments[i] || '');
+          if (s.indexOf('tailwindcss.com') !== -1 || s.indexOf('should not be used in production') !== -1) {
+            return;
+          }
+        }
+        return _w.apply(console, arguments);
       };
     })();
   </script>

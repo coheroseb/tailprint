@@ -18,11 +18,16 @@ export const dashboardRoutes: FastifyPluginAsyncZod = async (fastify) => {
   <title>Customer Dashboard - Tailprint</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E" />
   <script>
-    const _warn = console.warn;
-    console.warn = function(...args) {
-      if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-      _warn.apply(console, args);
-    };
+    (function() {
+      var _w = console.warn;
+      console.warn = function() {
+        for (var i = 0; i < arguments.length; i++) {
+          var s = String(arguments[i] || '');
+          if (s.indexOf('tailwindcss.com') !== -1 || s.indexOf('should not be used in production') !== -1) return;
+        }
+        return _w.apply(console, arguments);
+      };
+    })();
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
