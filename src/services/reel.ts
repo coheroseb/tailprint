@@ -861,7 +861,7 @@ Respond ONLY with valid JSON in this exact structure:
             ...script,
             slides,
             layout: script.layout || 'classic',
-            cleanExport: script.cleanExport !== false,
+            cleanExport: script.cleanExport === true,
             screenrecordUrl: resolvedScreenrecordUrl,
             screenrecordMode: script.screenrecordMode || (resolvedScreenrecordUrl ? 'inset' : 'none'),
             brandColors: script.brandColors || deriveBrandPalette(),
@@ -968,22 +968,70 @@ Respond ONLY with valid JSON in this exact structure:
               return lines;
             }
 
-            function drawKaraokeText(text: string, x: number, startY: number, maxWidth: number, lineHeight: number) {
+            function drawKaraokeText(text: string, x: number, startY: number, maxWidth: number, lineHeight: number, progress = 1.0) {
+              const allWords = (text || '').trim().split(/\s+/).filter(Boolean);
+              const totalWords = allWords.length;
+              // Active word index progresses across slide duration
+              const activeWordIdx = Math.min(totalWords - 1, Math.floor(progress * totalWords * 1.15));
+
               const lines = wrapLines(text || '', maxWidth);
-              ctx.fillStyle = t.sub;
+              let globalWordIdx = 0;
               let curY = startY;
+
               lines.forEach((line) => {
-                ctx.fillText(line, x, curY);
+                const words = line.trim().split(/\s+/).filter(Boolean);
+                let curX = x;
+                words.forEach((word) => {
+                  const wordW = ctx.measureText(word).width;
+                  const spaceW = ctx.measureText(' ').width;
+
+                  const isCurrent = globalWordIdx === activeWordIdx;
+                  const isPast = globalWordIdx < activeWordIdx;
+
+                  ctx.save();
+                  if (isCurrent) {
+                    // Kinetic Glowing Highlight Pill behind current word
+                    ctx.fillStyle = t.accent + '2d';
+                    roundRect(curX - 6, curY - lineHeight * 0.72, wordW + 12, lineHeight * 0.9, 8);
+                    ctx.fill();
+
+                    ctx.fillStyle = t.accent;
+                    ctx.shadowColor = t.accent;
+                    ctx.shadowBlur = 16;
+                    ctx.fillText(word, curX, curY);
+                  } else if (isPast) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(word, curX, curY);
+                  } else {
+                    ctx.fillStyle = t.sub + '66';
+                    ctx.fillText(word, curX, curY);
+                  }
+                  ctx.restore();
+
+                  curX += wordW + spaceW;
+                  globalWordIdx++;
+                });
                 curY += lineHeight;
               });
               return curY;
             }
 
-            // 1. Base Gradient Background
+            // 1. Base Gradient Background with Breathing Ambient Glow
             const grad = ctx.createLinearGradient(0, 0, W, H);
             grad.addColorStop(0, t.bg1);
             grad.addColorStop(1, t.bg2);
             ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Breathing ambient light aura
+            const breath = Math.sin(slideProgress * Math.PI);
+            const auraGrad = ctx.createRadialGradient(
+              W * 0.75 + breath * 25, H * 0.25 - breath * 15, 40,
+              W * 0.75, H * 0.25, 650
+            );
+            auraGrad.addColorStop(0, t.accent + '22');
+            auraGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = auraGrad;
             ctx.fillRect(0, 0, W, H);
 
             const bgVid = (window as any).__bgVideo as HTMLVideoElement | undefined;
@@ -1051,23 +1099,28 @@ Respond ONLY with valid JSON in this exact structure:
               ctx.fillRect(0, splitY - 3, W, 6);
             }
 
-            // 2. Top Progress Bars (only if cleanExport === false)
+            // 2. Sleek Top Instagram Story Progress Bars
             if (!cleanExport) {
-              const barGap = 16;
+              const barGap = 12;
+              const barH = 8;
               const barW = (W - padX * 2 - barGap * (total - 1)) / total;
               for (let i = 0; i < total; i++) {
                 const bx = padX + i * (barW + barGap);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                roundRect(bx, 80, barW, 12, 6);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+                roundRect(bx, 64, barW, barH, barH / 2);
                 ctx.fill();
                 if (i < slideIdx) {
-                  ctx.fillStyle = t.text;
-                  roundRect(bx, 80, barW, 12, 6);
+                  ctx.fillStyle = '#ffffff';
+                  roundRect(bx, 64, barW, barH, barH / 2);
                   ctx.fill();
                 } else if (i === slideIdx) {
-                  ctx.fillStyle = t.text;
-                  roundRect(bx, 80, Math.max(12, barW * slideProgress), 12, 6);
+                  ctx.save();
+                  ctx.fillStyle = t.accent;
+                  ctx.shadowColor = t.accent;
+                  ctx.shadowBlur = 8;
+                  roundRect(bx, 64, Math.max(barH, barW * slideProgress), barH, barH / 2);
                   ctx.fill();
+                  ctx.restore();
                 }
               }
             }
@@ -1150,7 +1203,7 @@ Respond ONLY with valid JSON in this exact structure:
               const bodyFont = isSquare ? 34 : 42;
               const bodyLineH = isSquare ? 50 : 62;
               ctx.font = `600 ${bodyFont}px Inter, sans-serif`;
-              drawKaraokeText(slide.body || '', padX, curY, W - padX * 2, bodyLineH);
+              drawKaraokeText(slide.body || '', padX, curY, W - padX * 2, bodyLineH, slideProgress);
 
             } else if (layout === 'iphone') {
               // Headline above 3D iPhone 16 Pro frame + Karaoke below
@@ -1215,7 +1268,7 @@ Respond ONLY with valid JSON in this exact structure:
               // Karaoke caption below iPhone
               const capY = phoneY + phoneH + 64;
               ctx.font = `600 ${isSquare ? 30 : 38}px Inter, sans-serif`;
-              drawKaraokeText(slide.body || '', padX, capY, W - padX * 2, isSquare ? 44 : 54);
+              drawKaraokeText(slide.body || '', padX, capY, W - padX * 2, isSquare ? 44 : 54, slideProgress);
 
             } else if (layout === 'editorial') {
               // Giant background watermark stat/number + vertical accent bar + quote style
@@ -1263,7 +1316,7 @@ Respond ONLY with valid JSON in this exact structure:
               const bodyFont = isSquare ? 36 : 44;
               const bodyLineH = isSquare ? 52 : 64;
               ctx.font = `600 ${bodyFont}px Inter, sans-serif`;
-              const endY = drawKaraokeText(slide.body || '', editX, curY, editW, bodyLineH);
+              const endY = drawKaraokeText(slide.body || '', editX, curY, editW, bodyLineH, slideProgress);
 
               // Left vertical accent bar
               ctx.fillStyle = t.accent;
@@ -1318,9 +1371,20 @@ Respond ONLY with valid JSON in this exact structure:
               if (slide.stat) {
                 curY += 16;
                 const statBoxH = hasInsetVideo ? 130 : 168;
+
+                ctx.save();
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
                 roundRect(padX, curY, W - padX * 2, statBoxH, 28);
                 ctx.fill();
+
+                // Sleek Neon Glow Accent Border
+                ctx.strokeStyle = t.accent + '77';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = t.accent;
+                ctx.shadowBlur = 14;
+                roundRect(padX, curY, W - padX * 2, statBoxH, 28);
+                ctx.stroke();
+                ctx.restore();
 
                 ctx.fillStyle = t.accent;
                 ctx.font = `900 ${hasInsetVideo ? 68 : 84}px Inter, sans-serif`;
@@ -1339,21 +1403,27 @@ Respond ONLY with valid JSON in this exact structure:
               const bodyFont = hasInsetVideo ? 38 : (isSquare ? 36 : 44);
               const bodyLineH = hasInsetVideo ? 54 : (isSquare ? 52 : 64);
               ctx.font = `600 ${bodyFont}px Inter, sans-serif`;
-              drawKaraokeText(slide.body || '', padX, curY, W - padX * 2, bodyLineH);
+              drawKaraokeText(slide.body || '', padX, curY, W - padX * 2, bodyLineH, slideProgress);
             }
 
             ctx.restore();
 
-            // 5. Footer CTA
+            // 5. Footer CTA with Breathing Pulsing Dot
             const footerY = H - (isLandscape ? 85 : 115);
+            const pulse = 0.85 + 0.15 * Math.sin(slideProgress * Math.PI * 6);
+
             if (!cleanExport) {
               ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
               ctx.fillRect(padX, footerY - 52, W - padX * 2, 2);
 
-              ctx.fillStyle = '#34d399';
+              ctx.save();
+              ctx.fillStyle = '#10b981';
+              ctx.shadowColor = '#10b981';
+              ctx.shadowBlur = 12 * pulse;
               ctx.beginPath();
-              ctx.arc(padX + 14, footerY - 12, 10, 0, Math.PI * 2);
+              ctx.arc(padX + 14, footerY - 12, 10 * pulse, 0, Math.PI * 2);
               ctx.fill();
+              ctx.restore();
 
               ctx.fillStyle = t.text;
               ctx.font = 'bold 30px Inter, sans-serif';
@@ -1372,10 +1442,14 @@ Respond ONLY with valid JSON in this exact structure:
               roundRect(padX, footerY - 42, pillW, 60, 30);
               ctx.fill();
 
-              ctx.fillStyle = '#34d399';
+              ctx.save();
+              ctx.fillStyle = '#10b981';
+              ctx.shadowColor = '#10b981';
+              ctx.shadowBlur = 12 * pulse;
               ctx.beginPath();
-              ctx.arc(padX + 30, footerY - 12, 9, 0, Math.PI * 2);
+              ctx.arc(padX + 30, footerY - 12, 9 * pulse, 0, Math.PI * 2);
               ctx.fill();
+              ctx.restore();
 
               ctx.fillStyle = t.text;
               ctx.fillText(ctaText, padX + 54, footerY - 2);
