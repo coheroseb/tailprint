@@ -521,6 +521,132 @@ const { pdfUrl } = await carouselRes.json();
           </div>
         </article>
 
+        <!-- Story 7: Automated Blog-to-Reels with Make.com -->
+        <article data-category="social" class="showcase-card p-6 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-rose-500/50 transition shadow-xl flex flex-col justify-between group">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                SOCIAL MEDIA OPTIMIZATION
+              </span>
+              <span class="text-xs text-slate-500 font-mono">Make.com &amp; RSS</span>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-bold text-white group-hover:text-rose-300 transition">Autonomous Blog Posts to Instagram Reels</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                "Our editorial team writes long-form articles. With Make.com and Tailprint's <code>/v1/tools/reel/from-url</code>, newly published posts trigger an automatic 9:16 vertical video reel with kinetic Hormozi glowing subtitles, voiceover, and Instagram posting in 24 seconds with zero manual editing."
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span class="text-rose-400 font-bold font-mono">100% Hands-Off</span>
+                <p class="text-[10px] text-slate-500 mt-0.5">Zero Human Touch</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span class="text-emerald-400 font-bold font-mono">24s Render</span>
+                <p class="text-[10px] text-slate-500 mt-0.5">MP4 + AI Audio</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-slate-400 font-mono">Instagram &amp; TikTok</span>
+            <a href="/guides/automate-blog-posts-to-instagram-reels" class="text-rose-400 font-bold group-hover:text-white transition">Read Reel Guide →</a>
+          </div>
+        </article>
+
+        <!-- Story 8: RAG Token Reduction -->
+        <article data-category="mcp" class="showcase-card p-6 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/50 transition shadow-xl flex flex-col justify-between group">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                AI AGENTS (MCP)
+              </span>
+              <span class="text-xs text-slate-500 font-mono">RAG &amp; Embeddings</span>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-bold text-white group-hover:text-purple-300 transition">Slashing LLM Token Costs by 94% with Clean Markdown</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                "Feeding raw web pages into OpenAI and Claude context windows was costing us a fortune in wasted cookie notices and HTML clutter. Tailprint's Markdown Scraper strips 95% of noise via Mozilla Readability, saving over $3,200/month in token bills."
+              </p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-950 font-mono text-[11px] text-purple-300 border border-slate-800">
+              <span class="text-slate-500">Savings:</span> 94.2% average token reduction on news &amp; docs
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-purple-400 font-bold font-mono">Redis 24h Cache</span>
+            <a href="/#scraper" class="text-purple-400 font-bold group-hover:text-white transition">Test Scraper Sandbox →</a>
+          </div>
+        </article>
+
+        <!-- Story 9: Automated Visual Regression in CI/CD -->
+        <article data-category="saas" class="showcase-card p-6 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 transition shadow-xl flex flex-col justify-between group">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                SAAS &amp; BACKEND
+              </span>
+              <span class="text-xs text-slate-500 font-mono">GitHub Actions CI</span>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition">Catching Broken Tailwind Layouts in Pull Requests</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                "Our engineering team uses Tailprint's Visual Diff endpoint in our CI/CD pipeline. Every PR automatically captures production vs staging UI snapshots and highlights pixel shifts and CSS breakages with an interactive split-slider before any merge."
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span class="text-emerald-400 font-bold font-mono">0 Regressions</span>
+                <p class="text-[10px] text-slate-500 mt-0.5">Shipped to Prod</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span class="text-cyan-400 font-bold font-mono">380ms Engine</span>
+                <p class="text-[10px] text-slate-500 mt-0.5">Pixelmatch Diff</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-indigo-400 font-bold font-mono">Pixel-Perfect QA</span>
+            <a href="/tools/visual-diff" class="text-indigo-400 font-bold group-hover:text-white transition">Try Visual Diff Tool →</a>
+          </div>
+        </article>
+
+        <!-- Story 10: Event Ticketing & Certificates -->
+        <article data-category="fintech" class="showcase-card p-6 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 transition shadow-xl flex flex-col justify-between group">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                FINTECH &amp; ERP
+              </span>
+              <span class="text-xs text-slate-500 font-mono">Event Summit &amp; EdTech</span>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-bold text-white group-hover:text-emerald-300 transition">50,000 Personalized Certificates in 12 Minutes</h3>
+              <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                "Following our annual tech conference, we needed to issue 50,000 course certificates and QR-verified attendee passes. Tailprint handled parallel bulk render queues without slowing down, streaming permanent hosted URLs directly to our email engine."
+              </p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-950 font-mono text-[11px] text-emerald-300 border border-slate-800">
+              <span class="text-slate-500">Security:</span> SHA-256 Checksums + Scannable Dynamic QR
+            </div>
+          </div>
+
+          <div class="pt-6 mt-6 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-emerald-400 font-bold font-mono">Zero Dropped Jobs</span>
+            <a href="/#templates" class="text-emerald-400 font-bold group-hover:text-white transition">View Templates →</a>
+          </div>
+        </article>
+
       </div>
     </section>
 
@@ -535,7 +661,7 @@ const { pdfUrl } = await carouselRes.json();
         <p class="text-xs text-slate-400 font-medium">Average Chromium Execution</p>
       </div>
       <div class="space-y-1">
-        <div class="text-3xl sm:text-4xl font-black text-indigo-400 font-mono">22</div>
+        <div class="text-3xl sm:text-4xl font-black text-indigo-400 font-mono">24</div>
         <p class="text-xs text-slate-400 font-medium">Native MCP Tools for AI Agents</p>
       </div>
       <div class="space-y-1">
