@@ -6,7 +6,7 @@ import { browserService } from '../services/browser.js';
 async function main() {
   const server = createMcpServer({
     name: 'tailprint-mcp-cli',
-    version: '1.0.0',
+    version: '1.1.0',
   });
 
   const transport = new StdioServerTransport();

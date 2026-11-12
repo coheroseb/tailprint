@@ -34,6 +34,12 @@ const TEMPLATE_IDS = [
   'shipping-label',
   'ticket',
   'receipt',
+  'quote',
+  'nda',
+  'statement',
+  'einvoice',
+  'presentation',
+  'contract',
 ] as const;
 
 /**
@@ -42,7 +48,7 @@ const TEMPLATE_IDS = [
 export function createMcpServer(options: McpServerOptions = {}): McpServer {
   const server = new McpServer({
     name: options.name || 'tailprint-mcp',
-    version: options.version || '1.0.0',
+    version: options.version || '1.1.0',
   });
 
   // ==========================================
