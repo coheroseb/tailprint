@@ -1,4 +1,7 @@
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
 import pLimit from 'p-limit';
 import { encryptPDF } from 'cryptpdf';
 import { env } from '../config/env.js';
@@ -495,6 +498,101 @@ export class BrowserService {
         if (timeoutHandle) {
           clearTimeout(timeoutHandle);
         }
+      }
+    });
+  }
+
+  public async recordWebpageScroll(
+    url: string,
+    options: {
+      width?: number;
+      height?: number;
+      durationMs?: number;
+      scrollDistance?: number;
+    } = {}
+  ): Promise<Buffer> {
+    await this.init();
+    if (!this.browser) {
+      throw new Error('Browser is not initialized');
+    }
+
+    const width = options.width ?? 720;
+    const height = options.height ?? 1280;
+    const durationMs = options.durationMs ?? 3500;
+    const scrollDistance = options.scrollDistance ?? 900;
+
+    const tmpDir = path.join(os.tmpdir(), `screenrecord-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await fs.mkdir(tmpDir, { recursive: true });
+
+    return this.limit(async () => {
+      let context: BrowserContext | null = null;
+      let page: Page | null = null;
+
+      try {
+        context = await this.browser!.newContext({
+          viewport: { width, height },
+          deviceScaleFactor: 1.5,
+          recordVideo: {
+            dir: tmpDir,
+            size: { width, height },
+          },
+        });
+
+        page = await context.newPage();
+
+        // Suppress cookie popups
+        await this.suppressPopupsAndBanners(page);
+
+        // Navigate with timeout
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+        // Let page settle & dismiss any dynamic banner overlays
+        await page.waitForTimeout(600);
+        await this.suppressPopupsAndBanners(page);
+
+        // Smoothly scroll down the page
+        await page.evaluate(
+          async ({ duration, distance }: { duration: number; distance: number }) => {
+            const start = performance.now();
+            await new Promise<void>((resolve) => {
+              function step(now: number) {
+                const elapsed = now - start;
+                const progress = Math.min(1, elapsed / duration);
+                const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                window.scrollTo(0, ease * distance);
+                if (progress < 1) {
+                  requestAnimationFrame(step);
+                } else {
+                  resolve();
+                }
+              }
+              requestAnimationFrame(step);
+            });
+          },
+          { duration: durationMs, distance: scrollDistance }
+        );
+
+        // Small pause at bottom
+        await page.waitForTimeout(300);
+
+        // Close page and context so Playwright finalizes the video file
+        const video = page.video();
+        await page.close();
+        page = null;
+        await context.close();
+        context = null;
+
+        if (!video) {
+          throw new Error('Video recording failed to initialize');
+        }
+
+        const videoPath = await video.path();
+        const buffer = await fs.readFile(videoPath);
+        return buffer;
+      } finally {
+        if (page) await (page as Page).close().catch(() => {});
+        if (context) await (context as BrowserContext).close().catch(() => {});
+        await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
       }
     });
   }

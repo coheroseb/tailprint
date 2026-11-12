@@ -16,6 +16,8 @@ export interface ReelScript {
   handle?: string;
   theme: 'cyberpunk' | 'midnight' | 'gradient' | 'sunset' | 'clean';
   aspectRatio?: '9:16' | '1:1' | '16:9' | '4:5';
+  screenrecordUrl?: string;
+  screenrecordMode?: 'inset' | 'backdrop' | 'none';
   slides: ReelSlide[];
   cta: string;
   sourceUrl?: string;
@@ -38,15 +40,54 @@ export class ReelService {
   }
 
   /**
-   * Scrapes any public URL and synthesizes a punchy 4-5 slide vertical Reel / Story script.
+   * Captures a smooth scrolling live video of the webpage via Chromium and saves to CDN.
    */
-  public async generateScriptFromUrl(url: string): Promise<ReelScript> {
-    const scraped = await scraperService.scrapeUrl({
+  public async captureLiveScreenrecord(
+    url: string,
+    options?: { width?: number; height?: number; durationMs?: number; scrollDistance?: number }
+  ): Promise<{ hostedUrl: string; width: number; height: number }> {
+    const width = options?.width ?? 720;
+    const height = options?.height ?? 1280;
+    const buffer = await browserService.recordWebpageScroll(url, {
+      width,
+      height,
+      durationMs: options?.durationMs ?? 3500,
+      scrollDistance: options?.scrollDistance ?? 900,
+    });
+
+    const stored = await storageService.saveFile(buffer, {
+      mimeType: 'video/webm',
+      extension: 'webm',
+      filename: 'live-screenrecord.webm',
+    });
+
+    return {
+      hostedUrl: stored.hostedUrl,
+      width,
+      height,
+    };
+  }
+
+  /**
+   * Scrapes any public URL and synthesizes a punchy 4-5 slide vertical Reel / Story script.
+   * Optionally captures a live scrolling screen recording of the target website in parallel.
+   */
+  public async generateScriptFromUrl(url: string, includeScreenrecord = false): Promise<ReelScript> {
+    const scrapePromise = scraperService.scrapeUrl({
       url,
       strip_images: true,
       include_raw_html: false,
       timeout_ms: 10000,
     });
+
+    const recordPromise = includeScreenrecord
+      ? this.captureLiveScreenrecord(url).catch((err) => {
+          console.warn('[ReelService] Screenrecord failed, continuing with script:', err);
+          return null;
+        })
+      : Promise.resolve(null);
+
+    const [scraped, screenrecord] = await Promise.all([scrapePromise, recordPromise]);
 
     // Derive brand from domain
     let brand = 'Insights';
@@ -104,6 +145,9 @@ export class ReelService {
       brand,
       handle: `@${brand.toLowerCase()}`,
       theme: 'gradient',
+      aspectRatio: '9:16',
+      screenrecordUrl: screenrecord?.hostedUrl,
+      screenrecordMode: screenrecord ? 'inset' : 'none',
       slides,
       cta: 'Follow for more • Link in bio',
       sourceUrl: url,

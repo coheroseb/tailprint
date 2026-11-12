@@ -1357,8 +1357,18 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               <span>✨ Generate Reel</span>
             </button>
           </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
+            <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer select-none">
+              <input type="checkbox" id="reel-include-screenrecord" checked class="w-4 h-4 accent-rose-500 rounded bg-slate-950 border-slate-800" />
+              <span class="font-semibold text-rose-300 flex items-center space-x-1.5">
+                <span>Record Live Webpage Scroll (Screenrecord)</span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">HOT</span>
+              </span>
+            </label>
+            <span class="text-[10px] text-slate-500 hidden sm:inline">Chromium auto-scroller</span>
+          </div>
           <p class="text-[11px] text-slate-400">
-            Tailprint extracts your core takeaways, pain points, and stats into punchy mobile slides.
+            Tailprint extracts your core takeaways and records an ultra-smooth scrolling video of your live webpage.
           </p>
         </div>
 
@@ -1390,6 +1400,19 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               <button onclick="setReelTheme('midnight')" id="theme-btn-midnight" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Midnight Emerald</button>
               <button onclick="setReelTheme('sunset')" id="theme-btn-sunset" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Sunset Amber</button>
               <button onclick="setReelTheme('clean')" id="theme-btn-clean" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Clean Tech Light</button>
+            </div>
+          </div>
+
+          <!-- Screenrecord Display Mode -->
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] text-slate-400 font-medium">Live Screenrecord Display</label>
+              <span id="screenrecord-status-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-semibold hidden">● Live WebM Loaded</span>
+            </div>
+            <div class="flex flex-wrap gap-2 text-xs">
+              <button onclick="setScreenrecordMode('inset')" id="sr-mode-btn-inset" class="px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white border border-rose-400/40">Browser Window (Card)</button>
+              <button onclick="setScreenrecordMode('backdrop')" id="sr-mode-btn-backdrop" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Video Backdrop</button>
+              <button onclick="setScreenrecordMode('none')" id="sr-mode-btn-none" class="px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800">Typographic Only</button>
             </div>
           </div>
 
@@ -1451,6 +1474,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           <!-- Inside Screen -->
           <div id="reel-screen" class="w-full h-full rounded-[38px] p-6 flex flex-col justify-between relative overflow-hidden text-white transition-all duration-300">
             
+            <!-- Live Screenrecord Ambient Video Backdrop (Only active in backdrop mode) -->
+            <video id="preview-backdrop-video" src="" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none hidden transition-opacity duration-300"></video>
+
             <!-- Ambient Animated Glow -->
             <div id="screen-glow" class="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-indigo-500/30 blur-3xl ambient-glow pointer-events-none"></div>
             <div class="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-rose-500/25 blur-3xl ambient-glow pointer-events-none"></div>
@@ -1480,14 +1506,27 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             </div>
 
             <!-- Main Slide Content (Center) -->
-            <div id="preview-content-container" class="my-auto z-20 space-y-3.5 py-3">
-              <h2 id="preview-headline" class="text-2xl font-black tracking-tight leading-tight text-white drop-shadow-md">
+            <div id="preview-content-container" class="my-auto z-20 space-y-3 py-2">
+              <h2 id="preview-headline" class="text-xl font-black tracking-tight leading-tight text-white drop-shadow-md">
                 Sub-500ms Vector PDF Generation for Developers
               </h2>
 
-              <div id="preview-stat-card" class="p-3.5 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl flex items-center space-x-3.5 shadow-lg">
-                <span id="preview-stat" class="text-3xl font-black text-cyan-400">94.2%</span>
-                <span id="preview-stat-label" class="text-xs font-bold uppercase text-white/90 tracking-wide">Context Savings</span>
+              <div id="preview-stat-card" class="p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl flex items-center space-x-3 shadow-lg">
+                <span id="preview-stat" class="text-2xl font-black text-cyan-400">380ms</span>
+                <span id="preview-stat-label" class="text-[10px] font-bold uppercase text-white/90 tracking-wide">Average Render Time</span>
+              </div>
+
+              <!-- Floating Live Screenrecord Browser Card (Active in inset mode) -->
+              <div id="preview-screenrecord-card" class="hidden rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md">
+                <div class="px-2.5 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[8px]">
+                  <div class="flex items-center space-x-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  </div>
+                  <span id="preview-browser-url" class="font-mono text-slate-400 truncate max-w-[140px]">tailprint.com</span>
+                </div>
+                <video id="preview-screenrecord-video" src="" autoplay loop muted playsinline class="w-full h-28 object-cover object-top"></video>
               </div>
 
               <p id="preview-body" class="text-xs leading-relaxed text-slate-200/90 font-medium">
@@ -1568,8 +1607,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     </div>
 
-    <!-- Hidden High-Res 1080x1920 Export Canvas -->
+    <!-- Hidden High-Res Export Canvas & Source Video -->
     <canvas id="export-canvas" width="1080" height="1920" style="display: none;"></canvas>
+    <video id="export-source-video" crossOrigin="anonymous" playsinline muted loop style="display: none;"></video>
 
     <!-- Developer cURL & API Integration Callout -->
     ${renderConversionCallout(
@@ -1600,6 +1640,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       handle: "@tailprint",
       theme: "gradient",
       aspectRatio: "9:16",
+      screenrecordUrl: null,
+      screenrecordMode: "inset",
+      sourceUrl: "https://tailprint.com",
       cta: "Follow for daily insights • Link in bio",
       duration: 3000,
       slides: [
@@ -1871,6 +1914,68 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
       // Render top progress bar segments
       renderProgressBars();
+      updateScreenrecordDisplay();
+    }
+
+    function setScreenrecordMode(mode) {
+      reelState.screenrecordMode = mode;
+      ['inset', 'backdrop', 'none'].forEach(m => {
+        const btn = document.getElementById('sr-mode-btn-' + m);
+        if (btn) {
+          if (m === mode) {
+            btn.className = 'px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white border border-rose-400/40';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-slate-950 text-slate-400 hover:text-white border border-slate-800';
+          }
+        }
+      });
+      updateScreenrecordDisplay();
+    }
+
+    function updateScreenrecordDisplay() {
+      const badge = document.getElementById('screenrecord-status-badge');
+      const card = document.getElementById('preview-screenrecord-card');
+      const video = document.getElementById('preview-screenrecord-video');
+      const backdrop = document.getElementById('preview-backdrop-video');
+      const exportVid = document.getElementById('export-source-video');
+      const urlLabel = document.getElementById('preview-browser-url');
+
+      if (!reelState.screenrecordUrl || reelState.screenrecordMode === 'none') {
+        if (badge) badge.classList.add('hidden');
+        if (card) card.classList.add('hidden');
+        if (backdrop) backdrop.classList.add('hidden');
+        return;
+      }
+
+      if (badge) badge.classList.remove('hidden');
+
+      if (video && video.src !== reelState.screenrecordUrl) {
+        video.src = reelState.screenrecordUrl;
+        video.play().catch(() => {});
+      }
+      if (backdrop && backdrop.src !== reelState.screenrecordUrl) {
+        backdrop.src = reelState.screenrecordUrl;
+        backdrop.play().catch(() => {});
+      }
+      if (exportVid && exportVid.src !== reelState.screenrecordUrl) {
+        exportVid.src = reelState.screenrecordUrl;
+      }
+
+      if (urlLabel && reelState.sourceUrl) {
+        try {
+          urlLabel.textContent = new URL(reelState.sourceUrl).hostname.replace(/^www\./, '');
+        } catch {
+          urlLabel.textContent = reelState.brand.toLowerCase() + '.com';
+        }
+      }
+
+      if (reelState.screenrecordMode === 'inset') {
+        if (card) card.classList.remove('hidden');
+        if (backdrop) backdrop.classList.add('hidden');
+      } else if (reelState.screenrecordMode === 'backdrop') {
+        if (card) card.classList.add('hidden');
+        if (backdrop) backdrop.classList.remove('hidden');
+      }
     }
 
     function renderProgressBars() {
@@ -1965,10 +2070,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
     }
 
-    // URL Scraper Auto-Generator
+    // URL Scraper Auto-Generator (with optional live screenrecord)
     async function generateReelFromUrl() {
       const input = document.getElementById('reel-url-input');
       const btn = document.getElementById('btn-scrape-reel');
+      const includeRecord = document.getElementById('reel-include-screenrecord')?.checked ?? true;
       const url = input.value.trim();
 
       if (!url) {
@@ -1977,13 +2083,15 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
 
       btn.disabled = true;
-      btn.innerHTML = '<span>⚡ Scraping & Synthesizing...</span>';
+      btn.innerHTML = includeRecord
+        ? '<span>⏳ Scraping & Recording Live Scroll...</span>'
+        : '<span>⚡ Scraping & Synthesizing...</span>';
 
       try {
         const res = await fetch('/v1/tools/reel/script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url, record_video: includeRecord })
         });
 
         const data = await res.json();
@@ -1997,6 +2105,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           reelState.handle = data.script.handle || reelState.handle;
           reelState.slides = data.script.slides || reelState.slides;
           reelState.cta = data.script.cta || reelState.cta;
+          reelState.sourceUrl = data.script.sourceUrl || url;
+          if (data.script.screenrecordUrl) {
+            reelState.screenrecordUrl = data.script.screenrecordUrl;
+            reelState.screenrecordMode = 'inset';
+          }
 
           document.getElementById('reel-brand').value = reelState.brand;
           document.getElementById('reel-handle').value = reelState.handle;
@@ -2118,6 +2231,23 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       overlay.classList.remove('hidden');
       btn.disabled = true;
 
+      // Prepare source video if screenrecord is active
+      const exportVid = document.getElementById('export-source-video');
+      const hasVideo = reelState.screenrecordUrl && reelState.screenrecordMode !== 'none' && exportVid;
+      if (hasVideo) {
+        if (exportVid.src !== reelState.screenrecordUrl) {
+          exportVid.src = reelState.screenrecordUrl;
+          await new Promise((resolve) => {
+            exportVid.onloadeddata = () => resolve();
+            setTimeout(resolve, 2000);
+          });
+        }
+        exportVid.currentTime = 0;
+        try {
+          await exportVid.play();
+        } catch {}
+      }
+
       const totalSlides = reelState.slides.length;
       const slideDurationMs = 2500; // 2.5s per slide in video export
       const fps = 30;
@@ -2175,6 +2305,10 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       recorder.stop();
       await finishedPromise;
 
+      if (hasVideo && exportVid) {
+        exportVid.pause();
+      }
+
       overlay.classList.add('hidden');
       btn.disabled = false;
       startPlayback();
@@ -2188,40 +2322,50 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         H = dim.h;
       }
       const aspect = reelState.aspectRatio || '9:16';
+      const exportVid = document.getElementById('export-source-video');
+      const hasBackdrop = reelState.screenrecordUrl && reelState.screenrecordMode === 'backdrop' && exportVid && exportVid.readyState >= 2;
 
       // 1. Background Fill
       ctx.fillStyle = '#030712';
       ctx.fillRect(0, 0, W, H);
 
-      // Gradient
-      const grad = ctx.createLinearGradient(0, 0, W, H);
-      if (reelState.theme === 'cyberpunk') {
-        grad.addColorStop(0, '#09090b');
-        grad.addColorStop(1, '#18181b');
-      } else if (reelState.theme === 'midnight') {
-        grad.addColorStop(0, '#000000');
-        grad.addColorStop(1, '#050505');
-      } else if (reelState.theme === 'sunset') {
-        grad.addColorStop(0, '#4c0519');
-        grad.addColorStop(0.5, '#030712');
-        grad.addColorStop(1, '#451a03');
-      } else if (reelState.theme === 'clean') {
-        grad.addColorStop(0, '#f8fafc');
-        grad.addColorStop(1, '#e2e8f0');
+      if (hasBackdrop) {
+        ctx.save();
+        ctx.drawImage(exportVid, 0, 0, W, H);
+        ctx.fillStyle = 'rgba(3, 7, 18, 0.72)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
       } else {
-        grad.addColorStop(0, '#1e1b4b');
-        grad.addColorStop(0.5, '#2e1065');
-        grad.addColorStop(1, '#020617');
-      }
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+        // Gradient
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        if (reelState.theme === 'cyberpunk') {
+          grad.addColorStop(0, '#09090b');
+          grad.addColorStop(1, '#18181b');
+        } else if (reelState.theme === 'midnight') {
+          grad.addColorStop(0, '#000000');
+          grad.addColorStop(1, '#050505');
+        } else if (reelState.theme === 'sunset') {
+          grad.addColorStop(0, '#4c0519');
+          grad.addColorStop(0.5, '#030712');
+          grad.addColorStop(1, '#451a03');
+        } else if (reelState.theme === 'clean') {
+          grad.addColorStop(0, '#f8fafc');
+          grad.addColorStop(1, '#e2e8f0');
+        } else {
+          grad.addColorStop(0, '#1e1b4b');
+          grad.addColorStop(0.5, '#2e1065');
+          grad.addColorStop(1, '#020617');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
 
-      // Radial glow
-      const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
-      radial.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
-      radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = radial;
-      ctx.fillRect(0, 0, W, H);
+        // Radial glow
+        const radial = ctx.createRadialGradient(W * 0.8, H * 0.15, 50, W * 0.8, H * 0.15, 600);
+        radial.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+        radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = radial;
+        ctx.fillRect(0, 0, W, H);
+      }
 
       // 2. Progress bars
       const barMargin = aspect === '1:1' ? 60 : aspect === '4:5' ? 70 : 80;
@@ -2777,10 +2921,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     {
       schema: {
         tags: ['Tools'],
-        summary: 'Generate 9:16 Social Reel Script from any URL',
-        description: 'Scrapes a given URL and synthesizes a punchy 4-5 slide script with tags, headlines, body insights, and stats ready for video rendering.',
+        summary: 'Generate Social Reel Script & Live Screenrecord from URL',
+        description: 'Scrapes a given URL, synthesizes a punchy 4-5 slide script with tags, headlines, body insights, and optionally captures a live scrolling video of the target site.',
         body: z.object({
           url: z.string().url().describe('Public web URL to extract insights from'),
+          record_video: z.boolean().optional().default(false).describe('Whether to capture a live scrolling screen recording of the target website'),
         }),
         response: {
           200: z.object({
@@ -2790,6 +2935,9 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
               brand: z.string(),
               handle: z.string().optional(),
               theme: z.string(),
+              aspectRatio: z.string().optional(),
+              screenrecordUrl: z.string().optional(),
+              screenrecordMode: z.string().optional(),
               slides: z.array(
                 z.object({
                   tag: z.string().optional(),
@@ -2819,10 +2967,62 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       }
 
       const body = request.body as any;
-      const script = await reelService.generateScriptFromUrl(body.url);
+      const script = await reelService.generateScriptFromUrl(body.url, Boolean(body.record_video));
       return reply.code(200).send({
         success: true,
         script,
+      });
+    }
+  );
+
+  // 5.5 POST /v1/tools/reel/screenrecord
+  fastify.post(
+    '/v1/tools/reel/screenrecord',
+    {
+      schema: {
+        tags: ['Tools'],
+        summary: 'Capture Live Scrolling Screenrecord of any Webpage',
+        description: 'Navigates to any public URL, suppresses cookie dialogs, and records a smooth scrolling video exported as WebM on CDN.',
+        body: z.object({
+          url: z.string().url().describe('Webpage URL to record'),
+          width: z.number().optional().default(720),
+          height: z.number().optional().default(1280),
+          durationMs: z.number().optional().default(3500),
+        }),
+        response: {
+          200: z.object({
+            success: z.boolean(),
+            screenrecordUrl: z.string(),
+            width: z.number(),
+            height: z.number(),
+          }),
+          429: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const clientIp = request.ip || 'anonymous';
+      const rateLimit = await redisService.checkPlaygroundRateLimit(clientIp);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Free tool rate limit exceeded (max 25 renders/hour). Please upgrade for unlimited access.',
+        });
+      }
+
+      const body = request.body as any;
+      const result = await reelService.captureLiveScreenrecord(body.url, {
+        width: body.width,
+        height: body.height,
+        durationMs: body.durationMs,
+      });
+
+      return reply.code(200).send({
+        success: true,
+        screenrecordUrl: result.hostedUrl,
+        width: result.width,
+        height: result.height,
       });
     }
   );
@@ -2841,6 +3041,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           handle: z.string().optional().default('@brand'),
           theme: z.enum(['cyberpunk', 'midnight', 'gradient', 'sunset', 'clean']).default('gradient'),
           aspectRatio: z.enum(['9:16', '1:1', '16:9', '4:5']).optional().default('9:16'),
+          screenrecordUrl: z.string().optional(),
+          screenrecordMode: z.enum(['inset', 'backdrop', 'none']).optional().default('inset'),
           slides: z
             .array(
               z.object({
