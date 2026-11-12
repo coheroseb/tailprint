@@ -722,7 +722,7 @@ describe('Tailprint Test Suite', () => {
       expect(response.headers['x-invoice-total']).toBe('12500');
     }, 25000);
 
-    it('GET /v1/mcp/tools returns catalog of 13 registered tools including generate_einvoice', async () => {
+    it('GET /v1/mcp/tools returns catalog of 22 registered tools including generate_einvoice and new additions', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/v1/mcp/tools',
@@ -730,11 +730,14 @@ describe('Tailprint Test Suite', () => {
 
       expect(response.statusCode).toBe(200);
       const data = JSON.parse(response.body);
-      expect(data.totalTools).toBe(13);
+      expect(data.totalTools).toBe(22);
       const names = data.tools.map((t: any) => t.name);
       expect(names).toContain('generate_einvoice');
       expect(names).toContain('render_carousel');
       expect(names).toContain('compare_snapshots');
+      expect(names).toContain('merge_pdfs');
+      expect(names).toContain('split_pdf');
+      expect(names).toContain('render_mermaid');
     });
 
     it('validates request input and rejects invalid schema (400)', async () => {

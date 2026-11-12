@@ -10,6 +10,11 @@ import { storageService } from '../services/storage.js';
 import { visualDiffService } from '../services/visualDiff.js';
 import { carouselService } from '../services/carousel.js';
 import { eInvoiceService } from '../services/eInvoice.js';
+import { pdfOperationsService } from '../services/pdfOperations.js';
+import { diagramService } from '../services/diagram.js';
+import { presentationService } from '../services/presentation.js';
+import { socialCardService } from '../services/socialCard.js';
+import { webAuditService } from '../services/webAudit.js';
 import { TEMPLATES } from '../config/templates.js';
 
 export interface McpServerOptions {
@@ -922,6 +927,621 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
     }
   );
 
+  // Helper to resolve a PDF from base64 string or remote URL
+  async function resolvePdfBuffer(input: string): Promise<Buffer> {
+    const trimmed = input.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      const res = await fetch(trimmed);
+      if (!res.ok) {
+        throw new Error(`Failed to download PDF from URL: ${res.statusText}`);
+      }
+      const arrayBuf = await res.arrayBuffer();
+      return Buffer.from(arrayBuf);
+    }
+    const cleanBase64 = trimmed.replace(/^data:application\/pdf;base64,/, '').trim();
+    return Buffer.from(cleanBase64, 'base64');
+  }
+
+  // Tool 14: merge_pdfs
+  server.tool(
+    'merge_pdfs',
+    'Merges two or more PDF documents (supplied as base64 strings or public URLs) into a single unified vector PDF.',
+    {
+      pdfs: z.array(z.string()).min(2).describe('Array of at least 2 PDF inputs (base64 data URI or public http/https URLs) to merge in order'),
+      output_filename: z.string().optional().default('merged.pdf').describe('Filename for the merged document (default: "merged.pdf")'),
+    },
+    async ({ pdfs, output_filename }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('merge_pdfs');
+        }
+
+        const buffers: Buffer[] = [];
+        for (const input of pdfs) {
+          const buf = await resolvePdfBuffer(input);
+          buffers.push(buf);
+        }
+
+        const mergedBuffer = await pdfOperationsService.mergePdfs({ pdfBuffers: buffers });
+        const sizeKb = (mergedBuffer.byteLength / 1024).toFixed(1);
+
+        const stored = await storageService.saveFile(mergedBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: output_filename || 'merged.pdf',
+        });
+
+        const outputBase64 = mergedBuffer.toString('base64');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `✅ **Successfully merged ${pdfs.length} PDF documents!** (${sizeKb} KB)`,
+                ``,
+                `🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})`,
+                `*(Link hosted on Tailprint CDN, expires in 24 hours)*`,
+                ``,
+                `Base64 Data URI:`,
+                `data:application/pdf;base64,${outputBase64}`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error merging PDFs: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 15: split_pdf
+  server.tool(
+    'split_pdf',
+    'Extracts specific pages or page ranges (e.g. "1-3, 5, 8-10") from an existing PDF document into a new PDF.',
+    {
+      pdf: z.string().describe('Source PDF document as a base64 data URI or public http/https URL'),
+      pages: z.string().describe('Comma-separated page numbers or ranges to extract (e.g. "1-3, 5, 8-10")'),
+      output_filename: z.string().optional().default('split.pdf').describe('Output filename (default: "split.pdf")'),
+    },
+    async ({ pdf, pages, output_filename }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('split_pdf');
+        }
+
+        const inputBuffer = await resolvePdfBuffer(pdf);
+        const splitBuffer = await pdfOperationsService.splitPdf({ pdfBuffer: inputBuffer, pages });
+        const sizeKb = (splitBuffer.byteLength / 1024).toFixed(1);
+
+        const stored = await storageService.saveFile(splitBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: output_filename || 'split.pdf',
+        });
+
+        const outputBase64 = splitBuffer.toString('base64');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `✅ **Successfully extracted pages (${pages}) into new PDF!** (${sizeKb} KB)`,
+                ``,
+                `🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})`,
+                `*(Link hosted on Tailprint CDN, expires in 24 hours)*`,
+                ``,
+                `Base64 Data URI:`,
+                `data:application/pdf;base64,${outputBase64}`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error splitting PDF: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 16: fill_pdf_form
+  server.tool(
+    'fill_pdf_form',
+    'Fills interactive PDF forms (AcroForms) with text, numbers, or checkboxes, with optional form flattening.',
+    {
+      pdf: z.string().describe('Interactive PDF document as a base64 data URI or public http/https URL'),
+      fields: z.record(z.union([z.string(), z.number(), z.boolean()])).describe('Key-value map of form field names to their values (e.g. {"client_name": "Acme", "agreed": true})'),
+      flatten: z.boolean().optional().default(true).describe('Whether to flatten form fields to prevent further editing (default: true)'),
+      output_filename: z.string().optional().default('filled_form.pdf').describe('Output filename (default: "filled_form.pdf")'),
+    },
+    async ({ pdf, fields, flatten, output_filename }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('fill_pdf_form');
+        }
+
+        const inputBuffer = await resolvePdfBuffer(pdf);
+        const result = await pdfOperationsService.fillPdfForm({
+          pdfBuffer: inputBuffer,
+          fields,
+          flatten: flatten ?? true,
+        });
+
+        const sizeKb = (result.buffer.byteLength / 1024).toFixed(1);
+
+        const stored = await storageService.saveFile(result.buffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: output_filename || 'filled_form.pdf',
+        });
+
+        const outputBase64 = result.buffer.toString('base64');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `✅ **PDF form successfully filled!** (${sizeKb} KB)`,
+                `- **Fields updated (${result.filledFields.length}):** ${result.filledFields.join(', ') || 'None'}`,
+                `- **All available form fields (${result.availableFields.length}):** ${result.availableFields.join(', ')}`,
+                `- **Flattened:** ${flatten ? 'Yes (read-only)' : 'No (interactive)'}`,
+                ``,
+                `🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})`,
+                `*(Link hosted on Tailprint CDN, expires in 24 hours)*`,
+                ``,
+                `Base64 Data URI:`,
+                `data:application/pdf;base64,${outputBase64}`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error filling PDF form: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 17: compress_pdf
+  server.tool(
+    'compress_pdf',
+    'Compacts and shrinks PDF file size by bundling internal PDF objects into compressed streams and stripping duplicate structures.',
+    {
+      pdf: z.string().describe('Source PDF document as base64 data URI or public http/https URL'),
+      output_filename: z.string().optional().default('compressed.pdf').describe('Output filename (default: "compressed.pdf")'),
+    },
+    async ({ pdf, output_filename }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('compress_pdf');
+        }
+
+        const inputBuffer = await resolvePdfBuffer(pdf);
+        const compressedBuffer = await pdfOperationsService.compressPdf(inputBuffer);
+
+        const origKb = (inputBuffer.byteLength / 1024).toFixed(1);
+        const compKb = (compressedBuffer.byteLength / 1024).toFixed(1);
+        const diffKb = (inputBuffer.byteLength - compressedBuffer.byteLength) / 1024;
+        const savingsPercent = inputBuffer.byteLength > 0
+          ? Math.max(0, Math.round(((inputBuffer.byteLength - compressedBuffer.byteLength) / inputBuffer.byteLength) * 100))
+          : 0;
+
+        const stored = await storageService.saveFile(compressedBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: output_filename || 'compressed.pdf',
+        });
+
+        const outputBase64 = compressedBuffer.toString('base64');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `✅ **PDF successfully compressed!**`,
+                `- **Original Size:** ${origKb} KB`,
+                `- **Compressed Size:** ${compKb} KB`,
+                `- **Savings:** ${savingsPercent}% (${diffKb.toFixed(1)} KB reduced)`,
+                ``,
+                `🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})`,
+                `*(Link hosted on Tailprint CDN, expires in 24 hours)*`,
+                ``,
+                `Base64 Data URI:`,
+                `data:application/pdf;base64,${outputBase64}`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error compressing PDF: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 18: render_mermaid
+  server.tool(
+    'render_mermaid',
+    'Renders Mermaid diagram syntax (flowcharts, sequence diagrams, ER diagrams, architecture, state diagrams) into high-resolution PNG, vector SVG, or vector PDF.',
+    {
+      code: z.string().describe('Mermaid diagram definition (e.g. "graph TD\\n  A[Client] --> B(API Server)\\n  B --> C[(PostgreSQL)]")'),
+      theme: z.enum(['dark', 'forest', 'neutral', 'default', 'base']).optional().default('dark').describe('Diagram color theme (default: "dark")'),
+      output_format: z.enum(['png', 'pdf', 'svg']).optional().default('png').describe('Output format: "png", "pdf", or "svg" (default: "png")'),
+      title: z.string().optional().describe('Optional diagram headline title'),
+      width: z.number().optional().default(1200).describe('Canvas width in pixels (default: 1200)'),
+      height: z.number().optional().default(800).describe('Canvas height in pixels (default: 800)'),
+    },
+    async ({ code, theme, output_format, title, width, height }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('render_mermaid');
+        }
+
+        const format = output_format || 'png';
+        const result = await diagramService.renderMermaid({
+          code,
+          theme: theme || 'dark',
+          outputFormat: format,
+          title,
+          width,
+          height,
+        });
+
+        const stored = await storageService.saveFile(result.buffer, {
+          mimeType: result.contentType,
+          extension: format === 'svg' ? 'svg' : format === 'pdf' ? 'pdf' : 'png',
+          filename: `diagram.${format === 'svg' ? 'svg' : format === 'pdf' ? 'pdf' : 'png'}`,
+        });
+
+        const contentBlocks: any[] = [];
+
+        if (format === 'png') {
+          contentBlocks.push({
+            type: 'image',
+            data: result.buffer.toString('base64'),
+            mimeType: 'image/png',
+          });
+        }
+
+        contentBlocks.push({
+          type: 'text',
+          text: [
+            `✅ **Mermaid diagram successfully rendered (${format.toUpperCase()})!**`,
+            title ? `- **Title:** ${title}` : null,
+            `- **Theme:** ${theme || 'dark'}`,
+            `- **Dimensions:** ${width || 1200}x${height || 800}px`,
+            ``,
+            `🔗 **Direct Asset Link:** [${stored.hostedUrl}](${stored.hostedUrl})`,
+            `*(Link hosted on Tailprint CDN, expires in 24 hours)*`,
+            format === 'svg' && result.svgString ? `\n\`\`\`xml\n${result.svgString.slice(0, 1000)}...\n\`\`\`` : null,
+          ].filter(Boolean).join('\n'),
+        });
+
+        return { content: contentBlocks };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error rendering Mermaid diagram: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 19: render_presentation
+  server.tool(
+    'render_presentation',
+    'Converts Markdown slides (separated by "---") into a widescreen 16:9 presentation vector PDF (1920x1080) with slide numbers and modern Tailwind styling. Returns an inline cover preview and hosted PDF link.',
+    {
+      markdown: z.string().describe('Markdown text containing slides separated by "---". Use "# Title" for slide header, "## Subtitle", and bullet points.'),
+      title: z.string().optional().default('Executive Briefing').describe('Keynote or presentation title'),
+      author: z.string().optional().default('Tailprint AI').describe('Author or presenter name'),
+      theme: z.enum(['dark', 'midnight', 'gradient', 'minimal']).optional().default('dark').describe('Slide theme: "dark", "midnight", "gradient", or "minimal" (default: "dark")'),
+    },
+    async ({ markdown, title, author, theme }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('render_presentation');
+        }
+
+        const result = await presentationService.renderPresentation({
+          markdown,
+          title: title || 'Executive Briefing',
+          author: author || 'Tailprint AI',
+          theme: theme || 'dark',
+        });
+
+        const storedPdf = await storageService.saveFile(result.pdfBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: 'presentation.pdf',
+        });
+
+        const previewBase64 = result.previewImageBuffer.toString('base64');
+        const sizeKb = (result.pdfBuffer.byteLength / 1024).toFixed(1);
+
+        return {
+          content: [
+            {
+              type: 'image',
+              data: previewBase64,
+              mimeType: 'image/png',
+            },
+            {
+              type: 'text',
+              text: [
+                `🎯 **Widescreen 16:9 Presentation PDF Generated!** (${result.totalSlides} slides, ${sizeKb} KB)`,
+                ``,
+                `- **Title:** ${title || 'Executive Briefing'}`,
+                `- **Presenter:** ${author || 'Tailprint AI'}`,
+                `- **Theme:** ${theme || 'dark'} (1920×1080 Full-Bleed Vector PDF)`,
+                `- **Cover Slide Preview:** Displayed inline above`,
+                ``,
+                `📥 **Download Complete Slide Deck (PDF):** [${storedPdf.hostedUrl}](${storedPdf.hostedUrl})`,
+                `*(Link hosted on Tailprint CDN, expires in 24 hours)*`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error rendering presentation: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 20: generate_social_card
+  server.tool(
+    'generate_social_card',
+    'Generates a high-converting 1200x630 Open Graph / Twitter social banner image with modern typography, tags, and gradient effects without requiring raw HTML.',
+    {
+      title: z.string().describe('Main headline or post title'),
+      description: z.string().optional().describe('Subtitle or synopsis (1-2 sentences)'),
+      category: z.string().optional().default('Engineering').describe('Pill badge category (e.g. "Engineering", "Design", "Product")'),
+      author_name: z.string().optional().describe('Author name to display on the card'),
+      author_handle: z.string().optional().describe('Author Twitter/X handle (e.g. "@johndoe")'),
+      brand_name: z.string().optional().default('Tailprint').describe('Brand name displayed in the top corner (default: "Tailprint")'),
+      theme: z.enum(['dark', 'light', 'gradient', 'cyberpunk', 'emerald', 'amber']).optional().default('dark').describe('Card visual theme (default: "dark")'),
+      badge: z.string().optional().describe('Optional alert or status badge (e.g. "NEW", "v2.0", "5 min read")'),
+      reading_time: z.string().optional().describe('Estimated read time (e.g. "4 min read")'),
+    },
+    async ({ title, description, category, author_name, author_handle, brand_name, theme, badge, reading_time }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('generate_social_card');
+        }
+
+        const buffer = await socialCardService.generateSocialCard({
+          title,
+          description,
+          category: category || 'Engineering',
+          authorName: author_name,
+          authorHandle: author_handle,
+          brandName: brand_name || 'Tailprint',
+          theme: theme || 'dark',
+          badge,
+          readingTime: reading_time,
+        });
+
+        const base64Img = buffer.toString('base64');
+        const sizeKb = (buffer.byteLength / 1024).toFixed(1);
+
+        const stored = await storageService.saveFile(buffer, {
+          mimeType: 'image/png',
+          extension: 'png',
+          filename: 'social-card.png',
+        });
+
+        return {
+          content: [
+            {
+              type: 'image',
+              data: base64Img,
+              mimeType: 'image/png',
+            },
+            {
+              type: 'text',
+              text: [
+                `✅ **High-DPI Social Card Rendered!** (1200×630 PNG, ${sizeKb} KB)`,
+                `- **Title:** "${title}"`,
+                `- **Category:** ${category || 'Engineering'}`,
+                `- **Theme:** ${theme || 'dark'}`,
+                ``,
+                `🔗 **Direct Image Link:** [${stored.hostedUrl}](${stored.hostedUrl})`,
+                `*(Hosted on Tailprint CDN, expires in 24 hours)*`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error generating social card: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 21: extract_tables_from_url
+  server.tool(
+    'extract_tables_from_url',
+    'Scrapes and extracts all <table> elements from any public web page into structured JSON arrays and clean Markdown tables.',
+    {
+      url: z.string().url().describe('The full web URL to extract tables from (e.g. https://en.wikipedia.org/wiki/List_of_countries)'),
+      selector: z.string().optional().default('table').describe('Optional CSS selector targeting specific tables (default: "table")'),
+    },
+    async ({ url, selector }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('extract_tables_from_url');
+        }
+
+        const tables = await webAuditService.extractTablesFromUrl({
+          url,
+          selector: selector || 'table',
+        });
+
+        if (tables.length === 0) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `ℹ️ No tables found matching selector "${selector || 'table'}" at URL: ${url}`,
+              },
+            ],
+          };
+        }
+
+        const tablesSummary = tables
+          .map((tbl) => {
+            return [
+              `### Table #${tbl.index + 1}${tbl.caption ? ` (${tbl.caption})` : ''}`,
+              `- **Columns (${tbl.headers.length}):** ${tbl.headers.join(', ')}`,
+              `- **Total Rows:** ${tbl.rows.length}`,
+              ``,
+              tbl.markdownTable,
+              ``,
+            ].join('\n');
+          })
+          .join('\n---\n\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `📊 **Extracted ${tables.length} table(s) from [${url}](${url}):**`,
+                ``,
+                tablesSummary,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error extracting tables from URL "${url}": ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 22: audit_webpage
+  server.tool(
+    'audit_webpage',
+    'Runs an automated technical audit on any public web page checking SEO (title, description, h1s, OpenGraph), accessibility (missing alts, lang, button labels), and DOM/performance metrics.',
+    {
+      url: z.string().url().describe('The public web URL to audit (e.g. https://tailprint.com)'),
+    },
+    async ({ url }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('audit_webpage');
+        }
+
+        const audit = await webAuditService.auditWebpage({ url });
+
+        const scoreEmoji = audit.score >= 90 ? '🟢' : audit.score >= 70 ? '🟡' : '🔴';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `# 🔍 Technical Audit Report for [${audit.finalUrl}](${audit.finalUrl})`,
+                ``,
+                `## Overall Health Score: ${scoreEmoji} **${audit.score} / 100**`,
+                `- **HTTP Status:** \`${audit.statusCode}\``,
+                `- **Protocol:** \`${audit.isHttps ? 'HTTPS (Secure)' : 'HTTP (Insecure)'}\``,
+                audit.performance.loadMs ? `- **Page Load Time:** \`${audit.performance.loadMs} ms\`` : null,
+                `- **Total DOM Nodes:** \`${audit.performance.totalDomNodes}\``,
+                ``,
+                `### 🚀 Actionable Recommendations:`,
+                ...audit.recommendations.map((rec) => `- ${rec}`),
+                ``,
+                `### 🏷️ SEO & Metadata:`,
+                `- **Page Title:** \`${audit.seo.title || 'None'}\``,
+                `- **Meta Description:** \`${audit.seo.description || 'None'}\``,
+                `- **Canonical URL:** \`${audit.seo.canonical || 'None'}\``,
+                `- **H1 Tags (${audit.seo.h1Count}):** ${audit.seo.h1Texts.map((t) => `"${t}"`).join(', ') || 'None'}`,
+                `- **H2 Count:** \`${audit.seo.h2Count}\``,
+                `- **Open Graph Image:** \`${audit.seo.openGraph['og:image'] || 'None'}\``,
+                ``,
+                `### ♿ Accessibility & HTML Standards:`,
+                `- **HTML Lang Attribute:** \`${audit.accessibility.hasHtmlLang ? `Yes (lang="${audit.accessibility.lang}")` : 'Missing'}\``,
+                `- **Images:** \`${audit.accessibility.totalImages}\` total (\`${audit.accessibility.imagesMissingAlt}\` missing alt tags)`,
+                `- **Buttons/Links without text:** \`${audit.accessibility.buttonsWithoutLabels}\``,
+              ].filter(Boolean).join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error auditing web page "${url}": ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
   // ==========================================
   // MCP RESOURCES
   // ==========================================
@@ -986,6 +1606,55 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             '',
             'Note: Header and footer templates must include inline styles for font size (e.g. `font-size: 9px;`).',
           ].join('\n'),
+        },
+      ],
+    })
+  );
+
+  // Resource 3: Smart Pagination & Zero-Retention Guide
+  server.resource(
+    'smart-pagination-guide',
+    'tailprint://docs/smart-pagination',
+    { description: 'Technical specifications of Smart Pagination Shield and Zero-Retention security in Tailprint', mimeType: 'text/markdown' },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: 'text/markdown',
+          text: [
+            '# Smart Pagination & Table Split Shield Guide',
+            '',
+            'Tailprint features automated PDF pagination protection and zero-retention privacy.',
+            '',
+            '## Automatic Protection Rules (smart_pagination: true)',
+            '1. **Repeating Table Headers:** When a `<table>` spans multiple pages, `<thead>` is automatically repeated at the top of every subsequent printed page (`display: table-header-group;`).',
+            '2. **TableRow Integrity:** Table rows (`<tr>`, `<td>`, `<th>`) are shielded with `break-inside: avoid;` to prevent text splitting halfway across page boundaries.',
+            '3. **Orphan Header Shield:** Heading tags (`<h1>` to `<h6>`) are prevented from being stranded at the bottom of a page without content (`break-after: avoid;`).',
+            '4. **Headless Table Conversion:** If an HTML table lacks a `<thead>` element, Tailprint automatically detects header cells and converts the first row into a semantic `<thead>`.',
+            '',
+            '## Zero-Retention Mode (no_store: true)',
+            '- Omits CDN file persistence entirely.',
+            '- Renders vector PDF or high-DPI image in transient Chromium memory.',
+            '- Completely bypasses Redis SHA-256 caching.',
+            '- Emits `X-Tailprint-Zero-Retention: active` HTTP header.',
+            '- Guaranteed GDPR / HIPAA compliance for sensitive medical and financial data.',
+          ].join('\n'),
+        },
+      ],
+    })
+  );
+
+  // Resource 4: All Templates Complete Source Bundle
+  server.resource(
+    'templates-all',
+    'tailprint://templates/all',
+    { description: 'Complete source bundle of all templates with HTML markup and metadata', mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(TEMPLATES, null, 2),
         },
       ],
     })
@@ -1078,6 +1747,56 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             content: {
               type: 'text',
               text: `Please design a high-converting 1200x630 Open Graph banner image for:\n- Title: "${title}"\n- Subtitle: "${subtitle || ''}"\n- Category: "${category || 'Article'}"\n\nUse the Tailprint render_template tool with template_id "og-card" (output_format: "png"), or render custom Tailwind HTML using render_image.`,
+            },
+          },
+        ],
+      };
+    }
+  );
+
+  // Prompt 4: Generate B2B Hybrid E-Invoice (Factur-X / ZUGFeRD)
+  server.prompt(
+    'generate_b2b_invoice',
+    'Generates a legally compliant European hybrid electronic invoice (Factur-X / ZUGFeRD / EN 16931) with embedded machine-readable XML',
+    {
+      seller_name: z.string().describe('Supplier or seller company name'),
+      buyer_name: z.string().describe('Customer or buyer company name'),
+      invoice_number: z.string().describe('Invoice identifier (e.g. "INV-2026-0042")'),
+      line_items_summary: z.string().describe('Description of line items, quantity, unit price, and VAT rate'),
+      currency: z.string().optional().describe('3-letter currency code (e.g. EUR, DKK, USD) - default EUR'),
+      iban: z.string().optional().describe('Bank wire transfer IBAN'),
+    },
+    async ({ seller_name, buyer_name, invoice_number, line_items_summary, currency, iban }) => {
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Please issue an EU-compliant hybrid Factur-X / ZUGFeRD e-invoice with embedded XML:\n- Seller: ${seller_name}\n- Buyer: ${buyer_name}\n- Invoice Number: ${invoice_number}\n- Items: ${line_items_summary}\n- Currency: ${currency || 'EUR'}\n${iban ? `- Payment IBAN: ${iban}\n` : ''}\nUse the Tailprint "generate_einvoice" tool to generate the hybrid PDF with CrossIndustryInvoice XML metadata for ERP systems (DATEV, SAP, Dinero, Billy).`,
+            },
+          },
+        ],
+      };
+    }
+  );
+
+  // Prompt 5: Visual Regression Audit
+  server.prompt(
+    'visual_regression_audit',
+    'Performs an automated visual comparison between two staging/production pages or HTML revisions',
+    {
+      before_url: z.string().url().describe('Baseline or production URL to compare against'),
+      after_url: z.string().url().describe('Current staging or branch deployment URL'),
+    },
+    async ({ before_url, after_url }) => {
+      return {
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Please perform a pixel-level visual regression audit between:\n- Baseline URL: "${before_url}"\n- Staging URL: "${after_url}"\n\nUse the Tailprint "compare_snapshots" tool to capture both viewports and generate a diff heatmap. Then use the "audit_webpage" tool to check for SEO and accessibility regressions.`,
             },
           },
         ],

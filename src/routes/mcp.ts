@@ -306,6 +306,120 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
       examplePrompt: 'Issue an EU-compliant Factur-X e-invoice to BMW AG for 40 hours consulting at 150 EUR/hr with 25% VAT and my IBAN.',
     },
+    {
+      name: 'merge_pdfs',
+      category: 'Document Management',
+      description: 'Merges two or more PDF documents (supplied as base64 strings or public URLs) into a single unified vector PDF. Returns CDN download URL + base64 data URI.',
+      outputType: 'application/pdf (hosted URL + base64)',
+      arguments: {
+        pdfs: 'string[] (min: 2) - Array of base64 data URIs or public http/https URLs to merge',
+        output_filename: 'string (default: "merged.pdf")',
+      },
+      examplePrompt: 'Merge this quote PDF with our standard terms and conditions PDF into a single customer contract.',
+    },
+    {
+      name: 'split_pdf',
+      category: 'Document Management',
+      description: 'Extracts specific pages or page ranges (e.g. "1-3, 5, 8-10") from an existing PDF document into a new PDF.',
+      outputType: 'application/pdf (hosted URL + base64)',
+      arguments: {
+        pdf: 'string - Source PDF document as base64 data URI or public http/https URL',
+        pages: 'string - Comma-separated page numbers or ranges (e.g. "1-3, 5, 8-10")',
+        output_filename: 'string (default: "split.pdf")',
+      },
+      examplePrompt: 'Extract pages 1 through 3 from this 50-page annual report PDF.',
+    },
+    {
+      name: 'fill_pdf_form',
+      category: 'Document Management',
+      description: 'Fills interactive PDF forms (AcroForms) with text, numbers, or checkboxes, with optional form flattening to lock values.',
+      outputType: 'application/pdf (hosted URL + base64)',
+      arguments: {
+        pdf: 'string - Interactive PDF document as base64 data URI or public http/https URL',
+        fields: 'record of string, number, or boolean - Field values to populate',
+        flatten: 'boolean (default: true) - Flatten form to make it read-only',
+        output_filename: 'string (default: "filled_form.pdf")',
+      },
+      examplePrompt: 'Fill this IRS W-9 form with our corporate tax info and flatten it.',
+    },
+    {
+      name: 'compress_pdf',
+      category: 'Document Management',
+      description: 'Compacts and shrinks PDF file size by bundling internal objects into compressed streams and stripping duplicate structures.',
+      outputType: 'application/pdf (hosted URL + base64)',
+      arguments: {
+        pdf: 'string - Source PDF document as base64 data URI or public http/https URL',
+        output_filename: 'string (default: "compressed.pdf")',
+      },
+      examplePrompt: 'Compress this 15MB scanned document PDF so it can be emailed under the 5MB mail limit.',
+    },
+    {
+      name: 'render_mermaid',
+      category: 'Data Visualization & Diagrams',
+      description: 'Renders Mermaid diagram syntax (flowcharts, sequence diagrams, ER diagrams, class diagrams, Gantt charts) into high-resolution PNG, vector SVG, or vector PDF.',
+      outputType: 'image/png, application/pdf, or image/svg+xml (inline image block + hosted URL)',
+      arguments: {
+        code: 'string - Mermaid diagram definition markup',
+        theme: '"dark" | "forest" | "neutral" | "default" | "base" (default: "dark")',
+        output_format: '"png" | "pdf" | "svg" (default: "png")',
+        title: 'string (optional) - Diagram headline',
+        width: 'number (default: 1200)',
+        height: 'number (default: 800)',
+      },
+      examplePrompt: 'Render an architecture sequence diagram showing user login, OAuth2 JWT issuance, and Postgres session verification.',
+    },
+    {
+      name: 'render_presentation',
+      category: 'Presentations & Slides',
+      description: 'Converts Markdown slides (separated by "---") into a widescreen 16:9 presentation vector PDF (1920x1080) with slide numbers and modern Tailwind styling. Returns inline cover slide preview and hosted PDF link.',
+      outputType: 'application/pdf + image/png (hosted PDF + inline preview)',
+      arguments: {
+        markdown: 'string - Markdown slides separated by "---"',
+        title: 'string (default: "Executive Briefing") - Keynote title',
+        author: 'string (default: "Tailprint AI") - Presenter name',
+        theme: '"dark" | "midnight" | "gradient" | "minimal" (default: "dark")',
+      },
+      examplePrompt: 'Convert this quarterly roadmap into a 5-slide dark 16:9 presentation PDF for our board meeting.',
+    },
+    {
+      name: 'generate_social_card',
+      category: 'Graphics & Open Graph',
+      description: 'Generates a high-converting 1200x630 Open Graph / Twitter social banner image with modern typography, tags, and gradient effects without requiring raw HTML.',
+      outputType: 'image/png (inline image block + hosted URL)',
+      arguments: {
+        title: 'string - Main headline or post title',
+        description: 'string (optional) - Subtitle or synopsis',
+        category: 'string (default: "Engineering") - Pill category tag',
+        author_name: 'string (optional) - Author name',
+        author_handle: 'string (optional) - Author handle',
+        brand_name: 'string (default: "Tailprint") - Brand badge',
+        theme: '"dark" | "light" | "gradient" | "cyberpunk" | "emerald" | "amber" (default: "dark")',
+        badge: 'string (optional) - Status badge (e.g. "NEW", "v2.0")',
+        reading_time: 'string (optional) - Read time (e.g. "5 min read")',
+      },
+      examplePrompt: 'Create a dark cyberpunk OpenGraph card for our article "Sub-millisecond Vector PDF Generation".',
+    },
+    {
+      name: 'extract_tables_from_url',
+      category: 'AI Data Ingestion',
+      description: 'Scrapes and extracts all <table> elements from any public web page into structured JSON arrays and clean Markdown tables.',
+      outputType: 'application/json + text/markdown',
+      arguments: {
+        url: 'string - Full public web URL to extract tables from',
+        selector: 'string (default: "table") - Optional CSS selector targeting specific tables',
+      },
+      examplePrompt: 'Extract all financial tables from this SEC 10-K filing page into structured markdown tables.',
+    },
+    {
+      name: 'audit_webpage',
+      category: 'Quality Assurance & CI/CD',
+      description: 'Runs an automated technical audit on any public web page checking SEO (title, description, h1s, OpenGraph), accessibility (missing alts, lang, button labels), and DOM/performance metrics with a health score (0-100).',
+      outputType: 'text/markdown (Health score + detailed diagnostic report)',
+      arguments: {
+        url: 'string - Full public web URL to audit',
+      },
+      examplePrompt: 'Run a technical SEO, accessibility, and DOM audit on https://tailprint.com and give me prioritized recommendations.',
+    },
   ];
 
   // GET /v1/mcp/tools - Comprehensive Tool Catalog & Documentation
@@ -314,8 +428,8 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       schema: {
         tags: ['MCP'],
-        summary: 'List All 13 Model Context Protocol (MCP) Tools & Schemas',
-        description: 'Returns the full catalog of 13 native MCP tools supported by Tailprint, including argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
+        summary: 'List All 22 Model Context Protocol (MCP) Tools & Schemas',
+        description: 'Returns the full catalog of 22 native MCP tools supported by Tailprint, including argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
         response: {
           200: z.object({
             totalTools: z.number().describe('Number of registered tools'),

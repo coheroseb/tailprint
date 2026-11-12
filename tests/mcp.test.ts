@@ -43,7 +43,16 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('compare_snapshots');
     expect(toolNames).toContain('render_carousel');
     expect(toolNames).toContain('generate_einvoice');
-    expect(toolNames.length).toBe(13);
+    expect(toolNames).toContain('merge_pdfs');
+    expect(toolNames).toContain('split_pdf');
+    expect(toolNames).toContain('fill_pdf_form');
+    expect(toolNames).toContain('compress_pdf');
+    expect(toolNames).toContain('render_mermaid');
+    expect(toolNames).toContain('render_presentation');
+    expect(toolNames).toContain('generate_social_card');
+    expect(toolNames).toContain('extract_tables_from_url');
+    expect(toolNames).toContain('audit_webpage');
+    expect(toolNames.length).toBe(22);
 
     await client.close();
     await server.close();
@@ -406,6 +415,128 @@ Takeaway: 90% token savings.
     await client.close();
     await server.close();
   }, 25000);
+
+  it('GET /v1/mcp/tools returns catalog of all 22 tools', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/mcp/tools',
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.totalTools).toBe(22);
+    expect(body.tools.length).toBe(22);
+    const names = body.tools.map((t: any) => t.name);
+    expect(names).toContain('merge_pdfs');
+    expect(names).toContain('split_pdf');
+    expect(names).toContain('render_mermaid');
+    expect(names).toContain('render_presentation');
+    expect(names).toContain('generate_social_card');
+    expect(names).toContain('extract_tables_from_url');
+    expect(names).toContain('audit_webpage');
+  });
+
+  it('executes generate_social_card and returns inline image block', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const res = (await client.callTool({
+      name: 'generate_social_card',
+      arguments: {
+        title: 'Instant High-Performance Vector PDF Generation',
+        description: 'Sub-millisecond headless Chromium rendering for AI agents.',
+        category: 'Engineering',
+        theme: 'dark',
+        brand_name: 'Tailprint',
+      },
+    })) as any;
+
+    expect(res.isError).toBeFalsy();
+    expect(res.content.some((c: any) => c.type === 'image')).toBe(true);
+    expect(res.content.some((c: any) => c.type === 'text' && c.text.includes('Direct Image Link'))).toBe(true);
+
+    await client.close();
+    await server.close();
+  }, 20000);
+
+  it('executes merge_pdfs and split_pdf tools', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    // Create 2 small test PDFs
+    const pdf1 = (await client.callTool({
+      name: 'render_pdf',
+      arguments: { html: '<h1>Doc 1 Page</h1>' },
+    })) as any;
+    const pdf1Base64 = pdf1.content[0].text.match(/data:application\/pdf;base64,([A-Za-z0-9+/=]+)/)[1];
+
+    const pdf2 = (await client.callTool({
+      name: 'render_pdf',
+      arguments: { html: '<h1>Doc 2 Page</h1>' },
+    })) as any;
+    const pdf2Base64 = pdf2.content[0].text.match(/data:application\/pdf;base64,([A-Za-z0-9+/=]+)/)[1];
+
+    // Merge them
+    const mergeRes = (await client.callTool({
+      name: 'merge_pdfs',
+      arguments: {
+        pdfs: [pdf1Base64, pdf2Base64],
+        output_filename: 'combined.pdf',
+      },
+    })) as any;
+
+    expect(mergeRes.isError).toBeFalsy();
+    expect(mergeRes.content[0].text).toContain('Successfully merged 2 PDF documents');
+    const mergedBase64 = mergeRes.content[0].text.match(/data:application\/pdf;base64,([A-Za-z0-9+/=]+)/)[1];
+
+    // Split page 1
+    const splitRes = (await client.callTool({
+      name: 'split_pdf',
+      arguments: {
+        pdf: mergedBase64,
+        pages: '1',
+      },
+    })) as any;
+
+    expect(splitRes.isError).toBeFalsy();
+    expect(splitRes.content[0].text).toContain('Successfully extracted pages (1)');
+
+    await client.close();
+    await server.close();
+  }, 30000);
+
+  it('lists MCP resources and prompts including new additions', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const resources = await client.listResources();
+    const resourceUris = resources.resources.map((r) => r.uri);
+    expect(resourceUris).toContain('tailprint://templates/catalog');
+    expect(resourceUris).toContain('tailprint://docs/tailwind-guide');
+    expect(resourceUris).toContain('tailprint://docs/smart-pagination');
+    expect(resourceUris).toContain('tailprint://templates/all');
+
+    const prompts = await client.listPrompts();
+    const promptNames = prompts.prompts.map((p) => p.name);
+    expect(promptNames).toContain('generate_invoice');
+    expect(promptNames).toContain('generate_b2b_invoice');
+    expect(promptNames).toContain('visual_regression_audit');
+
+    await client.close();
+    await server.close();
+  });
 
   it('rejects unauthenticated GET /v1/mcp/sse when no key is provided in production mode', async () => {
     const originalEnv = process.env.NODE_ENV;

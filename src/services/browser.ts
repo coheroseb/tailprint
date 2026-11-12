@@ -403,6 +403,14 @@ export class BrowserService {
 </html>`;
   }
 
+  public async executeTask<T>(
+    task: (context: BrowserContext, page: Page) => Promise<T>,
+    viewport = { width: 1200, height: 630 },
+    blockPopups = false
+  ): Promise<T> {
+    return this.executeWithTimeout(task, viewport, blockPopups);
+  }
+
   private async executeWithTimeout<T>(
     task: (context: BrowserContext, page: Page) => Promise<T>,
     viewport = { width: 1200, height: 630 },

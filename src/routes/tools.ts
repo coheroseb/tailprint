@@ -275,7 +275,7 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // ==========================================
   // PAGE 1: /tools (Tools Hub)
   // ==========================================
-  fastify.get('/tools', async (_request, reply) => {
+  fastify.get('/tools', { schema: { hide: true } }, async (_request, reply) => {
     const html = `<!DOCTYPE html>
 <html lang="en" class="dark scroll-smooth">
 <head>
@@ -646,8 +646,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
   };
 
-  fastify.get('/tools/carousel', carouselHandler);
-  fastify.get('/carousel', carouselHandler);
+  fastify.get('/tools/carousel', { schema: { hide: true } }, carouselHandler);
+  fastify.get('/carousel', { schema: { hide: true } }, carouselHandler);
 
   // ==========================================
   // PAGE 3: /tools/factur-x (EU E-Invoice Generator)
@@ -910,8 +910,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
   };
 
-  fastify.get('/tools/factur-x', facturXHandler);
-  fastify.get('/factur-x', facturXHandler);
+  fastify.get('/tools/factur-x', { schema: { hide: true } }, facturXHandler);
+  fastify.get('/factur-x', { schema: { hide: true } }, facturXHandler);
 
   // ==========================================
   // PAGE 4: /tools/visual-diff (Visual Regression Diff)
@@ -1065,8 +1065,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
   };
 
-  fastify.get('/tools/visual-diff', visualDiffHandler);
-  fastify.get('/visual-diff', visualDiffHandler);
+  fastify.get('/tools/visual-diff', { schema: { hide: true } }, visualDiffHandler);
+  fastify.get('/visual-diff', { schema: { hide: true } }, visualDiffHandler);
 
   // ==========================================
   // PAGE 5: /tools/mockup (Instant Device Mockup Generator)
@@ -1249,8 +1249,8 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
     return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
   };
 
-  fastify.get('/tools/mockup', mockupHandler);
-  fastify.get('/mockup', mockupHandler);
+  fastify.get('/tools/mockup', { schema: { hide: true } }, mockupHandler);
+  fastify.get('/mockup', { schema: { hide: true } }, mockupHandler);
 
   // ==========================================
   // FREE API ENDPOINTS (IP Rate-limited)
