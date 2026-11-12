@@ -1375,29 +1375,29 @@ Respond ONLY with valid JSON in this exact structure:
         }
       }
 
-      // 2. Determine virtual & physical canvas dimensions (2/3 scale for fast HD 720p H.264 encoding)
+      // 2. Match exact CSS viewport of Studio Preview (#preview-mockup-frame) at 2x Retina scale
       const aspect = script.aspectRatio || '9:16';
-      const virtualDims: Record<string, { w: number; h: number; outW: number; outH: number }> = {
-        '9:16': { w: 1080, h: 1920, outW: 720, outH: 1280 },
-        '1:1': { w: 1080, h: 1080, outW: 720, outH: 720 },
-        '16:9': { w: 1920, h: 1080, outW: 1280, outH: 720 },
-        '4:5': { w: 1080, h: 1350, outW: 720, outH: 900 },
+      const virtualDims: Record<string, { cssW: number; cssH: number; outW: number; outH: number }> = {
+        '9:16': { cssW: 320, cssH: 568, outW: 720, outH: 1280 },
+        '1:1': { cssW: 380, cssH: 380, outW: 720, outH: 720 },
+        '16:9': { cssW: 480, cssH: 270, outW: 1280, outH: 720 },
+        '4:5': { cssW: 340, cssH: 425, outW: 720, outH: 900 },
       };
       const dim = virtualDims[aspect] || virtualDims['9:16'];
       const totalDurationSec = slideDurations.reduce((a, b) => a + b, 0);
 
-      // 3. Spawn FFmpeg H.264 encoder receiving piped JPEG frames at 15fps (interpolated to 30fps)
-      const renderFps = 15;
+      // 3. Spawn FFmpeg H.264 encoder receiving piped Retina DOM screenshots at 12fps (interpolated to 30fps)
+      const renderFps = 12;
       const ffmpegArgs: string[] = [
         '-y',
         '-f', 'image2pipe',
         '-vcodec', 'mjpeg',
         '-framerate', String(renderFps),
         '-i', '-',
-        '-vf', 'fps=30,format=yuv420p',
+        '-vf', `fps=30,scale=${dim.outW}:${dim.outH}:flags=lanczos,format=yuv420p`,
         '-c:v', 'libx264',
         '-preset', 'ultrafast',
-        '-crf', '21',
+        '-crf', '20',
         '-pix_fmt', 'yuv420p',
         '-movflags', '+faststart',
         videoOutPath,
@@ -1405,1085 +1405,743 @@ Respond ONLY with valid JSON in this exact structure:
 
       const taskTimeoutMs = Math.max(45000, Math.round((totalDurationSec + 25) * 1000));
       await browserService.executeTask(
-        async (context) => {
-        const page = await context.newPage();
-        await page.setViewportSize({ width: dim.outW, height: dim.outH });
-        await page.setContent(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&family=Plus+Jakarta+Sans:wght@500;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
-  <style>
-    body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; }
-  </style>
-</head>
-<body>
-  <canvas id="c" width="${dim.outW}" height="${dim.outH}"></canvas>
-</body>
-</html>`);
-
-        // Initialize canvas renderer and preload assets inside page
-        const payload = {
-          script: {
+        async (_context, page) => {
+          const initialPayload = {
             ...script,
             slides,
+            aspectRatio: aspect,
             layout: script.layout || 'classic',
             cleanExport: Boolean(script.cleanExport),
             screenrecordUrl: resolvedScreenrecordUrl,
             screenrecordMode: script.screenrecordMode || (resolvedScreenrecordUrl ? 'inset' : 'none'),
             brandColors: script.brandColors || deriveBrandPalette(),
-          },
-          dim,
-        };
-
-        await page.evaluate(async (data) => {
-          const { script: st, dim: d } = data;
-          (window as any).__reelData = data;
-
-          // Preload logo if present
-          if (st.logoUrl) {
-            await new Promise<void>((resolve) => {
-              const img = new Image();
-              img.crossOrigin = 'anonymous';
-              img.onload = () => {
-                (window as any).__logoImg = img;
-                resolve();
-              };
-              img.onerror = () => resolve();
-              img.src = st.logoUrl!;
-              setTimeout(resolve, 2000);
-            });
-          }
-
-          // Preload screenrecord video if present (attached to DOM + offscreen frame cache so it never blinks)
-          if (st.screenrecordUrl && st.screenrecordMode !== 'none') {
-            await new Promise<void>((resolve) => {
-              const vid = document.createElement('video');
-              vid.muted = true;
-              vid.loop = true;
-              vid.playsInline = true;
-              vid.preload = 'auto';
-              vid.crossOrigin = 'anonymous';
-              vid.style.cssText = 'position:fixed;top:0;left:0;width:4px;height:4px;opacity:0.01;pointer-events:none;z-index:-1;';
-              document.body.appendChild(vid);
-
-              const cacheCanvas = document.createElement('canvas');
-              cacheCanvas.width = 720;
-              cacheCanvas.height = 1280;
-              (window as any).__bgVideoCache = cacheCanvas;
-              (window as any).__bgVideoCacheReady = false;
-
-              vid.onloadeddata = () => {
-                (window as any).__bgVideo = vid;
-                try {
-                  cacheCanvas.width = vid.videoWidth || 720;
-                  cacheCanvas.height = vid.videoHeight || 1280;
-                  const cctx = cacheCanvas.getContext('2d');
-                  if (cctx) {
-                    cctx.drawImage(vid, 0, 0, cacheCanvas.width, cacheCanvas.height);
-                    (window as any).__bgVideoCacheReady = true;
-                  }
-                } catch {}
-                resolve();
-              };
-              vid.onerror = () => resolve();
-              vid.src = st.screenrecordUrl;
-              setTimeout(resolve, 3500);
-            });
-          }
-
-          // Ensure Google Fonts (Playfair Display, Space Grotesk, JetBrains Mono, Plus Jakarta Sans, Inter) finish loading before Frame 0
-          if ((document as any).fonts) {
-            await Promise.race([
-              Promise.all([
-                (document as any).fonts.load('900 72px "Playfair Display"').catch(() => {}),
-                (document as any).fonts.load('italic 600 32px "Playfair Display"').catch(() => {}),
-                (document as any).fonts.load('800 72px "Space Grotesk"').catch(() => {}),
-                (document as any).fonts.load('700 44px "JetBrains Mono"').catch(() => {}),
-                (document as any).fonts.load('800 72px "Plus Jakarta Sans"').catch(() => {}),
-                (document as any).fonts.load('600 44px "Inter"').catch(() => {}),
-                (document as any).fonts.ready,
-              ]),
-              new Promise<void>((r) => setTimeout(r, 2500)),
-            ]);
-          }
-
-          // Define frame drawer function on window
-          (window as any).__renderFrame = (slideIdx: number, slideProgress: number): string => {
-            const canvas = document.getElementById('c') as HTMLCanvasElement;
-            const ctx = canvas.getContext('2d')!;
-            const W = d.w;
-            const H = d.h;
-            const scale = d.outW / d.w;
-
-            ctx.save();
-            ctx.scale(scale, scale);
-
-            const slide = st.slides[slideIdx] || st.slides[0];
-            const total = st.slides.length;
-            const layout = st.layout || 'classic';
-            const cleanExport = st.cleanExport !== false;
-            const themeKey = st.theme || 'brand';
-            const isLight = themeKey === 'clean';
-            const slideType = slide.slideType || (slideIdx === 0 ? 'hook' : slideIdx === 1 ? 'problem' : slideIdx === 2 ? 'stat' : 'cta');
-
-            const themes: Record<string, any> = {
-              nordic: {
-                bg1: '#101726',
-                bg2: '#0c111c',
-                text: '#fef3c7',
-                sub: '#cbd5e1',
-                accent: '#fbbf24',
-                fontHead: "'Playfair Display', Georgia, serif",
-                fontBody: "'Inter', sans-serif",
-                tagBg: 'rgba(245, 158, 11, 0.15)',
-                tagText: '#fcd34d',
-                badgeIcon: '✦',
-              },
-              bento: {
-                bg1: '#070b14',
-                bg2: '#030509',
-                text: '#ffffff',
-                sub: '#cbd5e1',
-                accent: '#38bdf8',
-                fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
-                fontBody: "'Plus Jakarta Sans', system-ui, sans-serif",
-                tagBg: 'rgba(56, 189, 248, 0.15)',
-                tagText: '#38bdf8',
-                badgeIcon: '●',
-              },
-              brutalist: {
-                bg1: '#000000',
-                bg2: '#000000',
-                text: '#ffffff',
-                sub: '#d4d4d8',
-                accent: '#facc15',
-                fontHead: "'Space Grotesk', monospace, sans-serif",
-                fontBody: "'Space Grotesk', monospace, sans-serif",
-                tagBg: '#facc15',
-                tagText: '#000000',
-                badgeIcon: '⚡',
-              },
-              creator: {
-                bg1: '#1e082e',
-                bg2: '#080310',
-                text: '#ffffff',
-                sub: '#fecdd3',
-                accent: '#fbbf24',
-                fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
-                fontBody: "'Inter', sans-serif",
-                tagBg: 'rgba(244, 63, 94, 0.3)',
-                tagText: '#fda4af',
-                badgeIcon: '🔥',
-              },
-              terminal: {
-                bg1: '#080c14',
-                bg2: '#05070c',
-                text: '#34d399',
-                sub: '#94a3b8',
-                accent: '#34d399',
-                fontHead: "'JetBrains Mono', monospace",
-                fontBody: "'JetBrains Mono', monospace",
-                tagBg: 'rgba(6, 78, 59, 0.8)',
-                tagText: '#34d399',
-                badgeIcon: '>_',
-              },
-              brand: {
-                bg1: st.brandColors?.primary || '#4f46e5',
-                bg2: st.brandColors?.secondary || '#090d16',
-                text: '#ffffff',
-                sub: '#cbd5e1',
-                accent: st.brandColors?.accent || '#38bdf8',
-                fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
-                fontBody: "'Inter', sans-serif",
-                tagBg: 'rgba(255, 255, 255, 0.14)',
-                tagText: '#ffffff',
-                badgeIcon: '✨',
-              },
-              gradient: { bg1: '#1e1b4b', bg2: '#3b0764', text: '#ffffff', sub: '#c4b5fd', accent: '#22d3ee', fontHead: "'Plus Jakarta Sans', system-ui, sans-serif", fontBody: "'Inter', sans-serif", tagBg: 'rgba(99, 102, 241, 0.25)', tagText: '#a5b4fc', badgeIcon: '✦' },
-              cyberpunk: { bg1: '#09090b', bg2: '#18181b', text: '#facc15', sub: '#d4d4d8', accent: '#ec4899', fontHead: "'Space Grotesk', monospace, sans-serif", fontBody: "'JetBrains Mono', monospace", tagBg: 'rgba(250, 204, 21, 0.15)', tagText: '#fde047', badgeIcon: '⚡' },
-              midnight: { bg1: '#000000', bg2: '#090d16', text: '#f8fafc', sub: '#94a3b8', accent: '#34d399', fontHead: "'Plus Jakarta Sans', system-ui, sans-serif", fontBody: "'Inter', sans-serif", tagBg: 'rgba(16, 185, 129, 0.2)', tagText: '#34d399', badgeIcon: '●' },
-              sunset: { bg1: '#4c0519', bg2: '#451a03', text: '#ffffff', sub: '#fecdd3', accent: '#fbbf24', fontHead: "'Playfair Display', Georgia, serif", fontBody: "'Inter', sans-serif", tagBg: 'rgba(244, 63, 94, 0.25)', tagText: '#fda4af', badgeIcon: '🌅' },
-              clean: { bg1: '#f8fafc', bg2: '#e2e8f0', text: '#0f172a', sub: '#475569', accent: '#2563eb', fontHead: "'Plus Jakarta Sans', system-ui, sans-serif", fontBody: "'Inter', sans-serif", tagBg: 'rgba(37, 99, 235, 0.12)', tagText: '#1d4ed8', badgeIcon: '✦' },
-            };
-            const t = themes[themeKey] || themes.brand || themes.nordic;
-            const cardRadius = themeKey === 'brutalist' ? 0 : 28;
-
-            function roundRect(x: number, y: number, w: number, h: number, r: number) {
-              if (r <= 0) {
-                ctx.beginPath();
-                ctx.rect(x, y, w, h);
-                ctx.closePath();
-                return;
-              }
-              ctx.beginPath();
-              ctx.moveTo(x + r, y);
-              ctx.arcTo(x + w, y, x + w, y + h, r);
-              ctx.arcTo(x + w, y + h, x, y + h, r);
-              ctx.arcTo(x, y + h, x, y, r);
-              ctx.arcTo(x, y, x + w, y, r);
-              ctx.closePath();
-            }
-
-            function drawArchetypeCard(x: number, y: number, w: number, h: number, withTerminalBar = true) {
-              ctx.save();
-              if (themeKey === 'brutalist') {
-                ctx.fillStyle = '#facc15';
-                ctx.fillRect(x + 10, y + 10, w, h);
-                ctx.fillStyle = '#050505';
-                ctx.fillRect(x, y, w, h);
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 4;
-                ctx.strokeRect(x, y, w, h);
-              } else if (themeKey === 'terminal') {
-                ctx.fillStyle = 'rgba(10, 15, 26, 0.94)';
-                roundRect(x, y, w, h, 20);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(52, 211, 153, 0.40)';
-                ctx.lineWidth = 2;
-                roundRect(x, y, w, h, 20);
-                ctx.stroke();
-                if (withTerminalBar) {
-                  ctx.fillStyle = 'rgba(15, 23, 42, 0.98)';
-                  roundRect(x + 1, y + 1, w - 2, 42, 18);
-                  ctx.fill();
-                  ctx.fillRect(x + 1, y + 22, w - 2, 21);
-                  ctx.fillStyle = '#f43f5e';
-                  ctx.beginPath(); ctx.arc(x + 24, y + 22, 6, 0, Math.PI * 2); ctx.fill();
-                  ctx.fillStyle = '#fbbf24';
-                  ctx.beginPath(); ctx.arc(x + 44, y + 22, 6, 0, Math.PI * 2); ctx.fill();
-                  ctx.fillStyle = '#34d399';
-                  ctx.beginPath(); ctx.arc(x + 64, y + 22, 6, 0, Math.PI * 2); ctx.fill();
-                  ctx.fillStyle = '#64748b';
-                  ctx.font = `600 18px ${t.fontBody}`;
-                  ctx.fillText(`~/${(st.brand || 'app').toLowerCase().replace(/[^a-z0-9_-]/g, '')}/slide-0${slideIdx + 1}.sh`, x + 86, y + 28);
-                }
-              } else if (themeKey === 'nordic') {
-                ctx.fillStyle = 'rgba(16, 23, 38, 0.80)';
-                roundRect(x, y, w, h, cardRadius);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(251, 191, 36, 0.28)';
-                ctx.lineWidth = 1.5;
-                roundRect(x, y, w, h, cardRadius);
-                ctx.stroke();
-              } else if (isLight) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                ctx.shadowColor = 'rgba(15, 23, 42, 0.09)';
-                ctx.shadowBlur = 24;
-                ctx.shadowOffsetY = 10;
-                roundRect(x, y, w, h, cardRadius);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-                ctx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
-                ctx.lineWidth = 1.5;
-                roundRect(x, y, w, h, cardRadius);
-                ctx.stroke();
-              } else {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-                roundRect(x, y, w, h, cardRadius);
-                ctx.fill();
-                ctx.strokeStyle = t.accent + '44';
-                ctx.lineWidth = 1.5;
-                roundRect(x, y, w, h, cardRadius);
-                ctx.stroke();
-              }
-              ctx.restore();
-            }
-
-            function wrapLines(text: string, maxWidth: number): string[] {
-              const words = (text || '').split(' ');
-              const lines: string[] = [];
-              let current = words[0] || '';
-              for (let i = 1; i < words.length; i++) {
-                const test = current + ' ' + words[i];
-                if (ctx.measureText(test).width < maxWidth) {
-                  current = test;
-                } else {
-                  lines.push(current);
-                  current = words[i];
-                }
-              }
-              if (current) lines.push(current);
-              return lines;
-            }
-
-            function buildHighlightTokens(): Set<string> {
-              const tokens = new Set<string>();
-              const list = Array.isArray(slide.highlightWords) ? slide.highlightWords : [];
-              for (const phrase of list) {
-                String(phrase || '')
-                  .toLowerCase()
-                  .split(/\s+/)
-                  .map((w) => w.replace(/[^a-zæøåäöü0-9-]/gi, ''))
-                  .filter((w) => w.length >= 3)
-                  .forEach((w) => tokens.add(w));
-              }
-              return tokens;
-            }
-
-            function drawHighlightedHeadline(
-              text: string,
-              x: number,
-              startY: number,
-              maxWidth: number,
-              lineHeight: number,
-              fontSize: number,
-              centered = false
-            ): number {
-              ctx.font = `900 ${fontSize}px ${t.fontHead}`;
-              const hLines = wrapLines(text || '', maxWidth);
-              const tokens = buildHighlightTokens();
-              let curY = startY;
-
-              hLines.forEach((line) => {
-                const words = line.trim().split(/\s+/).filter(Boolean);
-                const lineW = ctx.measureText(line).width;
-                let curX = centered ? x + (maxWidth - lineW) / 2 : x;
-
-                words.forEach((word) => {
-                  const wordW = ctx.measureText(word).width;
-                  const spaceW = ctx.measureText(' ').width;
-                  const cleanToken = word.toLowerCase().replace(/[^a-zæøåäöü0-9-]/gi, '');
-                  const isHi = cleanToken.length >= 3 && tokens.has(cleanToken);
-
-                  ctx.save();
-                  if (isHi) {
-                    if (themeKey === 'brutalist') {
-                      ctx.fillStyle = '#facc15';
-                      ctx.fillRect(curX - 6, curY - fontSize * 0.84, wordW + 12, fontSize * 1.04);
-                      ctx.fillStyle = '#000000';
-                    } else if (themeKey === 'terminal') {
-                      ctx.fillStyle = 'rgba(52, 211, 153, 0.22)';
-                      roundRect(curX - 6, curY - fontSize * 0.82, wordW + 12, fontSize * 1.02, 8);
-                      ctx.fill();
-                      ctx.strokeStyle = 'rgba(52, 211, 153, 0.5)';
-                      ctx.lineWidth = 1.5;
-                      roundRect(curX - 6, curY - fontSize * 0.82, wordW + 12, fontSize * 1.02, 8);
-                      ctx.stroke();
-                      ctx.fillStyle = '#a7f3d0';
-                    } else if (themeKey === 'nordic') {
-                      ctx.fillStyle = 'rgba(251, 191, 36, 0.16)';
-                      roundRect(curX - 5, curY - fontSize * 0.8, wordW + 10, fontSize * 0.98, 6);
-                      ctx.fill();
-                      ctx.fillStyle = '#fbbf24';
-                      ctx.fillRect(curX - 3, curY + 8, wordW + 6, 4);
-                      ctx.fillStyle = '#fde68a';
-                    } else {
-                      ctx.fillStyle = t.accent + '2e';
-                      roundRect(curX - 6, curY - fontSize * 0.82, wordW + 12, fontSize * 1.02, 10);
-                      ctx.fill();
-                      ctx.fillStyle = isLight ? t.accent : '#ffffff';
-                    }
-                  } else {
-                    ctx.fillStyle = t.text;
-                  }
-                  ctx.fillText(word, curX, curY);
-                  ctx.restore();
-
-                  curX += wordW + spaceW;
-                });
-
-                curY += lineHeight;
-              });
-
-              return curY;
-            }
-
-            function drawKaraokeText(text: string, x: number, startY: number, maxWidth: number, lineHeight: number, progress = 1.0, fontSize = 40) {
-              ctx.font = `600 ${fontSize}px ${t.fontBody}`;
-              const allWords = (text || '').trim().split(/\s+/).filter(Boolean);
-              const totalWords = allWords.length;
-              // Active word index progresses across slide duration
-              const activeWordIdx = Math.min(totalWords - 1, Math.floor(progress * totalWords * 1.15));
-
-              const lines = wrapLines(text || '', maxWidth);
-              let globalWordIdx = 0;
-              let curY = startY;
-
-              lines.forEach((line) => {
-                const words = line.trim().split(/\s+/).filter(Boolean);
-                let curX = x;
-                words.forEach((word) => {
-                  const wordW = ctx.measureText(word).width;
-                  const spaceW = ctx.measureText(' ').width;
-
-                  const isCurrent = globalWordIdx === activeWordIdx;
-                  const isPast = globalWordIdx < activeWordIdx;
-
-                  ctx.save();
-                  if (isCurrent) {
-                    // Kinetic Glowing Highlight Pill behind current word
-                    ctx.fillStyle = themeKey === 'brutalist' ? '#facc15' : t.accent + '2d';
-                    roundRect(curX - 6, curY - lineHeight * 0.72, wordW + 12, lineHeight * 0.9, themeKey === 'brutalist' ? 0 : 8);
-                    ctx.fill();
-
-                    ctx.fillStyle = themeKey === 'brutalist' ? '#000000' : t.accent;
-                    if (themeKey !== 'brutalist' && !isLight) {
-                      ctx.shadowColor = t.accent;
-                      ctx.shadowBlur = 14;
-                    }
-                    ctx.fillText(word, curX, curY);
-                  } else if (isPast) {
-                    ctx.fillStyle = t.text;
-                    ctx.fillText(word, curX, curY);
-                  } else {
-                    ctx.fillStyle = t.sub;
-                    ctx.fillText(word, curX, curY);
-                  }
-                  ctx.restore();
-
-                  curX += wordW + spaceW;
-                  globalWordIdx++;
-                });
-                curY += lineHeight;
-              });
-              return curY;
-            }
-
-            // 1. Base Gradient Background with Breathing Ambient Glow + Archetype Texture
-            const grad = ctx.createLinearGradient(0, 0, W, H);
-            grad.addColorStop(0, t.bg1);
-            grad.addColorStop(1, t.bg2);
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-
-            // Archetype backdrop surface texture
-            if (themeKey === 'terminal') {
-              ctx.save();
-              ctx.strokeStyle = 'rgba(52, 211, 153, 0.05)';
-              ctx.lineWidth = 1;
-              for (let gx = 0; gx < W; gx += 40) {
-                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
-              }
-              for (let gy = 0; gy < H; gy += 40) {
-                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
-              }
-              ctx.restore();
-            } else if (themeKey === 'brutalist') {
-              ctx.save();
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.10)';
-              for (let gx = 24; gx < W; gx += 32) {
-                for (let gy = 24; gy < H; gy += 32) {
-                  ctx.fillRect(gx, gy, 2, 2);
-                }
-              }
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-              ctx.font = `900 30px ${t.fontHead}`;
-              ctx.fillText('+', 34, 52);
-              ctx.fillText('+', W - 56, 52);
-              ctx.fillText('+', 34, H - 30);
-              ctx.fillText('+', W - 56, H - 30);
-              ctx.restore();
-            } else if (themeKey === 'nordic') {
-              ctx.save();
-              ctx.strokeStyle = 'rgba(251, 191, 36, 0.18)';
-              ctx.lineWidth = 1.5;
-              roundRect(38, 38, W - 76, H - 76, 22);
-              ctx.stroke();
-              ctx.restore();
-            }
-
-            // Breathing ambient light aura
-            const breath = Math.sin(slideProgress * Math.PI);
-            const auraGrad = ctx.createRadialGradient(
-              W * 0.75 + breath * 25, H * 0.25 - breath * 15, 40,
-              W * 0.75, H * 0.25, 650
-            );
-            auraGrad.addColorStop(0, t.accent + (isLight ? '18' : '24'));
-            auraGrad.addColorStop(1, 'transparent');
-            ctx.fillStyle = auraGrad;
-            ctx.fillRect(0, 0, W, H);
-
-            const bgVid = (window as any).__bgVideo as HTMLVideoElement | undefined;
-            const bgCache = (window as any).__bgVideoCache as HTMLCanvasElement | undefined;
-            if (bgVid && bgVid.readyState >= 2 && bgCache) {
-              try {
-                const cctx = bgCache.getContext('2d');
-                if (cctx) {
-                  cctx.drawImage(bgVid, 0, 0, bgCache.width, bgCache.height);
-                  (window as any).__bgVideoCacheReady = true;
-                }
-              } catch {}
-            }
-            const videoSource: HTMLVideoElement | HTMLCanvasElement | undefined =
-              bgVid && bgVid.readyState >= 2
-                ? bgVid
-                : (window as any).__bgVideoCacheReady && bgCache
-                  ? bgCache
-                  : undefined;
-            const videoReady = !!videoSource;
-
-            function drawVideoCover(targetX: number, targetY: number, targetW: number, targetH: number, anchorTop = false) {
-              if (!videoSource) return;
-              const vW = (bgVid && bgVid.videoWidth) || (bgCache && bgCache.width) || 720;
-              const vH = (bgVid && bgVid.videoHeight) || (bgCache && bgCache.height) || 1280;
-              const vScale = Math.max(targetW / vW, targetH / vH);
-              const sW = targetW / vScale;
-              const sH = targetH / vScale;
-              const sx = (vW - sW) / 2;
-              const sy = anchorTop ? Math.max(0, Math.min(vH - sH, (vH - sH) * 0.12)) : (vH - sH) / 2;
-              ctx.drawImage(videoSource, sx, sy, sW, sH, targetX, targetY, targetW, targetH);
-            }
-
-            function drawBrowserInsetCard(winX: number, winY: number, winW: number, winH: number) {
-              ctx.save();
-              ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-              roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
-              ctx.fill();
-              ctx.strokeStyle = t.accent + '66';
-              ctx.lineWidth = themeKey === 'brutalist' ? 4 : 2;
-              roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
-              ctx.stroke();
-
-              roundRect(winX, winY, winW, winH, themeKey === 'brutalist' ? 0 : 26);
-              ctx.clip();
-
-              ctx.fillStyle = 'rgba(30, 41, 59, 0.96)';
-              ctx.fillRect(winX, winY, winW, 44);
-              ctx.fillStyle = '#f87171';
-              ctx.beginPath(); ctx.arc(winX + 24, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
-              ctx.fillStyle = '#fbbf24';
-              ctx.beginPath(); ctx.arc(winX + 46, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
-              ctx.fillStyle = '#34d399';
-              ctx.beginPath(); ctx.arc(winX + 68, winY + 22, 7, 0, Math.PI * 2); ctx.fill();
-
-              let hostText = (st.brand || 'tailprint.com').toLowerCase();
-              if (st.sourceUrl) {
-                try { hostText = new URL(st.sourceUrl).hostname.replace(/^www\./, ''); } catch {}
-              }
-              ctx.fillStyle = '#94a3b8';
-              ctx.font = `600 20px ${t.fontBody}`;
-              const hw = ctx.measureText(hostText).width;
-              ctx.fillText(hostText, winX + winW - hw - 24, winY + 29);
-
-              drawVideoCover(winX, winY + 44, winW, winH - 44, true);
-              ctx.restore();
-            }
-
-            if (videoReady && st.screenrecordMode === 'backdrop') {
-              ctx.save();
-              ctx.globalAlpha = 0.46;
-              drawVideoCover(0, 0, W, H, false);
-              ctx.globalAlpha = 1.0;
-              ctx.fillStyle = isLight ? 'rgba(248, 250, 252, 0.56)' : 'rgba(9, 13, 22, 0.44)';
-              ctx.fillRect(0, 0, W, H);
-              ctx.restore();
-            }
-
-            const isLandscape = W > H;
-            const isSquare = W === H;
-            const padX = isLandscape ? 110 : isSquare ? 80 : 90;
-
-            // 2. Sleek Top Instagram Story Progress Bars
-            if (!cleanExport) {
-              const barGap = 12;
-              const barH = 8;
-              const barW = (W - padX * 2 - barGap * (total - 1)) / total;
-              for (let i = 0; i < total; i++) {
-                const bx = padX + i * (barW + barGap);
-                ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.16)' : 'rgba(255, 255, 255, 0.22)';
-                roundRect(bx, 64, barW, barH, themeKey === 'brutalist' ? 0 : barH / 2);
-                ctx.fill();
-                if (i < slideIdx) {
-                  ctx.fillStyle = isLight ? '#0f172a' : '#ffffff';
-                  roundRect(bx, 64, barW, barH, themeKey === 'brutalist' ? 0 : barH / 2);
-                  ctx.fill();
-                } else if (i === slideIdx) {
-                  ctx.save();
-                  ctx.fillStyle = t.accent;
-                  if (!isLight) {
-                    ctx.shadowColor = t.accent;
-                    ctx.shadowBlur = 8;
-                  }
-                  roundRect(bx, 64, Math.max(barH, barW * slideProgress), barH, themeKey === 'brutalist' ? 0 : barH / 2);
-                  ctx.fill();
-                  ctx.restore();
-                }
-              }
-            }
-
-            // 3. Brand Header with Safe Zone for Social Media (Instagram / TikTok)
-            const isPortrait = !isLandscape && !isSquare;
-            const headerY = isPortrait ? (cleanExport ? 150 : 160) : (cleanExport ? 76 : 130);
-            const logoImg = (window as any).__logoImg as HTMLImageElement | undefined;
-            if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
-              ctx.save();
-              ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.12)';
-              roundRect(padX, headerY, 92, 92, themeKey === 'brutalist' ? 0 : 24);
-              ctx.fill();
-              roundRect(padX, headerY, 92, 92, themeKey === 'brutalist' ? 0 : 24);
-              ctx.clip();
-              ctx.drawImage(logoImg, padX + 10, headerY + 10, 72, 72);
-              ctx.restore();
-            } else {
-              const brandLower = (st.brand || '').toLowerCase();
-              const handleLower = (st.handle || '').toLowerCase();
-              const isTailprint = brandLower.includes('tailprint') || handleLower.includes('tailprint');
-
-              ctx.save();
-              ctx.fillStyle = isLight ? '#0f172a' : 'rgba(15, 23, 42, 0.92)';
-              roundRect(padX, headerY, 92, 92, themeKey === 'brutalist' ? 0 : 24);
-              ctx.fill();
-              ctx.strokeStyle = t.accent + '88';
-              ctx.lineWidth = themeKey === 'brutalist' ? 3 : 2.5;
-              roundRect(padX, headerY, 92, 92, themeKey === 'brutalist' ? 0 : 24);
-              ctx.stroke();
-
-              if (isTailprint) {
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.strokeStyle = t.accent;
-                ctx.lineWidth = 5;
-                ctx.beginPath();
-                ctx.moveTo(padX + 32, headerY + 34);
-                ctx.lineTo(padX + 22, headerY + 46);
-                ctx.lineTo(padX + 32, headerY + 58);
-                ctx.stroke();
-                ctx.strokeStyle = '#f472b6';
-                ctx.lineWidth = 4.5;
-                ctx.beginPath();
-                ctx.moveTo(padX + 53, headerY + 28);
-                ctx.lineTo(padX + 39, headerY + 64);
-                ctx.stroke();
-                ctx.strokeStyle = t.accent;
-                ctx.lineWidth = 5;
-                ctx.beginPath();
-                ctx.moveTo(padX + 60, headerY + 34);
-                ctx.lineTo(padX + 70, headerY + 46);
-                ctx.lineTo(padX + 60, headerY + 58);
-                ctx.stroke();
-              } else {
-                const mono = (st.brand || 'TP').slice(0, 2).toUpperCase();
-                ctx.fillStyle = t.accent;
-                ctx.font = `900 38px ${t.fontHead}`;
-                const mw = ctx.measureText(mono).width;
-                ctx.fillText(mono, padX + (92 - mw) / 2, headerY + 58);
-              }
-              ctx.restore();
-            }
-
-            ctx.fillStyle = t.text;
-            ctx.font = `bold 36px ${t.fontHead}`;
-            ctx.fillText(st.brand || 'Brand', padX + 116, headerY + 42);
-
-            ctx.fillStyle = t.sub;
-            ctx.font = `500 25px ${t.fontBody}`;
-            ctx.fillText(st.handle || '@insights', padX + 116, headerY + 78);
-
-            const tagText = `${t.badgeIcon ? `${t.badgeIcon} ` : ''}${(slide.tag || `0${slideIdx + 1}`).toUpperCase()}`;
-            ctx.font = `bold 23px ${t.fontBody}`;
-            const tagW = ctx.measureText(tagText).width + 48;
-            ctx.fillStyle = t.tagBg;
-            roundRect(W - padX - tagW, headerY + 18, tagW, 54, themeKey === 'brutalist' ? 0 : 27);
-            ctx.fill();
-            if (themeKey === 'brutalist') {
-              ctx.strokeStyle = '#ffffff';
-              ctx.lineWidth = 2;
-              roundRect(W - padX - tagW, headerY + 18, tagW, 54, 0);
-              ctx.stroke();
-            }
-            ctx.fillStyle = t.tagText;
-            ctx.fillText(tagText, W - padX - tagW + 24, headerY + 53);
-
-            // 4. Main Slide Body by Layout + Archetype + Slide Role
-            const popScale = slideProgress < 0.12 ? 0.96 + (slideProgress / 0.12) * 0.04 : 1.0;
-            ctx.save();
-            ctx.translate(W / 2, H / 2);
-            ctx.scale(popScale, popScale);
-            ctx.translate(-W / 2, -H / 2);
-
-            if (layout === 'split') {
-              // Split Cinema card matching Studio Preview (#reel-screen layout === 'split')
-              const hasInsetVideo = videoReady && st.screenrecordMode === 'inset' && !isLandscape;
-              const cardX = padX;
-              const cardW = W - padX * 2;
-              const cardY = hasInsetVideo ? headerY + 135 : (isSquare ? 240 : 340);
-              const cardH = hasInsetVideo ? (isSquare ? 620 : 1080) : (isSquare ? 520 : 760);
-              const splitRadius = themeKey === 'brutalist' ? 0 : 28;
-
-              ctx.save();
-              ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.88)' : 'rgba(9, 13, 22, 0.76)';
-              roundRect(cardX, cardY, cardW, cardH, splitRadius);
-              ctx.fill();
-              ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)';
-              ctx.lineWidth = 1.5;
-              roundRect(cardX, cardY, cardW, cardH, splitRadius);
-              ctx.stroke();
-
-              // Top 5px accent bar
-              ctx.fillStyle = t.accent;
-              roundRect(cardX, cardY, cardW, 8, splitRadius > 0 ? 4 : 0);
-              ctx.fill();
-              ctx.restore();
-
-              const innerX = cardX + 38;
-              const innerW = cardW - 76;
-              let curY = cardY + 86;
-              const headFont = hasInsetVideo ? 50 : (isSquare ? 50 : 62);
-              const headLineH = hasInsetVideo ? 62 : (isSquare ? 62 : 76);
-              curY = drawHighlightedHeadline(slide.headline || '', innerX, curY, innerW, headLineH, headFont);
-
-              if (slide.stat) {
-                curY += 14;
-                const statBoxH = hasInsetVideo ? 114 : 134;
-                drawArchetypeCard(innerX, curY, innerW, statBoxH, false);
-                ctx.fillStyle = t.accent;
-                ctx.font = `900 ${hasInsetVideo ? 60 : 68}px ${t.fontHead}`;
-                const sw = ctx.measureText(slide.stat).width;
-                ctx.fillText(slide.stat, innerX + 32, curY + (hasInsetVideo ? 80 : 90));
-                ctx.fillStyle = t.text;
-                ctx.font = `bold 26px ${t.fontBody}`;
-                ctx.fillText((slide.statLabel || '').toUpperCase(), innerX + 32 + sw + 24, curY + (hasInsetVideo ? 70 : 78));
-                curY += statBoxH + 24;
-              } else {
-                curY += 20;
-              }
-
-              if (hasInsetVideo) {
-                const winH = isSquare ? 230 : 360;
-                drawBrowserInsetCard(innerX, curY, innerW, winH);
-                curY += winH + 34;
-              }
-
-              const bodyFont = hasInsetVideo ? 34 : (isSquare ? 34 : 40);
-              const bodyLineH = hasInsetVideo ? 50 : (isSquare ? 50 : 60);
-              drawKaraokeText(slide.body || '', innerX, curY, innerW, bodyLineH, slideProgress, bodyFont);
-
-            } else if (layout === 'iphone' && videoReady && st.screenrecordMode === 'inset') {
-              // Headline above 3D iPhone 16 Pro frame + Karaoke below
-              let curY = headerY + 150;
-              const headFont = isSquare ? 42 : 52;
-              const headLineH = isSquare ? 52 : 64;
-              curY = drawHighlightedHeadline(slide.headline || '', padX, curY, W - padX * 2, headLineH, headFont, true);
-
-              const phoneW = isSquare ? 340 : 450;
-              const phoneH = isSquare ? 430 : 750;
-              const phoneX = (W - phoneW) / 2;
-              const phoneY = curY + 14;
-
-              // Outer titanium bezel
-              ctx.save();
-              ctx.fillStyle = themeKey === 'brutalist' ? '#facc15' : '#334155';
-              roundRect(phoneX - 10, phoneY - 10, phoneW + 20, phoneH + 20, themeKey === 'brutalist' ? 18 : 66);
-              ctx.fill();
-              ctx.fillStyle = '#090d16';
-              roundRect(phoneX, phoneY, phoneW, phoneH, themeKey === 'brutalist' ? 12 : 56);
-              ctx.fill();
-
-              // Clip inside iPhone screen
-              roundRect(phoneX + 8, phoneY + 8, phoneW - 16, phoneH - 16, themeKey === 'brutalist' ? 8 : 48);
-              ctx.clip();
-
-              if (videoReady) {
-                drawVideoCover(phoneX + 8, phoneY + 8, phoneW - 16, phoneH - 16, true);
-              } else {
-                const screenGrad = ctx.createLinearGradient(phoneX, phoneY, phoneX, phoneY + phoneH);
-                screenGrad.addColorStop(0, '#0f172a');
-                screenGrad.addColorStop(1, t.bg1);
-                ctx.fillStyle = screenGrad;
-                ctx.fillRect(phoneX, phoneY, phoneW, phoneH);
-
-                const pStat = slide.stat || `0${slideIdx + 1}`;
-                ctx.fillStyle = t.accent;
-                ctx.font = `900 86px ${t.fontHead}`;
-                const psw = ctx.measureText(pStat).width;
-                ctx.fillText(pStat, phoneX + (phoneW - psw) / 2, phoneY + phoneH * 0.48);
-
-                const pLbl = (slide.statLabel || st.brand || 'LIVE').toUpperCase();
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `bold 24px ${t.fontBody}`;
-                const plw = ctx.measureText(pLbl).width;
-                ctx.fillText(pLbl, phoneX + (phoneW - plw) / 2, phoneY + phoneH * 0.48 + 46);
-              }
-
-              // Dynamic Island pill
-              ctx.fillStyle = '#000000';
-              roundRect(W / 2 - 68, phoneY + 22, 136, 34, 17);
-              ctx.fill();
-              ctx.restore();
-
-              // Karaoke caption below iPhone
-              const capY = phoneY + phoneH + 64;
-              const capSize = isSquare ? 30 : 38;
-              drawKaraokeText(slide.body || '', padX, capY, W - padX * 2, isSquare ? 44 : 54, slideProgress, capSize);
-
-            } else if (layout === 'editorial') {
-              // Giant background watermark stat/number + editorial framing + vertical accent bar
-              const hasInsetVideo = videoReady && st.screenrecordMode === 'inset' && !isLandscape;
-              const watermark = slide.stat || `0${slideIdx + 1}`;
-              ctx.save();
-              ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.055)' : 'rgba(255, 255, 255, 0.055)';
-              ctx.font = `900 280px ${t.fontHead}`;
-              ctx.fillText(watermark, padX - 20, H * 0.44);
-              ctx.restore();
-
-              const editX = padX + 44;
-              const editW = W - editX - padX;
-              let curY = hasInsetVideo ? headerY + 175 : (isSquare ? 280 : (isLandscape ? 280 : 440));
-
-              if (themeKey === 'nordic') {
-                ctx.save();
-                ctx.fillStyle = t.accent;
-                ctx.font = `italic 600 26px ${t.fontHead}`;
-                const chap = `kap. 0${slideIdx + 1}`;
-                const cw = ctx.measureText(chap).width;
-                ctx.fillText(chap, editX, curY - 72);
-                ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(editX + cw + 20, curY - 80);
-                ctx.lineTo(W - padX, curY - 80);
-                ctx.stroke();
-                ctx.restore();
-              } else {
-                ctx.fillStyle = t.accent;
-                ctx.font = `900 110px ${t.fontHead}`;
-                ctx.fillText('“', editX - 8, curY - 28);
-              }
-
-              const headFont = hasInsetVideo ? 52 : (isSquare ? 52 : (isLandscape ? 58 : 70));
-              const headLineH = hasInsetVideo ? 64 : (isSquare ? 64 : (isLandscape ? 70 : 84));
-              const barStartY = curY - headFont;
-              curY = drawHighlightedHeadline(slide.headline || '', editX, curY, editW, headLineH, headFont);
-
-              if (slide.stat) {
-                curY += 16;
-                const statBoxH = hasInsetVideo ? 118 : 134;
-                drawArchetypeCard(editX, curY, editW, statBoxH, false);
-                ctx.fillStyle = t.accent;
-                ctx.font = `900 ${hasInsetVideo ? 62 : 78}px ${t.fontHead}`;
-                const sw = ctx.measureText(slide.stat).width;
-                ctx.fillText(slide.stat, editX + 28, curY + (hasInsetVideo ? 82 : 90));
-                ctx.fillStyle = t.text;
-                ctx.font = `bold 26px ${t.fontBody}`;
-                ctx.fillText((slide.statLabel || '').toUpperCase(), editX + 28 + sw + 24, curY + (hasInsetVideo ? 72 : 78));
-                curY += statBoxH + 28;
-              } else {
-                curY += 24;
-              }
-
-              if (hasInsetVideo) {
-                const winH = isSquare ? 240 : 370;
-                drawBrowserInsetCard(editX, curY, editW, winH);
-                curY += winH + 38;
-              }
-
-              const bodyFont = hasInsetVideo ? 36 : (isSquare ? 34 : 42);
-              const bodyLineH = hasInsetVideo ? 52 : (isSquare ? 50 : 62);
-              const endY = drawKaraokeText(slide.body || '', editX, curY, editW, bodyLineH, slideProgress, bodyFont);
-
-              if (slideType === 'cta' && !hasInsetVideo) {
-                const btnY = Math.min(H - 360, endY + 26);
-                const btnW = Math.min(editW, 560);
-                ctx.save();
-                ctx.fillStyle = t.accent;
-                roundRect(editX, btnY, btnW, 88, themeKey === 'brutalist' ? 0 : 24);
-                ctx.fill();
-                ctx.fillStyle = themeKey === 'brutalist' || themeKey === 'nordic' || themeKey === 'terminal' ? '#090d16' : '#ffffff';
-                ctx.font = `900 30px ${t.fontHead}`;
-                ctx.fillText(`${st.cta || 'Start'}  →`, editX + 34, btnY + 55);
-                ctx.restore();
-              }
-
-              // Left vertical accent bar
-              ctx.fillStyle = t.accent;
-              roundRect(padX, barStartY, themeKey === 'brutalist' ? 16 : 10, Math.max(180, endY - barStartY - 10), themeKey === 'brutalist' ? 0 : 6);
-              ctx.fill();
-
-            } else {
-              // 'classic' layout with archetype card framing + per-slideType choreography
-              const hasInsetVideo = videoReady && st.screenrecordMode === 'inset' && !isLandscape;
-              let curY = hasInsetVideo ? headerY + 150 : (isSquare ? 280 : (isLandscape ? 260 : (cleanExport ? 370 : 410)));
-              const headFont = hasInsetVideo ? 52 : (isSquare ? 52 : 68);
-              const headLineH = hasInsetVideo ? 64 : (isSquare ? 64 : 82);
-              const innerPad = (themeKey === 'terminal' || themeKey === 'brutalist' || slideType === 'problem') && !hasInsetVideo ? 38 : 0;
-
-              if ((themeKey === 'terminal' || themeKey === 'brutalist' || slideType === 'problem') && !hasInsetVideo) {
-                const topOffset = themeKey === 'terminal' ? 76 : 36;
-                const boxY = curY - headFont - topOffset;
-                const boxH = isSquare ? 480 : isLandscape ? 430 : (slideType === 'stat' ? 740 : 620);
-                drawArchetypeCard(padX, boxY, W - padX * 2, boxH, themeKey === 'terminal');
-                curY = boxY + topOffset + headFont;
-              }
-
-              const contentX = padX + innerPad;
-              const contentW = W - (padX + innerPad) * 2;
-              curY = drawHighlightedHeadline(slide.headline || '', contentX, curY, contentW, headLineH, headFont, slideType === 'cta' && !hasInsetVideo);
-
-              if (slide.stat) {
-                curY += 14;
-                const statBoxH = hasInsetVideo ? 118 : 156;
-                drawArchetypeCard(contentX, curY, contentW, statBoxH, false);
-
-                ctx.fillStyle = t.accent;
-                ctx.font = `900 ${hasInsetVideo ? 62 : 80}px ${t.fontHead}`;
-                const statW = ctx.measureText(slide.stat).width;
-                ctx.fillText(slide.stat, contentX + 36, curY + (hasInsetVideo ? 82 : 106));
-
-                ctx.fillStyle = t.text;
-                ctx.font = `bold 26px ${t.fontBody}`;
-                ctx.fillText((slide.statLabel || 'METRIC').toUpperCase(), contentX + 36 + statW + 28, curY + (hasInsetVideo ? 72 : 94));
-
-                curY += statBoxH + (hasInsetVideo ? 22 : 40);
-              } else {
-                curY += 20;
-              }
-
-              if (hasInsetVideo) {
-                const winW = W - padX * 2;
-                const winH = isSquare ? 250 : 390;
-                drawBrowserInsetCard(padX, curY, winW, winH);
-                curY += winH + 40;
-              }
-
-              const bodyFont = hasInsetVideo ? 36 : (isSquare ? 34 : 44);
-              const bodyLineH = hasInsetVideo ? 52 : (isSquare ? 50 : 64);
-              const bodyText = themeKey === 'terminal' ? `> ${slide.body || ''}` : (slide.body || '');
-              const endY = drawKaraokeText(bodyText, contentX, curY, contentW, bodyLineH, slideProgress, bodyFont);
-
-              if (slideType === 'cta' && !hasInsetVideo) {
-                const btnY = Math.min(H - 360, endY + 34);
-                const btnW = Math.min(contentW, 600);
-                const btnX = padX + (W - padX * 2 - btnW) / 2;
-                ctx.save();
-                ctx.fillStyle = t.accent;
-                roundRect(btnX, btnY, btnW, 92, themeKey === 'brutalist' ? 0 : 28);
-                ctx.fill();
-                ctx.fillStyle = themeKey === 'brutalist' || themeKey === 'nordic' || themeKey === 'terminal' ? '#090d16' : '#ffffff';
-                ctx.font = `900 32px ${t.fontHead}`;
-                const ctaLabel = `${st.cta || 'Learn more'}  →`;
-                const cw = ctx.measureText(ctaLabel).width;
-                ctx.fillText(ctaLabel, btnX + (btnW - cw) / 2, btnY + 58);
-                ctx.restore();
-              }
-            }
-
-            ctx.restore();
-
-            // 5. Footer CTA with Instagram & TikTok Safe Zone Protection (Min 240px from bottom)
-            const footerY = isPortrait ? (H - 240) : (isLandscape ? H - 85 : H - 115);
-            const pulse = 0.85 + 0.15 * Math.sin(slideProgress * Math.PI * 6);
-
-            if (!cleanExport) {
-              ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.12)';
-              ctx.fillRect(padX, footerY - 52, W - padX * 2, 2);
-
-              ctx.save();
-              ctx.fillStyle = '#10b981';
-              if (!isLight) {
-                ctx.shadowColor = '#10b981';
-                ctx.shadowBlur = 12 * pulse;
-              }
-              ctx.beginPath();
-              ctx.arc(padX + 14, footerY - 12, 10 * pulse, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.restore();
-
-              ctx.fillStyle = t.text;
-              ctx.font = `bold 30px ${t.fontBody}`;
-              ctx.fillText(st.cta || 'Learn more', padX + 42, footerY);
-
-              ctx.fillStyle = t.sub;
-              ctx.font = `bold 28px ${t.fontBody}`;
-              const slideCountText = `${slideIdx + 1} / ${total}`;
-              const scW = ctx.measureText(slideCountText).width;
-              ctx.fillText(slideCountText, W - padX - scW, footerY);
-            } else {
-              ctx.save();
-              ctx.font = `bold 28px ${t.fontBody}`;
-              const ctaText = st.cta || 'Follow for more • Link in bio';
-              const pillW = Math.min(W - padX * 2, ctx.measureText(ctaText).width + 84);
-              const pillR = themeKey === 'brutalist' ? 0 : 30;
-              ctx.fillStyle = themeKey === 'brutalist' ? '#facc15' : isLight ? '#0f172a' : 'rgba(255, 255, 255, 0.09)';
-              roundRect(padX, footerY - 42, pillW, 60, pillR);
-              ctx.fill();
-              ctx.strokeStyle = themeKey === 'brutalist' ? '#ffffff' : isLight ? '#0f172a' : 'rgba(255, 255, 255, 0.18)';
-              ctx.lineWidth = themeKey === 'brutalist' ? 3 : 1.5;
-              roundRect(padX, footerY - 42, pillW, 60, pillR);
-              ctx.stroke();
-
-              ctx.fillStyle = themeKey === 'brutalist' ? '#000000' : '#10b981';
-              if (!isLight && themeKey !== 'brutalist') {
-                ctx.shadowColor = '#10b981';
-                ctx.shadowBlur = 12 * pulse;
-              }
-              ctx.beginPath();
-              ctx.arc(padX + 28, footerY - 12, 9 * pulse, 0, Math.PI * 2);
-              ctx.fill();
-
-              ctx.fillStyle = themeKey === 'brutalist' ? '#000000' : '#ffffff';
-              ctx.fillText(ctaText, padX + 52, footerY - 1);
-              ctx.restore();
-            }
-
-            ctx.restore();
-            return canvas.toDataURL('image/jpeg', 0.88);
           };
-        }, payload);
+          const serializedState = JSON.stringify(initialPayload).replace(/</g, '\\u003c');
 
-        // Start FFmpeg process and stream frames
-        const ffmpegProc = spawn('ffmpeg', ffmpegArgs, { stdio: ['pipe', 'ignore', 'pipe'] });
-        let ffmpegStderr = '';
-        ffmpegProc.stderr?.on('data', (chunk) => {
-          ffmpegStderr += chunk.toString();
-        });
+          await page.setContent(`<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <script src="${env.TAILWIND_CDN_URL}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&family=Plus+Jakarta+Sans:wght@500;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: ${dim.cssW}px;
+      height: ${dim.cssH}px;
+      overflow: hidden;
+      background: #030712;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body>
+  <div id="reel-screen" class="w-full h-full p-6 flex flex-col justify-between relative overflow-hidden text-white">
+    <video id="preview-backdrop-video" src="" muted playsinline preload="auto" class="absolute inset-0 w-full h-full object-cover opacity-45 pointer-events-none hidden"></video>
+    <div id="preview-archetype-decor" class="absolute inset-0 pointer-events-none z-10"></div>
+    <div id="preview-editorial-watermark" class="hidden absolute top-1/3 left-3 text-7xl font-black text-white/10 pointer-events-none select-none tracking-tighter z-10">380ms</div>
+    <div id="screen-glow" class="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-indigo-500/30 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-rose-500/25 blur-3xl pointer-events-none"></div>
 
-        const ffmpegExitPromise = new Promise<void>((resolve, reject) => {
-          ffmpegProc.on('close', (code) => {
-            if (code === 0) resolve();
-            else reject(new Error(`FFmpeg exited with code ${code}: ${ffmpegStderr.slice(-400)}`));
-          });
-          ffmpegProc.on('error', reject);
-        });
+    <div class="z-20 pt-2">
+      <div id="progress-bars-row" class="flex items-center space-x-1.5 w-full mb-3.5"></div>
+      <div id="preview-header-bar" class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <img id="preview-logo-img" src="" crossOrigin="anonymous" class="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5 border border-white/20 hidden shadow-md" />
+          <div id="preview-avatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-black text-xs text-white shadow-md">TP</div>
+          <div>
+            <div id="preview-brand" class="font-extrabold text-xs text-white leading-none">Tailprint</div>
+            <div id="preview-handle" class="text-[10px] text-slate-400 font-mono mt-0.5">@tailprint</div>
+          </div>
+        </div>
+        <span id="preview-tag" class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/10 border border-white/20 text-rose-300">HOOK</span>
+      </div>
+    </div>
 
-        for (let sIdx = 0; sIdx < slides.length; sIdx++) {
-          const sDur = slideDurations[sIdx];
-          const frameCount = Math.max(10, Math.round(sDur * renderFps));
-          for (let f = 0; f < frameCount; f++) {
-            const progress = f / frameCount;
-            const dataUrl = await page.evaluate(
-              async ({ idx, prog, total }) => {
-                const bgVid = (window as any).__bgVideo as HTMLVideoElement | undefined;
-                if (bgVid && bgVid.readyState >= 1 && Number.isFinite(bgVid.duration) && bgVid.duration > 0) {
-                  bgVid.pause();
-                  const baseStart = bgVid.duration > 6.5 ? 0.28 : 0.02;
-                  const baseSpan = bgVid.duration > 6.5 ? 0.70 : 0.96;
-                  const targetFrac = baseStart + ((idx + prog * 0.9) / Math.max(1, total)) * baseSpan;
-                  const targetTime = Math.min(bgVid.duration - 0.04, Math.max(0, bgVid.duration * targetFrac));
-                  if (Math.abs(bgVid.currentTime - targetTime) > 0.03) {
-                    await new Promise<void>((res) => {
-                      const onSeek = () => {
-                        bgVid.removeEventListener('seeked', onSeek);
-                        res();
-                      };
-                      bgVid.addEventListener('seeked', onSeek);
-                      bgVid.currentTime = targetTime;
-                      setTimeout(() => {
-                        bgVid.removeEventListener('seeked', onSeek);
-                        res();
-                      }, 220);
-                    });
-                  }
-                }
-                return (window as any).__renderFrame(idx, prog);
-              },
-              { idx: sIdx, prog: progress, total: slides.length }
-            );
-            const base64Data = dataUrl.replace(/^data:image\/jpeg;base64,/, '');
-            const frameBuf = Buffer.from(base64Data, 'base64');
-            const canContinue = ffmpegProc.stdin.write(frameBuf);
-            if (!canContinue) {
-              await new Promise<void>((r) => ffmpegProc.stdin.once('drain', r));
-            }
-          }
+    <div id="preview-content-container" class="my-auto z-20 space-y-2.5 py-2">
+      <div id="preview-kicker-bar" class="hidden"></div>
+      <div id="preview-stage-card" class="space-y-2.5">
+        <h2 id="preview-headline" class="text-xl font-black tracking-tight leading-tight text-white drop-shadow-sm"></h2>
+        <div id="preview-stat-card" class="p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-between space-x-3 shadow-lg">
+          <span id="preview-stat" class="text-2xl font-black text-cyan-400"></span>
+          <span id="preview-stat-label" class="text-[9px] font-bold uppercase text-white/90 tracking-wider text-right"></span>
+        </div>
+        <div id="preview-screenrecord-card" class="hidden rounded-xl border border-white/20 bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md">
+          <div id="preview-browser-bar" class="px-2.5 py-1 bg-slate-900 border-b border-white/10 flex items-center justify-between text-[8px]">
+            <div class="flex items-center space-x-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            </div>
+            <span id="preview-browser-url" class="font-mono text-slate-400 truncate max-w-[140px]">tailprint.com</span>
+          </div>
+          <video id="preview-screenrecord-video" src="" muted playsinline preload="auto" class="w-full h-28 object-cover object-top"></video>
+        </div>
+        <p id="preview-body" class="text-xs leading-relaxed text-slate-200/90 font-medium"></p>
+        <div id="preview-cta-card" class="hidden pt-1.5">
+          <div id="preview-cta-button" class="w-full px-3.5 py-2.5 rounded-2xl bg-white text-slate-950 font-black text-[11px] shadow-xl flex items-center justify-between">
+            <span id="preview-cta-button-text" class="truncate pr-2">Follow for more</span>
+            <span class="text-sm font-black">→</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="preview-footer-bar" class="z-20 border-t border-white/10 pt-3 flex items-center justify-between text-[10px]">
+      <div class="flex items-center space-x-1.5 font-bold" id="preview-footer-cta-wrap">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span id="preview-cta">Follow for more</span>
+      </div>
+      <span id="preview-slide-indicator" class="font-mono text-slate-400 font-bold">1 / 4</span>
+    </div>
+  </div>
+
+  <script id="reel-export-state" type="application/json">${serializedState}</script>
+  <script>
+    const reelState = JSON.parse(document.getElementById('reel-export-state').textContent);
+    let currentSlideIdx = -1;
+
+    const themeMaps = {
+      nordic: {
+        id: 'nordic',
+        bg: "radial-gradient(circle at 80% 20%, rgba(217, 119, 6, 0.14), transparent 55%), radial-gradient(circle at 10% 80%, rgba(16, 185, 129, 0.08), transparent 55%), linear-gradient(165deg, #101726 0%, #0c111c 100%)",
+        cardBg: "rgba(16, 23, 38, 0.78)",
+        cardBorder: "1px solid rgba(217, 119, 6, 0.25)",
+        text: "#fef3c7",
+        subtext: "rgba(226, 232, 240, 0.88)",
+        fontHead: "'Playfair Display', Georgia, serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "rgba(245, 158, 11, 0.12)",
+        tagBorder: "rgba(245, 158, 11, 0.35)",
+        tagText: "#fcd34d",
+        statBg: "rgba(245, 158, 11, 0.08)",
+        statBorder: "rgba(245, 158, 11, 0.25)",
+        statColor: "#fbbf24",
+        badgeIcon: "✦",
+        highlightClass: "bg-amber-400/20 text-amber-200 border-b-2 border-amber-400/60 px-1.5 py-0.5 rounded"
+      },
+      bento: {
+        id: 'bento',
+        bg: "radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.2), transparent 55%), linear-gradient(180deg, #070b14 0%, #030509 100%)",
+        cardBg: "rgba(255, 255, 255, 0.04)",
+        cardBorder: "1px solid rgba(255, 255, 255, 0.12)",
+        text: "#ffffff",
+        subtext: "rgba(203, 213, 225, 0.85)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Plus Jakarta Sans', system-ui, sans-serif",
+        tagBg: "rgba(56, 189, 248, 0.15)",
+        tagBorder: "rgba(56, 189, 248, 0.35)",
+        tagText: "#38bdf8",
+        statBg: "rgba(56, 189, 248, 0.08)",
+        statBorder: "rgba(56, 189, 248, 0.2)",
+        statColor: "#38bdf8",
+        badgeIcon: "●",
+        highlightClass: "bg-sky-500/20 text-sky-200 border border-sky-400/30 px-1.5 py-0.5 rounded-lg"
+      },
+      brutalist: {
+        id: 'brutalist',
+        bg: "#000000",
+        cardBg: "#09090b",
+        cardBorder: "2px solid #ffffff",
+        cardShadow: "4px 4px 0px #facc15",
+        text: "#ffffff",
+        subtext: "#e4e4e7",
+        fontHead: "'Space Grotesk', monospace, sans-serif",
+        fontBody: "'Space Grotesk', monospace, sans-serif",
+        tagBg: "#facc15",
+        tagBorder: "#ffffff",
+        tagText: "#000000",
+        statBg: "#18181b",
+        statBorder: "#ffffff",
+        statColor: "#facc15",
+        badgeIcon: "⚡",
+        highlightClass: "bg-yellow-400 text-black font-black px-1.5 py-0.5 -rotate-1 inline-block"
+      },
+      creator: {
+        id: 'creator',
+        bg: "radial-gradient(circle at 10% 20%, rgba(244, 63, 94, 0.25), transparent 45%), radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.25), transparent 45%), linear-gradient(135deg, #180828 0%, #080310 100%)",
+        cardBg: "rgba(30, 15, 45, 0.7)",
+        cardBorder: "1px solid rgba(244, 63, 94, 0.35)",
+        text: "#ffffff",
+        subtext: "rgba(254, 205, 211, 0.9)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "linear-gradient(90deg, #f43f5e 0%, #f59e0b 100%)",
+        tagBorder: "transparent",
+        tagText: "#ffffff",
+        statBg: "rgba(244, 63, 94, 0.12)",
+        statBorder: "rgba(244, 63, 94, 0.3)",
+        statColor: "#fbbf24",
+        badgeIcon: "🔥",
+        highlightClass: "bg-gradient-to-r from-rose-500/30 to-amber-500/30 text-amber-200 border border-amber-400/40 px-1.5 py-0.5 rounded-lg"
+      },
+      terminal: {
+        id: 'terminal',
+        bg: "#080c14",
+        cardBg: "rgba(10, 15, 26, 0.9)",
+        cardBorder: "1px solid rgba(52, 211, 153, 0.35)",
+        text: "#34d399",
+        subtext: "#94a3b8",
+        fontHead: "'JetBrains Mono', monospace",
+        fontBody: "'JetBrains Mono', monospace",
+        tagBg: "rgba(6, 78, 59, 0.8)",
+        tagBorder: "rgba(52, 211, 153, 0.4)",
+        tagText: "#34d399",
+        statBg: "rgba(6, 78, 59, 0.3)",
+        statBorder: "rgba(52, 211, 153, 0.3)",
+        statColor: "#34d399",
+        badgeIcon: ">_",
+        highlightClass: "bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-500/30"
+      },
+      brand: {
+        id: 'brand',
+        bg: "linear-gradient(135deg, #4f46e5 0%, #090d16 100%)",
+        cardBg: "rgba(255, 255, 255, 0.06)",
+        cardBorder: "1px solid rgba(255, 255, 255, 0.15)",
+        text: "#ffffff",
+        subtext: "rgba(226, 232, 240, 0.85)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "rgba(255, 255, 255, 0.12)",
+        tagBorder: "rgba(255, 255, 255, 0.25)",
+        tagText: "#ffffff",
+        statBg: "rgba(255, 255, 255, 0.08)",
+        statBorder: "rgba(255, 255, 255, 0.18)",
+        statColor: "#38bdf8",
+        badgeIcon: "✨",
+        highlightClass: "bg-white/15 text-white border-b-2 border-white/50 px-1.5 py-0.5 rounded"
+      },
+      gradient: {
+        id: 'gradient',
+        bg: "linear-gradient(145deg, #1e1b4b 0%, #31104b 50%, #030712 100%)",
+        cardBg: "rgba(255, 255, 255, 0.06)",
+        cardBorder: "1px solid rgba(255, 255, 255, 0.12)",
+        text: "#ffffff",
+        subtext: "rgba(233, 213, 255, 0.85)",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "rgba(99, 102, 241, 0.2)",
+        tagBorder: "rgba(99, 102, 241, 0.4)",
+        tagText: "#a5b4fc",
+        statBg: "rgba(255, 255, 255, 0.08)",
+        statBorder: "rgba(255, 255, 255, 0.15)",
+        statColor: "#38bdf8",
+        badgeIcon: "✦",
+        highlightClass: "bg-indigo-500/25 text-cyan-300 border-b-2 border-cyan-400/60 px-1.5 py-0.5 rounded"
+      },
+      cyberpunk: {
+        id: 'cyberpunk',
+        bg: "#09090b",
+        cardBg: "rgba(24, 24, 27, 0.85)",
+        cardBorder: "1px solid rgba(250, 204, 21, 0.35)",
+        text: "#facc15",
+        subtext: "#d4d4d8",
+        fontHead: "'Space Grotesk', monospace, sans-serif",
+        fontBody: "'JetBrains Mono', monospace",
+        tagBg: "rgba(250, 204, 21, 0.15)",
+        tagBorder: "rgba(250, 204, 21, 0.4)",
+        tagText: "#fef08a",
+        statBg: "rgba(250, 204, 21, 0.08)",
+        statBorder: "rgba(250, 204, 21, 0.3)",
+        statColor: "#ec4899",
+        badgeIcon: "⚡",
+        highlightClass: "bg-yellow-400/20 text-yellow-300 border border-yellow-400/50 px-1.5 py-0.5 rounded"
+      },
+      midnight: {
+        id: 'midnight',
+        bg: "radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15), transparent 60%), #040707",
+        cardBg: "rgba(8, 16, 14, 0.85)",
+        cardBorder: "1px solid rgba(16, 185, 129, 0.25)",
+        text: "#fafafa",
+        subtext: "#a1a1aa",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "rgba(16, 185, 129, 0.15)",
+        tagBorder: "rgba(16, 185, 129, 0.3)",
+        tagText: "#34d399",
+        statBg: "rgba(16, 185, 129, 0.08)",
+        statBorder: "rgba(16, 185, 129, 0.2)",
+        statColor: "#10b981",
+        badgeIcon: "●",
+        highlightClass: "bg-emerald-500/20 text-emerald-300 border-b-2 border-emerald-400/60 px-1.5 py-0.5 rounded"
+      },
+      sunset: {
+        id: 'sunset',
+        bg: "radial-gradient(circle at 80% 10%, rgba(244, 63, 94, 0.3), transparent 50%), linear-gradient(180deg, #2a0b18 0%, #0f0714 50%, #201006 100%)",
+        cardBg: "rgba(30, 15, 25, 0.75)",
+        cardBorder: "1px solid rgba(251, 146, 60, 0.25)",
+        text: "#ffffff",
+        subtext: "rgba(254, 205, 211, 0.85)",
+        fontHead: "'Playfair Display', Georgia, serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "rgba(244, 63, 94, 0.2)",
+        tagBorder: "rgba(244, 63, 94, 0.4)",
+        tagText: "#fda4af",
+        statBg: "rgba(244, 63, 94, 0.1)",
+        statBorder: "rgba(244, 63, 94, 0.25)",
+        statColor: "#f59e0b",
+        badgeIcon: "🌅",
+        highlightClass: "bg-rose-500/20 text-rose-200 border-b-2 border-rose-400/60 px-1.5 py-0.5 rounded"
+      },
+      clean: {
+        id: 'clean',
+        bg: "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
+        cardBg: "#ffffff",
+        cardBorder: "1px solid #cbd5e1",
+        text: "#0f172a",
+        subtext: "#475569",
+        fontHead: "'Plus Jakarta Sans', system-ui, sans-serif",
+        fontBody: "'Inter', sans-serif",
+        tagBg: "#dbeafe",
+        tagBorder: "#bfdbfe",
+        tagText: "#1d4ed8",
+        statBg: "#ffffff",
+        statBorder: "#cbd5e1",
+        statColor: "#2563eb",
+        badgeIcon: "✦",
+        highlightClass: "bg-blue-100 text-blue-900 border-b-2 border-blue-400 px-1.5 py-0.5 rounded"
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatHighlightedHtml(text, highlightWords, markClass) {
+      if (!text) return '';
+      let formatted = escapeHtml(text);
+      const cls = markClass || 'bg-amber-400/20 text-amber-200 px-1 rounded';
+      const escReg = new RegExp('[.*+?^' + '\\$' + '{}()|[\\]\\\\]', 'g');
+      const list = Array.isArray(highlightWords) ? highlightWords.slice() : [];
+      let matched = false;
+      for (const word of list) {
+        if (!word || String(word).trim().length < 2) continue;
+        const cleanWord = escapeHtml(String(word).trim()).replace(escReg, '\\\\$&');
+        const regex = new RegExp('(' + cleanWord + ')', 'gi');
+        if (regex.test(formatted)) {
+          formatted = formatted.replace(regex, '<mark class="' + cls + '">$1</mark>');
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        const words = escapeHtml(text).split(/\\s+/).map(w => w.replace(/[,.!?«»"']/g, '')).filter(w => w.length >= 6);
+        if (words.length > 0) {
+          const fallbackWord = words[words.length - 1].replace(escReg, '\\\\$&');
+          const regex = new RegExp('(' + fallbackWord + ')', 'i');
+          formatted = formatted.replace(regex, '<mark class="' + cls + '">$1</mark>');
+        }
+      }
+      return formatted;
+    }
+
+    function renderProgressBars(activeProgress) {
+      const row = document.getElementById('progress-bars-row');
+      if (!row) return;
+      row.innerHTML = reelState.slides.map((_, i) => {
+        let fillWidth = '0%';
+        if (i < currentSlideIdx) fillWidth = '100%';
+        else if (i === currentSlideIdx) fillWidth = Math.min(100, Math.round((activeProgress || 0) * 100)) + '%';
+        return '<div class="h-1 flex-1 rounded-full overflow-hidden bg-white/20 relative">' +
+          '<div id="progress-fill-' + i + '" class="h-full bg-white" style="width: ' + fillWidth + '"></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function updatePreviewDisplay() {
+      const slide = reelState.slides[currentSlideIdx] || reelState.slides[0];
+      if (reelState.brandColors) {
+        themeMaps.brand.bg = "linear-gradient(135deg, " + reelState.brandColors.primary + " 0%, " + reelState.brandColors.secondary + " 100%)";
+        themeMaps.brand.statColor = reelState.brandColors.accent;
+      }
+      const themeKey = reelState.theme || 'brand';
+      const isLight = themeKey === 'clean';
+      const theme = themeMaps[themeKey] || themeMaps.brand || themeMaps.gradient;
+      const slideType = slide.slideType || (currentSlideIdx === 0 ? 'hook' : currentSlideIdx === 1 ? 'problem' : currentSlideIdx === 2 ? 'stat' : 'cta');
+      const screen = document.getElementById('reel-screen');
+
+      screen.style.background = theme.bg;
+      screen.style.color = theme.text;
+
+      const decorEl = document.getElementById('preview-archetype-decor');
+      if (decorEl) {
+        if (themeKey === 'nordic') {
+          decorEl.innerHTML = '<div class="absolute inset-2.5 border border-amber-500/20 rounded-[24px]"></div>';
+        } else if (themeKey === 'brutalist') {
+          decorEl.innerHTML =
+            '<span class="absolute top-3 left-3 font-mono text-[10px] font-black text-white/60">+</span>' +
+            '<span class="absolute top-3 right-3 font-mono text-[10px] font-black text-white/60">+</span>' +
+            '<span class="absolute bottom-3 left-3 font-mono text-[10px] font-black text-white/60">+</span>' +
+            '<span class="absolute bottom-3 right-3 font-mono text-[10px] font-black text-white/60">+</span>';
+        } else {
+          decorEl.innerHTML = '';
+        }
+      }
+
+      const brandEl = document.getElementById('preview-brand');
+      const handleEl = document.getElementById('preview-handle');
+      const headerBar = document.getElementById('preview-header-bar');
+      const footerBar = document.getElementById('preview-footer-bar');
+      const footerCtaWrap = document.getElementById('preview-footer-cta-wrap');
+      if (brandEl) {
+        brandEl.textContent = reelState.brand || 'Brand';
+        brandEl.style.color = theme.text;
+        brandEl.style.fontFamily = theme.fontHead || 'system-ui, sans-serif';
+      }
+      if (handleEl) {
+        handleEl.textContent = reelState.handle || '@brand';
+        handleEl.style.color = theme.subtext;
+      }
+      if (headerBar) {
+        headerBar.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.12)' : (themeKey === 'brutalist' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.12)');
+      }
+      if (footerBar) {
+        footerBar.style.borderColor = isLight ? 'rgba(15, 23, 42, 0.12)' : (themeKey === 'brutalist' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.12)');
+      }
+      if (footerCtaWrap) {
+        footerCtaWrap.style.color = theme.text;
+      }
+
+      const logoImg = document.getElementById('preview-logo-img');
+      const avatarDiv = document.getElementById('preview-avatar');
+      if (reelState.logoUrl) {
+        if (logoImg) {
+          if (logoImg.getAttribute('src') !== reelState.logoUrl) logoImg.src = reelState.logoUrl;
+          logoImg.classList.remove('hidden');
+        }
+        if (avatarDiv) avatarDiv.classList.add('hidden');
+      } else {
+        if (logoImg) logoImg.classList.add('hidden');
+        if (avatarDiv) {
+          avatarDiv.classList.remove('hidden');
+          avatarDiv.textContent = (reelState.brand || 'TP').slice(0, 2).toUpperCase();
+        }
+      }
+
+      const tagEl = document.getElementById('preview-tag');
+      const badgeIcon = theme.badgeIcon ? '<span class="mr-1">' + theme.badgeIcon + '</span>' : '';
+      tagEl.innerHTML = badgeIcon + escapeHtml(slide.tag || ('0' + (currentSlideIdx + 1)));
+      tagEl.style.backgroundColor = theme.tagBg;
+      tagEl.style.borderColor = theme.tagBorder;
+      tagEl.style.color = theme.tagText;
+      tagEl.style.borderRadius = themeKey === 'brutalist' ? '0px' : '9999px';
+
+      const kickerBar = document.getElementById('preview-kicker-bar');
+      if (kickerBar) {
+        if (themeKey === 'terminal') {
+          const slugBrand = (reelState.brand || 'app').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+          kickerBar.className = 'flex items-center justify-between px-2.5 py-1.5 rounded-t-xl bg-slate-900/95 border border-b-0 border-emerald-500/40 font-mono text-[9px] text-emerald-400 -mb-2.5';
+          kickerBar.innerHTML =
+            '<div class="flex items-center space-x-1">' +
+              '<span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>' +
+              '<span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>' +
+              '<span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>' +
+              '<span class="ml-1.5 text-slate-400">~/' + escapeHtml(slugBrand) + '/0' + (currentSlideIdx + 1) + '.sh</span>' +
+            '</div>' +
+            '<span>[0' + (currentSlideIdx + 1) + '/0' + reelState.slides.length + ']</span>';
+        } else if (themeKey === 'nordic') {
+          kickerBar.className = 'flex items-center space-x-2 text-[10px] tracking-widest uppercase text-amber-300/90 mb-1';
+          kickerBar.innerHTML =
+            '<span class="italic font-serif lowercase text-xs text-amber-200">kap. 0' + (currentSlideIdx + 1) + '</span>' +
+            '<span class="h-px flex-1 bg-gradient-to-r from-amber-500/40 to-transparent"></span>';
+        } else if (themeKey === 'brutalist') {
+          kickerBar.className = 'flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-yellow-400 mb-1';
+          kickerBar.innerHTML =
+            '<span>+ ' + escapeHtml(slide.tag || 'RAW') + ' +</span>' +
+            '<span class="px-1.5 py-0.5 bg-white text-black">0' + (currentSlideIdx + 1) + '</span>';
+        } else {
+          kickerBar.className = 'hidden';
+          kickerBar.innerHTML = '';
+        }
+      }
+
+      const headlineEl = document.getElementById('preview-headline');
+      const bodyEl = document.getElementById('preview-body');
+      const stageCard = document.getElementById('preview-stage-card');
+      headlineEl.innerHTML = formatHighlightedHtml(slide.headline, slide.highlightWords, theme.highlightClass);
+      headlineEl.style.color = theme.text;
+      headlineEl.style.fontFamily = theme.fontHead || 'system-ui, -apple-system, sans-serif';
+      headlineEl.style.textAlign = slideType === 'cta' ? 'center' : 'left';
+
+      bodyEl.textContent = (themeKey === 'terminal' ? '> ' : '') + (slide.body || '');
+      bodyEl.style.color = theme.subtext;
+      bodyEl.style.fontFamily = theme.fontBody || 'system-ui, -apple-system, sans-serif';
+      bodyEl.style.textAlign = slideType === 'cta' ? 'center' : 'left';
+
+      if (stageCard) {
+        const shouldFrameStage = themeKey === 'terminal' || themeKey === 'brutalist' || slideType === 'problem' || (themeKey === 'bento' && slideType !== 'hook');
+        if (shouldFrameStage) {
+          stageCard.style.background = theme.cardBg || 'rgba(255,255,255,0.06)';
+          stageCard.style.border = theme.cardBorder || '1px solid rgba(255,255,255,0.14)';
+          stageCard.style.boxShadow = theme.cardShadow || 'none';
+          stageCard.style.padding = '12px';
+          stageCard.style.borderRadius = themeKey === 'brutalist' ? '0px' : (themeKey === 'terminal' ? '0 0 14px 14px' : '18px');
+        } else {
+          stageCard.style.background = 'transparent';
+          stageCard.style.border = 'none';
+          stageCard.style.boxShadow = 'none';
+          stageCard.style.padding = '0px';
+          stageCard.style.borderRadius = '0px';
+        }
+      }
+
+      const statCard = document.getElementById('preview-stat-card');
+      const statVal = document.getElementById('preview-stat');
+      const statLabel = document.getElementById('preview-stat-label');
+      if (slide.stat) {
+        statCard.classList.remove('hidden');
+        statCard.style.backgroundColor = theme.statBg;
+        statCard.style.borderColor = theme.statBorder;
+        statCard.style.borderRadius = themeKey === 'brutalist' ? '0px' : '16px';
+        statVal.textContent = slide.stat;
+        statVal.style.color = theme.statColor;
+        statVal.style.fontFamily = theme.fontHead || 'system-ui, -apple-system, sans-serif';
+        statLabel.textContent = slide.statLabel || 'METRIC';
+        statLabel.style.color = theme.text;
+      } else {
+        statCard.classList.add('hidden');
+      }
+
+      const ctaCard = document.getElementById('preview-cta-card');
+      const ctaBtn = document.getElementById('preview-cta-button');
+      const ctaBtnText = document.getElementById('preview-cta-button-text');
+      if (ctaCard && ctaBtn && ctaBtnText) {
+        if (slideType === 'cta') {
+          ctaCard.classList.remove('hidden');
+          ctaBtnText.textContent = reelState.cta || 'Learn more';
+          ctaBtn.style.borderRadius = themeKey === 'brutalist' ? '0px' : '16px';
+          ctaBtn.style.background = theme.statColor || '#38bdf8';
+          ctaBtn.style.color = (themeKey === 'brutalist' || themeKey === 'nordic' || themeKey === 'terminal' || themeKey === 'creator') ? '#090d16' : '#ffffff';
+          ctaBtn.style.border = themeKey === 'brutalist' ? '2px solid #ffffff' : 'none';
+        } else {
+          ctaCard.classList.add('hidden');
+        }
+      }
+
+      const layout = reelState.layout || 'classic';
+      const contentBox = document.getElementById('preview-content-container');
+      const watermark = document.getElementById('preview-editorial-watermark');
+      const srCard = document.getElementById('preview-screenrecord-card');
+      const browserBar = document.getElementById('preview-browser-bar');
+
+      if (watermark) {
+        if (layout === 'editorial') {
+          watermark.textContent = slide.stat || ('0' + (currentSlideIdx + 1));
+          watermark.style.fontFamily = theme.fontHead || 'serif';
+          watermark.style.color = isLight ? 'rgba(15, 23, 42, 0.07)' : 'rgba(255, 255, 255, 0.08)';
+          watermark.classList.remove('hidden');
+        } else {
+          watermark.classList.add('hidden');
+        }
+      }
+
+      if (contentBox) {
+        if (reelState.aspectRatio === '16:9') {
+          contentBox.className = 'my-auto z-20 grid grid-cols-2 gap-4 items-center space-y-0 py-1';
+        } else if (reelState.aspectRatio === '1:1') {
+          contentBox.className = 'my-auto z-20 space-y-2 py-1';
+        } else if (reelState.aspectRatio === '4:5') {
+          contentBox.className = 'my-auto z-20 space-y-2.5 py-1';
+        } else {
+          contentBox.className = 'my-auto z-20 space-y-3.5 py-3';
         }
 
-        ffmpegProc.stdin.end();
-        await ffmpegExitPromise;
-      }, { width: dim.outW, height: dim.outH }, false, taskTimeoutMs);
+        if (layout === 'editorial') {
+          contentBox.style.borderLeft = (themeKey === 'brutalist' ? '5px solid ' : '3px solid ') + (theme.statColor || '#38bdf8');
+          contentBox.style.paddingLeft = '12px';
+          contentBox.style.background = 'transparent';
+          contentBox.style.borderTop = 'none';
+          contentBox.style.borderRadius = '0px';
+        } else if (layout === 'split') {
+          contentBox.style.borderLeft = 'none';
+          contentBox.style.paddingLeft = '0px';
+          contentBox.style.background = isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(9, 13, 22, 0.72)';
+          contentBox.style.padding = '12px';
+          contentBox.style.borderRadius = themeKey === 'brutalist' ? '0px' : '16px';
+          contentBox.style.borderTop = '3px solid ' + (theme.statColor || '#38bdf8');
+        } else {
+          contentBox.style.borderLeft = 'none';
+          contentBox.style.borderTop = 'none';
+          contentBox.style.paddingLeft = '0px';
+          contentBox.style.padding = '8px 0';
+          contentBox.style.background = 'transparent';
+        }
+      }
+
+      if (srCard && browserBar) {
+        if (layout === 'iphone') {
+          srCard.className = 'mx-auto w-40 rounded-[26px] border-4 border-slate-600 bg-slate-950 shadow-2xl overflow-hidden';
+          browserBar.innerHTML = '<div class="mx-auto w-12 h-2.5 bg-black rounded-full my-0.5"></div>';
+        } else {
+          srCard.className = (themeKey === 'brutalist' ? 'rounded-none border-2 border-white' : 'rounded-xl border border-white/20') + ' bg-slate-950/80 shadow-2xl overflow-hidden backdrop-blur-md';
+          browserBar.innerHTML = '<div class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span></div><span id="preview-browser-url" class="font-mono text-slate-400 truncate max-w-[140px]">tailprint.com</span>';
+        }
+      }
+
+      document.getElementById('preview-cta').textContent = reelState.cta || 'Learn more';
+      const slideInd = document.getElementById('preview-slide-indicator');
+      const progRow = document.getElementById('progress-bars-row');
+      if (slideInd) {
+        slideInd.textContent = (currentSlideIdx + 1) + ' / ' + reelState.slides.length;
+        if (reelState.cleanExport) slideInd.classList.add('hidden');
+        else slideInd.classList.remove('hidden');
+      }
+      if (progRow) {
+        if (reelState.cleanExport) progRow.classList.add('hidden');
+        else progRow.classList.remove('hidden');
+      }
+
+      const card = document.getElementById('preview-screenrecord-card');
+      const backdrop = document.getElementById('preview-backdrop-video');
+      const urlLabel = document.getElementById('preview-browser-url');
+
+      if (!reelState.screenrecordUrl || reelState.screenrecordMode === 'none') {
+        if (card) card.classList.add('hidden');
+        if (backdrop) backdrop.classList.add('hidden');
+      } else {
+        if (urlLabel && reelState.sourceUrl) {
+          try {
+            urlLabel.textContent = new URL(reelState.sourceUrl).hostname.replace(/^www\\./, '');
+          } catch {
+            urlLabel.textContent = (reelState.brand || 'site').toLowerCase() + '.com';
+          }
+        }
+        if (reelState.screenrecordMode === 'inset') {
+          if (card) card.classList.remove('hidden');
+          if (backdrop) backdrop.classList.add('hidden');
+        } else if (reelState.screenrecordMode === 'backdrop') {
+          if (card) card.classList.add('hidden');
+          if (backdrop) backdrop.classList.remove('hidden');
+        }
+      }
+    }
+
+    window.__initAssets = async () => {
+      const promises = [];
+      if (reelState.logoUrl) {
+        const logoEl = document.getElementById('preview-logo-img');
+        if (logoEl) {
+          promises.push(new Promise((res) => {
+            logoEl.onload = () => res();
+            logoEl.onerror = () => res();
+            logoEl.src = reelState.logoUrl;
+            setTimeout(res, 2000);
+          }));
+        }
+      }
+      if (reelState.screenrecordUrl && reelState.screenrecordMode !== 'none') {
+        const activeVid = reelState.screenrecordMode === 'backdrop'
+          ? document.getElementById('preview-backdrop-video')
+          : document.getElementById('preview-screenrecord-video');
+        if (activeVid) {
+          promises.push(new Promise((res) => {
+            activeVid.onloadeddata = () => res();
+            activeVid.onerror = () => res();
+            activeVid.src = reelState.screenrecordUrl;
+            setTimeout(res, 3500);
+          }));
+        }
+      }
+      if (document.fonts && document.fonts.ready) {
+        promises.push(Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]));
+      }
+      await Promise.all(promises);
+      currentSlideIdx = 0;
+      updatePreviewDisplay();
+      renderProgressBars(0);
+    };
+
+    window.__syncReelFrame = async (idx, prog) => {
+      if (idx !== currentSlideIdx) {
+        currentSlideIdx = idx;
+        updatePreviewDisplay();
+      }
+      renderProgressBars(prog);
+
+      if (reelState.screenrecordUrl && reelState.screenrecordMode !== 'none') {
+        const activeVid = reelState.screenrecordMode === 'backdrop'
+          ? document.getElementById('preview-backdrop-video')
+          : document.getElementById('preview-screenrecord-video');
+        if (activeVid && activeVid.readyState >= 1 && Number.isFinite(activeVid.duration) && activeVid.duration > 0) {
+          activeVid.pause();
+          const total = Math.max(1, reelState.slides.length);
+          const baseStart = activeVid.duration > 6.5 ? 0.28 : 0.02;
+          const baseSpan = activeVid.duration > 6.5 ? 0.70 : 0.96;
+          const targetFrac = baseStart + ((idx + prog * 0.9) / total) * baseSpan;
+          const targetTime = Math.min(activeVid.duration - 0.04, Math.max(0, activeVid.duration * targetFrac));
+          if (Math.abs(activeVid.currentTime - targetTime) > 0.03) {
+            await new Promise((res) => {
+              const onSeek = () => {
+                activeVid.removeEventListener('seeked', onSeek);
+                res();
+              };
+              activeVid.addEventListener('seeked', onSeek);
+              activeVid.currentTime = targetTime;
+              setTimeout(() => {
+                activeVid.removeEventListener('seeked', onSeek);
+                res();
+              }, 220);
+            });
+          }
+        }
+      }
+    };
+  </script>
+</body>
+</html>`, { waitUntil: 'networkidle', timeout: 15000 }).catch(() => {});
+
+          await page.evaluate(() => (window as any).__initAssets());
+          await page.waitForTimeout(150);
+
+          // Start FFmpeg process and stream Retina DOM screenshots
+          const ffmpegProc = spawn('ffmpeg', ffmpegArgs, { stdio: ['pipe', 'ignore', 'pipe'] });
+          let ffmpegStderr = '';
+          ffmpegProc.stderr?.on('data', (chunk) => {
+            ffmpegStderr += chunk.toString();
+          });
+
+          const ffmpegExitPromise = new Promise<void>((resolve, reject) => {
+            ffmpegProc.on('close', (code) => {
+              if (code === 0) resolve();
+              else reject(new Error(`FFmpeg exited with code ${code}: ${ffmpegStderr.slice(-400)}`));
+            });
+            ffmpegProc.on('error', reject);
+          });
+
+          for (let sIdx = 0; sIdx < slides.length; sIdx++) {
+            const sDur = slideDurations[sIdx];
+            const frameCount = Math.max(8, Math.round(sDur * renderFps));
+            for (let f = 0; f < frameCount; f++) {
+              const progress = f / frameCount;
+              await page.evaluate(
+                ({ idx, prog }) => (window as any).__syncReelFrame(idx, prog),
+                { idx: sIdx, prog: progress }
+              );
+              const frameBuf = await page.screenshot({ type: 'jpeg', quality: 90 });
+              const canContinue = ffmpegProc.stdin.write(frameBuf);
+              if (!canContinue) {
+                await new Promise<void>((r) => ffmpegProc.stdin.once('drain', r));
+              }
+            }
+          }
+
+          ffmpegProc.stdin.end();
+          await ffmpegExitPromise;
+        },
+        { width: dim.cssW, height: dim.cssH },
+        false,
+        taskTimeoutMs
+      );
 
       const mp4Buffer = await readFile(videoOutPath);
       const safeBrand = (script.brand || 'reel').toLowerCase().replace(/[^a-z0-9]/g, '') || 'reel';
