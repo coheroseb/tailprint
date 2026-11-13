@@ -93,6 +93,56 @@ console.log('Batch Queued:', batchJob.job_id);
 
 ---
 
+## 🐍 Official Python SDK
+
+Tailprint provides an official zero-dependency Python client for Django, FastAPI, Flask, Celery, and AI workflows:
+
+```bash
+pip install tailprint
+```
+
+### Python Quickstart
+
+```python
+import os
+from tailprint import Tailprint
+
+tp = Tailprint(api_key=os.environ.get("TAILPRINT_API_KEY", "sec_live_..."))
+
+# 1. Render Tailwind HTML to Vector PDF
+pdf_bytes = tp.render_pdf(
+    html="""
+    <div class="p-12 bg-slate-900 text-white font-sans">
+        <h1 class="text-3xl font-bold text-indigo-400">Quarterly Invoice</h1>
+        <p class="text-slate-400 mt-2">Styled dynamically with Tailwind CSS.</p>
+    </div>
+    """,
+    format="A4",
+)
+with open("invoice.pdf", "wb") as f:
+    f.write(pdf_bytes)
+
+# 2. Asynchronous Render & Webhook
+job = tp.render_pdf_async(
+    html="<h1>Annual Report</h1>",
+    webhook_url="https://my-app.com/api/webhooks",
+)
+completed = tp.wait_for_job(job["job_id"])
+print("PDF ready at:", completed["results"][0]["download_url"])
+
+# 3. Batch Rendering with Merging
+batch = tp.render_batch(
+    items=[
+        {"html": "<h1>Invoice 1</h1>", "filename": "inv-1.pdf"},
+        {"html": "<h1>Invoice 2</h1>", "filename": "inv-2.pdf"},
+    ],
+    merge_output=True,
+    merged_filename="combined.pdf",
+)
+```
+
+---
+
 ## 🤖 Model Context Protocol (MCP) Setup
 
 Tailprint provides an official, 100% spec-compliant MCP server exposing **11 Document & PDF Tools** enabling AI coding assistants and autonomous agents to generate and inspect documents on command.

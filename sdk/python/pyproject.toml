@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tailprint"
+version = "1.3.0"
+description = "Official Python SDK for Tailprint — Developer-First PDF & Document Engine"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    { name = "Tailprint", email = "reach@clewaa.com" }
+]
+keywords = [
+    "pdf",
+    "html-to-pdf",
+    "tailwind",
+    "factur-x",
+    "zugferd",
+    "einvoice",
+    "playwright",
+    "pdf-merge",
+    "pdf-split",
+    "pdf-stamp",
+    "document-generation"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Typing :: Typed"
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://tailprint.com"
+Documentation = "https://tailprint.com/docs"
+Repository = "https://github.com/coheroseb/tailprint"
+Issues = "https://github.com/coheroseb/tailprint/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tailprint*"]
+
+[tool.setuptools.package-data]
+tailprint = ["py.typed"]
