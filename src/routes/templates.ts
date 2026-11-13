@@ -635,6 +635,42 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <loc>https://tailprint.com/guides</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/neural-implant-pdf-spatial-cortex</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/white-label-conversational-pdf-api</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/dual-brain-pdf-zero-ocr-ai-extraction</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.88</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/cryptographic-proof-of-origin-tamper-proof-pdf</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.88</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/hosted-custom-pdf-templates-mustache-tailwind</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/guides/async-batch-pdf-webhooks-multi-language-sdks</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
@@ -690,6 +726,12 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // GET /rss.xml & /feed.xml - RSS 2.0 Feed for Automations (Make.com, Zapier, Feedly)
   const serveRssFeed = async (_request: any, reply: any) => {
     const coreSlugs = new Set([
+      'neural-implant-pdf-spatial-cortex',
+      'white-label-conversational-pdf-api',
+      'dual-brain-pdf-zero-ocr-ai-extraction',
+      'cryptographic-proof-of-origin-tamper-proof-pdf',
+      'hosted-custom-pdf-templates-mustache-tailwind',
+      'async-batch-pdf-webhooks-multi-language-sdks',
       'tailwind-html-to-pdf-nextjs',
       'factur-x-zugferd-pdf-api',
       'puppeteer-serverless-pdf-alternatives',
@@ -2536,6 +2578,144 @@ Cursor IDE & Windsurf:
             Via <code class="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">POST /v1/render/einvoice</code> or the MCP tool <code class="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded text-xs font-mono">generate_einvoice</code>, Tailprint generates a hybrid PDF document compliant with the European Standard EN 16931. It renders an A4 vector visual invoice using Tailwind CSS and embeds a machine-readable <code class="text-emerald-300">factur-x.xml</code> (CrossIndustryInvoice) file into the PDF document catalog dictionary (<code class="text-slate-400 text-xs font-mono">/EmbeddedFiles</code>). This is directly readable by ERP systems such as DATEV, SAP, Chorus Pro, Dinero, and Billy.
           </p>
         </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Latest Engineering & Architecture Guides -->
+  <section id="latest-guides" class="py-24 border-t border-slate-800/80 bg-slate-950/60">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+        <div>
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/60 text-indigo-300 text-xs font-semibold mb-3">
+            <span>📚 Engineering Deep-Dives &amp; Architecture</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Latest Technical Articles &amp; Blueprints
+          </h2>
+          <p class="text-slate-400 mt-2 text-sm sm:text-base max-w-2xl">
+            Explore how we engineered Neural-Implant PDFs, White-Label Conversational Q&amp;A APIs, Dual-Brain Zero-OCR extraction, and Cryptographic Proof-of-Origin.
+          </p>
+        </div>
+        <a href="/guides" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-indigo-300 hover:text-white transition shrink-0">
+          <span>View All 10 Engineering Guides →</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a href="/guides/neural-implant-pdf-spatial-cortex" class="group p-6 rounded-2xl bg-slate-900/70 border border-indigo-500/30 hover:border-indigo-400/70 transition flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-indigo-400 mb-3">
+              <span class="px-2 py-0.5 rounded bg-indigo-950/80 border border-indigo-800/60 font-bold">🧠 Neural-Implant Architecture</span>
+              <span>12 min read</span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-indigo-300 transition leading-snug mb-2">
+              Neural-Implant PDFs: How We Built Documents with a 64-D Int8 Spatial Cortex &amp; Subconscious Latent Memory
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Inside the DOM bounding-box harvesting, 64-D Int8 quantized character trigram projection, and HMAC-signed neural memory embedded inside /Names/EmbeddedFiles.
+            </p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-800/80 text-xs font-bold text-indigo-400 group-hover:text-indigo-300 flex items-center justify-between">
+            <span>Read Architecture Guide</span>
+            <span>→</span>
+          </div>
+        </a>
+
+        <a href="/guides/white-label-conversational-pdf-api" class="group p-6 rounded-2xl bg-slate-900/70 border border-purple-500/30 hover:border-purple-400/70 transition flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-purple-400 mb-3">
+              <span class="px-2 py-0.5 rounded bg-purple-950/80 border border-purple-800/60 font-bold">🏷️ White-Label API</span>
+              <span>11 min read</span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-purple-300 transition leading-snug mb-2">
+              Building a White-Label Conversational PDF Q&amp;A Portal on Your Own Domain (With Spatial Highlighting)
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Use POST /v1/pdf/ask, POST /v1/pdf/cortex, and neural_custom_url so recipients click your PDF badge and land on your own branded portal with zero Tailprint branding.
+            </p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-800/80 text-xs font-bold text-purple-400 group-hover:text-purple-300 flex items-center justify-between">
+            <span>Read White-Label Tutorial</span>
+            <span>→</span>
+          </div>
+        </a>
+
+        <a href="/guides/dual-brain-pdf-zero-ocr-ai-extraction" class="group p-6 rounded-2xl bg-slate-900/70 border border-cyan-500/30 hover:border-cyan-400/70 transition flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-cyan-400 mb-3">
+              <span class="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/60 font-bold">🤖 Dual-Brain Zero-OCR</span>
+              <span>9 min read</span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-cyan-300 transition leading-snug mb-2">
+              Dual-Brain PDFs: Replacing Brittle OCR &amp; Expensive Vision LLMs with 0ms Embedded JSON-LD
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Eliminate OCR hallucinations and $0.05/page Vision LLM costs by embedding deterministic JSON-LD directly inside the PDF binary via ai_payload and POST /v1/pdf/extract.
+            </p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-800/80 text-xs font-bold text-cyan-400 group-hover:text-cyan-300 flex items-center justify-between">
+            <span>Read Zero-OCR Guide</span>
+            <span>→</span>
+          </div>
+        </a>
+
+        <a href="/guides/cryptographic-proof-of-origin-tamper-proof-pdf" class="group p-6 rounded-2xl bg-slate-900/70 border border-emerald-500/30 hover:border-emerald-400/70 transition flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-emerald-400 mb-3">
+              <span class="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-800/60 font-bold">🔐 Document Security</span>
+              <span>10 min read</span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-emerald-300 transition leading-snug mb-2">
+              Cryptographic Proof-of-Origin: Detecting Invoice Fraud &amp; PDF Tampering with HMAC-SHA256
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              How Tailprint binds structural visual stream fingerprints to embedded JSON-LD payloads with HMAC-SHA256 signatures—without X.509 certificate headaches.
+            </p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-800/80 text-xs font-bold text-emerald-400 group-hover:text-emerald-300 flex items-center justify-between">
+            <span>Read Security Guide</span>
+            <span>→</span>
+          </div>
+        </a>
+
+        <a href="/guides/hosted-custom-pdf-templates-mustache-tailwind" class="group p-6 rounded-2xl bg-slate-900/70 border border-amber-500/30 hover:border-amber-400/70 transition flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-amber-400 mb-3">
+              <span class="px-2 py-0.5 rounded bg-amber-950/80 border border-amber-800/60 font-bold">🧩 Template Engine</span>
+              <span>9 min read</span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-amber-300 transition leading-snug mb-2">
+              Hosted &amp; Custom PDF Templates: Data-Driven Mustache + Tailwind CSS Document Automation
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Decouple document design from backend application code using Mustache variables, loops, and reusable custom templates via POST /v1/templates/custom.
+            </p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-800/80 text-xs font-bold text-amber-400 group-hover:text-amber-300 flex items-center justify-between">
+            <span>Read Template Guide</span>
+            <span>→</span>
+          </div>
+        </a>
+
+        <a href="/guides/async-batch-pdf-webhooks-multi-language-sdks" class="group p-6 rounded-2xl bg-slate-900/70 border border-sky-500/30 hover:border-sky-400/70 transition flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-sky-400 mb-3">
+              <span class="px-2 py-0.5 rounded bg-sky-950/80 border border-sky-800/60 font-bold">⚙️ Scale &amp; SDKs</span>
+              <span>10 min read</span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-sky-300 transition leading-snug mb-2">
+              High-Throughput Async Batch PDF Rendering, Auto-Merging &amp; Signed Webhooks Across 4 SDKs
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Render up to 50 documents per batch with BullMQ worker pools, automatic PDF merging, and HMAC-SHA256 webhooks in TypeScript, Python, PHP/Laravel, and Go.
+            </p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-800/80 text-xs font-bold text-sky-400 group-hover:text-sky-300 flex items-center justify-between">
+            <span>Read Scaling Guide</span>
+            <span>→</span>
+          </div>
+        </a>
       </div>
     </div>
   </section>
