@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TemplateIdField, TemplateDataField, validateRenderSource } from './renderSource.js';
 
 export const PdfMarginSchema = z.object({
   top: z.string().optional().describe('Top margin with unit (e.g. 10mm, 0.5in, 20px)'),
@@ -9,8 +10,10 @@ export const PdfMarginSchema = z.object({
 
 export const RenderPdfRequestSchema = z
   .object({
-    html: z.string().optional().describe('HTML string with optional Tailwind CSS utility classes. Either html or url is required.'),
+    html: z.string().optional().describe('HTML string with optional Tailwind CSS utility classes. Either html, url or template_id is required.'),
     url: z.string().url().optional().describe('Direct web URL to render to PDF (e.g. https://example.com). Either html or url is required.'),
+    template_id: TemplateIdField,
+    data: TemplateDataField,
     format: z.enum(['A4', 'Letter', 'Legal']).default('A4').describe('Paper format'),
     landscape: z.boolean().default(false).describe('Whether to print in landscape orientation'),
     print_background: z.boolean().default(true).describe('Whether to print background graphics and colors'),
@@ -31,10 +34,7 @@ export const RenderPdfRequestSchema = z
     webhook_url: z.string().url().optional().describe('Callback URL to POST completion notification and download links when async rendering is complete.'),
     webhook_headers: z.record(z.string()).optional().describe('Optional custom HTTP headers to include with the webhook callback.'),
   })
-  .refine((data) => Boolean(data.html || data.url), {
-    message: 'Either "html" or "url" must be provided',
-    path: ['html'],
-  });
+  .superRefine(validateRenderSource);
 
 export type RenderPdfRequest = z.input<typeof RenderPdfRequestSchema>;
 export type RenderPdfOutput = z.infer<typeof RenderPdfRequestSchema>;

@@ -80,6 +80,35 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     await server.close();
   });
 
+  it('renders a hosted template via render_pdf template_id + data and reports invalid data', async () => {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const server = createMcpServer();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: 'test-agent', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
+
+    const ok = (await client.callTool({
+      name: 'render_pdf',
+      arguments: {
+        template_id: 'certificate-classic',
+        data: { recipient_name: 'Ada Lovelace' },
+      },
+    })) as any;
+    expect(ok.isError).toBeFalsy();
+    expect(ok.content[0].text).toContain('data:application/pdf;base64,');
+
+    const bad = (await client.callTool({
+      name: 'render_pdf',
+      arguments: { template_id: 'invoice-modern', data: { invoice_number: 'only' } },
+    })) as any;
+    expect(bad.isError).toBe(true);
+    expect(bad.content[0].text).toContain('Invalid data for template "invoice-modern"');
+
+    await client.close();
+    await server.close();
+  });
+
   it('executes render_template tool with data variables', async () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createMcpServer();

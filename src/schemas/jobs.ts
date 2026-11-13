@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TemplateIdField, TemplateDataField, validateRenderSource } from './renderSource.js';
 
 export const BatchMarginSchema = z.object({
   top: z.string().optional().describe('Top margin with unit (e.g. 10mm, 0.5in, 20px)'),
@@ -11,6 +12,8 @@ export const BatchItemSchema = z
   .object({
     html: z.string().optional().describe('HTML string with optional Tailwind CSS utility classes'),
     url: z.string().url().optional().describe('Direct web URL to render to PDF'),
+    template_id: TemplateIdField,
+    data: TemplateDataField,
     filename: z.string().optional().describe('Custom filename for this document item (e.g. invoice-101.pdf)'),
     format: z.enum(['A4', 'Letter', 'Legal']).default('A4').optional().describe('Paper format'),
     landscape: z.boolean().default(false).optional().describe('Whether to print in landscape orientation'),
@@ -20,10 +23,7 @@ export const BatchItemSchema = z
     smart_pagination: z.boolean().default(true).optional().describe('Prevent awkward page splits'),
     delay_ms: z.coerce.number().int().min(0).max(5000).optional().describe('Delay before rendering'),
   })
-  .refine((data) => Boolean(data.html || data.url), {
-    message: 'Either "html" or "url" must be provided for each batch item',
-    path: ['html'],
-  });
+  .superRefine(validateRenderSource);
 
 export type BatchItem = z.infer<typeof BatchItemSchema>;
 

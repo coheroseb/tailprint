@@ -291,7 +291,32 @@ curl -X POST https://tailprint.com/v1/render/batch \
   }'
 ```
 
-### 8. Poll Job Status
+### 8. Hosted Templates (JSON in, PDF out)
+Send `template_id` + `data` instead of HTML. Totals are computed server-side and all values are HTML-escaped.
+```bash
+# Browse templates (no API key required)
+curl https://tailprint.com/v1/templates
+curl https://tailprint.com/v1/templates/invoice-modern   # example_data + example_request
+
+curl -X POST https://tailprint.com/v1/render/pdf \
+  -H "Authorization: Bearer sec_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "invoice-modern",
+    "data": {
+      "invoice_number": "INV-1042",
+      "issue_date": "2026-11-13",
+      "currency": "EUR",
+      "seller": { "name": "Tailprint ApS" },
+      "buyer": { "name": "Cohero Technologies" },
+      "items": [{ "description": "API Subscription", "quantity": 1, "unit_price": 49 }],
+      "tax_rate": 25
+    }
+  }' --output invoice.pdf
+```
+Available: `invoice-modern`, `receipt-minimal`, `certificate-classic`, `report-executive`. Also usable per item in `/v1/render/batch`, via `client.renderPdf({ template_id, data })` (TypeScript) / `client.render_pdf(template_id=..., data=...)` (Python) and the MCP `render_pdf` tool.
+
+### 9. Poll Job Status
 ```bash
 curl https://tailprint.com/v1/jobs/job_batch_0123456789abcdef
 ```

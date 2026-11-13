@@ -7,6 +7,7 @@ import { eInvoiceService } from '../services/eInvoice.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
 import { presentationService } from '../services/presentation.js';
 import { TEMPLATES } from '../config/templates.js';
+import { resolveTemplateRequest } from '../services/templateEngine.js';
 
 export interface McpServerOptions {
   name?: string;
@@ -48,10 +49,12 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   // Tool 1: render_pdf
   server.tool(
     'render_pdf',
-    'Converts HTML with full Tailwind CSS classes into a pixel-perfect, vector PDF document with Smart Pagination Shield. Returns a hosted CDN link and base64 data URI.',
+    'Converts HTML with full Tailwind CSS classes, a public URL, or a hosted template (template_id + JSON data, e.g. "invoice-modern") into a pixel-perfect, vector PDF document with Smart Pagination Shield. Returns a hosted CDN link and base64 data URI.',
     {
-      html: z.string().optional().describe('HTML markup to render. Tailwind CSS utility classes are supported automatically. Either html or url is required.'),
-      url: z.string().url().optional().describe('Public web URL to render directly to PDF (e.g. https://news.ycombinator.com). Either html or url is required.'),
+      html: z.string().optional().describe('HTML markup to render. Tailwind CSS utility classes are supported automatically. Provide exactly one of html, url or template_id.'),
+      url: z.string().url().optional().describe('Public web URL to render directly to PDF (e.g. https://news.ycombinator.com). Provide exactly one of html, url or template_id.'),
+      template_id: z.string().optional().describe('Hosted template id: invoice-modern, receipt-minimal, certificate-classic or report-executive. Requires "data". Provide exactly one of html, url or template_id.'),
+      data: z.record(z.any()).optional().describe('JSON data for template_id (e.g. seller, buyer and items for invoice-modern). Validation errors name the offending fields.'),
       format: z.enum(['A4', 'Letter']).optional().default('A4').describe('Paper format: "A4" or "Letter" (default: "A4")'),
       landscape: z.boolean().optional().default(false).describe('Whether to generate PDF in landscape orientation (default: false)'),
       print_background: z.boolean().optional().default(true).describe('Whether to print CSS backgrounds and colors (default: true)'),
@@ -61,15 +64,24 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       wait_for: z.string().optional().describe('Optional CSS selector to wait for before rendering'),
       delay_ms: z.number().optional().describe('Optional delay in milliseconds before rendering (max 5000)'),
     },
-    async ({ html, url, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms }) => {
+    async ({ html, url, template_id, data, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms }) => {
       try {
+        if (template_id && (html || url)) {
+          throw new Error('Provide only one of html, url or template_id.');
+        }
+        if (data !== undefined && !template_id) {
+          throw new Error('"data" can only be used together with template_id.');
+        }
+        // Validate template input before counting usage
+        const resolved = resolveTemplateRequest({ html, url, template_id, data });
+
         if (options.onUsage) {
           await options.onUsage('render_pdf');
         }
 
         const buffer = await browserService.renderPdf({
-          html,
-          url,
+          html: resolved.html,
+          url: resolved.url,
           format: format || 'A4',
           landscape: landscape || false,
           print_background: print_background !== false,

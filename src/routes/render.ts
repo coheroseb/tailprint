@@ -17,8 +17,32 @@ import { redisService } from '../services/redis.js';
 import { storageService } from '../services/storage.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { jobsService } from '../services/jobs.js';
+import { resolveTemplateRequest, TemplateInputError } from '../services/templateEngine.js';
+import { HOSTED_TEMPLATES, getHostedTemplate } from '../config/hostedTemplates.js';
 
 export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
+  // Resolves `template_id` + `data` into HTML. Runs before authentication/quota so that
+  // invalid template input is rejected with 400 without consuming a render.
+  function resolveTemplate<T extends { template_id?: string; html?: string; url?: string; data?: Record<string, unknown> }>(
+    input: T,
+    reply: any,
+    prefix = ''
+  ): T | null {
+    try {
+      return resolveTemplateRequest(input);
+    } catch (err) {
+      if (err instanceof TemplateInputError) {
+        reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: `${prefix}${err.message}`,
+        });
+        return null;
+      }
+      throw err;
+    }
+  }
+
   // Helper to authenticate Bearer token and check monthly quota
   async function authenticateAndCheckQuota(request: any, reply: any, units: number = 1) {
     const authHeader = request.headers.authorization;
@@ -96,6 +120,11 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
+      const resolvedBody = resolveTemplate(request.body, reply);
+      if (!resolvedBody) return;
+      request.body = resolvedBody;
+      if (resolvedBody.template_id) reply.header('X-Tailprint-Template', resolvedBody.template_id);
+
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
 
@@ -193,6 +222,14 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
+      const resolvedItems: typeof request.body.items = [];
+      for (let index = 0; index < request.body.items.length; index++) {
+        const resolvedItem = resolveTemplate(request.body.items[index], reply, `items[${index}]: `);
+        if (!resolvedItem) return;
+        resolvedItems.push(resolvedItem);
+      }
+      request.body.items = resolvedItems;
+
       const itemsCount = request.body.items.length;
       const auth = await authenticateAndCheckQuota(request, reply, itemsCount);
       if (!auth) return;
@@ -265,6 +302,11 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
+      const resolvedBody = resolveTemplate(request.body, reply);
+      if (!resolvedBody) return;
+      request.body = resolvedBody;
+      if (resolvedBody.template_id) reply.header('X-Tailprint-Template', resolvedBody.template_id);
+
       const auth = await authenticateAndCheckQuota(request, reply);
       if (!auth) return;
 
@@ -672,6 +714,10 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
+      const resolvedBody = resolveTemplate(request.body, reply);
+      if (!resolvedBody) return;
+      request.body = resolvedBody;
+
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const isExempt = cookieHeader.includes('tailprint_ignore_me=1');
@@ -696,6 +742,78 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         .header('X-Render-Time-Ms', String(renderDuration))
         .header('X-Playground-Remaining', String(rateLimit.remaining))
         .send(pdfBuffer);
+    }
+  );
+
+  // ==========================================
+  // Hosted template catalog (public, no API key)
+  // ==========================================
+  const HostedTemplateSummarySchema = z.object({
+    id: z.string().describe('Template identifier to pass as template_id'),
+    title: z.string(),
+    category: z.string(),
+    description: z.string(),
+    format: z.string().describe('Recommended paper format'),
+    landscape: z.boolean().describe('Recommended orientation'),
+  });
+
+  const summarizeTemplate = (t: (typeof HOSTED_TEMPLATES)[number]) => ({
+    id: t.id,
+    title: t.title,
+    category: t.category,
+    description: t.description,
+    format: t.format,
+    landscape: t.landscape,
+  });
+
+  fastify.get(
+    '/v1/templates',
+    {
+      schema: {
+        tags: ['Templates'],
+        summary: 'List hosted document templates',
+        description:
+          'Returns the catalog of data-driven templates. Render one with POST /v1/render/pdf using { "template_id": "...", "data": { ... } }.',
+        response: {
+          200: z.object({ templates: z.array(HostedTemplateSummarySchema) }),
+        },
+      },
+    },
+    async () => ({ templates: HOSTED_TEMPLATES.map(summarizeTemplate) })
+  );
+
+  fastify.get(
+    '/v1/templates/:templateId',
+    {
+      schema: {
+        tags: ['Templates'],
+        summary: 'Get a hosted template with example data',
+        description:
+          'Returns template metadata plus complete example data and a ready-to-send request body for POST /v1/render/pdf.',
+        params: z.object({ templateId: z.string().max(100) }),
+        response: {
+          200: HostedTemplateSummarySchema.extend({
+            example_data: z.record(z.any()).describe('Valid sample data for this template'),
+            example_request: z.record(z.any()).describe('Request body ready to POST to /v1/render/pdf'),
+          }),
+          404: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const template = getHostedTemplate(request.params.templateId);
+      if (!template) {
+        return reply.code(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: `Unknown template "${request.params.templateId}". Available templates: ${HOSTED_TEMPLATES.map((t) => t.id).join(', ')}.`,
+        });
+      }
+      return {
+        ...summarizeTemplate(template),
+        example_data: template.example as Record<string, unknown>,
+        example_request: { template_id: template.id, data: template.example as Record<string, unknown> },
+      };
     }
   );
 };

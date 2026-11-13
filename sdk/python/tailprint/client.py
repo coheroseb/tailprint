@@ -13,6 +13,7 @@ import json
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional, Union
 
@@ -132,6 +133,8 @@ class Tailprint:
         self,
         html: Optional[str] = None,
         url: Optional[str] = None,
+        template_id: Optional[str] = None,
+        data: Optional[Dict[str, Any]] = None,
         format: str = "A4",
         landscape: bool = False,
         print_background: bool = True,
@@ -154,6 +157,8 @@ class Tailprint:
         Args:
             html: HTML string with Tailwind CSS utility classes.
             url: Direct web URL to capture as vector PDF.
+            template_id: Hosted template id (e.g. 'invoice-modern'); use with ``data`` instead of html/url.
+            data: JSON data for ``template_id``. See ``list_templates()`` / ``get_template()``.
             format: Paper size ('A4', 'Letter', 'Legal').
             landscape: Landscape orientation if True.
             margin: Dict with 'top', 'bottom', 'left', 'right' (e.g. {'top': '10mm'}).
@@ -175,6 +180,10 @@ class Tailprint:
             payload["html"] = html
         if url is not None:
             payload["url"] = url
+        if template_id is not None:
+            payload["template_id"] = template_id
+        if data is not None:
+            payload["data"] = data
         if margin is not None:
             payload["margin"] = margin
         if header_html is not None:
@@ -197,6 +206,21 @@ class Tailprint:
         return self._request("/v1/render/pdf", payload=payload, expect_binary=not store)
 
     # =========================================================================
+    # HOSTED TEMPLATES
+    # =========================================================================
+
+    def list_templates(self) -> List[Dict[str, Any]]:
+        """Lists hosted document templates usable with ``render_pdf(template_id=..., data=...)``."""
+        res = self._request("/v1/templates", method="GET", expect_binary=False)
+        templates = res.get("templates", []) if isinstance(res, dict) else []
+        return templates if isinstance(templates, list) else []
+
+    def get_template(self, template_id: str) -> Dict[str, Any]:
+        """Returns a hosted template with complete ``example_data`` and a ready-to-send ``example_request``."""
+        res = self._request(f"/v1/templates/{urllib.parse.quote(template_id, safe='')}", method="GET", expect_binary=False)
+        return res if isinstance(res, dict) else {}
+
+    # =========================================================================
     # ASYNCHRONOUS & BATCH RENDERING
     # =========================================================================
 
@@ -204,6 +228,8 @@ class Tailprint:
         self,
         html: Optional[str] = None,
         url: Optional[str] = None,
+        template_id: Optional[str] = None,
+        data: Optional[Dict[str, Any]] = None,
         webhook_url: Optional[str] = None,
         webhook_headers: Optional[Dict[str, str]] = None,
         format: str = "A4",
@@ -230,6 +256,10 @@ class Tailprint:
             payload["html"] = html
         if url is not None:
             payload["url"] = url
+        if template_id is not None:
+            payload["template_id"] = template_id
+        if data is not None:
+            payload["data"] = data
         if webhook_url is not None:
             payload["webhook_url"] = webhook_url
         if webhook_headers is not None:

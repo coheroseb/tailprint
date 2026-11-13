@@ -122,11 +122,13 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       name: 'render_pdf',
       category: 'Document Generation',
-      description: 'Converts HTML with Tailwind CSS classes or a public web URL into a vector PDF with Smart Pagination Shield. Automatically saves to CDN and returns both a clickable download link and base64.',
+      description: 'Converts HTML with Tailwind CSS classes, a public web URL, or a hosted template (template_id + JSON data) into a vector PDF with Smart Pagination Shield. Automatically saves to CDN and returns both a clickable download link and base64.',
       outputType: 'application/pdf (CDN hosted URL + base64)',
       arguments: {
         html: 'string (optional) - Raw HTML with Tailwind utility classes',
         url: 'string (optional) - Public web URL to render directly',
+        template_id: 'string (optional) - Hosted template: invoice-modern, receipt-minimal, certificate-classic, report-executive',
+        data: 'object (optional) - JSON data for template_id',
         format: '"A4" | "Letter" (default: "A4")',
         landscape: 'boolean (default: false)',
         print_background: 'boolean (default: true)',

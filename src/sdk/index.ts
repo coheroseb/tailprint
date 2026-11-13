@@ -23,6 +23,10 @@ export interface TailprintOptions {
 export interface RenderPdfOptions {
   html?: string;
   url?: string;
+  /** Hosted template id, e.g. "invoice-modern". Use together with `data` instead of html/url. */
+  template_id?: string;
+  /** JSON data for `template_id`. See `listTemplates()` / `getTemplate()`. */
+  data?: Record<string, unknown>;
   format?: 'A4' | 'Letter' | 'Legal';
   landscape?: boolean;
   print_background?: boolean;
@@ -52,6 +56,8 @@ export interface RenderPdfOptions {
 export interface BatchItemOptions {
   html?: string;
   url?: string;
+  template_id?: string;
+  data?: Record<string, unknown>;
   filename?: string;
   format?: 'A4' | 'Letter' | 'Legal';
   landscape?: boolean;
@@ -120,6 +126,20 @@ export interface JobStatus {
   started_at?: string;
   completed_at?: string;
   duration_ms?: number;
+}
+
+export interface TemplateSummary {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  format: string;
+  landscape: boolean;
+}
+
+export interface TemplateDetails extends TemplateSummary {
+  example_data: Record<string, unknown>;
+  example_request: { template_id: string; data: Record<string, unknown> };
 }
 
 export interface StoredFileResponse {
@@ -317,6 +337,21 @@ export class Tailprint {
       body: options,
       expectBinary: !isStored,
     });
+  }
+
+  /**
+   * Lists the hosted document templates that can be rendered with `renderPdf({ template_id, data })`.
+   */
+  public async listTemplates(): Promise<TemplateSummary[]> {
+    const res = await this.request('/v1/templates', { method: 'GET' });
+    return res.templates;
+  }
+
+  /**
+   * Returns a hosted template with complete example data and a ready-to-send request body.
+   */
+  public async getTemplate(templateId: string): Promise<TemplateDetails> {
+    return this.request(`/v1/templates/${encodeURIComponent(templateId)}`, { method: 'GET' });
   }
 
   /**

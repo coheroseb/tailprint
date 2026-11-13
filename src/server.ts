@@ -63,12 +63,13 @@ Convert raw HTML styled with arbitrary Tailwind CSS utility classes into pixel-p
 ### 📚 Table of Contents & Developer Guides
 1. [Authentication & API Keys](#section/authentication)
 2. [Quickstart: cURL, TypeScript & Python](#section/quickstart)
-3. [Guide: Tailwind CSS for Print & Vector PDF](#section/tailwind-pdf-guide)
-4. [Guide: European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)](#section/einvoice-guide)
-5. [Model Context Protocol (MCP) — 11 Native PDF & Document Tools](#section/mcp-reference)
-6. [Interactive PDF Studio & Factur-X Generator](#section/developer-tools)
-7. [Zero Data Retention & Enterprise Security](#section/privacy-security)
-8. [Quotas, Rate Limits & Error Handling](#section/quotas-errors)
+3. [Hosted Templates: JSON data in, PDF out](#section/hosted-templates)
+4. [Guide: Tailwind CSS for Print & Vector PDF](#section/tailwind-pdf-guide)
+5. [Guide: European E-Invoicing (Factur-X / ZUGFeRD / EN 16931)](#section/einvoice-guide)
+6. [Model Context Protocol (MCP) — 11 Native PDF & Document Tools](#section/mcp-reference)
+7. [Interactive PDF Studio & Factur-X Generator](#section/developer-tools)
+8. [Zero Data Retention & Enterprise Security](#section/privacy-security)
+9. [Quotas, Rate Limits & Error Handling](#section/quotas-errors)
 
 ---
 
@@ -156,6 +157,41 @@ response = requests.post(
 with open('output.pdf', 'wb') as f:
     f.write(response.content)
 \`\`\`
+
+---
+
+<a id="section/hosted-templates"></a>
+### 🧾 Hosted Templates: JSON data in, PDF out
+
+Skip HTML entirely. Send a \`template_id\` and your \`data\`; Tailprint validates the data, computes totals, escapes every value and renders a vector PDF. Browse the catalog (no API key needed) with \`GET /v1/templates\` and fetch example data with \`GET /v1/templates/{id}\`.
+
+| template_id | Use case |
+|---|---|
+| \`invoice-modern\` | Invoice with automatic line totals, per-rate tax, discount, status badge, logo and translatable labels |
+| \`receipt-minimal\` | POS-style receipt with tax (inclusive or exclusive) and tip |
+| \`certificate-classic\` | Bordered certificate with recipient, description and signature line |
+| \`report-executive\` | Report with KPI tiles, sections and a data table |
+
+\`\`\`bash
+curl -X POST https://tailprint.com/v1/render/pdf \\
+  -H "Authorization: Bearer sec_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "template_id": "invoice-modern",
+    "data": {
+      "invoice_number": "INV-1042",
+      "issue_date": "2026-11-13",
+      "currency": "EUR",
+      "seller": { "name": "Tailprint ApS" },
+      "buyer": { "name": "Cohero Technologies" },
+      "items": [{ "description": "API Subscription", "quantity": 1, "unit_price": 49 }],
+      "tax_rate": 25
+    }
+  }' \\
+  --output invoice.pdf
+\`\`\`
+
+\`template_id\` works on \`POST /v1/render/pdf\`, on each item of \`POST /v1/render/batch\` and in the MCP \`render_pdf\` tool. Invalid data returns \`400\` with the offending field paths (for example \`seller.name: Required\`) and does not consume a render. \`template_id\` cannot be combined with \`html\` or \`url\`.
 
 ---
 

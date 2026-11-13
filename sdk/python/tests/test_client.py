@@ -1,3 +1,4 @@
+import json
 import unittest
 import base64
 import hashlib
@@ -47,6 +48,39 @@ class TestTailprintClient(unittest.TestCase):
 
         pdf_bytes = self.client.render_pdf(html="<h1>Hello Test</h1>")
         self.assertEqual(pdf_bytes, b"%PDF-1.4 mock content")
+
+    @patch("urllib.request.urlopen")
+    def test_render_pdf_with_template_sends_template_id_and_data(self, mock_urlopen):
+        mock_response = MagicMock()
+        mock_response.headers = {"Content-Type": "application/pdf"}
+        mock_response.read.return_value = b"%PDF-1.4 mock content"
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
+
+        self.client.render_pdf(template_id="invoice-modern", data={"invoice_number": "INV-1"})
+
+        request = mock_urlopen.call_args[0][0]
+        payload = json.loads(request.data.decode("utf-8"))
+        self.assertEqual(payload["template_id"], "invoice-modern")
+        self.assertEqual(payload["data"], {"invoice_number": "INV-1"})
+        self.assertNotIn("html", payload)
+
+    @patch("urllib.request.urlopen")
+    def test_list_and_get_templates(self, mock_urlopen):
+        mock_response = MagicMock()
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
+
+        mock_response.read.return_value = b'{"templates":[{"id":"invoice-modern"}]}'
+        templates = self.client.list_templates()
+        self.assertEqual(templates[0]["id"], "invoice-modern")
+        self.assertTrue(mock_urlopen.call_args[0][0].full_url.endswith("/v1/templates"))
+
+        mock_response.read.return_value = b'{"id":"invoice-modern","example_data":{}}'
+        detail = self.client.get_template("invoice-modern")
+        self.assertEqual(detail["id"], "invoice-modern")
+        self.assertTrue(mock_urlopen.call_args[0][0].full_url.endswith("/v1/templates/invoice-modern"))
 
     @patch("urllib.request.urlopen")
     def test_get_job_success(self, mock_urlopen):

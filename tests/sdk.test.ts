@@ -38,6 +38,20 @@ describe('Official Tailprint TypeScript SDK Suite', () => {
     expect(pdfBuffer.length).toBeGreaterThan(1000);
   });
 
+  it('lists hosted templates and renders one via renderPdf({ template_id, data })', async () => {
+    const templates = await client.listTemplates();
+    expect(templates.map((t) => t.id)).toContain('invoice-modern');
+
+    const details = await client.getTemplate('invoice-modern');
+    expect(details.example_request.template_id).toBe('invoice-modern');
+
+    const pdfBuffer = await client.renderPdf({
+      template_id: details.id,
+      data: details.example_data,
+    });
+    expect(pdfBuffer.toString('utf-8', 0, 5)).toBe('%PDF-');
+  });
+
   it('merges multiple PDF buffers via client.mergePdfs()', async () => {
     const doc1 = await client.renderPdf({ html: '<h1>Page One</h1>' });
     const doc2 = await client.renderPdf({ html: '<h1>Page Two</h1>' });

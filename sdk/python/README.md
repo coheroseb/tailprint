@@ -49,6 +49,30 @@ with open("invoice.pdf", "wb") as f:
 
 ---
 
+## 🧾 Hosted Templates (JSON in, PDF out)
+
+Skip HTML: pass a `template_id` and your `data`. Totals are computed server-side and every value is HTML-escaped.
+
+```python
+templates = client.list_templates()            # invoice-modern, receipt-minimal, certificate-classic, report-executive
+example = client.get_template("invoice-modern")  # example_data + example_request
+
+pdf = client.render_pdf(
+    template_id="invoice-modern",
+    data={
+        "invoice_number": "INV-1042",
+        "issue_date": "2026-11-13",
+        "currency": "EUR",
+        "seller": {"name": "Tailprint ApS"},
+        "buyer": {"name": "Cohero Technologies"},
+        "items": [{"description": "API Subscription", "quantity": 1, "unit_price": 49}],
+        "tax_rate": 25,
+    },
+)
+```
+
+Invalid data raises `ValidationError` naming the offending fields (e.g. `seller.name: Required`).
+
 ## ⚡ Asynchronous Rendering & Webhooks
 
 For heavy 100+ page reports or async pipelines:
