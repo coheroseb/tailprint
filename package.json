@@ -1,7 +1,7 @@
 {
   "name": "tailprint",
-  "version": "1.1.1",
-  "description": "Tailwind-Native Render & PDF Engine + AI Web Scraper (tailprint.com)",
+  "version": "1.2.0",
+  "description": "The Developer-First PDF & Document Engine, TypeScript SDK & MCP Server (tailprint.com)",
   "type": "module",
   "main": "dist/sdk/index.js",
   "types": "dist/sdk/index.d.ts",

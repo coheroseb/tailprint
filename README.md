@@ -28,9 +28,59 @@ Organized into three core suites:
 
 ---
 
+## 📦 Official TypeScript / Node.js SDK
+
+Tailprint provides an official zero-dependency isomorphic SDK for Node.js, Next.js, Bun, Deno, and Cloudflare Workers:
+
+```bash
+npm install tailprint
+```
+
+### Quickstart
+
+```typescript
+import { Tailprint } from 'tailprint';
+
+const tp = new Tailprint({
+  apiKey: process.env.TAILPRINT_API_KEY, // Or pass directly
+});
+
+// 1. Render Tailwind HTML to vector PDF
+const { buffer } = await tp.renderPdf({
+  html: `
+    <div class="p-12 bg-slate-900 text-white font-sans">
+      <h1 class="text-3xl font-bold text-indigo-400">Quarterly Report</h1>
+      <p class="text-slate-400 mt-2">Rendered with Tailwind CSS & Playwright.</p>
+    </div>
+  `,
+  format: 'A4',
+});
+
+// 2. Merge multiple PDFs
+const merged = await tp.mergePdfs({
+  pdfs: [bufferA, bufferB],
+});
+
+// 3. Stamp Watermark / Page Numbers
+const stamped = await tp.stampPdf({
+  pdf: buffer,
+  text: 'CONFIDENTIAL',
+  opacity: 0.2,
+  diagonal: true,
+});
+
+// 4. Validate European Factur-X / ZUGFeRD E-Invoice
+const validation = await tp.validateEInvoice({
+  pdf: invoiceBuffer,
+});
+console.log('Factur-X Valid:', validation.valid, validation.profile);
+```
+
+---
+
 ## 🤖 Model Context Protocol (MCP) Setup
 
-Tailprint provides an official, 100% spec-compliant MCP server exposing **22 Native Tools** enabling AI coding assistants and autonomous agents to generate documents, charts, mockups, diagrams, and scrape web pages on command.
+Tailprint provides an official, 100% spec-compliant MCP server enabling AI coding assistants (Claude Desktop, Cursor, Windsurf) to generate documents and scrape web pages on command via `npx tailprint` or remote SSE.
 
 ### 22 Native Tools Catalog
 | Tool | Category | Returns | Description |
