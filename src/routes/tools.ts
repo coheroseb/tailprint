@@ -2916,122 +2916,37 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         });
         clearInterval(progInterval);
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.downloadUrl || data.videoUrl) {
-            if (percentEl) percentEl.textContent = '100%';
-            if (progressBar) progressBar.style.width = '100%';
-            const dlUrl = data.downloadUrl || (data.videoUrl + '?download=true');
-            const a = document.createElement('a');
-            a.href = dlUrl;
-            a.download = 'social-' + ratio.replace(':', '-') + '-' + (reelState.brand || 'reel').toLowerCase() + '.mp4';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || ('Server video rendering failed (' + res.status + ')'));
+        }
 
-            overlay.classList.add('hidden');
-            btn.disabled = false;
-            startPlayback();
-            return;
-          }
+        if (data.downloadUrl || data.videoUrl) {
+          if (percentEl) percentEl.textContent = '100%';
+          if (progressBar) progressBar.style.width = '100%';
+          const dlUrl = data.downloadUrl || (data.videoUrl + '?download=true');
+          const a = document.createElement('a');
+          a.href = dlUrl;
+          a.download = 'social-' + ratio.replace(':', '-') + '-' + (reelState.brand || 'reel').toLowerCase() + '.mp4';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          overlay.classList.add('hidden');
+          btn.disabled = false;
+          startPlayback();
+          return;
+        } else {
+          throw new Error('Video URL missing in server response');
         }
       } catch (err) {
         clearInterval(progInterval);
-        console.warn('Server MP4 render fallback to local canvas:', err);
+        overlay.classList.add('hidden');
+        btn.disabled = false;
+        startPlayback();
+        alert('Kunne ikke eksportere MP4 video: ' + (err.message || err));
+        return;
       }
-
-      // Fallback: local canvas recording if server endpoint is unreachable
-      const dim = getCanvasDimensions(ratio);
-      const canvas = document.getElementById('export-canvas');
-      canvas.width = dim.w;
-      canvas.height = dim.h;
-      const ctx = canvas.getContext('2d');
-
-      const exportVid = document.getElementById('export-source-video');
-      const hasVideo = reelState.screenrecordUrl && reelState.screenrecordMode !== 'none' && exportVid;
-      if (hasVideo) {
-        if (exportVid.src !== reelState.screenrecordUrl) {
-          exportVid.src = reelState.screenrecordUrl;
-          await new Promise((resolve) => {
-            exportVid.onloadeddata = () => resolve();
-            setTimeout(resolve, 2000);
-          });
-        }
-        exportVid.currentTime = 0;
-        try {
-          await exportVid.play();
-        } catch {}
-      }
-
-      const totalSlides = reelState.slides.length;
-      const slideDurationMs = 2500;
-      const fps = 30;
-      const framesPerSlide = (slideDurationMs / 1000) * fps;
-      const totalFrames = totalSlides * framesPerSlide;
-
-      const stream = canvas.captureStream(fps);
-      let mimeType = 'video/webm;codecs=vp9';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm';
-      }
-
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
-      const chunks = [];
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-
-      const finishedPromise = new Promise((resolve) => {
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: mimeType });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'social-' + ratio.replace(':', '-') + '-' + reelState.brand.toLowerCase() + '.webm';
-          a.click();
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-      });
-
-      recorder.start();
-
-      let frameCount = 0;
-      for (let sIdx = 0; sIdx < totalSlides; sIdx++) {
-        const slide = reelState.slides[sIdx];
-        const theme = themeMaps[reelState.theme] || themeMaps.gradient;
-
-        if (hasVideo && exportVid && Number.isFinite(exportVid.duration) && exportVid.duration > 0.5) {
-          const startFrac = 0.12 + (sIdx / Math.max(1, totalSlides)) * 0.86;
-          const targetTime = Math.min(exportVid.duration - 0.1, Math.max(0, exportVid.duration * startFrac));
-          try {
-            exportVid.currentTime = targetTime;
-            const shotDur = (exportVid.duration * 0.86) / Math.max(1, totalSlides);
-            exportVid.playbackRate = Math.max(0.35, Math.min(1.75, shotDur / Math.max(1.5, slideDurationMs / 1000)));
-            exportVid.play().catch(() => {});
-          } catch (e) {}
-          await new Promise((r) => setTimeout(r, 45));
-        }
-
-        for (let f = 0; f < framesPerSlide; f++) {
-          frameCount++;
-          const progress = f / framesPerSlide;
-          drawReelFrame(ctx, slide, sIdx, totalSlides, progress, theme, dim.w, dim.h);
-          const overallPct = Math.round((frameCount / totalFrames) * 100);
-          percentEl.textContent = overallPct + '%';
-          progressBar.style.width = overallPct + '%';
-          await new Promise((r) => setTimeout(r, 1000 / fps));
-        }
-      }
-
-      recorder.stop();
-      await finishedPromise;
-
-      if (hasVideo && exportVid) {
-        exportVid.pause();
-      }
-
-      overlay.classList.add('hidden');
-      btn.disabled = false;
-      startPlayback();
     }
 
     // Helper: Draws single frame on Canvas with dynamic W and H
@@ -3807,6 +3722,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -3815,10 +3737,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -3900,6 +3823,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -3908,10 +3838,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -4023,6 +3954,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -4031,10 +3969,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -4095,6 +4034,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -4103,10 +4049,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -4195,6 +4142,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -4203,10 +4157,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -4254,6 +4209,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -4262,10 +4224,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -4346,6 +4309,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -4354,10 +4324,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -4384,6 +4355,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -4392,10 +4370,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -4464,6 +4443,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -4472,10 +4458,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
@@ -5487,6 +5474,13 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       const clientIp = request.ip || 'anonymous';
       const cookieHeader = String(request.headers['cookie'] || '');
       const authHeader = String(request.headers['authorization'] || '');
+      const refererHeader = String(request.headers['referer'] || '');
+      const originHeader = String(request.headers['origin'] || '');
+      const isFromStudio =
+        refererHeader.includes('/tools/reel') ||
+        refererHeader.includes('/reel') ||
+        refererHeader.includes('tailprint.com') ||
+        originHeader.includes('tailprint.com');
       const apiKeyHeader = String(
         request.headers['x-api-key'] ||
           request.headers['api-key'] ||
@@ -5495,10 +5489,11 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           ''
       );
       const isExempt =
+        isFromStudio ||
         cookieHeader.includes('tailprint_ignore_me=1') ||
         authHeader.startsWith('Bearer sec_') ||
         apiKeyHeader.startsWith('sec_');
-      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 5, isExempt);
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, isFromStudio ? 100 : 5, isExempt);
       if (!rateLimit.allowed) {
         return reply.code(429).send({
           statusCode: 429,
