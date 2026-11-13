@@ -86,6 +86,49 @@ describe('Official Tailprint TypeScript SDK Suite', () => {
     expect(report.invoiceDetails?.totals?.grandTotalAmount).toBe(625);
   });
 
+  it('submits and polls async render job via client.renderPdfAsync() & client.waitForJob()', async () => {
+    const jobAccepted = await client.renderPdfAsync({
+      html: '<h1>Async SDK Doc</h1>',
+      format: 'A4',
+    });
+
+    expect(jobAccepted.success).toBe(true);
+    expect(jobAccepted.job_id).toMatch(/^job_render_/);
+
+    const completed = await client.waitForJob(jobAccepted.job_id, {
+      pollIntervalMs: 200,
+      timeoutMs: 15000,
+    });
+
+    expect(completed.status).toBe('completed');
+    expect(completed.results.length).toBe(1);
+    expect(completed.results[0].download_url).toMatch(/\/d\/f_/);
+  });
+
+  it('executes batch rendering with merging via client.renderBatch()', async () => {
+    const batchAccepted = await client.renderBatch({
+      items: [
+        { html: '<h1>Batch 1</h1>', filename: 'page-1.pdf' },
+        { html: '<h1>Batch 2</h1>', filename: 'page-2.pdf' },
+      ],
+      merge_output: true,
+      merged_filename: 'all-pages.pdf',
+    });
+
+    expect(batchAccepted.success).toBe(true);
+    expect(batchAccepted.job_id).toMatch(/^job_batch_/);
+
+    const completed = await client.waitForJob(batchAccepted.job_id, {
+      pollIntervalMs: 250,
+      timeoutMs: 20000,
+    });
+
+    expect(completed.status).toBe('completed');
+    expect(completed.progress.completed).toBe(2);
+    expect(completed.merged_output).toBeDefined();
+    expect(completed.merged_output?.filename).toBe('all-pages.pdf');
+  });
+
   it('retrieves real-time usage via client.getUsage()', async () => {
     const usage = await client.getUsage();
     expect(usage.monthly_limit).toBeGreaterThan(0);

@@ -69,11 +69,26 @@ const stamped = await tp.stampPdf({
   diagonal: true,
 });
 
-// 4. Validate European Factur-X / ZUGFeRD E-Invoice
-const validation = await tp.validateEInvoice({
-  pdf: invoiceBuffer,
+// 5. Asynchronous Rendering & Webhook Delivery
+const job = await tp.renderPdfAsync({
+  html: '<h1>Heavy 100-page Annual Report</h1>',
+  webhook_url: 'https://my-app.com/api/webhooks/pdf',
 });
-console.log('Factur-X Valid:', validation.valid, validation.profile);
+// Or poll until finished:
+const completedJob = await tp.waitForJob(job.job_id);
+console.log('PDF Ready at:', completedJob.results[0].download_url);
+
+// 6. Concurrent Batch Rendering with Automatic Merging
+const batchJob = await tp.renderBatch({
+  items: [
+    { html: '<h1>Invoice #101</h1>', filename: 'inv-101.pdf' },
+    { html: '<h1>Invoice #102</h1>', filename: 'inv-102.pdf' },
+  ],
+  merge_output: true,
+  merged_filename: 'all-invoices.pdf',
+  webhook_url: 'https://my-app.com/api/webhooks/pdf',
+});
+console.log('Batch Queued:', batchJob.job_id);
 ```
 
 ---
@@ -208,6 +223,27 @@ curl -X POST https://tailprint.com/v1/pdf/stamp \
     "diagonal": true
   }' \
   --output stamped.pdf
+```
+
+### 7. Asynchronous Batch Rendering & Webhook
+```bash
+curl -X POST https://tailprint.com/v1/render/batch \
+  -H "Authorization: Bearer sec_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      { "html": "<h1>Invoice #101</h1>", "filename": "inv-101.pdf" },
+      { "html": "<h1>Invoice #102</h1>", "filename": "inv-102.pdf" }
+    ],
+    "merge_output": true,
+    "merged_filename": "all-invoices.pdf",
+    "webhook_url": "https://my-app.com/api/webhooks/pdf"
+  }'
+```
+
+### 8. Poll Job Status
+```bash
+curl https://tailprint.com/v1/jobs/job_batch_0123456789abcdef
 ```
 
 ---

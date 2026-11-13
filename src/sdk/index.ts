@@ -44,6 +44,82 @@ export interface RenderPdfOptions {
   no_store?: boolean;
   store?: boolean;
   expires_in?: '1h' | '24h' | '7d';
+  async?: boolean;
+  webhook_url?: string;
+  webhook_headers?: Record<string, string>;
+}
+
+export interface BatchItemOptions {
+  html?: string;
+  url?: string;
+  filename?: string;
+  format?: 'A4' | 'Letter' | 'Legal';
+  landscape?: boolean;
+  margin?: RenderPdfOptions['margin'];
+  header_html?: string;
+  footer_html?: string;
+  smart_pagination?: boolean;
+  delay_ms?: number;
+}
+
+export interface RenderBatchOptions {
+  items: BatchItemOptions[];
+  merge_output?: boolean;
+  merged_filename?: string;
+  webhook_url?: string;
+  webhook_headers?: Record<string, string>;
+  expires_in?: '1h' | '24h' | '7d';
+}
+
+export interface AsyncJobAccepted {
+  success: boolean;
+  job_id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  message: string;
+  status_url: string;
+  webhook_url?: string;
+  created_at: string;
+}
+
+export interface JobStatus {
+  job_id: string;
+  type: 'render_pdf' | 'batch_pdf';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress: {
+    total: number;
+    completed: number;
+    failed: number;
+  };
+  results: Array<{
+    index: number;
+    filename: string;
+    file_id?: string;
+    download_url?: string;
+    size_bytes?: number;
+    pages?: number;
+    status: 'completed' | 'failed';
+    error?: string;
+    render_time_ms?: number;
+  }>;
+  merged_output?: {
+    file_id: string;
+    download_url: string;
+    filename: string;
+    size_bytes?: number;
+    pages?: number;
+  };
+  webhook_delivery?: {
+    url: string;
+    status_code?: number;
+    delivered: boolean;
+    delivered_at?: string;
+    error?: string;
+  };
+  error?: string | null;
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  duration_ms?: number;
 }
 
 export interface StoredFileResponse {
@@ -378,6 +454,63 @@ export class Tailprint {
     return this.request('/v1/pdf/validate-einvoice', {
       body: payload,
     });
+  }
+
+  /**
+   * Submits a PDF rendering job asynchronously in background. Returns immediately with job_id and status_url.
+   */
+  public async renderPdfAsync(
+    options: RenderPdfOptions & { webhook_url?: string; webhook_headers?: Record<string, string> }
+  ): Promise<AsyncJobAccepted> {
+    return this.request('/v1/render/pdf', {
+      body: {
+        ...options,
+        async: true,
+      },
+    });
+  }
+
+  /**
+   * Submits up to 100 documents for concurrent batch rendering with optional merging and webhook notifications.
+   */
+  public async renderBatch(options: RenderBatchOptions): Promise<AsyncJobAccepted> {
+    return this.request('/v1/render/batch', {
+      body: options,
+    });
+  }
+
+  /**
+   * Retrieves the current processing status, progress, and download links of a render or batch job.
+   */
+  public async getJob(jobId: string): Promise<JobStatus> {
+    return this.request(`/v1/jobs/${encodeURIComponent(jobId)}`, {
+      method: 'GET',
+    });
+  }
+
+  /**
+   * Polls a job until it finishes (reaches 'completed' or 'failed'), or until timeoutMs expires.
+   */
+  public async waitForJob(
+    jobId: string,
+    options: { pollIntervalMs?: number; timeoutMs?: number } = {}
+  ): Promise<JobStatus> {
+    const pollInterval = options.pollIntervalMs ?? 1000;
+    const timeout = options.timeoutMs ?? 60000;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeout) {
+      const job = await this.getJob(jobId);
+      if (job.status === 'completed' || job.status === 'failed') {
+        return job;
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+    }
+
+    throw new TailprintError(
+      `Job ${jobId} did not complete within timeout of ${timeout}ms`,
+      408
+    );
   }
 
   /**

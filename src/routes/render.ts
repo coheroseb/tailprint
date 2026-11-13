@@ -8,15 +8,19 @@ import {
   type RenderEInvoiceOutput,
   HostedFileResponseSchema,
   ErrorResponseSchema,
+  AsyncRenderAcceptedResponseSchema,
+  RenderBatchRequestSchema,
+  JobStatusResponseSchema,
 } from '../schemas/render.js';
 import { browserService } from '../services/browser.js';
 import { redisService } from '../services/redis.js';
 import { storageService } from '../services/storage.js';
 import { eInvoiceService } from '../services/eInvoice.js';
+import { jobsService } from '../services/jobs.js';
 
 export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // Helper to authenticate Bearer token and check monthly quota
-  async function authenticateAndCheckQuota(request: any, reply: any) {
+  async function authenticateAndCheckQuota(request: any, reply: any, units: number = 1) {
     const authHeader = request.headers.authorization;
     let token: string | null = null;
 
@@ -54,7 +58,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       return null;
     }
 
-    const quota = await redisService.incrementAndCheckQuota(token, apiKey.monthly_limit);
+    const quota = await redisService.incrementAndCheckQuota(token, apiKey.monthly_limit, units);
     reply.header('X-RateLimit-Limit', String(quota.limit));
     reply.header('X-RateLimit-Remaining', String(quota.remaining));
 
@@ -82,6 +86,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         body: RenderPdfRequestSchema,
         response: {
           200: z.any().describe('Binary PDF stream (application/pdf)'),
+          202: AsyncRenderAcceptedResponseSchema.describe('Asynchronous render job accepted and processing in background'),
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           429: ErrorResponseSchema,
@@ -99,6 +104,33 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           statusCode: 400,
           error: 'Bad Request',
           message: "Cannot specify 'store: true' when 'no_store: true' is requested.",
+        });
+      }
+
+      // Asynchronous background rendering with optional webhook callback
+      if (request.body.async || request.body.webhook_url) {
+        const job = await jobsService.createJob({
+          type: 'render_pdf',
+          customerId: auth.apiKey.customer_id,
+          apiKeyToken: auth.token,
+          webhookUrl: request.body.webhook_url,
+          webhookHeaders: request.body.webhook_headers,
+          totalItems: 1,
+        });
+
+        // Fire-and-forget background processing
+        jobsService.processRenderPdfJob(job.job_id, request.body, auth.token).catch((err) => {
+          console.error(`[JobsService] Background render failed for ${job.job_id}:`, err);
+        });
+
+        return reply.code(202).send({
+          success: true,
+          job_id: job.job_id,
+          status: 'pending',
+          message: 'Asynchronous render job queued successfully. Poll GET /v1/jobs/:jobId or listen for webhook delivery.',
+          status_url: `${env.APP_URL}/v1/jobs/${job.job_id}`,
+          webhook_url: request.body.webhook_url,
+          created_at: job.created_at,
         });
       }
 
@@ -137,6 +169,89 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         .header('Content-Disposition', 'inline; filename="rendered.pdf"')
         .header('Content-Length', String(pdfBuffer.length))
         .send(pdfBuffer);
+    }
+  );
+
+  // POST /v1/render/batch (Batch PDF Rendering)
+  fastify.post(
+    '/v1/render/batch',
+    {
+      schema: {
+        tags: ['Rendering'],
+        summary: 'Asynchronous Batch PDF Rendering',
+        description:
+          'Submits up to 100 documents for concurrent background rendering with optional multi-document merging and webhook callback notifications.',
+        security: [{ bearerAuth: [] }],
+        body: RenderBatchRequestSchema,
+        response: {
+          202: AsyncRenderAcceptedResponseSchema.describe('Batch job successfully accepted and processing'),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          429: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const itemsCount = request.body.items.length;
+      const auth = await authenticateAndCheckQuota(request, reply, itemsCount);
+      if (!auth) return;
+
+      const job = await jobsService.createJob({
+        type: 'batch_pdf',
+        customerId: auth.apiKey.customer_id,
+        apiKeyToken: auth.token,
+        webhookUrl: request.body.webhook_url,
+        webhookHeaders: request.body.webhook_headers,
+        totalItems: itemsCount,
+      });
+
+      // Fire-and-forget background processing
+      jobsService.processBatchJob(job.job_id, request.body, auth.token).catch((err) => {
+        console.error(`[JobsService] Background batch failed for ${job.job_id}:`, err);
+      });
+
+      return reply.code(202).send({
+        success: true,
+        job_id: job.job_id,
+        status: 'pending',
+        message: `Batch of ${itemsCount} documents queued. Poll GET /v1/jobs/${job.job_id} or listen for webhook delivery.`,
+        status_url: `${env.APP_URL}/v1/jobs/${job.job_id}`,
+        webhook_url: request.body.webhook_url,
+        created_at: job.created_at,
+      });
+    }
+  );
+
+  // GET /v1/jobs/:jobId (Poll asynchronous job status and results)
+  fastify.get(
+    '/v1/jobs/:jobId',
+    {
+      schema: {
+        tags: ['Rendering'],
+        summary: 'Get Asynchronous Job Status & Results',
+        description:
+          'Retrieves the live processing state, completed document links, and webhook delivery status of a render or batch job.',
+        params: z.object({
+          jobId: z.string().describe('Unique job ID (e.g. job_render_... or job_batch_...)'),
+        }),
+        response: {
+          200: JobStatusResponseSchema,
+          404: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const job = await jobsService.getJob(request.params.jobId);
+      if (!job) {
+        return reply.code(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: `Job with ID "${request.params.jobId}" was not found or has expired.`,
+        });
+      }
+
+      return reply.code(200).send(job);
     }
   );
 

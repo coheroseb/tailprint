@@ -27,6 +27,9 @@ export const RenderPdfRequestSchema = z
     no_store: z.boolean().default(false).optional().describe('Zero-retention mode. Guarantees no caching or storage of input/output data.'),
     store: z.boolean().default(false).describe('If true, saves the rendered PDF to Tailprint hosted delivery and returns a public hostedUrl link.'),
     expires_in: z.enum(['1h', '24h', '7d']).default('24h').describe('Expiration duration for the hosted link (1h, 24h, or 7d). Defaults to 24h.'),
+    async: z.boolean().default(false).optional().describe('If true, renders document asynchronously in background and returns job_id immediately.'),
+    webhook_url: z.string().url().optional().describe('Callback URL to POST completion notification and download links when async rendering is complete.'),
+    webhook_headers: z.record(z.string()).optional().describe('Optional custom HTTP headers to include with the webhook callback.'),
   })
   .refine((data) => Boolean(data.html || data.url), {
     message: 'Either "html" or "url" must be provided',
@@ -114,3 +117,6 @@ export const ErrorResponseSchema = z.object({
 });
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+
+export * from './jobs.js';
+

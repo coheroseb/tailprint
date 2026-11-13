@@ -56,6 +56,13 @@ class MemoryRedisClient {
     return val;
   }
 
+  async incrby(key: string, amount: number): Promise<number> {
+    this.cleanKey(key);
+    const val = Number(this.data.get(key) || 0) + amount;
+    this.data.set(key, val);
+    return val;
+  }
+
   async del(...keys: string[]): Promise<number> {
     let count = 0;
     for (const k of keys) {
@@ -250,12 +257,19 @@ export class RedisService {
     return `${y}-${m}`;
   }
 
-  public async incrementAndCheckQuota(rawKey: string, monthlyLimit: number): Promise<QuotaCheckResult> {
+  public async incrementAndCheckQuota(
+    rawKey: string,
+    monthlyLimit: number,
+    amount: number = 1
+  ): Promise<QuotaCheckResult> {
     const hash = this.hashKey(rawKey);
     const month = this.getMonthString();
     const usageKey = `usage:${hash}:${month}`;
 
-    const usage = await this.client.incr(usageKey);
+    const usage =
+      amount > 1 && typeof (this.client as any).incrby === 'function'
+        ? await (this.client as any).incrby(usageKey, amount)
+        : await this.client.incr(usageKey);
     const allowed = usage <= monthlyLimit;
     const remaining = Math.max(0, monthlyLimit - usage);
 
