@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { TEMPLATES } from '../config/templates.js';
 import { browserService } from '../services/browser.js';
 import { redisService } from '../services/redis.js';
+import { smartPdfService } from '../services/smartPdf.js';
 import { env } from '../config/env.js';
 import { renderGlobalNavbar } from '../components/navbar.js';
 
@@ -14,12 +15,22 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       schema: {
         tags: ['Tools'],
         summary: 'Live Render PDF from Studio Playground',
-        description: 'Free browser studio endpoint with rate-limiting. Renders Tailwind HTML into a vector PDF.',
+        description:
+          'Free browser studio endpoint with rate-limiting. Renders Tailwind HTML into a vector PDF with optional Neural-Implant Cortex, White-Label badge, Dual-Brain JSON, and Cryptographic Proof-of-Origin.',
         body: z.object({
           html: z.string().min(1).describe('HTML with Tailwind CSS'),
           format: z.enum(['A4', 'Letter', 'Legal']).default('A4'),
           landscape: z.boolean().default(false),
           smart_pagination: z.boolean().default(true),
+          neural_implant: z.boolean().default(false),
+          neural_persona: z.string().max(500).optional(),
+          neural_context: z.record(z.unknown()).optional(),
+          neural_badge: z.boolean().default(true),
+          neural_custom_url: z.string().url().optional(),
+          neural_badge_label: z.string().max(60).optional(),
+          sign: z.boolean().default(false),
+          verify_seal: z.boolean().default(false),
+          embed_data: z.record(z.unknown()).optional(),
         }),
       },
     },
@@ -40,21 +51,75 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
       }
 
-      const { html, format, landscape, smart_pagination } = request.body;
-      const pdfBuffer = await browserService.renderPdf({
+      const {
+        html,
+        format,
+        landscape,
+        smart_pagination,
+        neural_implant,
+        neural_persona,
+        neural_context,
+        neural_badge,
+        neural_custom_url,
+        neural_badge_label,
+        sign,
+        verify_seal,
+        embed_data,
+      } = request.body;
+
+      const hasNeural = Boolean(
+        neural_implant || neural_persona || neural_context || neural_custom_url || neural_badge_label
+      );
+
+      const rawPdfBuffer = await browserService.renderPdf({
         html,
         format,
         landscape,
         smart_pagination,
         print_background: true,
-      });
+        ...(hasNeural ? { neural_implant: true } : {}),
+      } as any);
+
+      let finalPdfBuffer = rawPdfBuffer;
+
+      if (hasNeural || sign || verify_seal || embed_data) {
+        const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
+        const enriched = await smartPdfService.enrichPdf(rawPdfBuffer, {
+          customerId: 'studio-playground',
+          templateId: null,
+          data: embed_data || null,
+          aiReady: true,
+          sign: Boolean(sign || verify_seal || hasNeural),
+          verifySeal: Boolean(verify_seal),
+          neuralImplant: hasNeural,
+          neuralPersona: neural_persona,
+          neuralContext: neural_context,
+          neuralBadge: neural_badge,
+          neuralCustomUrl: neural_custom_url,
+          neuralBadgeLabel: neural_badge_label,
+          domSynapses,
+          noStore: false,
+        });
+
+        finalPdfBuffer = enriched.buffer;
+        reply.header('X-Tailprint-Doc-Id', enriched.docId);
+        reply.header('X-Tailprint-Verify-Url', `/verify/${enriched.docId}`);
+        if (enriched.cortex) {
+          reply.header('X-Tailprint-Neural-Implant', 'true');
+          reply.header('X-Tailprint-Brain-Url', `/brain/${enriched.docId}`);
+          reply.header('X-Tailprint-Cortex-Synapses', String(enriched.cortex.total_synapses));
+        }
+        if (enriched.manifest.signed && enriched.manifest.signature) {
+          reply.header('X-Tailprint-Signature', `sha256=${enriched.manifest.signature}`);
+        }
+      }
 
       return reply
         .code(200)
         .header('Content-Type', 'application/pdf')
         .header('Content-Disposition', 'attachment; filename="tailprint-studio.pdf"')
-        .header('Content-Length', String(pdfBuffer.length))
-        .send(pdfBuffer);
+        .header('Content-Length', String(finalPdfBuffer.length))
+        .send(finalPdfBuffer);
     }
   );
 
@@ -277,12 +342,25 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       <!-- Smart Pagination Shield Toggle -->
       <button id="paginationShieldBtn" onclick="toggleSmartPagination()" type="button" class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50 shadow-sm" title="Smart Pagination Shield automatically prevents broken table rows across pages and repeats table headers">
         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <span class="hidden md:inline">Smart Pagination Shield</span>
-        <span class="md:hidden">Shield</span>
+        <span class="hidden xl:inline">Pagination Shield</span>
+        <span class="xl:hidden">Shield</span>
+      </button>
+
+      <!-- Neural-Implant Cortex Quick Toggle -->
+      <button id="neuralToggleBtn" onclick="toggleNeuralImplant()" type="button" class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-indigo-950/60 border-indigo-500/40 text-indigo-300 hover:bg-indigo-900/50 shadow-sm" title="Embed a 64-D Int8 Spatial Cortex, Subconscious Latent Memory & Clickable Q&A Badge inside the PDF">
+        <span id="neuralDot" class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+        <span>🧠 Neural-Implant</span>
+      </button>
+
+      <!-- Cryptographic Sign & Seal Quick Toggle -->
+      <button id="signToggleBtn" onclick="toggleSignPdf()" type="button" class="hidden sm:flex px-2.5 py-1.5 rounded-lg border text-xs font-semibold items-center space-x-1.5 transition bg-cyan-950/60 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50 shadow-sm" title="Cryptographically sign visual stream & embed Proof-of-Origin seal">
+        <span id="signDot" class="w-2 h-2 rounded-full bg-cyan-400"></span>
+        <span class="hidden lg:inline">🔐 Proof-of-Origin</span>
+        <span class="lg:hidden">🔐 Sign</span>
       </button>
 
       <!-- Multi-page Test Insert -->
-      <button onclick="insertMultiPageDemo()" type="button" class="hidden xl:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium transition" title="Inject a sample 24-row invoice table to test page splits">
+      <button onclick="insertMultiPageDemo()" type="button" class="hidden 2xl:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium transition" title="Inject a sample 24-row invoice table to test page splits">
         <span>⚡ Test Multi-Page</span>
       </button>
 
@@ -315,10 +393,14 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <button id="tabVarsBtn" onclick="switchTab('vars')" class="px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition">
             Variables (JSON)
           </button>
+          <button id="tabNeuralBtn" onclick="switchTab('neural')" class="px-3 py-1 rounded-md text-xs font-medium text-indigo-300 hover:text-white transition flex items-center space-x-1">
+            <span>🧠 Neural &amp; Security</span>
+            <span class="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 text-[9px] font-mono font-bold">NEW</span>
+          </button>
         </div>
 
         <!-- Quick Snippet Buttons -->
-        <div class="hidden sm:flex items-center space-x-1 text-[11px]">
+        <div class="hidden xl:flex items-center space-x-1 text-[11px]">
           <span class="text-slate-500 font-mono text-[10px] mr-1">Insert:</span>
           <button onclick="insertSnippet('table')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert Smart Table with thead and no-split rows">+ Table</button>
           <button onclick="insertSnippet('pagebreak')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert explicit page break">+ Page Break</button>
@@ -335,12 +417,106 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       <!-- Tab 2: Variables (JSON) Editor -->
       <div id="varsTabContent" class="hidden flex-1 flex-col overflow-hidden p-4 bg-slate-950">
         <p class="text-xs text-slate-400 mb-2 leading-relaxed">
-          Define dynamic JSON variables to automatically substitute into your template using <code class="text-purple-400 font-mono">{{variable_name}}</code>:
+          Define dynamic JSON variables to automatically substitute into your template using <code class="text-purple-400 font-mono">{{variable_name}}</code>, and automatically embed them as a 0ms Dual-Brain JSON-LD payload (<code class="text-cyan-400 font-mono">embed_data</code>):
         </p>
         <textarea id="varsEditor" spellcheck="false" class="flex-1 w-full p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-indigo-300 resize-none focus:outline-none focus:border-indigo-500 leading-relaxed">{\n  "company_name": "Tailprint Technologies",\n  "client_name": "Acme Global Solutions",\n  "invoice_number": "INV-2026-889",\n  "invoice_date": "November 12, 2026",\n  "total_amount": "€1,450.00"\n}</textarea>
         <div class="mt-3 flex justify-end">
           <button onclick="applyVariables()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition">
             Apply Variables to HTML ➔
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 3: Neural-Implant, White-Label & Proof-of-Origin Config -->
+      <div id="neuralTabContent" class="hidden flex-1 flex-col overflow-y-auto p-4 bg-slate-950 space-y-4">
+        <div class="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30 flex items-center justify-between">
+          <div>
+            <h3 class="text-xs font-bold text-white flex items-center space-x-1.5">
+              <span>🧠 Neural-Implant Spatial Cortex</span>
+              <span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-[10px]">64-D Int8</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Harvests exact DOM bounding boxes before print, quantizes semantic vectors into the PDF catalog, and injects a clickable Q&amp;A annotation.
+            </p>
+          </div>
+          <label class="inline-flex items-center cursor-pointer ml-3 shrink-0">
+            <input id="chkNeuralImplant" type="checkbox" checked onchange="syncNeuralControlsFromForm()" class="sr-only peer" />
+            <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-indigo-600"></div>
+          </label>
+        </div>
+
+        <!-- Persona & Subconscious Latent Memory -->
+        <div class="space-y-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 mb-1">
+              Document Persona (<code class="text-indigo-400 font-mono">neural_persona</code>)
+            </label>
+            <input id="inputNeuralPersona" type="text" value="Enterprise Finance & SLA Concierge for Acme Global Solutions" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono" />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[11px] font-bold text-violet-300">
+                🔮 Subconscious Latent Memory (<code class="text-violet-400 font-mono">neural_context</code> JSON)
+              </label>
+              <span class="text-[10px] text-slate-500 font-mono">Unprinted background knowledge</span>
+            </div>
+            <textarea id="inputNeuralContext" rows="5" spellcheck="false" class="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-violet-200 focus:outline-none focus:border-violet-500 leading-relaxed">{\n  "early_payment_discount": "4% discount if paid within 10 business days",\n  "max_negotiable_discount": "12% with VP approval for annual renewals",\n  "gdpr_data_residency": "Frankfurt EU-Central-1 with Zero-Retention enabled",\n  "sla_uptime_guarantee": "99.99% uptime with 15-minute P1 incident response",\n  "escalation_contact": "vip-billing@acmeglobal.com"\n}</textarea>
+          </div>
+        </div>
+
+        <!-- White-Label Custom Domain & Badge -->
+        <div class="space-y-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-purple-300">🏷️ White-Label Badge &amp; Custom Q&amp;A Domain</h4>
+              <p class="text-[10px] text-slate-400">Route PDF badge clicks to your own portal or hide the visual badge for 100% headless API usage.</p>
+            </div>
+            <label class="inline-flex items-center space-x-1.5 text-[11px] text-slate-300 cursor-pointer">
+              <input id="chkNeuralBadge" type="checkbox" checked onchange="syncNeuralControlsFromForm()" class="rounded bg-slate-950 border-slate-700 text-indigo-600" />
+              <span>Render Visual Badge</span>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Custom Portal URL (<code class="text-purple-400 font-mono">neural_custom_url</code>)</label>
+              <input id="inputNeuralCustomUrl" type="url" placeholder="https://portal.yourdomain.com/ask?id={doc_id}" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-white focus:outline-none focus:border-purple-500 font-mono" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Custom Badge Label (<code class="text-purple-400 font-mono">neural_badge_label</code>)</label>
+              <input id="inputNeuralBadgeLabel" type="text" placeholder="NEURAL PDF • CLICK TO ASK THIS DOCUMENT" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-white focus:outline-none focus:border-purple-500 font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Cryptographic Proof-of-Origin & Dual-Brain JSON -->
+        <div class="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-500/30 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-cyan-300">🔐 Cryptographic Proof-of-Origin &amp; Dual-Brain JSON</h4>
+              <p class="text-[10px] text-slate-400">Signs visual stream fingerprint with HMAC-SHA256 and embeds 0ms Zero-OCR JSON-LD.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <label class="inline-flex items-center space-x-1 text-[11px] text-slate-300 cursor-pointer">
+                <input id="chkSignPdf" type="checkbox" checked onchange="syncNeuralControlsFromForm()" class="rounded bg-slate-950 border-slate-700 text-cyan-500" />
+                <span>Sign (<code class="text-cyan-400 font-mono">sign</code>)</span>
+              </label>
+              <label class="inline-flex items-center space-x-1 text-[11px] text-slate-300 cursor-pointer">
+                <input id="chkVerifySeal" type="checkbox" checked onchange="syncNeuralControlsFromForm()" class="rounded bg-slate-950 border-slate-700 text-cyan-500" />
+                <span>Visual Seal (<code class="text-cyan-400 font-mono">verify_seal</code>)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons inside Neural Tab -->
+        <div class="pt-1 flex flex-wrap items-center gap-2.5">
+          <button type="button" onclick="setCanvasViewMode('pdf')" class="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 border border-slate-700">
+            <span>📄 Preview Multi-Page PDF with Badges</span>
+          </button>
+          <button type="button" id="btnCompileOpenBrain" onclick="compileAndOpenBrain()" class="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-1.5">
+            <span>🧠 Compile &amp; Chat with PDF in /brain ↗</span>
           </button>
         </div>
       </div>
@@ -384,10 +560,18 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           <span id="canvasDimensionsPill" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-mono hidden md:inline">
             A4 Portrait (794 × 1123px)
           </span>
-          <span id="shieldActiveBadge" class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 font-semibold flex items-center space-x-1 hidden lg:flex">
+          <span id="shieldActiveBadge" class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 font-semibold flex items-center space-x-1 hidden xl:flex">
             <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-            <span>Split Shield Active</span>
+            <span>Split Shield</span>
           </span>
+          <a id="studioBrainLink" href="/brain" target="_blank" class="hidden text-[10px] px-2.5 py-0.5 rounded-md bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-500/50 font-bold items-center space-x-1 transition shadow-sm" title="Open this compiled PDF's Neural Cortex in /brain">
+            <span>🧠</span>
+            <span id="studioBrainLinkText">Chat with PDF ↗</span>
+          </a>
+          <a id="studioVerifyLink" href="/verify" target="_blank" class="hidden text-[10px] px-2 py-0.5 rounded-md bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/50 font-bold items-center space-x-1 transition shadow-sm" title="Verify Cryptographic Proof-of-Origin & Dual-Brain JSON in /verify">
+            <span>🔐</span>
+            <span>Verify Seal ↗</span>
+          </a>
         </div>
 
         <!-- Zoom, Re-Split & Page Break Guide Controls -->
@@ -500,11 +684,16 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     var currentZoom = 1.0;
     var smartPaginationEnabled = true;
+    var neuralImplantEnabled = true;
+    var signPdfEnabled = true;
+    var verifySealEnabled = true;
+    var neuralBadgeEnabled = true;
     var breakGuidesVisible = true;
     var activeApiTab = 'curl';
     var currentCanvasView = 'html';
     var isRenderingPdf = false;
     var pdfRenderDebounce = null;
+    var lastRenderedDocId = null;
 
     if (window.pdfjsLib) {
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -520,6 +709,11 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     var lineCount = document.getElementById('lineCount');
     var shieldActiveBadge = document.getElementById('shieldActiveBadge');
     var paginationShieldBtn = document.getElementById('paginationShieldBtn');
+    var neuralToggleBtn = document.getElementById('neuralToggleBtn');
+    var signToggleBtn = document.getElementById('signToggleBtn');
+    var studioBrainLink = document.getElementById('studioBrainLink');
+    var studioBrainLinkText = document.getElementById('studioBrainLinkText');
+    var studioVerifyLink = document.getElementById('studioVerifyLink');
 
     var viewModeHtmlBtn = document.getElementById('viewModeHtmlBtn');
     var viewModePdfBtn = document.getElementById('viewModePdfBtn');
@@ -530,6 +724,86 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     var pdfPagesContainer = document.getElementById('pdfPagesContainer');
     var pdfLoadingState = document.getElementById('pdfLoadingState');
     var guideToggleBtn = document.getElementById('guideToggleBtn');
+
+    function buildStudioPdfPayload() {
+      var fmt = formatSelect.value;
+      var payload = {
+        html: codeEditor.value,
+        format: fmt.indexOf('Letter') !== -1 ? 'Letter' : 'A4',
+        landscape: fmt.indexOf('landscape') !== -1,
+        smart_pagination: smartPaginationEnabled,
+        neural_implant: neuralImplantEnabled,
+        neural_badge: neuralBadgeEnabled,
+        sign: signPdfEnabled,
+        verify_seal: verifySealEnabled
+      };
+
+      if (neuralImplantEnabled) {
+        var personaEl = document.getElementById('inputNeuralPersona');
+        if (personaEl && personaEl.value.trim()) {
+          payload.neural_persona = personaEl.value.trim();
+        }
+        var ctxEl = document.getElementById('inputNeuralContext');
+        if (ctxEl && ctxEl.value.trim()) {
+          try {
+            payload.neural_context = JSON.parse(ctxEl.value);
+          } catch (e) {}
+        }
+        var customUrlEl = document.getElementById('inputNeuralCustomUrl');
+        if (customUrlEl && customUrlEl.value.trim()) {
+          payload.neural_custom_url = customUrlEl.value.trim();
+        }
+        var badgeLabelEl = document.getElementById('inputNeuralBadgeLabel');
+        if (badgeLabelEl && badgeLabelEl.value.trim()) {
+          payload.neural_badge_label = badgeLabelEl.value.trim();
+        }
+      }
+
+      var varsEl = document.getElementById('varsEditor');
+      if (varsEl && varsEl.value.trim()) {
+        try {
+          payload.embed_data = JSON.parse(varsEl.value);
+        } catch (e) {}
+      }
+
+      return payload;
+    }
+
+    function updateEnrichedLinksFromHeaders(res) {
+      var docId = res.headers.get('X-Tailprint-Doc-Id');
+      var brainUrl = res.headers.get('X-Tailprint-Brain-Url');
+      var verifyUrl = res.headers.get('X-Tailprint-Verify-Url');
+      var synapses = res.headers.get('X-Tailprint-Cortex-Synapses');
+
+      if (docId) {
+        lastRenderedDocId = docId;
+      }
+
+      if (studioBrainLink) {
+        if (brainUrl) {
+          studioBrainLink.href = brainUrl;
+          if (studioBrainLinkText) {
+            studioBrainLinkText.textContent = (synapses ? synapses + ' Synapses • ' : '') + 'Chat in /brain ↗';
+          }
+          studioBrainLink.classList.remove('hidden');
+          studioBrainLink.classList.add('flex');
+        } else {
+          studioBrainLink.classList.add('hidden');
+          studioBrainLink.classList.remove('flex');
+        }
+      }
+
+      if (studioVerifyLink) {
+        if (verifyUrl) {
+          studioVerifyLink.href = verifyUrl;
+          studioVerifyLink.classList.remove('hidden');
+          studioVerifyLink.classList.add('flex');
+        } else {
+          studioVerifyLink.classList.add('hidden');
+          studioVerifyLink.classList.remove('flex');
+        }
+      }
+    }
 
     var SMART_PAGINATION_CSS = [
       '<style id="smart-pagination-shield">',
@@ -582,22 +856,18 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       }
 
       try {
-        var fmt = formatSelect.value;
         var res = await fetch('/v1/tools/studio/render-pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            html: codeEditor.value,
-            format: fmt.indexOf('Letter') !== -1 ? 'Letter' : 'A4',
-            landscape: fmt.indexOf('landscape') !== -1,
-            smart_pagination: smartPaginationEnabled
-          })
+          body: JSON.stringify(buildStudioPdfPayload())
         });
 
         if (!res.ok) {
           var errJson = await res.json().catch(function() { return {}; });
           throw new Error(errJson.message || 'PDF render failed with status ' + res.status);
         }
+
+        updateEnrichedLinksFromHeaders(res);
 
         var arrayBuffer = await res.arrayBuffer();
 
@@ -909,19 +1179,128 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
     function switchTab(tab) {
       var htmlBtn = document.getElementById('tabHtmlBtn');
       var varsBtn = document.getElementById('tabVarsBtn');
+      var neuralBtn = document.getElementById('tabNeuralBtn');
       var htmlContent = document.getElementById('htmlTabContent');
       var varsContent = document.getElementById('varsTabContent');
+      var neuralContent = document.getElementById('neuralTabContent');
+
+      htmlContent.classList.add('hidden');
+      varsContent.classList.add('hidden');
+      if (neuralContent) neuralContent.classList.add('hidden');
+
+      htmlBtn.className = 'px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition';
+      varsBtn.className = 'px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition';
+      if (neuralBtn) neuralBtn.className = 'px-3 py-1 rounded-md text-xs font-medium text-indigo-300 hover:text-white transition flex items-center space-x-1';
 
       if (tab === 'html') {
         htmlBtn.className = 'px-3 py-1 rounded-md text-xs font-bold transition bg-indigo-600/20 text-indigo-400 border border-indigo-500/30';
-        varsBtn.className = 'px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition';
         htmlContent.classList.remove('hidden');
-        varsContent.classList.add('hidden');
-      } else {
+      } else if (tab === 'vars') {
         varsBtn.className = 'px-3 py-1 rounded-md text-xs font-bold transition bg-indigo-600/20 text-indigo-400 border border-indigo-500/30';
-        htmlBtn.className = 'px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white transition';
         varsContent.classList.remove('hidden');
-        htmlContent.classList.add('hidden');
+      } else if (tab === 'neural' && neuralContent) {
+        neuralBtn.className = 'px-3 py-1 rounded-md text-xs font-bold transition bg-indigo-600/25 text-indigo-300 border border-indigo-500/40 flex items-center space-x-1';
+        neuralContent.classList.remove('hidden');
+      }
+    }
+
+    function updateNeuralToolbarButtons() {
+      var dot = document.getElementById('neuralDot');
+      var signDot = document.getElementById('signDot');
+      if (neuralToggleBtn) {
+        if (neuralImplantEnabled) {
+          neuralToggleBtn.className = 'px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-indigo-950/60 border-indigo-500/40 text-indigo-300 hover:bg-indigo-900/50 shadow-sm';
+          if (dot) dot.className = 'w-2 h-2 rounded-full bg-indigo-400 animate-pulse';
+        } else {
+          neuralToggleBtn.className = 'px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1.5 transition bg-slate-900 border-slate-700 text-slate-400 hover:text-white';
+          if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-600';
+        }
+      }
+      if (signToggleBtn) {
+        if (signPdfEnabled) {
+          signToggleBtn.className = 'hidden sm:flex px-2.5 py-1.5 rounded-lg border text-xs font-semibold items-center space-x-1.5 transition bg-cyan-950/60 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50 shadow-sm';
+          if (signDot) signDot.className = 'w-2 h-2 rounded-full bg-cyan-400';
+        } else {
+          signToggleBtn.className = 'hidden sm:flex px-2.5 py-1.5 rounded-lg border text-xs font-semibold items-center space-x-1.5 transition bg-slate-900 border-slate-700 text-slate-400 hover:text-white';
+          if (signDot) signDot.className = 'w-2 h-2 rounded-full bg-slate-600';
+        }
+      }
+    }
+
+    function toggleNeuralImplant() {
+      neuralImplantEnabled = !neuralImplantEnabled;
+      var chk = document.getElementById('chkNeuralImplant');
+      if (chk) chk.checked = neuralImplantEnabled;
+      updateNeuralToolbarButtons();
+      if (currentCanvasView === 'pdf') {
+        renderPdfMultiPage();
+      } else {
+        switchTab('neural');
+      }
+    }
+
+    function toggleSignPdf() {
+      signPdfEnabled = !signPdfEnabled;
+      verifySealEnabled = signPdfEnabled;
+      var chkSign = document.getElementById('chkSignPdf');
+      var chkSeal = document.getElementById('chkVerifySeal');
+      if (chkSign) chkSign.checked = signPdfEnabled;
+      if (chkSeal) chkSeal.checked = verifySealEnabled;
+      updateNeuralToolbarButtons();
+      if (currentCanvasView === 'pdf') {
+        renderPdfMultiPage();
+      }
+    }
+
+    function syncNeuralControlsFromForm() {
+      var chkNeural = document.getElementById('chkNeuralImplant');
+      var chkBadge = document.getElementById('chkNeuralBadge');
+      var chkSign = document.getElementById('chkSignPdf');
+      var chkSeal = document.getElementById('chkVerifySeal');
+      if (chkNeural) neuralImplantEnabled = chkNeural.checked;
+      if (chkBadge) neuralBadgeEnabled = chkBadge.checked;
+      if (chkSign) signPdfEnabled = chkSign.checked;
+      if (chkSeal) verifySealEnabled = chkSeal.checked;
+      updateNeuralToolbarButtons();
+      if (currentCanvasView === 'pdf') {
+        renderPdfMultiPage();
+      }
+    }
+
+    async function compileAndOpenBrain() {
+      var btn = document.getElementById('btnCompileOpenBrain');
+      var origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Compiling Neural Cortex...</span>';
+      }
+      neuralImplantEnabled = true;
+      var chkNeural = document.getElementById('chkNeuralImplant');
+      if (chkNeural) chkNeural.checked = true;
+      updateNeuralToolbarButtons();
+
+      try {
+        var res = await fetch('/v1/tools/studio/render-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildStudioPdfPayload())
+        });
+        if (!res.ok) {
+          throw new Error('Failed to compile Neural-Implant PDF');
+        }
+        updateEnrichedLinksFromHeaders(res);
+        var brainUrl = res.headers.get('X-Tailprint-Brain-Url');
+        if (brainUrl) {
+          window.open(brainUrl, '_blank');
+        }
+        setCanvasViewMode('pdf');
+      } catch (err) {
+        alert(err.message || 'Error compiling Neural-Implant PDF');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
       }
     }
 
@@ -1039,11 +1418,12 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       var isLandscape = fmt.indexOf('landscape') !== -1;
       var isImage = fmt === 'og-card' || fmt === 'slide';
       var codeBlock = document.getElementById('apiCodeBlock');
+      var fullPayload = buildStudioPdfPayload();
 
       if (activeApiTab === 'curl') {
         var payloadObj = isImage
           ? { html: html, width: fmt === 'og-card' ? 1200 : 1280, height: fmt === 'og-card' ? 630 : 720, type: 'png' }
-          : { html: html, format: 'A4', landscape: isLandscape, smart_pagination: smartPaginationEnabled };
+          : fullPayload;
 
         var endpoint = isImage ? 'image' : 'pdf';
         var outfile = isImage ? 'render.png' : 'document.pdf';
@@ -1052,7 +1432,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           'curl -X POST https://tailprint.com/v1/render/' + endpoint + ' \\\\',
           '  -H "Authorization: Bearer sec_live_..." \\\\',
           '  -H "Content-Type: application/json" \\\\',
-          '  -d ' + JSON.stringify(JSON.stringify(payloadObj)) + ' \\\\',
+          '  -d ' + JSON.stringify(JSON.stringify(payloadObj, null, 2)) + ' \\\\',
           '  --output ' + outfile
         ].join('\\n');
       } else if (activeApiTab === 'node') {
@@ -1065,17 +1445,13 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           '    authorization: "Bearer sec_live_...",',
           '    "content-type": "application/json",',
           '  },',
-          '  body: JSON.stringify({',
-          '    html: ' + JSON.stringify(html) + ',',
-          '    format: "A4",',
-          '    landscape: ' + isLandscape + ',',
-          '    smart_pagination: ' + smartPaginationEnabled + ',',
-          '  }),',
+          '  body: JSON.stringify(' + JSON.stringify(isImage ? { html: html, width: 1200, height: 630, type: 'png' } : fullPayload, null, 2) + '),',
           '});',
           '',
+          'console.log("Doc ID:", response.headers.get("x-tailprint-doc-id"));',
+          'console.log("Brain URL:", response.headers.get("x-tailprint-brain-url"));',
           'const buffer = Buffer.from(await response.arrayBuffer());',
-          'fs.writeFileSync("output.' + (isImage ? 'png' : 'pdf') + '", buffer);',
-          'console.log("Document rendered successfully!");'
+          'fs.writeFileSync("output.' + (isImage ? 'png' : 'pdf') + '", buffer);'
         ].join('\\n');
       } else if (activeApiTab === 'python') {
         codeBlock.textContent = [
@@ -1086,27 +1462,21 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           '    "Authorization": "Bearer sec_live_...",',
           '    "Content-Type": "application/json"',
           '}',
-          'payload = {',
-          '    "html": ' + JSON.stringify(html) + ',',
-          '    "format": "A4",',
-          '    "landscape": ' + (isLandscape ? 'True' : 'False') + ',',
-          '    "smart_pagination": ' + (smartPaginationEnabled ? 'True' : 'False'),
-          '}',
+          'payload = ' + JSON.stringify(isImage ? { html: html, width: 1200, height: 630, type: 'png' } : fullPayload, null, 4)
+            .replace(/: true/g, ': True')
+            .replace(/: false/g, ': False')
+            .replace(/: null/g, ': None'),
           '',
           'response = requests.post(url, json=payload, headers=headers)',
           'with open("output.' + (isImage ? 'png' : 'pdf') + '", "wb") as f:',
           '    f.write(response.content)',
           '',
-          'print("Document saved successfully!")'
+          'print("Rendered Doc ID:", response.headers.get("X-Tailprint-Doc-Id"))'
         ].join('\\n');
       } else if (activeApiTab === 'mcp') {
         codeBlock.textContent = [
           '// In Claude Desktop, Cursor, or your AI Agent:',
-          'await call_tool("tailprint", "render_pdf", {',
-          '  "html": ' + JSON.stringify(html) + ',',
-          '  "format": "A4",',
-          '  "landscape": ' + isLandscape,
-          '});'
+          'await call_tool("tailprint", "render_pdf", ' + JSON.stringify(fullPayload, null, 2) + ');'
         ].join('\\n');
       }
     }
@@ -1127,24 +1497,21 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       var btn = document.getElementById('downloadPdfBtn');
       var btnText = document.getElementById('pdfBtnText');
       btn.disabled = true;
-      btnText.textContent = '⏳ Rendering PDF...';
+      btnText.textContent = '⏳ Compiling PDF...';
 
       try {
         var res = await fetch('/v1/tools/studio/render-pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            html: codeEditor.value,
-            format: formatSelect.value.indexOf('Letter') !== -1 ? 'Letter' : 'A4',
-            landscape: formatSelect.value.indexOf('landscape') !== -1,
-            smart_pagination: smartPaginationEnabled,
-          }),
+          body: JSON.stringify(buildStudioPdfPayload()),
         });
 
         if (!res.ok) {
           var err = await res.json().catch(function() { return {}; });
           throw new Error(err.message || 'Render failed with status ' + res.status);
         }
+
+        updateEnrichedLinksFromHeaders(res);
 
         var blob = await res.blob();
         var url = window.URL.createObjectURL(blob);

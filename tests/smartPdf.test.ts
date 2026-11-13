@@ -342,4 +342,43 @@ describe('Dual-Brain PDFs (Zero-OCR) & Cryptographic Proof-of-Origin', () => {
       `https://portal.kundedomæne.dk/verify/${docId}`
     );
   });
+
+  it('supports Neural-Implant, Latent Context, and Proof-of-Origin directly from /studio and POST /v1/tools/studio/render-pdf', async () => {
+    const studioPage = await app.inject({
+      method: 'GET',
+      url: '/studio',
+    });
+    expect(studioPage.statusCode).toBe(200);
+    expect(studioPage.body).toContain('Neural-Implant');
+    const studioScripts = [
+      ...studioPage.body.matchAll(/<script(?![^>]*src=)[^>]*>([\s\S]*?)<\/script>/gi),
+    ];
+    expect(studioScripts.length).toBeGreaterThan(0);
+    for (const match of studioScripts) {
+      expect(() => new vm.Script(match[1])).not.toThrow();
+    }
+
+    const studioRender = await app.inject({
+      method: 'POST',
+      url: '/v1/tools/studio/render-pdf',
+      payload: {
+        html: '<div class="p-8"><h1>Studio Neural Invoice #ST-101</h1><p>Total: €2,900.00</p></div>',
+        format: 'A4',
+        landscape: false,
+        smart_pagination: true,
+        neural_implant: true,
+        neural_persona: 'Studio Test Concierge',
+        neural_context: { studio_discount: '5% early bird discount' },
+        sign: true,
+        verify_seal: true,
+      },
+    });
+
+    expect(studioRender.statusCode).toBe(200);
+    expect(studioRender.headers['x-tailprint-neural-implant']).toBe('true');
+    const docId = studioRender.headers['x-tailprint-doc-id'] as string;
+    expect(docId).toMatch(/^doc_/);
+    expect(studioRender.headers['x-tailprint-brain-url']).toBe(`/brain/${docId}`);
+    expect(studioRender.headers['x-tailprint-verify-url']).toBe(`/verify/${docId}`);
+  });
 });
