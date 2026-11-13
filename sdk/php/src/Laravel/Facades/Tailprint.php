@@ -17,6 +17,8 @@ use Tailprint\TailprintClient;
  * @method static string|array<string, mixed> renderTemplate(string $templateId, array<string, mixed> $data, array<string, mixed> $options = [])
  * @method static array<int, array<string, mixed>> listTemplates()
  * @method static array<string, mixed> getTemplate(string $templateId)
+ * @method static array<string, mixed> createTemplate(array<string, mixed> $options)
+ * @method static array<string, mixed> deleteTemplate(string $templateId)
  * @method static array<string, mixed> renderPdfAsync(array<string, mixed> $options)
  * @method static array<string, mixed> renderBatch(array<int, array<string, mixed>> $items, array<string, mixed> $options = [])
  * @method static array<string, mixed> getJob(string $jobId)

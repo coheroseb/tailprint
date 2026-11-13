@@ -17,24 +17,58 @@ import { redisService } from '../services/redis.js';
 import { storageService } from '../services/storage.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { jobsService } from '../services/jobs.js';
-import { resolveTemplateRequest, TemplateInputError } from '../services/templateEngine.js';
-import { HOSTED_TEMPLATES, getHostedTemplate } from '../config/hostedTemplates.js';
+import {
+  resolveTemplateRequest,
+  resolveTemplateRequestForCustomer,
+  TemplateInputError,
+  TemplatePlanError,
+} from '../services/templateEngine.js';
+import { HOSTED_TEMPLATES, HOSTED_TEMPLATE_IDS, getHostedTemplate } from '../config/hostedTemplates.js';
 
 export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
-  // Resolves `template_id` + `data` into HTML. Runs before authentication/quota so that
-  // invalid template input is rejected with 400 without consuming a render.
-  function resolveTemplate<T extends { template_id?: string; html?: string; url?: string; data?: Record<string, unknown> }>(
-    input: T,
-    reply: any,
-    prefix = ''
-  ): T | null {
+  async function peekCustomerFromRequest(
+    request: any
+  ): Promise<{ customerId: string; plan: string; token: string } | null> {
+    const authHeader = request?.headers?.authorization;
+    let token: string | null = null;
+
+    if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    } else if (env.NODE_ENV === 'development') {
+      token = env.DEV_DEFAULT_API_KEY || 'sec_live_dev_test_key_12345';
+    }
+
+    if (!token) return null;
+    const apiKey = await redisService.getApiKey(token);
+    if (!apiKey || apiKey.status !== 'active') return null;
+    return { customerId: apiKey.customer_id, plan: apiKey.plan, token };
+  }
+
+  // Resolves `template_id` + `data` into HTML (supports built-in templates on all plans and
+  // customer-owned custom templates on Starter+ plans). Runs before quota deduction so that
+  // invalid template input or plan checks never consume a render.
+  async function resolveTemplate<
+    T extends { template_id?: string; html?: string; url?: string; data?: Record<string, unknown> }
+  >(input: T, reply: any, prefix = '', request?: any): Promise<T | null> {
     try {
-      return resolveTemplateRequest(input);
+      if (!request) {
+        return resolveTemplateRequest(input);
+      }
+      const customerCtx = input.template_id ? await peekCustomerFromRequest(request) : null;
+      return await resolveTemplateRequestForCustomer(input, customerCtx);
     } catch (err) {
       if (err instanceof TemplateInputError) {
         reply.code(400).send({
           statusCode: 400,
           error: 'Bad Request',
+          message: `${prefix}${err.message}`,
+        });
+        return null;
+      }
+      if (err instanceof TemplatePlanError) {
+        reply.code(403).send({
+          statusCode: 403,
+          error: 'Forbidden',
           message: `${prefix}${err.message}`,
         });
         return null;
@@ -208,6 +242,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           202: AsyncRenderAcceptedResponseSchema.describe('Asynchronous render job accepted and processing in background'),
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
           409: ErrorResponseSchema,
           429: ErrorResponseSchema,
           500: ErrorResponseSchema,
@@ -216,7 +251,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const resolvedBody = resolveTemplate(request.body, reply);
+      const resolvedBody = await resolveTemplate(request.body, reply, '', request);
       if (!resolvedBody) return;
       request.body = resolvedBody;
       if (resolvedBody.template_id) reply.header('X-Tailprint-Template', resolvedBody.template_id);
@@ -349,6 +384,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           202: AsyncRenderAcceptedResponseSchema.describe('Batch job successfully accepted and processing'),
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
           409: ErrorResponseSchema,
           429: ErrorResponseSchema,
           500: ErrorResponseSchema,
@@ -358,7 +394,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     async (request, reply) => {
       const resolvedItems: typeof request.body.items = [];
       for (let index = 0; index < request.body.items.length; index++) {
-        const resolvedItem = resolveTemplate(request.body.items[index], reply, `items[${index}]: `);
+        const resolvedItem = await resolveTemplate(request.body.items[index], reply, `items[${index}]: `, request);
         if (!resolvedItem) return;
         resolvedItems.push(resolvedItem);
       }
@@ -445,7 +481,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const resolvedBody = resolveTemplate(request.body, reply);
+      const resolvedBody = await resolveTemplate(request.body, reply, '', request);
       if (!resolvedBody) return;
       request.body = resolvedBody;
       if (resolvedBody.template_id) reply.header('X-Tailprint-Template', resolvedBody.template_id);
@@ -909,7 +945,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const resolvedBody = resolveTemplate(request.body, reply);
+      const resolvedBody = await resolveTemplate(request.body, reply);
       if (!resolvedBody) return;
       request.body = resolvedBody;
 
@@ -941,7 +977,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
   );
 
   // ==========================================
-  // Hosted template catalog (public, no API key)
+  // Hosted template catalog & Custom Templates (Starter+ Plans)
   // ==========================================
   const HostedTemplateSummarySchema = z.object({
     id: z.string().describe('Template identifier to pass as template_id'),
@@ -950,7 +986,40 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     description: z.string(),
     format: z.string().describe('Recommended paper format'),
     landscape: z.boolean().describe('Recommended orientation'),
+    builtin: z.boolean().optional().describe('True for Tailprint built-in templates, false for custom user templates'),
+    custom: z.boolean().optional().describe('True for customer-owned custom templates'),
+    required_fields: z.array(z.string()).optional(),
   });
+
+  const CustomTemplateBodySchema = z.object({
+    id: z
+      .string()
+      .min(2)
+      .max(64)
+      .regex(/^[a-z0-9][a-z0-9-_]*[a-z0-9]$/i, 'Template ID must be an alphanumeric slug with hyphens or underscores')
+      .describe('Unique slug for your custom template, e.g. "acme-invoice-v2"'),
+    title: z.string().min(1).max(120).describe('Human-readable template title'),
+    category: z.string().max(60).optional().default('Custom'),
+    description: z.string().max(500).optional().default('Custom Mustache + Tailwind CSS PDF template'),
+    html: z
+      .string()
+      .min(1)
+      .max(500000)
+      .describe('Tailwind CSS HTML template using {{variable}}, {{{raw_html}}}, and {{#items}}...{{/items}} syntax'),
+    required_fields: z
+      .array(z.string().min(1).max(120))
+      .max(100)
+      .optional()
+      .default([])
+      .describe('List of required data keys (supports dot notation, e.g. ["invoice_number", "buyer.name"])'),
+    default_data: z.record(z.any()).optional().describe('Optional default data values merged before rendering'),
+    example_data: z.record(z.any()).optional().describe('Optional sample data payload for preview/docs'),
+    format: z.enum(['A4', 'Letter', 'Legal']).optional().default('A4'),
+    landscape: z.boolean().optional().default(false),
+    smart_pagination: z.boolean().optional().default(true),
+  });
+
+  const CustomTemplateUpdateBodySchema = CustomTemplateBodySchema.omit({ id: true });
 
   const summarizeTemplate = (t: (typeof HOSTED_TEMPLATES)[number]) => ({
     id: t.id,
@@ -959,22 +1028,84 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     description: t.description,
     format: t.format,
     landscape: t.landscape,
+    builtin: true,
+    custom: false,
   });
+
+  async function requireStarterCustomer(request: any, reply: any) {
+    const authHeader = request.headers.authorization;
+    let token: string | null = null;
+
+    if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    } else if (env.NODE_ENV === 'development') {
+      token = env.DEV_DEFAULT_API_KEY || 'sec_live_dev_test_key_12345';
+    }
+
+    if (!token) {
+      reply.code(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Missing or invalid Bearer authentication token.',
+      });
+      return null;
+    }
+
+    const apiKey = await redisService.getApiKey(token);
+    if (!apiKey || apiKey.status !== 'active') {
+      reply.code(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Invalid or inactive API key.',
+      });
+      return null;
+    }
+
+    if (!redisService.isPaidPlan(apiKey.plan)) {
+      reply.code(403).send({
+        statusCode: 403,
+        error: 'Forbidden',
+        message: `Custom hosted templates require a Starter plan or higher (current plan: ${apiKey.plan}). Please upgrade at https://tailprint.com/#pricing.`,
+      });
+      return null;
+    }
+
+    return { token, apiKey };
+  }
 
   fastify.get(
     '/v1/templates',
     {
       schema: {
         tags: ['Templates'],
-        summary: 'List hosted document templates',
+        summary: 'List hosted document templates (built-in + custom)',
         description:
-          'Returns the catalog of data-driven templates. Render one with POST /v1/render/pdf using { "template_id": "...", "data": { ... } }.',
+          'Returns the catalog of data-driven templates. Includes your custom templates when authenticated with a Bearer token.',
         response: {
           200: z.object({ templates: z.array(HostedTemplateSummarySchema) }),
         },
       },
     },
-    async () => ({ templates: HOSTED_TEMPLATES.map(summarizeTemplate) })
+    async (request) => {
+      const builtins = HOSTED_TEMPLATES.map(summarizeTemplate);
+      const customerCtx = await peekCustomerFromRequest(request);
+      if (!customerCtx) {
+        return { templates: builtins };
+      }
+      const customList = await redisService.listCustomTemplates(customerCtx.customerId);
+      const customSummaries = customList.map((c) => ({
+        id: c.id,
+        title: c.title,
+        category: c.category,
+        description: c.description,
+        format: c.format,
+        landscape: c.landscape,
+        builtin: false,
+        custom: true,
+        required_fields: c.required_fields,
+      }));
+      return { templates: [...builtins, ...customSummaries] };
+    }
   );
 
   fastify.get(
@@ -988,6 +1119,8 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         params: z.object({ templateId: z.string().max(100) }),
         response: {
           200: HostedTemplateSummarySchema.extend({
+            html: z.string().optional(),
+            default_data: z.record(z.any()).optional(),
             example_data: z.record(z.any()).describe('Valid sample data for this template'),
             example_request: z.record(z.any()).describe('Request body ready to POST to /v1/render/pdf'),
           }),
@@ -997,18 +1130,207 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request, reply) => {
       const template = getHostedTemplate(request.params.templateId);
-      if (!template) {
+      if (template) {
+        return {
+          ...summarizeTemplate(template),
+          example_data: template.example as Record<string, unknown>,
+          example_request: { template_id: template.id, data: template.example as Record<string, unknown> },
+        };
+      }
+
+      const customerCtx = await peekCustomerFromRequest(request);
+      if (customerCtx) {
+        const custom = await redisService.getCustomTemplate(customerCtx.customerId, request.params.templateId);
+        if (custom) {
+          const sampleData = custom.example_data || custom.default_data || {};
+          return {
+            id: custom.id,
+            title: custom.title,
+            category: custom.category,
+            description: custom.description,
+            format: custom.format,
+            landscape: custom.landscape,
+            builtin: false,
+            custom: true,
+            required_fields: custom.required_fields,
+            html: custom.html,
+            default_data: custom.default_data,
+            example_data: sampleData,
+            example_request: { template_id: custom.id, data: sampleData },
+          };
+        }
+      }
+
+      return reply.code(404).send({
+        statusCode: 404,
+        error: 'Not Found',
+        message: `Unknown template "${request.params.templateId}". Available built-in templates: ${HOSTED_TEMPLATES.map((t) => t.id).join(', ')}.`,
+      });
+    }
+  );
+
+  // POST /v1/templates - Create or update a custom hosted template (Requires Starter+ plan)
+  fastify.post(
+    '/v1/templates',
+    {
+      schema: {
+        tags: ['Templates'],
+        summary: 'Create a Custom Hosted Template (Starter+ Plan)',
+        description:
+          'Creates or updates a reusable Mustache + Tailwind CSS document template tied to your account. Render it anytime via POST /v1/render/pdf with { "template_id": "...", "data": { ... } }. Requires a Starter plan or higher.',
+        security: [{ bearerAuth: [] }],
+        body: CustomTemplateBodySchema,
+        response: {
+          201: z.any(),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const auth = await requireStarterCustomer(request, reply);
+      if (!auth) return;
+
+      const normalizedId = request.body.id.toLowerCase().trim();
+      if ((HOSTED_TEMPLATE_IDS as readonly string[]).includes(normalizedId)) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: `Template ID "${normalizedId}" is reserved for a built-in template. Please choose a different ID.`,
+        });
+      }
+
+      const now = new Date().toISOString();
+      const saved = await redisService.saveCustomTemplate({
+        id: normalizedId,
+        customer_id: auth.apiKey.customer_id,
+        title: request.body.title,
+        category: request.body.category || 'Custom',
+        description: request.body.description || 'Custom Mustache + Tailwind CSS PDF template',
+        html: request.body.html,
+        required_fields: request.body.required_fields || [],
+        default_data: request.body.default_data,
+        example_data: request.body.example_data,
+        format: request.body.format || 'A4',
+        landscape: request.body.landscape ?? false,
+        smart_pagination: request.body.smart_pagination ?? true,
+        created_at: now,
+        updated_at: now,
+      });
+
+      const sampleData = saved.example_data || saved.default_data || {};
+      return reply.code(201).send({
+        success: true,
+        template: saved,
+        example_request: {
+          template_id: saved.id,
+          data: sampleData,
+        },
+      });
+    }
+  );
+
+  // PUT /v1/templates/:templateId - Update an existing custom template (Requires Starter+ plan)
+  fastify.put(
+    '/v1/templates/:templateId',
+    {
+      schema: {
+        tags: ['Templates'],
+        summary: 'Update a Custom Hosted Template (Starter+ Plan)',
+        security: [{ bearerAuth: [] }],
+        params: z.object({ templateId: z.string().min(2).max(64) }),
+        body: CustomTemplateUpdateBodySchema,
+        response: {
+          200: z.any(),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const auth = await requireStarterCustomer(request, reply);
+      if (!auth) return;
+
+      const normalizedId = request.params.templateId.toLowerCase().trim();
+      if ((HOSTED_TEMPLATE_IDS as readonly string[]).includes(normalizedId)) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: `Built-in template "${normalizedId}" cannot be modified.`,
+        });
+      }
+
+      const now = new Date().toISOString();
+      const saved = await redisService.saveCustomTemplate({
+        id: normalizedId,
+        customer_id: auth.apiKey.customer_id,
+        title: request.body.title,
+        category: request.body.category || 'Custom',
+        description: request.body.description || 'Custom Mustache + Tailwind CSS PDF template',
+        html: request.body.html,
+        required_fields: request.body.required_fields || [],
+        default_data: request.body.default_data,
+        example_data: request.body.example_data,
+        format: request.body.format || 'A4',
+        landscape: request.body.landscape ?? false,
+        smart_pagination: request.body.smart_pagination ?? true,
+        created_at: now,
+        updated_at: now,
+      });
+
+      return reply.code(200).send({
+        success: true,
+        template: saved,
+      });
+    }
+  );
+
+  // DELETE /v1/templates/:templateId - Delete a custom hosted template (Requires Starter+ plan)
+  fastify.delete(
+    '/v1/templates/:templateId',
+    {
+      schema: {
+        tags: ['Templates'],
+        summary: 'Delete a Custom Hosted Template (Starter+ Plan)',
+        security: [{ bearerAuth: [] }],
+        params: z.object({ templateId: z.string().min(2).max(64) }),
+        response: {
+          200: z.object({ success: z.boolean(), deleted: z.string() }),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const auth = await requireStarterCustomer(request, reply);
+      if (!auth) return;
+
+      const normalizedId = request.params.templateId.toLowerCase().trim();
+      if ((HOSTED_TEMPLATE_IDS as readonly string[]).includes(normalizedId)) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: `Built-in template "${normalizedId}" cannot be deleted.`,
+        });
+      }
+
+      const deleted = await redisService.deleteCustomTemplate(auth.apiKey.customer_id, normalizedId);
+      if (!deleted) {
         return reply.code(404).send({
           statusCode: 404,
           error: 'Not Found',
-          message: `Unknown template "${request.params.templateId}". Available templates: ${HOSTED_TEMPLATES.map((t) => t.id).join(', ')}.`,
+          message: `Custom template "${normalizedId}" was not found on your account.`,
         });
       }
-      return {
-        ...summarizeTemplate(template),
-        example_data: template.example as Record<string, unknown>,
-        example_request: { template_id: template.id, data: template.example as Record<string, unknown> },
-      };
+
+      return reply.code(200).send({
+        success: true,
+        deleted: normalizedId,
+      });
     }
   );
 };

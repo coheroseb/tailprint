@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/server.js';
 import { browserService } from '../src/services/browser.js';
+import { redisService } from '../src/services/redis.js';
 import { HOSTED_TEMPLATES } from '../src/config/hostedTemplates.js';
 import { resolveTemplateRequest, TemplateInputError } from '../src/services/templateEngine.js';
 
@@ -347,6 +348,175 @@ describe('Hosted templates (template_id + data)', () => {
       expect(second.statusCode).toBe(202);
       expect(second.headers['x-tailprint-idempotent-replay']).toBe('true');
       expect(second.json().job_id).toBe(first.json().job_id);
+    });
+  });
+
+  describe('Custom Hosted Templates (Starter+ Plan Required)', () => {
+    const freeKeyToken = 'sec_live_free_tier_custom_tpl_test';
+    const starterKeyToken = 'sec_live_starter_tier_custom_tpl_test';
+
+    beforeAll(async () => {
+      await redisService.storeApiKey(freeKeyToken, {
+        key_prefix: freeKeyToken.slice(0, 12),
+        customer_id: 'cus_free_custom_tpl_test',
+        plan: 'free',
+        monthly_limit: 100,
+        status: 'active',
+        created_at: new Date().toISOString(),
+      });
+
+      await redisService.storeApiKey(starterKeyToken, {
+        key_prefix: starterKeyToken.slice(0, 12),
+        customer_id: 'cus_starter_custom_tpl_test',
+        plan: 'starter',
+        monthly_limit: 3000,
+        status: 'active',
+        created_at: new Date().toISOString(),
+      });
+    });
+
+    it('rejects creating a custom template on the Free plan with 403 Forbidden', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/v1/templates',
+        headers: { authorization: `Bearer ${freeKeyToken}` },
+        payload: {
+          id: 'my-free-template',
+          title: 'Free Attempt',
+          html: '<h1>Hello {{name}}</h1>',
+        },
+      });
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json().message).toContain('Starter plan or higher');
+    });
+
+    it('rejects overwriting a built-in template ID with 400 Bad Request', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/v1/templates',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+        payload: {
+          id: 'invoice-modern',
+          title: 'Overwrite Attempt',
+          html: '<h1>Nope</h1>',
+        },
+      });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.json().message).toContain('reserved for a built-in template');
+    });
+
+    it('allows Starter+ customers to create, list, inspect, render, and delete custom Mustache templates', async () => {
+      // 1. Create custom template
+      const createRes = await app.inject({
+        method: 'POST',
+        url: '/v1/templates',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+        payload: {
+          id: 'acme-custom-quote',
+          title: 'Acme Sales Quote',
+          category: 'Sales',
+          description: 'Custom quote with line items',
+          html: `<div class="p-10 font-sans">
+            <h1 class="text-2xl font-bold">{{company_name}}</h1>
+            <p class="text-slate-600">Quote for {{customer.name}}</p>
+            <ul>{{#items}}<li>{{@number}}. {{name}} — {{price}}</li>{{/items}}</ul>
+          </div>`,
+          required_fields: ['company_name', 'customer.name'],
+          default_data: { company_name: 'Acme Default ApS' },
+          example_data: {
+            company_name: 'Acme ApS',
+            customer: { name: 'Nordic Bio' },
+            items: [{ name: 'API License', price: '€49' }],
+          },
+        },
+      });
+
+      expect(createRes.statusCode).toBe(201);
+      expect(createRes.json().template.id).toBe('acme-custom-quote');
+
+      // 2. List templates (authenticated includes custom template)
+      const listRes = await app.inject({
+        method: 'GET',
+        url: '/v1/templates',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+      });
+      expect(listRes.statusCode).toBe(200);
+      const customEntry = listRes.json().templates.find((t: any) => t.id === 'acme-custom-quote');
+      expect(customEntry).toBeTruthy();
+      expect(customEntry.custom).toBe(true);
+      expect(customEntry.builtin).toBe(false);
+
+      // 3. Get custom template details
+      const getRes = await app.inject({
+        method: 'GET',
+        url: '/v1/templates/acme-custom-quote',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+      });
+      expect(getRes.statusCode).toBe(200);
+      expect(getRes.json().html).toContain('{{company_name}}');
+
+      // 4. Missing required field customer.name returns 400 without consuming quota
+      const badRender = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+        payload: {
+          template_id: 'acme-custom-quote',
+          data: { company_name: 'Acme ApS' },
+        },
+      });
+      expect(badRender.statusCode).toBe(400);
+      expect(badRender.json().message).toContain('customer.name: Required');
+
+      // 5. Free plan key attempting to render custom template gets 403 Forbidden
+      const freeRenderAttempt = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: { authorization: `Bearer ${freeKeyToken}` },
+        payload: {
+          template_id: 'acme-custom-quote',
+          data: { company_name: 'Acme ApS', customer: { name: 'Nordic Bio' } },
+        },
+      });
+      expect(freeRenderAttempt.statusCode).toBe(403);
+
+      // 6. Valid Starter+ render produces a valid PDF
+      const validRender = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+        payload: {
+          template_id: 'acme-custom-quote',
+          data: {
+            customer: { name: 'Nordic Bio <script>alert(1)</script>' },
+            items: [
+              { name: 'Starter Subscription', price: '€19' },
+              { name: 'Custom Templates Addon', price: 'Included' },
+            ],
+          },
+        },
+      });
+      expect(validRender.statusCode).toBe(200);
+      expect(validRender.headers['x-tailprint-template']).toBe('acme-custom-quote');
+      expect(validRender.rawPayload.subarray(0, 4).toString()).toBe('%PDF');
+
+      // 7. Delete custom template
+      const delRes = await app.inject({
+        method: 'DELETE',
+        url: '/v1/templates/acme-custom-quote',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+      });
+      expect(delRes.statusCode).toBe(200);
+      expect(delRes.json().deleted).toBe('acme-custom-quote');
+
+      const afterDel = await app.inject({
+        method: 'GET',
+        url: '/v1/templates/acme-custom-quote',
+        headers: { authorization: `Bearer ${starterKeyToken}` },
+      });
+      expect(afterDel.statusCode).toBe(404);
     });
   });
 });

@@ -29,6 +29,23 @@ export interface IdempotencyRecord {
   createdAt: string;
 }
 
+export interface CustomTemplateRecord {
+  id: string;
+  customer_id: string;
+  title: string;
+  category: string;
+  description: string;
+  html: string;
+  required_fields: string[];
+  default_data?: Record<string, unknown>;
+  example_data?: Record<string, unknown>;
+  format: 'A4' | 'Letter' | 'Legal';
+  landscape: boolean;
+  smart_pagination: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // In-Memory store fallback for local development or tests when Upstash is not configured
 class MemoryRedisClient {
   private data = new Map<string, any>();
@@ -103,6 +120,15 @@ class MemoryRedisClient {
     const had = set.has(member);
     set.add(member);
     return had ? 0 : 1;
+  }
+
+  async srem(key: string, member: string): Promise<number> {
+    this.cleanKey(key);
+    const set = this.data.get(key);
+    if (set instanceof Set) {
+      return set.delete(member) ? 1 : 0;
+    }
+    return 0;
   }
 
   async keys(pattern: string): Promise<string[]> {
@@ -627,6 +653,85 @@ export class RedisService {
   ): Promise<void> {
     const key = this.getIdempotencyRedisKey(rawKey, endpoint, idempotencyKey);
     await this.client.set(key, record, { ex: ttlSeconds });
+  }
+
+  // ==========================================
+  // Custom User Templates (Starter+ Plans)
+  // ==========================================
+
+  public isPaidPlan(plan?: string | null): boolean {
+    if (!plan) return false;
+    const p = plan.toLowerCase().trim();
+    return p === 'starter' || p === 'pro' || p === 'business' || p === 'enterprise';
+  }
+
+  private getCustomTemplateKey(customerId: string, templateId: string): string {
+    return `custom_templates:${customerId}:${templateId.toLowerCase().trim()}`;
+  }
+
+  private getCustomTemplateSetKey(customerId: string): string {
+    return `custom_template_ids:${customerId}`;
+  }
+
+  public async saveCustomTemplate(record: CustomTemplateRecord): Promise<CustomTemplateRecord> {
+    const normalizedId = record.id.toLowerCase().trim();
+    const existing = await this.getCustomTemplate(record.customer_id, normalizedId);
+    const now = new Date().toISOString();
+
+    const saved: CustomTemplateRecord = {
+      ...record,
+      id: normalizedId,
+      created_at: existing?.created_at || record.created_at || now,
+      updated_at: now,
+    };
+
+    const key = this.getCustomTemplateKey(record.customer_id, normalizedId);
+    await this.client.set(key, saved);
+    if ('sadd' in this.client) {
+      await (this.client as any).sadd(this.getCustomTemplateSetKey(record.customer_id), normalizedId);
+    }
+    return saved;
+  }
+
+  public async getCustomTemplate(customerId: string, templateId: string): Promise<CustomTemplateRecord | null> {
+    const key = this.getCustomTemplateKey(customerId, templateId);
+    const raw = await this.client.get<CustomTemplateRecord | string>(key);
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw) as CustomTemplateRecord;
+      } catch {
+        return null;
+      }
+    }
+    return raw as CustomTemplateRecord;
+  }
+
+  public async listCustomTemplates(customerId: string): Promise<CustomTemplateRecord[]> {
+    let ids: string[] = [];
+    if ('smembers' in this.client) {
+      ids = await (this.client as any).smembers(this.getCustomTemplateSetKey(customerId));
+    }
+
+    const records: CustomTemplateRecord[] = [];
+    for (const id of ids) {
+      const rec = await this.getCustomTemplate(customerId, id);
+      if (rec) {
+        records.push(rec);
+      }
+    }
+
+    return records.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  }
+
+  public async deleteCustomTemplate(customerId: string, templateId: string): Promise<boolean> {
+    const normalizedId = templateId.toLowerCase().trim();
+    const key = this.getCustomTemplateKey(customerId, normalizedId);
+    const deletedCount = await this.client.del(key);
+    if ('srem' in this.client) {
+      await (this.client as any).srem(this.getCustomTemplateSetKey(customerId), normalizedId);
+    }
+    return deletedCount > 0;
   }
 }
 

@@ -70,6 +70,21 @@ type TemplateDetailRecord struct {
 	ExampleRequest map[string]any `json:"example_request"`
 }
 
+// CustomTemplateRequest configures creating or updating a custom hosted template (Starter+ plan required).
+type CustomTemplateRequest struct {
+	ID              string         `json:"id"`
+	Title           string         `json:"title"`
+	HTML            string         `json:"html"`
+	Category        string         `json:"category,omitempty"`
+	Description     string         `json:"description,omitempty"`
+	RequiredFields  []string       `json:"required_fields,omitempty"`
+	DefaultData     map[string]any `json:"default_data,omitempty"`
+	ExampleData     map[string]any `json:"example_data,omitempty"`
+	Format          string         `json:"format,omitempty"`
+	Landscape       bool           `json:"landscape,omitempty"`
+	SmartPagination *bool          `json:"smart_pagination,omitempty"`
+}
+
 // TemplateDetails is the response envelope from GetTemplate.
 type TemplateDetails struct {
 	Success  bool                 `json:"success"`

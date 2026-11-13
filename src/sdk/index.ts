@@ -273,7 +273,7 @@ export class Tailprint {
   private async request(
     endpoint: string,
     options: {
-      method?: 'GET' | 'POST';
+      method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
       body?: any;
       headers?: Record<string, string>;
       expectBinary?: boolean;
@@ -364,6 +364,58 @@ export class Tailprint {
    */
   public async getTemplate(templateId: string): Promise<TemplateDetails> {
     return this.request(`/v1/templates/${encodeURIComponent(templateId)}`, { method: 'GET' });
+  }
+
+  /**
+   * Creates or overwrites a custom hosted Mustache + Tailwind CSS template on your account (Starter+ plan required).
+   */
+  public async createTemplate(options: {
+    id: string;
+    title: string;
+    html: string;
+    category?: string;
+    description?: string;
+    required_fields?: string[];
+    default_data?: Record<string, unknown>;
+    example_data?: Record<string, unknown>;
+    format?: 'A4' | 'Letter' | 'Legal';
+    landscape?: boolean;
+    smart_pagination?: boolean;
+  }): Promise<any> {
+    return this.request('/v1/templates', { method: 'POST', body: options });
+  }
+
+  /**
+   * Updates an existing custom hosted template on your account (Starter+ plan required).
+   */
+  public async updateTemplate(
+    templateId: string,
+    options: {
+      title: string;
+      html: string;
+      category?: string;
+      description?: string;
+      required_fields?: string[];
+      default_data?: Record<string, unknown>;
+      example_data?: Record<string, unknown>;
+      format?: 'A4' | 'Letter' | 'Legal';
+      landscape?: boolean;
+      smart_pagination?: boolean;
+    }
+  ): Promise<any> {
+    return this.request(`/v1/templates/${encodeURIComponent(templateId)}`, {
+      method: 'PUT',
+      body: options,
+    });
+  }
+
+  /**
+   * Deletes a custom hosted template from your account (Starter+ plan required).
+   */
+  public async deleteTemplate(templateId: string): Promise<{ success: boolean; deleted: string }> {
+    return this.request(`/v1/templates/${encodeURIComponent(templateId)}`, {
+      method: 'DELETE',
+    });
   }
 
   /**

@@ -40,6 +40,7 @@ export const PLANS: Record<string, PlanConfig> = {
     description: 'Zero purchase friction. Get production-grade PDF rendering up and running in minutes.',
     features: [
       '3,000 vector PDF renders / month',
+      'Custom Hosted Templates (POST /v1/templates)',
       'Full Tailwind CSS v3 & v4 support',
       'Instant sub-500ms execution',
       'Smart Pagination & Table Split Shield',

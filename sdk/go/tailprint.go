@@ -141,6 +141,21 @@ func (c *Client) GetTemplate(ctx context.Context, templateID string) (*TemplateD
 	return &res, nil
 }
 
+// CreateTemplate creates or overwrites a custom hosted template on your account (Starter+ plan required).
+func (c *Client) CreateTemplate(ctx context.Context, req CustomTemplateRequest) (map[string]any, error) {
+	var res map[string]any
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/templates", req, &res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// DeleteTemplate deletes a custom hosted template from your account (Starter+ plan required).
+func (c *Client) DeleteTemplate(ctx context.Context, templateID string) error {
+	endpoint := "/v1/templates/" + url.PathEscape(templateID)
+	return c.doJSON(ctx, http.MethodDelete, endpoint, nil, nil)
+}
+
 // RenderPDFAsync enqueues an asynchronous PDF rendering job and immediately returns job tracking info.
 func (c *Client) RenderPDFAsync(ctx context.Context, opts RenderOptions) (*AsyncJobAccepted, error) {
 	opts.Async = true

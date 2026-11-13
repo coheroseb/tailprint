@@ -227,6 +227,44 @@ class Tailprint:
         res = self._request(f"/v1/templates/{urllib.parse.quote(template_id, safe='')}", method="GET", expect_binary=False)
         return res if isinstance(res, dict) else {}
 
+    def create_template(
+        self,
+        id: str,
+        title: str,
+        html: str,
+        category: str = "Custom",
+        description: str = "Custom Mustache + Tailwind CSS PDF template",
+        required_fields: Optional[List[str]] = None,
+        default_data: Optional[Dict[str, Any]] = None,
+        example_data: Optional[Dict[str, Any]] = None,
+        format: str = "A4",
+        landscape: bool = False,
+        smart_pagination: bool = True,
+    ) -> Dict[str, Any]:
+        """Creates or updates a custom hosted template on your account (Starter+ plan required)."""
+        payload: Dict[str, Any] = {
+            "id": id,
+            "title": title,
+            "html": html,
+            "category": category,
+            "description": description,
+            "required_fields": required_fields or [],
+            "format": format,
+            "landscape": landscape,
+            "smart_pagination": smart_pagination,
+        }
+        if default_data is not None:
+            payload["default_data"] = default_data
+        if example_data is not None:
+            payload["example_data"] = example_data
+        res = self._request("/v1/templates", method="POST", payload=payload, expect_binary=False)
+        return res if isinstance(res, dict) else {}
+
+    def delete_template(self, template_id: str) -> Dict[str, Any]:
+        """Deletes a custom hosted template from your account (Starter+ plan required)."""
+        res = self._request(f"/v1/templates/{urllib.parse.quote(template_id, safe='')}", method="DELETE", expect_binary=False)
+        return res if isinstance(res, dict) else {}
+
     # =========================================================================
     # ASYNCHRONOUS & BATCH RENDERING
     # =========================================================================

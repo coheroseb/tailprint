@@ -176,6 +176,31 @@ class TailprintClient
     }
 
     /**
+     * Create or update a custom hosted template on your account (Starter+ plan required).
+     *
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     */
+    public function createTemplate(array $options): array
+    {
+        /** @var array<string, mixed> $res */
+        $res = $this->request('/v1/templates', 'POST', $options, false);
+        return $res;
+    }
+
+    /**
+     * Delete a custom hosted template from your account (Starter+ plan required).
+     *
+     * @return array<string, mixed>
+     */
+    public function deleteTemplate(string $templateId): array
+    {
+        /** @var array<string, mixed> $res */
+        $res = $this->request('/v1/templates/' . rawurlencode($templateId), 'DELETE', null, false);
+        return $res;
+    }
+
+    /**
      * Enqueue an asynchronous PDF rendering job and return job metadata immediately.
      *
      * @param array<string, mixed> $options
