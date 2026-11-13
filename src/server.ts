@@ -39,6 +39,33 @@ export async function buildApp(): Promise<FastifyInstance> {
   fastify.setValidatorCompiler(validatorCompiler);
   fastify.setSerializerCompiler(serializerCompiler);
 
+  // Tolerant JSON parser: handles standard JSON and auto-repairs unescaped HTML attribute quotes
+  // when browser cURL tools (like ReqBin) strip backslashes from \" inside <...> tags.
+  fastify.removeContentTypeParser('application/json');
+  fastify.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (_req, body, done) => {
+      const raw = typeof body === 'string' ? body : body.toString('utf8');
+      if (!raw || !raw.trim()) {
+        return done(null, {});
+      }
+      try {
+        return done(null, JSON.parse(raw));
+      } catch (firstErr: any) {
+        try {
+          const repaired = raw.replace(/<[^<>]*>/g, (tag) =>
+            tag.replace(/\\?"/g, '\\"')
+          );
+          return done(null, JSON.parse(repaired));
+        } catch {
+          firstErr.statusCode = 400;
+          return done(firstErr, undefined);
+        }
+      }
+    }
+  );
+
   // 2. Raw body plugin (for Stripe signature validation)
   await fastify.register(fastifyRawBody, {
     field: 'rawBody',
