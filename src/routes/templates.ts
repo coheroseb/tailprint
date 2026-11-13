@@ -2088,8 +2088,27 @@ Cursor IDE & Windsurf:
   </div>
 
   <!-- Footer -->
-  <footer class="py-12 border-t border-slate-900 bg-slate-950 text-center text-xs text-slate-500">
-    <p>© 2026 Tailprint (tailprint.com). Built with Fastify, Playwright Chromium, Upstash Redis & Stripe.</p>
+  <footer class="py-12 border-t border-slate-900 bg-slate-950 text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center space-x-2">
+        <span class="font-mono text-sm font-bold text-white">&lt;tailprint /&gt;</span>
+        <span class="text-slate-600">|</span>
+        <span>Developer-First PDF &amp; Document Engine</span>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-slate-400">
+        <a href="/docs" target="_blank" class="hover:text-white transition">API Docs</a>
+        <a href="https://www.npmjs.com/package/tailprint" target="_blank" class="hover:text-rose-300 transition">TypeScript SDK (npm)</a>
+        <a href="https://pypi.org/project/tailprint/" target="_blank" class="hover:text-emerald-300 transition">Python SDK (PyPI)</a>
+        <a href="https://github.com/coheroseb/tailprint" target="_blank" class="hover:text-slate-200 transition">GitHub</a>
+        <a href="/tools/factur-x" class="hover:text-indigo-300 transition">Factur-X Validator</a>
+        <a href="/studio" class="hover:text-indigo-300 transition">Studio</a>
+        <a href="/guides" class="hover:text-cyan-300 transition">Guides</a>
+        <a href="/#faq" class="hover:text-white transition">FAQ</a>
+      </div>
+
+      <p>© 2026 Tailprint. All rights reserved.</p>
+    </div>
   </footer>
 
   <!-- Script for Interactivity -->
