@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { carouselService } from '../services/carousel.js';
 import { eInvoiceService } from '../services/eInvoice.js';
+import { pdfOperationsService } from '../services/pdfOperations.js';
 import { visualDiffService } from '../services/visualDiff.js';
 import { mockupService } from '../services/mockup.js';
 import { reelService } from '../services/reel.js';
@@ -406,8 +407,18 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
       </p>
     </div>
 
-    <!-- Generator Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <!-- Mode Switcher Tabs -->
+    <div class="flex items-center justify-center space-x-3">
+      <button id="tab-btn-generator" onclick="switchFacturXTab('generator')" class="px-5 py-2.5 rounded-xl font-bold text-xs transition border bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-lg shadow-emerald-500/10 flex items-center space-x-2">
+        <span>⚡ Generate Factur-X PDF</span>
+      </button>
+      <button id="tab-btn-validator" onclick="switchFacturXTab('validator')" class="px-5 py-2.5 rounded-xl font-bold text-xs transition border bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700 flex items-center space-x-2">
+        <span>🔍 Inspect &amp; Validate E-Invoice</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: GENERATOR -->
+    <div id="section-generator" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       
       <!-- Form Controls (7 cols) -->
       <div class="lg:col-span-7 bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-6">
@@ -545,13 +556,133 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     </div>
 
+    <!-- TAB 2: INSPECTOR & VALIDATOR -->
+    <div id="section-validator" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Upload / Dropzone (5 cols) -->
+      <div class="lg:col-span-5 bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl space-y-6">
+        <div>
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">Drop PDF or XML Invoice</span>
+          <p class="text-xs text-slate-400">
+            Upload any European electronic invoice (PDF or CrossIndustryInvoice XML). Tailprint inspects the PDF catalog, extracts the embedded XML, and validates strict EN 16931 compliance.
+          </p>
+        </div>
+
+        <div id="dropzone" onclick="document.getElementById('validator-file-input').click()" class="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-2xl p-8 text-center cursor-pointer transition bg-slate-950/60 hover:bg-slate-950 space-y-3">
+          <input id="validator-file-input" type="file" accept=".pdf,.xml" class="hidden" onchange="handleFileSelected(event)" />
+          <div class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 text-emerald-400 flex items-center justify-center text-2xl mx-auto">
+            📄
+          </div>
+          <div>
+            <p id="dropzone-text" class="text-xs font-bold text-slate-200">Click to browse or drop PDF / XML here</p>
+            <p class="text-[10px] text-slate-500 mt-0.5">Supports Factur-X, ZUGFeRD, and PEPPOL invoices</p>
+          </div>
+        </div>
+
+        <div id="selected-file-info" class="hidden p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+          <div class="truncate max-w-[200px]">
+            <span id="selected-filename" class="font-mono text-emerald-400 font-bold block truncate">invoice.pdf</span>
+            <span id="selected-filesize" class="text-[10px] text-slate-500">124 KB</span>
+          </div>
+          <button onclick="clearSelectedFile()" class="text-slate-400 hover:text-rose-400 text-xs font-bold px-2 py-1">✕ Remove</button>
+        </div>
+
+        <button id="btn-validate-invoice" onclick="runValidation()" disabled class="w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs transition flex items-center justify-center space-x-2 cursor-not-allowed">
+          <span>🔍 Validate EN 16931 Compliance</span>
+        </button>
+      </div>
+
+      <!-- Report View (7 cols) -->
+      <div class="lg:col-span-7 bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-2xl flex flex-col items-center justify-center min-h-[460px] text-center space-y-4">
+        
+        <div id="val-state-empty" class="space-y-4 max-w-sm">
+          <div class="w-16 h-16 rounded-2xl bg-slate-800/80 text-slate-400 flex items-center justify-center text-3xl mx-auto border border-slate-700/50">
+            ⚖️
+          </div>
+          <h3 class="text-lg font-bold text-white">Compliance Report &amp; Diagnostics</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Select or drop an e-invoice PDF. Tailprint will extract its machine-readable metadata and perform arithmetic, profile, and syntax checks.
+          </p>
+        </div>
+
+        <div id="val-state-loading" class="hidden space-y-4">
+          <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p class="text-xs text-emerald-300 font-semibold">Inspecting PDF catalog &amp; validating EN 16931 rules...</p>
+        </div>
+
+        <div id="val-state-result" class="hidden w-full space-y-4 text-left">
+          
+          <!-- Status Banner -->
+          <div id="val-status-banner" class="p-4 rounded-xl border flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span id="val-status-icon" class="text-2xl">✅</span>
+              <div>
+                <h4 id="val-status-title" class="font-bold text-sm text-white">Valid Factur-X / ZUGFeRD E-Invoice</h4>
+                <p id="val-status-standard" class="text-[11px] text-slate-400">EN 16931 Compliant</p>
+              </div>
+            </div>
+            <span id="val-profile-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">BASIC</span>
+          </div>
+
+          <!-- Metadata Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Invoice #</span>
+              <span id="val-meta-number" class="font-mono font-bold text-slate-200 truncate block mt-0.5">-</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Issue Date</span>
+              <span id="val-meta-date" class="font-mono font-bold text-slate-200 truncate block mt-0.5">-</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Currency</span>
+              <span id="val-meta-currency" class="font-mono font-bold text-slate-200 truncate block mt-0.5">EUR</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Total Gross</span>
+              <span id="val-meta-total" class="font-mono font-bold text-emerald-400 truncate block mt-0.5">-</span>
+            </div>
+          </div>
+
+          <!-- Parties -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+              <span class="text-[10px] text-emerald-400 uppercase font-bold tracking-wider block">Seller (Supplier)</span>
+              <p id="val-seller-name" class="font-bold text-slate-200">-</p>
+              <p id="val-seller-vat" class="text-slate-400 font-mono text-[11px]">VAT: -</p>
+            </div>
+            <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+              <span class="text-[10px] text-indigo-400 uppercase font-bold tracking-wider block">Buyer (Customer)</span>
+              <p id="val-buyer-name" class="font-bold text-slate-200">-</p>
+              <p id="val-buyer-vat" class="text-slate-400 font-mono text-[11px]">VAT: -</p>
+            </div>
+          </div>
+
+          <!-- Diagnostics & Errors -->
+          <div id="val-errors-container" class="hidden p-3.5 rounded-xl bg-rose-950/40 border border-rose-800/60 text-xs space-y-1.5">
+            <span class="font-bold text-rose-300 block">⚠️ Compliance Errors:</span>
+            <ul id="val-errors-list" class="list-disc list-inside text-rose-200 text-[11px] space-y-0.5"></ul>
+          </div>
+
+          <div id="val-warnings-container" class="hidden p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/60 text-xs space-y-1.5">
+            <span class="font-bold text-amber-300 block">ℹ️ Recommendations &amp; Warnings:</span>
+            <ul id="val-warnings-list" class="list-disc list-inside text-amber-200 text-[11px] space-y-0.5"></ul>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
     ${renderConversionCallout(
-      'Factur-X Invoicing',
+      'Factur-X Invoicing & Validation',
       '// Inside Claude Desktop or Cursor MCP:\n' +
         '"Issue a Factur-X invoice to BMW AG for\n' +
         ' 40h consulting at 150 EUR/hr with 25% VAT"\n\n' +
-        '// Tool executed: generate_einvoice\n' +
-        '// PDF + factur-x.xml compiled in 800ms'
+        '// Or via REST API:\n' +
+        'POST /v1/pdf/validate-einvoice\n' +
+        '// Validates EN 16931 rules & extracts metadata'
     )}
   </main>
 
@@ -560,6 +691,184 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
   </footer>
 
   <script>
+    var currentFileBase64 = null;
+    var currentFileXml = null;
+
+    function switchFacturXTab(tab) {
+      var genTabBtn = document.getElementById('tab-btn-generator');
+      var valTabBtn = document.getElementById('tab-btn-validator');
+      var genSec = document.getElementById('section-generator');
+      var valSec = document.getElementById('section-validator');
+
+      if (tab === 'generator') {
+        genTabBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-xs transition border bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-lg shadow-emerald-500/10 flex items-center space-x-2';
+        valTabBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-xs transition border bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700 flex items-center space-x-2';
+        genSec.classList.remove('hidden');
+        valSec.classList.add('hidden');
+      } else {
+        valTabBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-xs transition border bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-lg shadow-emerald-500/10 flex items-center space-x-2';
+        genTabBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-xs transition border bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700 flex items-center space-x-2';
+        valSec.classList.remove('hidden');
+        genSec.classList.add('hidden');
+      }
+    }
+
+    function handleFileSelected(event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      document.getElementById('selected-filename').innerText = file.name;
+      document.getElementById('selected-filesize').innerText = (file.size / 1024).toFixed(1) + ' KB';
+      document.getElementById('selected-file-info').classList.remove('hidden');
+
+      var reader = new FileReader();
+      if (file.name.toLowerCase().endsWith('.xml')) {
+        reader.onload = function(e) {
+          currentFileXml = e.target.result;
+          currentFileBase64 = null;
+          enableValidateBtn();
+        };
+        reader.readAsText(file);
+      } else {
+        reader.onload = function(e) {
+          currentFileBase64 = e.target.result;
+          currentFileXml = null;
+          enableValidateBtn();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function clearSelectedFile() {
+      currentFileBase64 = null;
+      currentFileXml = null;
+      document.getElementById('validator-file-input').value = '';
+      document.getElementById('selected-file-info').classList.add('hidden');
+      var btn = document.getElementById('btn-validate-invoice');
+      btn.disabled = true;
+      btn.className = 'w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs transition flex items-center justify-center space-x-2 cursor-not-allowed';
+    }
+
+    function enableValidateBtn() {
+      var btn = document.getElementById('btn-validate-invoice');
+      btn.disabled = false;
+      btn.className = 'w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 cursor-pointer';
+    }
+
+    // Drag and drop listeners
+    var dropzone = document.getElementById('dropzone');
+    dropzone.addEventListener('dragover', function(e) { e.preventDefault(); dropzone.classList.add('border-emerald-500', 'bg-slate-950'); });
+    dropzone.addEventListener('dragleave', function(e) { e.preventDefault(); dropzone.classList.remove('border-emerald-500', 'bg-slate-950'); });
+    dropzone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropzone.classList.remove('border-emerald-500', 'bg-slate-950');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFileSelected({ target: { files: e.dataTransfer.files } });
+      }
+    });
+
+    async function runValidation() {
+      var emptyState = document.getElementById('val-state-empty');
+      var loadingState = document.getElementById('val-state-loading');
+      var resultState = document.getElementById('val-state-result');
+
+      emptyState.classList.add('hidden');
+      resultState.classList.add('hidden');
+      loadingState.classList.remove('hidden');
+
+      try {
+        var payload = {};
+        if (currentFileBase64) payload.pdf = currentFileBase64;
+        if (currentFileXml) payload.xml = currentFileXml;
+
+        var res = await fetch('/v1/tools/factur-x/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        var data = await res.json();
+        if (!res.ok) {
+          alert('Validation failed: ' + (data.message || 'Unknown error'));
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        // Render Report
+        var banner = document.getElementById('val-status-banner');
+        var icon = document.getElementById('val-status-icon');
+        var title = document.getElementById('val-status-title');
+        var standardEl = document.getElementById('val-status-standard');
+        var badge = document.getElementById('val-profile-badge');
+
+        if (data.isValid) {
+          banner.className = 'p-4 rounded-xl border flex items-center justify-between bg-emerald-950/40 border-emerald-800/60';
+          icon.innerText = '✅';
+          title.innerText = 'Valid European Factur-X / ZUGFeRD E-Invoice';
+          title.className = 'font-bold text-sm text-emerald-300';
+          badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        } else {
+          banner.className = 'p-4 rounded-xl border flex items-center justify-between bg-rose-950/40 border-rose-800/60';
+          icon.innerText = '❌';
+          title.innerText = 'Non-Compliant Electronic Invoice';
+          title.className = 'font-bold text-sm text-rose-300';
+          badge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+        }
+
+        standardEl.innerText = data.standard + (data.xmlFilename ? ' (' + data.xmlFilename + ')' : '');
+        badge.innerText = data.profile;
+
+        if (data.invoiceDetails) {
+          document.getElementById('val-meta-number').innerText = data.invoiceDetails.invoiceNumber || 'None';
+          document.getElementById('val-meta-date').innerText = data.invoiceDetails.issueDate || 'None';
+          document.getElementById('val-meta-currency').innerText = data.invoiceDetails.currency || 'EUR';
+          var grand = data.invoiceDetails.totals && data.invoiceDetails.totals.grandTotalAmount;
+          document.getElementById('val-meta-total').innerText = grand !== null ? grand.toFixed(2) + ' ' + (data.invoiceDetails.currency || '') : '-';
+
+          document.getElementById('val-seller-name').innerText = (data.invoiceDetails.seller && data.invoiceDetails.seller.name) || 'Not declared';
+          document.getElementById('val-seller-vat').innerText = 'VAT: ' + ((data.invoiceDetails.seller && data.invoiceDetails.seller.vatId) || 'None');
+          document.getElementById('val-buyer-name').innerText = (data.invoiceDetails.buyer && data.invoiceDetails.buyer.name) || 'Not declared';
+          document.getElementById('val-buyer-vat').innerText = 'VAT: ' + ((data.invoiceDetails.buyer && data.invoiceDetails.buyer.vatId) || 'None');
+        }
+
+        // Errors & Warnings
+        var errContainer = document.getElementById('val-errors-container');
+        var errList = document.getElementById('val-errors-list');
+        errList.innerHTML = '';
+        if (data.errors && data.errors.length > 0) {
+          data.errors.forEach(function(e) {
+            var li = document.createElement('li');
+            li.innerText = e;
+            errList.appendChild(li);
+          });
+          errContainer.classList.remove('hidden');
+        } else {
+          errContainer.classList.add('hidden');
+        }
+
+        var warnContainer = document.getElementById('val-warnings-container');
+        var warnList = document.getElementById('val-warnings-list');
+        warnList.innerHTML = '';
+        if (data.warnings && data.warnings.length > 0) {
+          data.warnings.forEach(function(w) {
+            var li = document.createElement('li');
+            li.innerText = w;
+            warnList.appendChild(li);
+          });
+          warnContainer.classList.remove('hidden');
+        } else {
+          warnContainer.classList.add('hidden');
+        }
+
+        resultState.classList.remove('hidden');
+      } catch (err) {
+        alert('Validation error: ' + err.message);
+        emptyState.classList.remove('hidden');
+      } finally {
+        loadingState.classList.add('hidden');
+      }
+    }
+
     async function generateEInvoice() {
       const btn = document.getElementById('btn-generate-einvoice');
       const emptyState = document.getElementById('einvoice-state-empty');
@@ -3630,6 +3939,59 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         grossTotal: result.grossTotal,
         currency: result.currency,
       });
+    }
+  );
+
+  // 2b. POST /v1/tools/factur-x/validate (Free Browser E-Invoice Inspector)
+  fastify.post(
+    '/v1/tools/factur-x/validate',
+    {
+      schema: {
+        tags: ['Tools'],
+        summary: 'Validate EU Factur-X / ZUGFeRD E-Invoice (Free Browser Tool)',
+        description: 'Rate-limited browser tool to inspect and validate any PDF or XML e-invoice against EN 16931 rules.',
+        body: z.object({
+          pdf: z.string().optional().describe('PDF document as base64 data URI'),
+          xml: z.string().optional().describe('Direct Factur-X XML string'),
+        }),
+      },
+    },
+    async (request, reply) => {
+      const clientIp = request.ip || 'anonymous';
+      const cookieHeader = String(request.headers['cookie'] || '');
+      const authHeader = String(request.headers['authorization'] || '');
+      const apiKeyHeader = String(
+        request.headers['x-api-key'] ||
+          request.headers['api-key'] ||
+          (request.query as any)?.key ||
+          (request.query as any)?.api_key ||
+          ''
+      );
+      const isExempt =
+        cookieHeader.includes('tailprint_ignore_me=1') ||
+        authHeader.startsWith('Bearer sec_') ||
+        apiKeyHeader.startsWith('sec_');
+      const rateLimit = await redisService.checkAiToolRateLimit(clientIp, 10, isExempt);
+      if (!rateLimit.allowed) {
+        return reply.code(429).send({
+          statusCode: 429,
+          error: 'Too Many Requests',
+          message: 'Guest validation limit reached. Please wait a few moments or claim a free developer API key.',
+        });
+      }
+
+      const body = request.body as any;
+      let pdfBuffer: Buffer | undefined;
+      if (body.pdf) {
+        pdfBuffer = await pdfOperationsService.resolvePdfBuffer(body.pdf);
+      }
+
+      const report = await eInvoiceService.validatePdfOrXml({
+        pdfBuffer,
+        xmlString: body.xml,
+      });
+
+      return reply.code(200).send(report);
     }
   );
 

@@ -3,7 +3,13 @@
   "version": "1.1.1",
   "description": "Tailwind-Native Render & PDF Engine + AI Web Scraper (tailprint.com)",
   "type": "module",
-  "main": "dist/server.js",
+  "main": "dist/sdk/index.js",
+  "types": "dist/sdk/index.d.ts",
+  "exports": {
+    ".": "./dist/sdk/index.js",
+    "./sdk": "./dist/sdk/index.js",
+    "./server": "./dist/server.js"
+  },
   "bin": {
     "tailprint": "dist/mcp/stdio.js",
     "tailprint-mcp": "dist/mcp/stdio.js"

@@ -29,6 +29,23 @@ export class PdfOperationsService {
   }
 
   /**
+   * Resolves a PDF buffer from a base64 data URI, raw base64 string, or public HTTP/HTTPS URL.
+   */
+  public async resolvePdfBuffer(input: string): Promise<Buffer> {
+    const trimmed = input.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      const res = await fetch(trimmed);
+      if (!res.ok) {
+        throw new Error(`Failed to download PDF from URL: ${res.statusText} (${res.status})`);
+      }
+      const arrayBuf = await res.arrayBuffer();
+      return Buffer.from(arrayBuf);
+    }
+    const cleanBase64 = trimmed.replace(/^data:application\/pdf;base64,/, '').trim();
+    return Buffer.from(cleanBase64, 'base64');
+  }
+
+  /**
    * Merges multiple PDF buffers into a single combined vector PDF.
    */
   public async mergePdfs(options: MergePdfsOptions): Promise<Buffer> {

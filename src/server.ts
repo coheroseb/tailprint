@@ -10,6 +10,7 @@ import {
 } from 'fastify-type-provider-zod';
 import { env } from './config/env.js';
 import { renderRoutes } from './routes/render.js';
+import { pdfOperationsRoutes } from './routes/pdfOperations.js';
 import { webhookRoutes } from './routes/webhooks.js';
 import { templateRoutes } from './routes/templates.js';
 import { dashboardRoutes } from './routes/dashboard.js';
@@ -106,30 +107,34 @@ curl -X POST https://tailprint.com/v1/render/pdf \\
   --output invoice.pdf
 \`\`\`
 
-#### TypeScript / Node.js
+#### TypeScript / Node.js (Official SDK & Native Fetch)
+\`\`\`bash
+npm install tailprint
+\`\`\`
+
 \`\`\`typescript
+import { Tailprint } from 'tailprint';
 import fs from 'node:fs/promises';
 
-const response = await fetch('https://tailprint.com/v1/render/pdf', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer sec_live_...',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    html: \`
-      <div class="max-w-2xl mx-auto p-8 bg-white border border-slate-200 rounded-2xl shadow-xl">
-        <h1 class="text-2xl font-black text-slate-900">Certificate of Completion</h1>
-        <p class="text-sm text-slate-500 mt-1">Issued to Alexander Wright</p>
-      </div>
-    \`,
-    format: 'A4',
-    landscape: true,
-  }),
-});
+const tailprint = new Tailprint({ apiKey: 'sec_live_...' });
 
-const pdfBuffer = Buffer.from(await response.arrayBuffer());
+// 1. Render Tailwind HTML to Vector PDF
+const pdfBuffer = await tailprint.renderPdf({
+  html: \`
+    <div class="max-w-2xl mx-auto p-8 bg-white border border-slate-200 rounded-2xl shadow-xl">
+      <h1 class="text-2xl font-black text-slate-900">Certificate of Completion</h1>
+      <p class="text-sm text-slate-500 mt-1">Issued to Alexander Wright</p>
+    </div>
+  \`,
+  format: 'A4',
+  landscape: true,
+  smart_pagination: true,
+});
 await fs.writeFile('certificate.pdf', pdfBuffer);
+
+// 2. Or automate PDF operations in 1 line
+const merged = await tailprint.mergePdfs([pdfBuffer, termsBuffer]);
+const watermarked = await tailprint.stampPdf(merged, 'CONFIDENTIAL');
 \`\`\`
 
 #### Python
@@ -425,6 +430,7 @@ curl -X GET https://tailprint.com/v1/usage \\
   await fastify.register(templateRoutes);
   await fastify.register(dashboardRoutes);
   await fastify.register(renderRoutes);
+  await fastify.register(pdfOperationsRoutes);
   await fastify.register(scrapeRoutes);
   await fastify.register(mcpRoutes);
   await fastify.register(usageRoutes);

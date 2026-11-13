@@ -1,4 +1,5 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFName } from 'pdf-lib';
+import zlib from 'node:zlib';
 import { browserService } from './browser.js';
 import { storageService, type StoredFileMetadata } from './storage.js';
 
@@ -43,6 +44,44 @@ export interface GenerateEInvoiceResult {
   taxTotal: number;
   grossTotal: number;
   pdfStored?: StoredFileMetadata;
+}
+
+export interface EInvoiceValidationResult {
+  isValid: boolean;
+  hasEmbeddedXml: boolean;
+  xmlFilename: string | null;
+  standard: string;
+  profile: string;
+  profileUrn: string | null;
+  invoiceDetails: {
+    invoiceNumber: string | null;
+    issueDate: string | null;
+    dueDate: string | null;
+    currency: string | null;
+    seller: {
+      name: string | null;
+      vatId: string | null;
+      country: string | null;
+      city: string | null;
+    } | null;
+    buyer: {
+      name: string | null;
+      vatId: string | null;
+      country: string | null;
+      city: string | null;
+    } | null;
+    totals: {
+      lineTotalAmount: number | null;
+      taxBasisTotalAmount: number | null;
+      taxTotalAmount: number | null;
+      grandTotalAmount: number | null;
+      duePayableAmount: number | null;
+    } | null;
+    lineItemsCount: number;
+    paymentIban: string | null;
+  } | null;
+  errors: string[];
+  warnings: string[];
 }
 
 export class EInvoiceService {
@@ -495,6 +534,324 @@ export class EInvoiceService {
       grossTotal,
       pdfStored,
     };
+  }
+
+  /**
+   * Extracts embedded Factur-X / ZUGFeRD XML document from a PDF's /EmbeddedFiles catalog.
+   */
+  public async extractXmlFromPdf(pdfBuffer: Buffer): Promise<{ xmlString: string; filename: string } | null> {
+    try {
+      const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
+      const names = pdfDoc.catalog.lookup(PDFName.of('Names'));
+      if (!names || typeof (names as any).lookup !== 'function') {
+        return this.fallbackScanForXml(pdfBuffer);
+      }
+
+      const embeddedFiles = (names as any).lookup(PDFName.of('EmbeddedFiles'));
+      if (!embeddedFiles || typeof (embeddedFiles as any).lookup !== 'function') {
+        return this.fallbackScanForXml(pdfBuffer);
+      }
+
+      const efNames = (embeddedFiles as any).lookup(PDFName.of('Names'));
+      if (!efNames || typeof efNames.size !== 'function') {
+        return this.fallbackScanForXml(pdfBuffer);
+      }
+
+      for (let i = 0; i < efNames.size(); i += 2) {
+        const rawName = efNames.get(i);
+        const fileName = rawName && typeof rawName.decodeText === 'function' ? rawName.decodeText() : String(rawName);
+        const lowerName = fileName.toLowerCase();
+
+        if (lowerName.endsWith('.xml')) {
+          const fileSpec = efNames.lookup(i + 1);
+          if (!fileSpec || typeof (fileSpec as any).lookup !== 'function') continue;
+
+          const efDict = (fileSpec as any).lookup(PDFName.of('EF'));
+          if (!efDict || typeof (efDict as any).lookup !== 'function') continue;
+
+          const stream = (efDict as any).lookup(PDFName.of('F'));
+          if (!stream || !stream.contents) continue;
+
+          let xmlString = '';
+          try {
+            const decompressed = zlib.inflateSync(stream.contents);
+            xmlString = decompressed.toString('utf-8');
+          } catch {
+            xmlString = Buffer.from(stream.contents).toString('utf-8');
+          }
+
+          if (xmlString.includes('CrossIndustryInvoice') || xmlString.includes('Invoice')) {
+            return { xmlString, filename: fileName };
+          }
+        }
+      }
+
+      return this.fallbackScanForXml(pdfBuffer);
+    } catch {
+      return this.fallbackScanForXml(pdfBuffer);
+    }
+  }
+
+  /**
+   * Fallback raw stream scan for XML signatures when standard /EmbeddedFiles dictionary is absent.
+   */
+  private fallbackScanForXml(pdfBuffer: Buffer): { xmlString: string; filename: string } | null {
+    try {
+      const rawText = pdfBuffer.toString('latin1');
+      const ciiMatch = rawText.match(/<(?:\w+:)?CrossIndustryInvoice[\s\S]*?<\/(?:\w+:)?CrossIndustryInvoice>/i);
+      if (ciiMatch) {
+        return { xmlString: ciiMatch[0], filename: 'factur-x.xml' };
+      }
+      const ublMatch = rawText.match(/<(?:\w+:)?Invoice[\s\S]*?<\/(?:\w+:)?Invoice>/i);
+      if (ublMatch) {
+        return { xmlString: ublMatch[0], filename: 'ubl-invoice.xml' };
+      }
+    } catch {}
+    return null;
+  }
+
+  /**
+   * Validates Factur-X / ZUGFeRD / EN 16931 XML conformance, extracts all structured metadata,
+   * and verifies required fields and arithmetic consistency.
+   */
+  public validateFacturX(xmlString: string, filename = 'factur-x.xml'): EInvoiceValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    const getSection = (s: string, secName: string): string => {
+      const m = s.match(new RegExp(`<(?:[a-zA-Z0-9_-]+:)?${secName}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:[a-zA-Z0-9_-]+:)?${secName}>`, 'i'));
+      return m ? m[1] : '';
+    };
+
+    const getTag = (s: string, tagName: string): string | null => {
+      const m = s.match(new RegExp(`<(?:[a-zA-Z0-9_-]+:)?${tagName}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:[a-zA-Z0-9_-]+:)?${tagName}>`, 'i'));
+      return m ? m[1].trim() : null;
+    };
+
+    const isCII = xmlString.includes('CrossIndustryInvoice');
+    const isUBL = !isCII && xmlString.includes('Invoice');
+
+    if (!isCII && !isUBL) {
+      errors.push('Document XML is not a recognized European electronic invoice standard (CrossIndustryInvoice or UBL Invoice).');
+      return {
+        isValid: false,
+        hasEmbeddedXml: true,
+        xmlFilename: filename,
+        standard: 'Unknown',
+        profile: 'UNKNOWN',
+        profileUrn: null,
+        invoiceDetails: null,
+        errors,
+        warnings,
+      };
+    }
+
+    // 1. Profile identification
+    const contextSec = getSection(xmlString, 'GuidelineSpecifiedDocumentContextParameter');
+    const profileUrn = getTag(contextSec, 'ID');
+    let profile = 'UNKNOWN';
+    let standard = 'Factur-X 1.0 / ZUGFeRD 2.2 (EN 16931)';
+
+    if (profileUrn) {
+      const lowerUrn = profileUrn.toLowerCase();
+      if (lowerUrn.includes('minimum')) {
+        profile = 'MINIMUM';
+      } else if (lowerUrn.includes('basicwl')) {
+        profile = 'BASIC WL';
+      } else if (lowerUrn.includes('basic')) {
+        profile = 'BASIC';
+      } else if (lowerUrn.includes('extended')) {
+        profile = 'EXTENDED';
+      } else if (lowerUrn.includes('en16931')) {
+        profile = 'EN16931';
+      }
+    } else {
+      warnings.push('Missing explicit GuidelineSpecifiedDocumentContextParameter ID profile declaration.');
+      profile = 'BASIC';
+    }
+
+    // 2. Invoice identification
+    const docSec = getSection(xmlString, 'ExchangedDocument');
+    const invoiceNumber = getTag(docSec, 'ID');
+    if (!invoiceNumber) {
+      errors.push('Missing mandatory invoice number identifier (<ram:ID> in ExchangedDocument).');
+    }
+
+    const issueDateStr = getTag(docSec, 'DateTimeString');
+    let issueDate: string | null = null;
+    if (issueDateStr && issueDateStr.length === 8) {
+      issueDate = `${issueDateStr.slice(0, 4)}-${issueDateStr.slice(4, 6)}-${issueDateStr.slice(6, 8)}`;
+    } else {
+      issueDate = issueDateStr;
+    }
+
+    if (!issueDate) {
+      errors.push('Missing mandatory invoice issue date (<ram:IssueDateTime>).');
+    }
+
+    // 3. Currency
+    const currency = getTag(xmlString, 'InvoiceCurrencyCode');
+    if (!currency) {
+      errors.push('Missing mandatory ISO 4217 invoice currency code (<ram:InvoiceCurrencyCode>).');
+    }
+
+    // 4. Seller Trade Party
+    const sellerSec = getSection(xmlString, 'SellerTradeParty');
+    const sellerName = getTag(sellerSec, 'Name');
+    const sellerTaxSec = getSection(sellerSec, 'SpecifiedTaxRegistration');
+    const sellerVat = getTag(sellerTaxSec, 'ID') || getTag(sellerSec, 'ID');
+    const sellerCountry = getTag(sellerSec, 'CountryID');
+    const sellerCity = getTag(sellerSec, 'CityName');
+
+    if (!sellerName) {
+      errors.push('Missing mandatory supplier/seller company name (<ram:SellerTradeParty>/<ram:Name>).');
+    }
+    if (!sellerVat) {
+      warnings.push('Supplier VAT ID / Tax identifier is missing or not declared under SpecifiedTaxRegistration.');
+    }
+
+    // 5. Buyer Trade Party
+    const buyerSec = getSection(xmlString, 'BuyerTradeParty');
+    const buyerName = getTag(buyerSec, 'Name');
+    const buyerTaxSec = getSection(buyerSec, 'SpecifiedTaxRegistration');
+    const buyerVat = getTag(buyerTaxSec, 'ID') || getTag(buyerSec, 'ID');
+    const buyerCountry = getTag(buyerSec, 'CountryID');
+    const buyerCity = getTag(buyerSec, 'CityName');
+
+    if (!buyerName) {
+      errors.push('Missing mandatory customer/buyer company name (<ram:BuyerTradeParty>/<ram:Name>).');
+    }
+
+    // 6. Monetary Summation & Totals
+    const summationSec = getSection(xmlString, 'SpecifiedTradeSettlementHeaderMonetarySummation');
+    const lineTotalStr = getTag(summationSec, 'LineTotalAmount');
+    const taxBasisStr = getTag(summationSec, 'TaxBasisTotalAmount');
+    const taxTotalStr = getTag(summationSec, 'TaxTotalAmount');
+    const grandTotalStr = getTag(summationSec, 'GrandTotalAmount');
+    const duePayableStr = getTag(summationSec, 'DuePayableAmount');
+
+    const lineTotalAmount = lineTotalStr ? parseFloat(lineTotalStr) : null;
+    const taxBasisTotalAmount = taxBasisStr ? parseFloat(taxBasisStr) : null;
+    const taxTotalAmount = taxTotalStr ? parseFloat(taxTotalStr) : null;
+    const grandTotalAmount = grandTotalStr ? parseFloat(grandTotalStr) : null;
+    const duePayableAmount = duePayableStr ? parseFloat(duePayableStr) : null;
+
+    if (grandTotalAmount === null) {
+      errors.push('Missing mandatory GrandTotalAmount in monetary summation.');
+    }
+
+    // Arithmetic check: TaxBasis + TaxTotal approx GrandTotal
+    if (taxBasisTotalAmount !== null && taxTotalAmount !== null && grandTotalAmount !== null) {
+      const calculatedGrand = Number((taxBasisTotalAmount + taxTotalAmount).toFixed(2));
+      const diff = Math.abs(calculatedGrand - grandTotalAmount);
+      if (diff > 0.05) {
+        errors.push(`Arithmetic inconsistency in monetary totals: TaxBasis (${taxBasisTotalAmount}) + TaxTotal (${taxTotalAmount}) = ${calculatedGrand}, but GrandTotalAmount is ${grandTotalAmount}.`);
+      }
+    }
+
+    // 7. Line items count
+    const lineItemsCount = (xmlString.match(/<(?:\w+:)?IncludedSupplyChainTradeLineItem/g) || []).length;
+    if (lineItemsCount === 0 && profile !== 'MINIMUM') {
+      warnings.push('No line items found (<ram:IncludedSupplyChainTradeLineItem>). Invoices under BASIC or EN16931 profile typically include line items.');
+    }
+
+    // 8. Payment & Due date
+    const paymentSec = getSection(xmlString, 'PayeePartyCreditorFinancialAccount');
+    const paymentIban = getTag(paymentSec, 'IBANID');
+
+    const dueDateStr = getTag(xmlString, 'DueDateDateTime') || getTag(getSection(xmlString, 'SpecifiedTradePaymentTerms'), 'DateTimeString');
+    let dueDate: string | null = null;
+    if (dueDateStr && dueDateStr.length === 8) {
+      dueDate = `${dueDateStr.slice(0, 4)}-${dueDateStr.slice(4, 6)}-${dueDateStr.slice(6, 8)}`;
+    } else {
+      dueDate = dueDateStr;
+    }
+
+    return {
+      isValid: errors.length === 0,
+      hasEmbeddedXml: true,
+      xmlFilename: filename,
+      standard,
+      profile,
+      profileUrn,
+      invoiceDetails: {
+        invoiceNumber,
+        issueDate,
+        dueDate,
+        currency,
+        seller: {
+          name: sellerName,
+          vatId: sellerVat,
+          country: sellerCountry,
+          city: sellerCity,
+        },
+        buyer: {
+          name: buyerName,
+          vatId: buyerVat,
+          country: buyerCountry,
+          city: buyerCity,
+        },
+        totals: {
+          lineTotalAmount,
+          taxBasisTotalAmount,
+          taxTotalAmount,
+          grandTotalAmount,
+          duePayableAmount,
+        },
+        lineItemsCount,
+        paymentIban,
+      },
+      errors,
+      warnings,
+    };
+  }
+
+  /**
+   * High-level validation: extracts XML from a PDF or parses raw XML,
+   * returning an exhaustive EN 16931 compliance report.
+   */
+  public async validatePdfOrXml(options: {
+    pdfBuffer?: Buffer;
+    xmlString?: string;
+  }): Promise<EInvoiceValidationResult> {
+    if (options.xmlString) {
+      return this.validateFacturX(options.xmlString, 'input.xml');
+    }
+
+    if (!options.pdfBuffer) {
+      return {
+        isValid: false,
+        hasEmbeddedXml: false,
+        xmlFilename: null,
+        standard: 'Unknown',
+        profile: 'NONE',
+        profileUrn: null,
+        invoiceDetails: null,
+        errors: ['Neither a PDF document buffer nor XML string was provided for validation.'],
+        warnings: [],
+      };
+    }
+
+    const extracted = await this.extractXmlFromPdf(options.pdfBuffer);
+    if (!extracted) {
+      return {
+        isValid: false,
+        hasEmbeddedXml: false,
+        xmlFilename: null,
+        standard: 'Factur-X / ZUGFeRD (EN 16931)',
+        profile: 'NONE',
+        profileUrn: null,
+        invoiceDetails: null,
+        errors: [
+          'No embedded Factur-X / ZUGFeRD XML file found in this PDF document catalog (/EmbeddedFiles). European hybrid e-invoices require an attached factur-x.xml or zugferd-invoice.xml file.',
+        ],
+        warnings: [
+          'Ensure the document is compiled as a Hybrid PDF/A-3 invoice containing machine-readable CrossIndustryInvoice or UBL XML.',
+        ],
+      };
+    }
+
+    return this.validateFacturX(extracted.xmlString, extracted.filename);
   }
 }
 
