@@ -305,5 +305,41 @@ describe('Dual-Brain PDFs (Zero-OCR) & Cryptographic Proof-of-Origin', () => {
     for (const match of brainScripts) {
       expect(() => new vm.Script(match[1])).not.toThrow();
     }
+
+    // 4. Verify POST /v1/pdf/cortex extracts starter suggested_questions & synapses for white-label frontends
+    const cortexRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/cortex',
+      payload: { pdf: renderRes.rawPayload.toString('base64') },
+    });
+    expect(cortexRes.statusCode).toBe(200);
+    const cortexJson = cortexRes.json();
+    expect(cortexJson.doc_id).toBe(docId);
+    expect(Array.isArray(cortexJson.suggested_questions)).toBe(true);
+    expect(cortexJson.suggested_questions.length).toBeGreaterThan(0);
+  });
+
+  it('supports White-Label Neural-Implant PDFs (neural_custom_url, neural_badge_label, and headless neural_badge: false)', async () => {
+    const renderRes = await app.inject({
+      method: 'POST',
+      url: '/v1/render/pdf',
+      headers: { authorization: authHeader },
+      payload: {
+        html: '<div><h1>White-Label Invoice #WL-99</h1><p>Total due: 49,000 DKK</p></div>',
+        neural_implant: true,
+        neural_custom_url: 'https://portal.kundedomæne.dk/faktura/{{doc_id}}',
+        neural_badge_label: 'KUNDEDOMÆNE AI • SPØRG FAKTURAEN',
+        verify_custom_url: 'https://portal.kundedomæne.dk/verify/{{doc_id}}',
+      },
+    });
+
+    expect(renderRes.statusCode).toBe(200);
+    const docId = renderRes.headers['x-tailprint-doc-id'] as string;
+    expect(renderRes.headers['x-tailprint-brain-url']).toBe(
+      `https://portal.kundedomæne.dk/faktura/${docId}`
+    );
+    expect(renderRes.headers['x-tailprint-verify-url']).toBe(
+      `https://portal.kundedomæne.dk/verify/${docId}`
+    );
   });
 });

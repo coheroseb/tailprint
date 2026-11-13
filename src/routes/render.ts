@@ -202,12 +202,15 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     const hasNeuralImplant =
       Boolean(body.neural_implant) ||
       Boolean(body.neural_context) ||
-      Boolean(body.neural_persona);
+      Boolean(body.neural_persona) ||
+      Boolean(body.neural_custom_url) ||
+      Boolean(body.neural_badge_label);
 
     const shouldEnrich =
       hasNeuralImplant ||
       Boolean(body.sign) ||
       Boolean(body.verify_seal) ||
+      Boolean(body.verify_custom_url) ||
       Boolean(body.ai_ready) ||
       Boolean(body.embed_data) ||
       (Boolean(body.template_id) && body.ai_ready !== false);
@@ -232,11 +235,15 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       templateId: body.template_id || null,
       data: combinedData,
       aiReady: body.ai_ready !== undefined ? body.ai_ready : true,
-      sign: Boolean(body.sign || body.verify_seal || hasNeuralImplant),
-      verifySeal: Boolean(body.verify_seal),
+      sign: Boolean(body.sign || body.verify_seal || body.verify_custom_url || hasNeuralImplant),
+      verifySeal: Boolean(body.verify_seal || body.verify_custom_url),
+      verifyCustomUrl: body.verify_custom_url,
       neuralImplant: hasNeuralImplant,
       neuralPersona: body.neural_persona,
       neuralContext: body.neural_context,
+      neuralBadge: body.neural_badge,
+      neuralCustomUrl: body.neural_custom_url,
+      neuralBadgeLabel: body.neural_badge_label,
       domSynapses,
       noStore: Boolean(body.no_store),
     });

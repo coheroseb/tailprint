@@ -37,9 +37,13 @@ export const RenderPdfRequestSchema = z
     embed_data: z.record(z.any()).optional().describe('Structured JSON payload to embed inside the Dual-Brain PDF container (tailprint-manifest.json) for instant zero-OCR extraction via POST /v1/pdf/extract.'),
     sign: z.boolean().optional().describe('Cryptographic Proof-of-Origin: signs the PDF content streams and embedded manifest with HMAC-SHA256 and registers a tamper-proof verification record.'),
     verify_seal: z.boolean().optional().describe('Renders a sleek vector "Verified by Tailprint" cryptographic seal and verification link onto the PDF document. Automatically enables sign: true.'),
+    verify_custom_url: z.string().max(1000).optional().describe('White-label custom verification URL for the cryptographic seal and manifest (e.g. "https://portal.mycompany.com/verify/{{doc_id}}"). Supports {{doc_id}} placeholder so recipients stay on your own domain.'),
     neural_implant: z.boolean().optional().describe('Neural-Implant PDF mode: compiles a Neuro-Symbolic Spatial Cortex (64-D Int8 vectors, pre-render DOM bounding boxes, and latent memory) into tailprint-cortex.json inside the PDF and stamps a clickable "Ask this PDF" link annotation.'),
     neural_persona: z.string().max(500).optional().describe('Optional persona and instructions implanted into the PDF Neural Cortex (e.g. "Financial & Contract Assistant for Acme Corp").'),
     neural_context: z.union([z.record(z.any()), z.string()]).optional().describe('Subconscious Latent Memory implanted into the PDF Cortex (knowledge, FAQs, SLA, GDPR, discount rules) that the PDF can answer from even though it is not printed on the visual page.'),
+    neural_badge: z.boolean().optional().describe('Whether to draw the clickable Neural-Implant badge on the PDF page (defaults to true when neural_implant is enabled). Set to false for headless/API-only Neural-Implant PDFs with zero visual badge on the page.'),
+    neural_custom_url: z.string().max(1000).optional().describe('White-label custom URL for the clickable PDF badge and brain_url (e.g. "https://portal.mycompany.com/docs/{{doc_id}}"). Replaces tailprint.com/brain/:docId so recipients stay 100% on your own domain. Supports {{doc_id}} placeholder.'),
+    neural_badge_label: z.string().max(120).optional().describe('Custom white-label title text on the clickable PDF badge (e.g. "ACME AI • KLIK FOR AT SPØRGE FAKTURAEN").'),
   })
   .superRefine(validateRenderSource);
 

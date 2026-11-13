@@ -231,6 +231,24 @@ export const NeuralAskResponseSchema = z.object({
   suggested_followups: z.array(z.string()),
 });
 
+export const GetCortexRequestSchema = z
+  .object({
+    pdf: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('PDF document as a base64 string, base64 data URI, or public HTTP/HTTPS URL'),
+    doc_id: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('Tailprint Document ID (e.g. doc_...) to retrieve its stored Neural Cortex directly'),
+  })
+  .refine((d) => Boolean(d.pdf || d.doc_id), {
+    message: 'Either "pdf" or "doc_id" must be provided',
+    path: ['pdf'],
+  });
+
 export const PdfProofLookupResponseSchema = z.object({
   found: z.boolean(),
   doc_id: z.string(),

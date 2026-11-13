@@ -42,9 +42,13 @@ export interface SmartPdfEnrichOptions {
   aiReady?: boolean;
   sign?: boolean;
   verifySeal?: boolean;
+  verifyCustomUrl?: string;
   neuralImplant?: boolean;
   neuralPersona?: string;
   neuralContext?: Record<string, unknown> | string | null;
+  neuralBadge?: boolean;
+  neuralCustomUrl?: string;
+  neuralBadgeLabel?: string;
   domSynapses?: ExtractedDomSynapse[];
   noStore?: boolean;
 }
@@ -264,12 +268,14 @@ export class SmartPdfService {
   /**
    * Draws an interactive, clickable "NEURAL CORTEX ACTIVE — Click to ask this PDF" badge
    * on the first page (bottom-left) AND attaches an ISO-32000 PDF /Link Annotation
-   * so clicking the badge in Apple Preview, Chrome, or Adobe Reader opens `/brain/:docId`.
+   * so clicking the badge in Apple Preview, Chrome, or Adobe Reader opens `brainUrl`
+   * (either `/brain/:docId` or the customer's white-label `neural_custom_url`).
    */
   private async drawNeuralImplantBadgeAndLink(
     pdfDoc: PDFDocument,
     docId: string,
-    brainUrl: string
+    brainUrl: string,
+    customLabel?: string
   ): Promise<void> {
     const pages = pdfDoc.getPages();
     if (pages.length === 0) return;
@@ -303,7 +309,11 @@ export class SmartPdfService {
       color: rgb(0.35, 0.32, 0.9),
     });
 
-    firstPage.drawText(`NEURAL-IMPLANT PDF  •  CLICK TO ASK THIS DOCUMENT`, {
+    const headerLabel = (
+      customLabel?.trim() || 'NEURAL-IMPLANT PDF  •  CLICK TO ASK THIS DOCUMENT'
+    ).slice(0, 62);
+
+    firstPage.drawText(headerLabel, {
       x: x + 10,
       y: y + 13,
       size: 6.4,
@@ -311,7 +321,7 @@ export class SmartPdfService {
       color: rgb(0.24, 0.2, 0.72),
     });
 
-    const displayUrl = brainUrl.replace(/^https?:\/\//i, '');
+    const displayUrl = brainUrl.replace(/^https?:\/\//i, '').slice(0, 56);
     firstPage.drawText(`Interactive Brain & Latent Memory: ${displayUrl}`, {
       x: x + 10,
       y: y + 4.5,
@@ -336,6 +346,15 @@ export class SmartPdfService {
     firstPage.node.addAnnot(linkAnnotRef);
   }
 
+  private resolveCustomUrl(customUrl: string | undefined, defaultUrl: string, docId: string): string {
+    if (!customUrl || !customUrl.trim()) return defaultUrl;
+    const trimmed = customUrl.trim();
+    if (trimmed.includes('{{doc_id}}') || trimmed.includes(':docId')) {
+      return trimmed.replace(/\{\{\s*doc_id\s*\}\}/g, docId).replace(/:docId\b/g, docId);
+    }
+    return trimmed;
+  }
+
   /**
    * Enriches a rendered PDF with:
    * 1. Dual-Brain structured JSON (`tailprint-manifest.json`),
@@ -351,7 +370,11 @@ export class SmartPdfService {
     const issuer = options.customerId || 'tailprint.com';
     const templateId = options.templateId ?? null;
     const hasNeuralImplant = Boolean(
-      options.neuralImplant || options.neuralContext || options.neuralPersona
+      options.neuralImplant ||
+        options.neuralContext ||
+        options.neuralPersona ||
+        options.neuralCustomUrl ||
+        options.neuralBadgeLabel
     );
     const signed = Boolean(options.sign || options.verifySeal || hasNeuralImplant);
     const aiReady = options.aiReady !== undefined ? options.aiReady : true;
@@ -361,16 +384,29 @@ export class SmartPdfService {
         : null;
 
     const appBaseUrl = (env.APP_URL || 'https://tailprint.com').replace(/\/+$/, '');
-    const verificationUrl = `${appBaseUrl}/verify/${docId}`;
-    const brainUrl = `${appBaseUrl}/brain/${docId}`;
+    const verificationUrl = this.resolveCustomUrl(
+      options.verifyCustomUrl,
+      `${appBaseUrl}/verify/${docId}`,
+      docId
+    );
+    const brainUrl = this.resolveCustomUrl(
+      options.neuralCustomUrl,
+      `${appBaseUrl}/brain/${docId}`,
+      docId
+    );
 
     // 1. Load PDF and optionally stamp the cryptographic verification seal & interactive Neural Implant badge
     const initialDoc = await PDFDocument.load(pdfBuffer);
     if (options.verifySeal) {
       await this.drawVerificationSeal(initialDoc, docId, verificationUrl);
     }
-    if (hasNeuralImplant) {
-      await this.drawNeuralImplantBadgeAndLink(initialDoc, docId, brainUrl);
+    if (hasNeuralImplant && options.neuralBadge !== false) {
+      await this.drawNeuralImplantBadgeAndLink(
+        initialDoc,
+        docId,
+        brainUrl,
+        options.neuralBadgeLabel
+      );
     }
 
     // 2. Normalize streams with useObjectStreams: false so content_fingerprint is 100% deterministic
@@ -393,6 +429,7 @@ export class SmartPdfService {
         latentContext: options.neuralContext,
         structuredData: dataPayload,
         appBaseUrl,
+        brainUrl,
       });
 
       const cortexJson = JSON.stringify(cortex, null, 2);
@@ -613,6 +650,53 @@ export class SmartPdfService {
       CORTEX_FILENAME,
       NEURAL_CORTEX_CONTEXT
     );
+  }
+
+  /**
+   * Retrieves the full compiled Neural-Implant Cortex (`TailprintNeuralCortex` including
+   * `suggested_questions`, `persona`, `synapses` with `bbox`, and `knowledge_graph`)
+   * either statelessly from a `pdfBuffer` or by `docId` from Redis.
+   */
+  public async getCortex(options: {
+    pdfBuffer?: Buffer;
+    docId?: string;
+  }): Promise<TailprintNeuralCortex> {
+    if (options.pdfBuffer) {
+      const pdfDoc = await PDFDocument.load(options.pdfBuffer, { ignoreEncryption: true });
+      let cortex = this.extractCortexFromPdfDoc(pdfDoc, options.pdfBuffer);
+      const manifest = this.extractManifestFromPdfDoc(pdfDoc, options.pdfBuffer);
+
+      if (!cortex && manifest && manifest.data) {
+        cortex = neuralCortexService.compileCortex({
+          docId: manifest.doc_id,
+          structuredData: manifest.data,
+        });
+      }
+
+      if (!cortex && manifest?.doc_id) {
+        cortex = await redisService.getPdfCortex<TailprintNeuralCortex>(manifest.doc_id);
+      }
+
+      if (!cortex) {
+        throw new Error(
+          'This PDF does not contain an implanted Tailprint Neural Cortex (tailprint-cortex.json) or Dual-Brain manifest.'
+        );
+      }
+
+      return cortex;
+    }
+
+    if (options.docId) {
+      const cortex = await redisService.getPdfCortex<TailprintNeuralCortex>(options.docId);
+      if (!cortex) {
+        throw new Error(
+          `No Neural Cortex found in ledger for document ID "${options.docId}". Provide the PDF file directly to extract its embedded cortex.`
+        );
+      }
+      return cortex;
+    }
+
+    throw new Error('Either "pdf" or "doc_id" must be provided to retrieve a Neural Cortex.');
   }
 
   /**

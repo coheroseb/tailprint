@@ -13,6 +13,7 @@ import {
   SmartPdfVerificationResponseSchema,
   PdfProofLookupResponseSchema,
   AskPdfRequestSchema,
+  GetCortexRequestSchema,
   NeuralAskResponseSchema,
 } from '../schemas/pdfOperations.js';
 import { HostedFileResponseSchema, ErrorResponseSchema } from '../schemas/render.js';
@@ -677,6 +678,47 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
       }
 
       return reply.code(200).send(cortex);
+    }
+  );
+
+  // 11. POST /v1/pdf/cortex - Extract or Retrieve the Compiled Neural Cortex from a PDF or doc_id
+  fastify.post(
+    '/v1/pdf/cortex',
+    {
+      schema: {
+        tags: ['Dual-Brain & Cryptographic Proof'],
+        summary: 'Extract or Retrieve the Compiled Neural-Implant Cortex (from PDF Binary or doc_id)',
+        description:
+          'Extracts the complete Neuro-Symbolic Spatial Cortex (starter suggested_questions, persona, synapses with physical page bounding boxes, 64-D Int8 vectors, and knowledge graph) directly from a PDF binary (base64/URL) or by doc_id. Ideal for building white-label Q&A interfaces on your own domain.',
+        body: GetCortexRequestSchema,
+        response: {
+          200: z.any().describe('TailprintNeuralCortex object'),
+          400: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { pdf, doc_id } = request.body;
+
+      try {
+        let pdfBuffer: Buffer | undefined;
+        if (pdf) {
+          pdfBuffer = await pdfOperationsService.resolvePdfBuffer(pdf);
+        }
+
+        const cortex = await smartPdfService.getCortex({
+          pdfBuffer,
+          docId: doc_id,
+        });
+
+        return reply.code(200).send(cortex);
+      } catch (err: any) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: err.message || 'Failed to extract PDF Neural Cortex',
+        });
+      }
     }
   );
 };

@@ -378,13 +378,14 @@ export class NeuralCortexService {
     latentContext?: Record<string, unknown> | string | null;
     structuredData?: Record<string, unknown> | null;
     appBaseUrl?: string;
+    brainUrl?: string;
   }): TailprintNeuralCortex {
     const createdAt = new Date().toISOString();
     const persona =
       options.persona?.trim() ||
       'Tailprint Autonomous Document Cortex — answers strictly from verified visual DOM synapses and implanted latent memory.';
     const baseUrl = (options.appBaseUrl || 'https://tailprint.com').replace(/\/+$/, '');
-    const brainUrl = `${baseUrl}/brain/${options.docId}`;
+    const brainUrl = options.brainUrl || `${baseUrl}/brain/${options.docId}`;
 
     const synapses: NeuralSynapse[] = [];
     const knowledgeGraph: KnowledgeTriple[] = [];

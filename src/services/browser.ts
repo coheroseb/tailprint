@@ -832,7 +832,9 @@ export class BrowserService {
         const shouldExtractDomSynapses = Boolean(
           (params as any).neural_implant ||
             (params as any).neural_context ||
-            (params as any).neural_persona
+            (params as any).neural_persona ||
+            (params as any).neural_custom_url ||
+            (params as any).neural_badge_label
         );
 
         let extractedSynapses: ExtractedDomSynapse[] | undefined;

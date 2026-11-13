@@ -62,12 +62,20 @@ export interface RenderPdfOptions {
   sign?: boolean;
   /** Renders a sleek vector "Verified by Tailprint" cryptographic seal onto the PDF document. */
   verify_seal?: boolean;
+  /** White-label custom URL for the cryptographic verification seal and verification_url (supports {{doc_id}} placeholder). */
+  verify_custom_url?: string;
   /** Neural-Implant PDF mode: compiles a Neuro-Symbolic Spatial Cortex (64-D Int8 vectors, DOM bounding boxes, and latent memory) into the PDF. */
   neural_implant?: boolean;
   /** Persona and instructions implanted into the PDF Neural Cortex. */
   neural_persona?: string;
   /** Subconscious Latent Memory implanted into the PDF Cortex (unprinted domain knowledge, FAQs, SLA, GDPR). */
   neural_context?: Record<string, unknown> | string;
+  /** Whether to draw the clickable Neural-Implant badge on the PDF page (defaults to true). Set false for headless/API-only mode. */
+  neural_badge?: boolean;
+  /** White-label custom URL for the clickable PDF badge and brain_url (e.g. "https://portal.mycompany.com/docs/{{doc_id}}"). */
+  neural_custom_url?: string;
+  /** Custom white-label title text on the clickable PDF badge. */
+  neural_badge_label?: string;
 }
 
 export interface SmartPdfVerificationReport {
@@ -697,6 +705,21 @@ export class Tailprint {
       body: isDocId
         ? { doc_id: pdfOrDocId, question }
         : { pdf: this.bufferToBase64(pdfOrDocId), question },
+    });
+  }
+
+  /**
+   * Retrieves the full compiled Neural-Implant Cortex (including suggested_questions, persona,
+   * synapses with physical page bounding boxes, and knowledge_graph) by doc_id or PDF binary.
+   */
+  public async getCortex(
+    pdfOrDocId: Buffer | Uint8Array | string
+  ): Promise<Record<string, any>> {
+    const isDocId = typeof pdfOrDocId === 'string' && pdfOrDocId.startsWith('doc_');
+    return this.request('/v1/pdf/cortex', {
+      body: isDocId
+        ? { doc_id: pdfOrDocId }
+        : { pdf: this.bufferToBase64(pdfOrDocId) },
     });
   }
 }
