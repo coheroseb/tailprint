@@ -34,9 +34,18 @@ export class PdfOperationsService {
   public async resolvePdfBuffer(input: string): Promise<Buffer> {
     const trimmed = input.trim();
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      const res = await fetch(trimmed);
+      const res = await fetch(trimmed, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          Accept: 'application/pdf,application/octet-stream,*/*;q=0.9',
+          'Accept-Language': 'da-DK,da;q=0.9,en-US;q=0.8,en;q=0.7',
+        },
+      });
       if (!res.ok) {
-        throw new Error(`Failed to download PDF from URL: ${res.statusText} (${res.status})`);
+        throw new Error(
+          `Failed to download PDF from URL (${trimmed}): ${res.statusText} (${res.status}). Note: Some websites (like sst.dk behind Vercel Bot Protection) block automated downloads with HTTP 429.`
+        );
       }
       const arrayBuf = await res.arrayBuffer();
       return Buffer.from(arrayBuf);

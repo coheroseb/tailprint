@@ -156,6 +156,14 @@ export class CrisprPdfService {
           for (const m of matches) {
             pushLine(m[1]);
           }
+          // Also extract TJ array text blocks e.g. [(Hello ) -15 (World)] TJ
+          const tjArrayMatches = decoded.matchAll(/\[([^\]]{4,600})\]\s*TJ/g);
+          for (const arrMatch of tjArrayMatches) {
+            const innerParts = Array.from(arrMatch[1].matchAll(/\(([^()]*)\)/g)).map((p) => p[1]);
+            if (innerParts.length > 0) {
+              pushLine(innerParts.join(''));
+            }
+          }
         }
       }
     } catch {
@@ -726,7 +734,7 @@ export class CrisprPdfService {
     });
 
     // 5. Render Vector Master PDF via Chromium and Enrich with Fused Neural-Implant Cortex
-    const rawPdfBuffer = await browserService.renderPdf({
+    let rawPdfBuffer = await browserService.renderPdf({
       html: masterHtml,
       format: 'A4',
       landscape: false,
@@ -737,6 +745,31 @@ export class CrisprPdfService {
 
     const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
     const customButtons = browserService.getCustomButtonPlacement(rawPdfBuffer);
+
+    // If any parent PDF is an external third-party PDF (no native Tailprint Cortex embedded),
+    // also append its original vector pages after the CRISPR Master Dossier pages so 100% of original visual graphics/tables are preserved!
+    const externalParentBuffers: Buffer[] = [];
+    for (let i = 0; i < options.inputs.length; i++) {
+      const inp = options.inputs[i];
+      if (inp.pdfBuffer && !genomes[i].has_neural_cortex) {
+        externalParentBuffers.push(inp.pdfBuffer);
+      }
+    }
+    if (externalParentBuffers.length > 0) {
+      try {
+        const masterDoc = await PDFDocument.load(rawPdfBuffer, { ignoreEncryption: true });
+        for (const extBuf of externalParentBuffers) {
+          const extDoc = await PDFDocument.load(extBuf, { ignoreEncryption: true });
+          const copiedPages = await masterDoc.copyPages(extDoc, extDoc.getPageIndices());
+          for (const p of copiedPages) {
+            masterDoc.addPage(p);
+          }
+        }
+        rawPdfBuffer = Buffer.from(await masterDoc.save());
+      } catch {
+        // Keep synthesized master PDF if external PDF copyPages fails
+      }
+    }
 
     const fusedPersona =
       options.neural_persona?.trim() ||
