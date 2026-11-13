@@ -15,15 +15,12 @@ import {
   AskPdfRequestSchema,
   GetCortexRequestSchema,
   NeuralAskResponseSchema,
-  CrisprSplicePdfRequestSchema,
-  SequenceGenomeRequestSchema,
 } from '../schemas/pdfOperations.js';
 import { HostedFileResponseSchema, ErrorResponseSchema } from '../schemas/render.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
 import { pdfStamperService } from '../services/pdfStamper.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { smartPdfService } from '../services/smartPdf.js';
-import { crisprPdfService } from '../services/crisprPdf.js';
 import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
 
@@ -720,179 +717,6 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
           statusCode: 400,
           error: 'Bad Request',
           message: err.message || 'Failed to extract PDF Neural Cortex',
-        });
-      }
-    }
-  );
-
-  // 12. POST /v1/pdf/splice - 🧬 CRISPR-PDF™: Composable Genetic Document Splicing
-  fastify.post(
-    '/v1/pdf/splice',
-    {
-      schema: {
-        tags: ['CRISPR-PDF™ Genetic Splicing'],
-        summary: 'Splice 2-10 Parent PDFs into a Unified Offspring Master PDF & Fused Neural Cortex',
-        description:
-          'Unlike dumb PDF page concatenation (/v1/pdf/merge), CRISPR-PDF™ sequences 2 to 10 parent PDFs into their constituent chromosomes (Visual Exons, Dual-Brain Data Proteome, and Subconscious Latent Epigenome), excises Cas9 knockout terms, resolves cross-document conflicting clauses, injects point mutations, and expresses a newly typeset Vector Master Offspring PDF with a fused Multi-Parent 64-D Neural Cortex and Cryptographic Proof-of-Origin.',
-        body: CrisprSplicePdfRequestSchema,
-      },
-    },
-    async (request, reply) => {
-      const auth = await authenticateAndCheckQuota(request, reply);
-      if (!auth) return;
-
-      const {
-        pdfs,
-        title,
-        subtitle,
-        phenotype,
-        mutations,
-        knockout_terms,
-        neural_persona,
-        neural_custom_url,
-        neural_badge_label,
-        verify_custom_url,
-        store,
-        return_report,
-      } = request.body;
-
-      try {
-        // Resolve each parent input into { pdfBuffer?, docId?, label? }
-        const parents = await Promise.all(
-          pdfs.map(async (item, idx) => {
-            if (typeof item === 'string') {
-              // Check if user passed a doc_id directly as string
-              if (item.startsWith('doc_')) {
-                return { docId: item, label: `Parent #${idx + 1} (${item})` };
-              }
-              const pdfBuffer = await pdfOperationsService.resolvePdfBuffer(item);
-              return { pdfBuffer, label: `Parent #${idx + 1}` };
-            }
-            let pdfBuffer: Buffer | undefined;
-            if (item.pdf) {
-              pdfBuffer = await pdfOperationsService.resolvePdfBuffer(item.pdf);
-            }
-            return {
-              pdfBuffer,
-              docId: item.doc_id,
-              label: item.label || `Parent #${idx + 1}`,
-            };
-          })
-        );
-
-        const result = await crisprPdfService.splicePdfs({
-          inputs: parents,
-          title,
-          subtitle,
-          phenotype,
-          mutations,
-          knockout_terms,
-          neural_persona,
-          neural_custom_url,
-          neural_badge_label,
-          verify_custom_url,
-          customer_id: auth.apiKey.customer_id || 'api_user',
-        });
-
-        reply.header('X-Tailprint-Doc-Id', result.report.offspring_doc_id);
-        reply.header('X-Tailprint-Content-Hash', result.report.offspring_sha256);
-        reply.header('X-Tailprint-Verify-Url', result.report.verify_url);
-        reply.header('X-Tailprint-Brain-Url', result.report.brain_url);
-        reply.header('X-Tailprint-Parents-Spliced', String(result.report.parents.length));
-        reply.header('X-Tailprint-Conflicts-Resolved', String(result.report.conflicts_resolved.length));
-
-        let hostedUrl: string | undefined;
-        let expiresAt: string | undefined;
-        if (store) {
-          const stored = await storageService.saveFile(result.pdfBuffer, {
-            mimeType: 'application/pdf',
-            extension: 'pdf',
-            filename: `crispr-offspring-${result.report.offspring_doc_id}.pdf`,
-          });
-          hostedUrl = stored.hostedUrl;
-          expiresAt = stored.expiresAt;
-        }
-
-        if (store || return_report) {
-          return reply.code(200).send({
-            status: 'spliced',
-            doc_id: result.report.offspring_doc_id,
-            brain_url: result.report.brain_url,
-            verify_url: result.report.verify_url,
-            hosted_url: hostedUrl || null,
-            expires_at: expiresAt || null,
-            pdf_base64: result.pdfBuffer.toString('base64'),
-            report: result.report,
-          });
-        }
-
-        return reply
-          .code(200)
-          .header('Content-Type', 'application/pdf')
-          .header(
-            'Content-Disposition',
-            `inline; filename="crispr-offspring-${result.report.offspring_doc_id}.pdf"`
-          )
-          .send(result.pdfBuffer);
-      } catch (err: any) {
-        return reply.code(400).send({
-          statusCode: 400,
-          error: 'Bad Request',
-          message: err.message || 'Failed to splice parent PDFs with CRISPR-PDF engine',
-        });
-      }
-    }
-  );
-
-  // 13. POST /v1/pdf/genome - Sequence 1-10 PDFs into their Constituent Chromosomes
-  fastify.post(
-    '/v1/pdf/genome',
-    {
-      schema: {
-        tags: ['CRISPR-PDF™ Genetic Splicing'],
-        summary: 'Sequence PDF Chromosomes (Visual Exons, Data Proteome & Latent Epigenome)',
-        description:
-          'Sequences 1 to 10 PDFs (or Tailprint doc_ids) into their genetic components: Visual Exons (sections, tables, callouts), Structured Data Proteome (Dual-Brain JSON alleles), and Subconscious Latent Epigenome (hidden neural_context clauses).',
-        body: SequenceGenomeRequestSchema,
-      },
-    },
-    async (request, reply) => {
-      const { pdfs } = request.body;
-
-      try {
-        const genomes = await Promise.all(
-          pdfs.map(async (item, idx) => {
-            if (typeof item === 'string') {
-              if (item.startsWith('doc_')) {
-                return crisprPdfService.sequenceGenome({ docId: item, label: `Parent #${idx + 1}` }, idx);
-              }
-              const pdfBuffer = await pdfOperationsService.resolvePdfBuffer(item);
-              return crisprPdfService.sequenceGenome({ pdfBuffer, label: `Parent #${idx + 1}` }, idx);
-            }
-            let pdfBuffer: Buffer | undefined;
-            if (item.pdf) {
-              pdfBuffer = await pdfOperationsService.resolvePdfBuffer(item.pdf);
-            }
-            return crisprPdfService.sequenceGenome(
-              {
-                pdfBuffer,
-                docId: item.doc_id,
-                label: item.label || `Parent #${idx + 1}`,
-              },
-              idx
-            );
-          })
-        );
-
-        return reply.code(200).send({
-          count: genomes.length,
-          genomes,
-        });
-      } catch (err: any) {
-        return reply.code(400).send({
-          statusCode: 400,
-          error: 'Bad Request',
-          message: err.message || 'Failed to sequence PDF genome',
         });
       }
     }

@@ -20,58 +20,6 @@ export interface GuideArticle {
 }
 
 export const GUIDE_ARTICLES: Record<string, GuideArticle> = {
-  'crispr-pdf-genetic-document-splicing': {
-    slug: 'crispr-pdf-genetic-document-splicing',
-    title: 'CRISPR-PDF™: Composable Genetic Document Splicing vs. Legacy PDF Merging',
-    seoTitle: 'CRISPR-PDF™: Genetic PDF Splicing, Cas9 Clause Knockouts & Multi-Parent Neural Cortex',
-    description: 'Discover how Tailprint CRISPR-PDF™ sequences 2 to 10 parent PDFs into chromosomes (Visual Exons, Data Proteome, and Latent Epigenome), resolves cross-document conflicts, applies Cas9 knockouts, and expresses a unified Offspring Master PDF.',
-    category: 'Next-Gen PDF Architecture',
-    readTime: '6 min read',
-    datePublished: '2026-11-13T17:00:00Z',
-    dateModified: '2026-11-13T17:00:00Z',
-    keywords: 'crispr pdf, genetic document splicing, composable pdf api, pdf conflict resolution, multi-parent neural cortex, tailprint splice',
-    relatedTool: {
-      name: 'CRISPR-PDF™ Splicer Lab',
-      url: '/splice',
-    },
-    contentHtml: `
-      <section class="space-y-6">
-        <p class="text-lg text-slate-300 leading-relaxed">
-          For 30 years, "merging PDFs" has meant one thing: blindly stapling page 1-4 of Document A onto page 1-3 of Document B. The result is a fragmented Frankenstein file with mismatched typography, duplicate boilerplate, and contradictory legal or pricing terms. <strong>CRISPR-PDF™</strong> replaces dumb page concatenation with <strong>Composable Genetic Document Splicing</strong>.
-        </p>
-
-        <div class="p-5 rounded-2xl bg-fuchsia-950/40 border border-fuchsia-500/30">
-          <h3 class="text-fuchsia-300 font-bold text-sm uppercase tracking-wider mb-2">🧬 How CRISPR-PDF™ Works</h3>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            When you send 2 to 10 parent PDFs to <code>POST /v1/pdf/splice</code>, Tailprint sequences each parent into three chromosomes: <strong>Visual Exons</strong> (DOM sections, tables, callouts), <strong>Data Proteome</strong> (Dual-Brain JSON alleles), and <strong>Latent Epigenome</strong> (subconscious <code>neural_context</code>). It excises unwanted clauses via <strong>Cas9 Knockouts</strong>, resolves cross-document conflicts, injects <strong>Point Mutations</strong>, and synthesizes a newly typeset Vector Master Offspring PDF with a fused 64-D Neural Cortex.
-          </p>
-        </div>
-
-        <h2 class="text-2xl font-bold text-white pt-4">1. Sequencing the Three Document Chromosomes</h2>
-        <ul class="list-disc pl-6 space-y-2 text-slate-300 text-sm">
-          <li><strong>Visual Exons:</strong> Extracted from each parent's <code>tailprint-cortex.json</code> (or raw PDF text streams for third-party PDFs), preserving section headings, tables, and callout boxes.</li>
-          <li><strong>Data Proteome:</strong> Structured JSON key-value alleles from <code>tailprint-manifest.json</code> (e.g., <code>discount_rate</code>, <code>payment_terms</code>, <code>annual_contract_value</code>).</li>
-          <li><strong>Latent Epigenome:</strong> Subconscious hidden policy rules implanted via <code>neural_context</code> (e.g., <code>early_payment_discount</code>, <code>gdpr_dpa_audit_rights</code>).</li>
-        </ul>
-
-        <h2 class="text-2xl font-bold text-white pt-4">2. Cas9 Knockouts, Dominant Alleles &amp; Point Mutations</h2>
-        <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-fuchsia-200 overflow-x-auto"><code>curl -X POST https://tailprint.com/v1/pdf/splice \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "pdfs": ["doc_nda_v1", "doc_proposal_v2", "doc_gdpr_sla_v3"],
-    "title": "Master Enterprise Cloud &amp; GDPR Agreement",
-    "phenotype": "executive-indigo",
-    "knockout_terms": ["Legacy Non-Compete", "auto_renewal_policy"],
-    "mutations": {
-      "discount_rate": "25% (Executive Board Override)",
-      "governing_law": "Danish Law (Copenhagen Venue)"
-    },
-    "return_report": true
-  }'</code></pre>
-      </section>
-    `,
-  },
   'tailwind-html-to-pdf-nextjs': {
     slug: 'tailwind-html-to-pdf-nextjs',
     title: 'How to Convert Tailwind HTML to Pixel-Perfect Vector PDF in Next.js & Node.js',

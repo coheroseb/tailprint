@@ -122,19 +122,6 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
             <div class="absolute left-0 top-full pt-2 w-[370px] opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-200 z-50">
               <div class="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl shadow-black/80 p-2 space-y-1">
                 
-                <a href="/splice" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'splice' ? 'bg-fuchsia-600/20 border border-fuchsia-500/30' : 'hover:bg-slate-800/60'} transition group/item">
-                  <div class="w-8 h-8 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/30 text-fuchsia-300 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-fuchsia-500/25">
-                    🧬
-                  </div>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover/item:text-fuchsia-300 flex items-center space-x-1.5">
-                      <span>CRISPR-PDF™ Splicer Lab</span>
-                      <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-fuchsia-500/20 text-fuchsia-300 font-mono font-semibold">NEW</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">Splice 2-10 PDFs with Cas9 knockouts, mutations &amp; fused Cortex</p>
-                  </div>
-                </a>
-
                 <a href="/brain" class="flex items-start space-x-3 p-2.5 rounded-xl ${activeTool === 'brain' ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-slate-800/60'} transition group/item">
                   <div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-indigo-500/25">
                     🧠
@@ -386,10 +373,6 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
           <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold uppercase">No Login</span>
         </div>
         <div class="space-y-1">
-          <a href="/splice" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'splice' ? 'bg-fuchsia-600 text-white' : 'text-fuchsia-300 hover:bg-slate-900'}">
-            <span>🧬 CRISPR-PDF™ Splicer Lab</span>
-            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-fuchsia-500/20 text-fuchsia-300 font-bold ml-auto">NEW</span>
-          </a>
           <a href="/brain" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg text-sm font-medium ${activeTool === 'brain' ? 'bg-indigo-600 text-white' : 'text-indigo-300 hover:bg-slate-900'}">
             <span>🧠 Neural-Implant PDF Reader</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-bold ml-auto">64-D Cortex</span>
