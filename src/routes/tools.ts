@@ -6378,4 +6378,350 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
     return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(html);
   });
+
+  // ============================================================================
+  // PUBLIC CRYPTOGRAPHIC VERIFIER & DUAL-BRAIN INSPECTOR (/verify & /verify/:docId)
+  // ============================================================================
+  const renderVerifyPageHtml = (initialDocId = '') => {
+    const safeDocId = initialDocId.replace(/[^a-zA-Z0-9_-]/g, '');
+    return `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dual-Brain PDF Inspector &amp; Cryptographic Verifier — Tailprint</title>
+  <meta name="description" content="Verify the cryptographic proof-of-origin (HMAC-SHA256) and extract lossless Dual-Brain JSON data from any Tailprint PDF in 0ms without OCR." />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white flex flex-col">
+  ${renderHeader('verify')}
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-6 py-12">
+    <div class="text-center max-w-3xl mx-auto mb-10">
+      <div class="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-4">
+        <span>🛡️</span>
+        <span>Dual-Brain Zero-OCR JSON + Cryptographic Proof-of-Origin</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white">
+        Verify &amp; Inspect <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400">Dual-Brain PDFs</span>
+      </h1>
+      <p class="text-slate-400 mt-3 text-sm sm:text-base leading-relaxed">
+        Drop any Tailprint PDF to verify its <strong class="text-slate-200">HMAC-SHA256 cryptographic signature</strong>, check visual page stream integrity against tampering, and extract its embedded <strong class="text-emerald-300">structured JSON payload in 0ms</strong> without OCR.
+      </p>
+    </div>
+
+    <!-- Lookup by Doc ID Bar -->
+    <div class="max-w-2xl mx-auto mb-8 flex flex-col sm:flex-row gap-2">
+      <input
+        id="doc-id-input"
+        type="text"
+        value="${safeDocId}"
+        placeholder="Look up by Document ID (e.g. doc_8f3a91c04b2e19a4)..."
+        class="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+      />
+      <button
+        type="button"
+        onclick="lookupByDocId()"
+        class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition cursor-pointer"
+      >
+        🔍 Lookup Ledger Proof
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Left: Dropzone -->
+      <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-xl">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <span>📄</span>
+          <span>1. Select or Drop PDF File</span>
+        </h3>
+
+        <div
+          id="verify-dropzone"
+          onclick="document.getElementById('verify-file-input').click()"
+          class="border-2 border-dashed border-slate-700 hover:border-emerald-500/60 bg-slate-950/60 rounded-2xl p-8 text-center cursor-pointer transition group"
+        >
+          <input type="file" id="verify-file-input" accept=".pdf,application/pdf" class="hidden" onchange="handleVerifyFile(event)" />
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-3 text-2xl">
+            🔐
+          </div>
+          <p class="text-xs font-bold text-slate-200">Click to browse or drag &amp; drop PDF</p>
+          <p class="text-[11px] text-slate-500 mt-1">Inspects <code class="text-emerald-400">tailprint-manifest.json</code> &amp; page stream hashes</p>
+        </div>
+
+        <div id="verify-file-pill" class="hidden p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+          <div class="truncate pr-2">
+            <span id="verify-file-name" class="font-mono font-semibold text-emerald-300">document.pdf</span>
+            <span id="verify-file-size" class="text-[10px] text-slate-500 ml-2">0 KB</span>
+          </div>
+          <button type="button" onclick="runFileVerification()" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] cursor-pointer">
+            Re-Verify
+          </button>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2 text-[11px] text-slate-400">
+          <div class="font-bold text-slate-200">How Dual-Brain &amp; Tamper Detection Works:</div>
+          <p>1. <strong class="text-emerald-400">Zero-OCR JSON-LD:</strong> Structured data is embedded directly inside the PDF catalog (<code class="text-slate-300">/Names/EmbeddedFiles</code>).</p>
+          <p>2. <strong class="text-indigo-400">Stream Fingerprinting:</strong> SHA-256 over all visual PDF page streams &amp; dimensions detects even a 1-character text edit or added page.</p>
+          <p>3. <strong class="text-amber-300">HMAC-SHA256 Proof:</strong> Cryptographic signature binds issuer, timestamp, data hash, and visual content fingerprint together.</p>
+        </div>
+      </div>
+
+      <!-- Right: Results & Dual-Brain JSON Inspector -->
+      <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 min-h-[420px] shadow-xl flex flex-col justify-between">
+        <div id="verify-empty" class="my-auto text-center max-w-md mx-auto py-12 space-y-3">
+          <div class="text-4xl">🧠</div>
+          <h3 class="text-lg font-bold text-white">Ready to Inspect &amp; Verify</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Drop any PDF on the left or look up a <code class="text-emerald-400">doc_...</code> ID above to view its cryptographic proof-of-origin and zero-OCR structured JSON payload.
+          </p>
+        </div>
+
+        <div id="verify-loading" class="hidden my-auto text-center py-12 space-y-3">
+          <div class="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p class="text-xs text-emerald-300 font-semibold">Computing SHA-256 page stream fingerprint &amp; extracting Dual-Brain manifest...</p>
+        </div>
+
+        <div id="verify-result" class="hidden space-y-5">
+          <div id="verify-banner" class="p-4 rounded-xl border flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span id="verify-icon" class="text-2xl">✅</span>
+              <div>
+                <h4 id="verify-title" class="font-bold text-sm text-white">Authentic &amp; Untampered PDF</h4>
+                <p id="verify-subtitle" class="text-[11px] text-slate-300 mt-0.5">Cryptographic signature &amp; page streams verified</p>
+              </div>
+            </div>
+            <span id="verify-badge" class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">SIGNED</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Document ID</span>
+              <span id="res-doc-id" class="font-mono font-bold text-emerald-400 truncate block mt-0.5">-</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Issued At</span>
+              <span id="res-issued-at" class="font-mono font-bold text-slate-200 truncate block mt-0.5">-</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Template</span>
+              <span id="res-template" class="font-mono font-bold text-indigo-300 truncate block mt-0.5">-</span>
+            </div>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block uppercase font-bold">Pages / AI-Ready</span>
+              <span id="res-pages" class="font-mono font-bold text-slate-200 truncate block mt-0.5">-</span>
+            </div>
+          </div>
+
+          <div class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5 text-[11px] font-mono">
+            <div class="flex justify-between gap-4">
+              <span class="text-slate-500">File SHA-256:</span>
+              <span id="res-file-sha" class="text-slate-300 truncate">-</span>
+            </div>
+            <div class="flex justify-between gap-4">
+              <span class="text-slate-500">Stream Fingerprint:</span>
+              <span id="res-stream-fp" class="text-slate-300 truncate">-</span>
+            </div>
+            <div class="flex justify-between gap-4">
+              <span class="text-slate-500">Reasons / Checks:</span>
+              <span id="res-reasons" class="text-emerald-300 text-right">-</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-white flex items-center space-x-1.5">
+                <span>🧠</span>
+                <span>Extracted Dual-Brain JSON Payload (0ms, Zero-OCR)</span>
+              </span>
+              <button
+                type="button"
+                onclick="copyExtractedJson()"
+                id="btn-copy-extracted-json"
+                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-mono text-slate-300 cursor-pointer"
+              >
+                Copy JSON
+              </button>
+            </div>
+            <pre id="res-json-data" class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-emerald-300 overflow-x-auto max-h-64">null</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    var selectedPdfDataUri = null;
+    var lastExtractedJsonText = 'null';
+
+    function handleVerifyFile(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      document.getElementById('verify-file-name').textContent = file.name;
+      document.getElementById('verify-file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+      document.getElementById('verify-file-pill').classList.remove('hidden');
+
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        selectedPdfDataUri = ev.target.result;
+        runFileVerification();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    var dz = document.getElementById('verify-dropzone');
+    if (dz) {
+      dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('border-emerald-500'); });
+      dz.addEventListener('dragleave', function(e) { e.preventDefault(); dz.classList.remove('border-emerald-500'); });
+      dz.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dz.classList.remove('border-emerald-500');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleVerifyFile({ target: { files: e.dataTransfer.files } });
+        }
+      });
+    }
+
+    function renderReportUI(report) {
+      document.getElementById('verify-empty').classList.add('hidden');
+      document.getElementById('verify-loading').classList.add('hidden');
+      document.getElementById('verify-result').classList.remove('hidden');
+
+      var banner = document.getElementById('verify-banner');
+      var icon = document.getElementById('verify-icon');
+      var title = document.getElementById('verify-title');
+      var subtitle = document.getElementById('verify-subtitle');
+      var badge = document.getElementById('verify-badge');
+
+      if (report.tampered) {
+        banner.className = 'p-4 rounded-xl border border-rose-500/50 bg-rose-950/40 flex items-center justify-between';
+        icon.textContent = '🚨';
+        title.textContent = 'Tampering Detected — Document Altered After Issuance';
+        subtitle.textContent = (report.reasons && report.reasons[0]) || 'Signature or content fingerprint mismatch';
+        badge.textContent = 'TAMPERED';
+        badge.className = 'px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+      } else if (report.valid) {
+        banner.className = 'p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 flex items-center justify-between';
+        icon.textContent = '✅';
+        title.textContent = report.signed ? 'Cryptographically Verified Tailprint PDF' : 'Valid Dual-Brain Tailprint PDF';
+        subtitle.textContent = (report.reasons && report.reasons[0]) || '100% content integrity verified';
+        badge.textContent = report.signed ? 'SIGNED & VERIFIED' : 'DUAL-BRAIN READY';
+        badge.className = 'px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+      } else {
+        banner.className = 'p-4 rounded-xl border border-amber-500/40 bg-amber-950/30 flex items-center justify-between';
+        icon.textContent = 'ℹ️';
+        title.textContent = 'Unsigned / Standard PDF Document';
+        subtitle.textContent = (report.reasons && report.reasons[0]) || 'No Dual-Brain manifest found';
+        badge.textContent = 'UNVERIFIED';
+        badge.className = 'px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      }
+
+      document.getElementById('res-doc-id').textContent = report.doc_id || 'None';
+      document.getElementById('res-issued-at').textContent = report.issued_at ? report.issued_at.slice(0, 19).replace('T', ' ') : '-';
+      document.getElementById('res-template').textContent = report.template_id || 'Custom HTML';
+      document.getElementById('res-pages').textContent = String(report.page_count || 1) + 'p • ' + (report.ai_ready ? 'AI-Ready' : 'Standard');
+      document.getElementById('res-file-sha').textContent = report.file_sha256 || '-';
+      document.getElementById('res-stream-fp').textContent = report.content_fingerprint || '-';
+      document.getElementById('res-reasons').textContent = (report.reasons || []).join(' | ') || 'OK';
+
+      lastExtractedJsonText = JSON.stringify(report.data || (report.data_keys ? { _ledger_only_schema_keys: report.data_keys } : null), null, 2);
+      document.getElementById('res-json-data').textContent = lastExtractedJsonText;
+    }
+
+    async function runFileVerification() {
+      if (!selectedPdfDataUri) return;
+      document.getElementById('verify-empty').classList.add('hidden');
+      document.getElementById('verify-result').classList.add('hidden');
+      document.getElementById('verify-loading').classList.remove('hidden');
+
+      try {
+        var res = await fetch('/v1/pdf/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdf: selectedPdfDataUri })
+        });
+        var data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'Verification failed');
+          document.getElementById('verify-loading').classList.add('hidden');
+          document.getElementById('verify-empty').classList.remove('hidden');
+          return;
+        }
+        if (data.doc_id) {
+          document.getElementById('doc-id-input').value = data.doc_id;
+        }
+        renderReportUI(data);
+      } catch (err) {
+        alert('Verification request failed');
+        document.getElementById('verify-loading').classList.add('hidden');
+        document.getElementById('verify-empty').classList.remove('hidden');
+      }
+    }
+
+    async function lookupByDocId() {
+      var docId = (document.getElementById('doc-id-input').value || '').trim();
+      if (!docId) return;
+      document.getElementById('verify-empty').classList.add('hidden');
+      document.getElementById('verify-result').classList.add('hidden');
+      document.getElementById('verify-loading').classList.remove('hidden');
+
+      try {
+        var res = await fetch('/v1/pdf/verify/' + encodeURIComponent(docId));
+        var data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'Document ID not found');
+          document.getElementById('verify-loading').classList.add('hidden');
+          document.getElementById('verify-empty').classList.remove('hidden');
+          return;
+        }
+        renderReportUI({
+          valid: true,
+          signed: data.signed,
+          tampered: false,
+          ai_ready: data.ai_ready,
+          doc_id: data.doc_id,
+          issued_at: data.issued_at,
+          issuer: data.issuer,
+          template_id: data.template_id,
+          page_count: data.page_count,
+          file_sha256: data.file_sha256,
+          content_fingerprint: data.content_fingerprint,
+          data_keys: data.data_keys,
+          data: null,
+          reasons: ['Registered in Tailprint Cryptographic Proof Ledger. Drop the PDF file on the left to extract its full Dual-Brain JSON payload and verify byte integrity.']
+        });
+      } catch (err) {
+        alert('Lookup failed');
+      }
+    }
+
+    function copyExtractedJson() {
+      navigator.clipboard.writeText(lastExtractedJsonText);
+      var btn = document.getElementById('btn-copy-extracted-json');
+      btn.textContent = 'Copied ✓';
+      setTimeout(function() { btn.textContent = 'Copy JSON'; }, 1500);
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      var initial = (document.getElementById('doc-id-input').value || '').trim();
+      if (initial) lookupByDocId();
+    });
+  </script>
+</body>
+</html>`;
+  };
+
+  fastify.get('/verify', { schema: { hide: true } }, async (_request, reply) => {
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderVerifyPageHtml(''));
+  });
+
+  fastify.get('/verify/:docId', { schema: { hide: true } }, async (request, reply) => {
+    const { docId } = request.params as { docId: string };
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderVerifyPageHtml(docId || ''));
+  });
+
+  fastify.get('/tools/verify', { schema: { hide: true } }, async (_request, reply) => {
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderVerifyPageHtml(''));
+  });
 };

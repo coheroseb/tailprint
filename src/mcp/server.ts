@@ -6,6 +6,7 @@ import { storageService } from '../services/storage.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
 import { presentationService } from '../services/presentation.js';
+import { smartPdfService } from '../services/smartPdf.js';
 import { TEMPLATES } from '../config/templates.js';
 import { resolveTemplateRequest } from '../services/templateEngine.js';
 
@@ -813,6 +814,60 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             {
               type: 'text',
               text: `Error rendering presentation: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 12: verify_pdf (Dual-Brain Zero-OCR Extraction & Cryptographic Tamper Verification)
+  server.tool(
+    'verify_pdf',
+    'Verifies the cryptographic HMAC-SHA256 signature and visual content fingerprint of a Tailprint PDF to detect tampering, and extracts its embedded Dual-Brain structured JSON payload in 0ms without OCR.',
+    {
+      pdf: z.string().describe('PDF document as a base64 string, base64 data URI, or public HTTP/HTTPS URL'),
+    },
+    async ({ pdf }) => {
+      try {
+        const pdfBuffer = await resolvePdfBuffer(pdf);
+        const report = await smartPdfService.inspectAndVerifyPdf(pdfBuffer);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                report.tampered
+                  ? `🚨 **TAMPERING DETECTED — PDF Altered After Issuance**`
+                  : report.valid
+                    ? `✅ **Cryptographically Verified & Intact Tailprint PDF**`
+                    : `ℹ️ **Standard / Unsigned PDF Document**`,
+                ``,
+                `- **Document ID:** \`${report.doc_id || 'N/A'}\``,
+                `- **Signed:** \`${report.signed}\` (Signature Valid: \`${report.signature_valid}\`)`,
+                `- **Tampered:** \`${report.tampered}\` (Content Intact: \`${report.content_intact}\`)`,
+                `- **AI-Ready (Dual-Brain):** \`${report.ai_ready}\``,
+                `- **Template:** \`${report.template_id || 'Custom HTML'}\``,
+                `- **File SHA-256:** \`${report.file_sha256}\``,
+                `- **Stream Fingerprint:** \`${report.content_fingerprint}\``,
+                `- **Details:** ${(report.reasons || []).join(' | ')}`,
+                ``,
+                `### 🧠 Extracted Dual-Brain JSON Payload (0ms, Zero-OCR):`,
+                '```json',
+                JSON.stringify(report.data, null, 2),
+                '```',
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error verifying/extracting PDF: ${err.message || 'Unknown error'}`,
             },
           ],
         };

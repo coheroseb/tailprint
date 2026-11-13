@@ -531,6 +531,28 @@ class Tailprint:
         return self._request("/v1/pdf/stamp", payload=payload, expect_binary=not store)
 
     # =========================================================================
+    # DUAL-BRAIN ZERO-OCR EXTRACTION & CRYPTOGRAPHIC PROOF VERIFICATION
+    # =========================================================================
+
+    def verify_pdf(self, pdf: PDFInput) -> Dict[str, Any]:
+        """
+        Verifies the HMAC-SHA256 cryptographic signature and visual content fingerprint
+        of a Tailprint PDF, and extracts its Dual-Brain structured JSON payload in 0ms.
+        """
+        payload = {"pdf": self._to_base64_data_uri(pdf)}
+        res = self._request("/v1/pdf/verify", payload=payload, expect_binary=False)
+        return res if isinstance(res, dict) else {}
+
+    def extract_pdf_data(self, pdf: PDFInput) -> Dict[str, Any]:
+        """
+        Extracts the lossless Dual-Brain structured JSON-LD payload (`tailprint-manifest.json`)
+        embedded inside a Tailprint PDF in 0ms without OCR or LLM vision token cost.
+        """
+        payload = {"pdf": self._to_base64_data_uri(pdf)}
+        res = self._request("/v1/pdf/extract", payload=payload, expect_binary=False)
+        return res if isinstance(res, dict) else {}
+
+    # =========================================================================
     # UTILITIES & USAGE
     # =========================================================================
 

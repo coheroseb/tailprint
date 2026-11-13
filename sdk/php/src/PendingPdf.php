@@ -98,6 +98,28 @@ class PendingPdf
     }
 
     /**
+     * Enable Cryptographic Proof-of-Origin (HMAC-SHA256 signature) and optional visual verification seal.
+     */
+    public function sign(bool $verifySeal = false): self
+    {
+        $this->payload['sign'] = true;
+        $this->payload['verify_seal'] = $verifySeal;
+        return $this;
+    }
+
+    /**
+     * Embed arbitrary structured JSON data inside the Dual-Brain PDF container for 0ms zero-OCR extraction.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function embedData(array $data): self
+    {
+        $this->payload['ai_ready'] = true;
+        $this->payload['embed_data'] = $data;
+        return $this;
+    }
+
+    /**
      * Render and return raw PDF binary string.
      */
     public function bytes(): string

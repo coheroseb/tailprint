@@ -33,6 +33,10 @@ export const RenderPdfRequestSchema = z
     async: z.boolean().default(false).optional().describe('If true, renders document asynchronously in background and returns job_id immediately.'),
     webhook_url: z.string().url().optional().describe('Callback URL to POST completion notification and download links when async rendering is complete.'),
     webhook_headers: z.record(z.string()).optional().describe('Optional custom HTTP headers to include with the webhook callback.'),
+    ai_ready: z.boolean().optional().describe('Dual-Brain PDF mode: embeds lossless structured JSON-LD manifest (tailprint-manifest.json) inside the PDF catalog for 0ms zero-OCR AI extraction. Automatically enabled when template_id or embed_data is provided.'),
+    embed_data: z.record(z.any()).optional().describe('Structured JSON payload to embed inside the Dual-Brain PDF container (tailprint-manifest.json) for instant zero-OCR extraction via POST /v1/pdf/extract.'),
+    sign: z.boolean().optional().describe('Cryptographic Proof-of-Origin: signs the PDF content streams and embedded manifest with HMAC-SHA256 and registers a tamper-proof verification record.'),
+    verify_seal: z.boolean().optional().describe('Renders a sleek vector "Verified by Tailprint" cryptographic seal and verification link onto the PDF document. Automatically enables sign: true.'),
   })
   .superRefine(validateRenderSource);
 
@@ -69,6 +73,11 @@ export const HostedFileResponseSchema = z.object({
   mimeType: z.string().describe('MIME type of the stored document'),
   sizeBytes: z.number().describe('File size in bytes'),
   expiresAt: z.string().describe('ISO timestamp of expiration'),
+  docId: z.string().optional().describe('Tailprint Dual-Brain & Cryptographic Proof document ID (e.g. doc_...)'),
+  aiReady: z.boolean().optional().describe('Whether Dual-Brain structured JSON manifest is embedded'),
+  signed: z.boolean().optional().describe('Whether the PDF is cryptographically signed'),
+  signature: z.string().nullable().optional().describe('HMAC-SHA256 cryptographic signature'),
+  verifyUrl: z.string().url().optional().describe('Public cryptographic verification URL'),
 });
 
 export type HostedFileResponse = z.infer<typeof HostedFileResponseSchema>;

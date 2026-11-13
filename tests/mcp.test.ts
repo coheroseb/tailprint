@@ -41,7 +41,8 @@ describe('Tailprint Model Context Protocol (MCP) Suite', () => {
     expect(toolNames).toContain('fill_pdf_form');
     expect(toolNames).toContain('compress_pdf');
     expect(toolNames).toContain('render_presentation');
-    expect(toolNames.length).toBe(11);
+    expect(toolNames).toContain('verify_pdf');
+    expect(toolNames.length).toBe(12);
 
     await client.close();
     await server.close();

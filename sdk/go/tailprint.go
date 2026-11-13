@@ -262,6 +262,25 @@ func (c *Client) FillPDFForm(ctx context.Context, req FillFormRequest) ([]byte, 
 	return c.doBinary(ctx, http.MethodPost, "/v1/pdf/fill-form", req)
 }
 
+// VerifyPDF cryptographically verifies a Tailprint PDF's HMAC-SHA256 signature and page stream fingerprint,
+// and extracts its Dual-Brain structured JSON payload in 0ms without OCR.
+func (c *Client) VerifyPDF(ctx context.Context, pdf string) (*SmartPDFVerificationReport, error) {
+	var out SmartPDFVerificationReport
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/pdf/verify", map[string]string{"pdf": pdf}, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ExtractPDFData extracts the lossless Dual-Brain structured JSON-LD payload from a Tailprint PDF in 0ms without OCR.
+func (c *Client) ExtractPDFData(ctx context.Context, pdf string) (*SmartPDFVerificationReport, error) {
+	var out SmartPDFVerificationReport
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/pdf/extract", map[string]string{"pdf": pdf}, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // VerifyWebhookSignature verifies the X-Tailprint-Signature HMAC-SHA256 header on webhook requests.
 func VerifyWebhookSignature(payload []byte, signatureHeader, secret string) bool {
 	if len(signatureHeader) == 0 || len(secret) == 0 {

@@ -46,6 +46,22 @@ export interface CustomTemplateRecord {
   updated_at: string;
 }
 
+export interface PdfProofRecord {
+  doc_id: string;
+  customer_id: string;
+  issued_at: string;
+  template_id: string | null;
+  signed: boolean;
+  ai_ready: boolean;
+  page_count: number;
+  file_sha256: string;
+  content_fingerprint: string;
+  data_hash: string | null;
+  data_keys: string[];
+  signature: string | null;
+  verification_url: string;
+}
+
 // In-Memory store fallback for local development or tests when Upstash is not configured
 class MemoryRedisClient {
   private data = new Map<string, any>();
@@ -732,6 +748,37 @@ export class RedisService {
       await (this.client as any).srem(this.getCustomTemplateSetKey(customerId), normalizedId);
     }
     return deletedCount > 0;
+  }
+
+  // ==========================================
+  // Dual-Brain & Cryptographic PDF Proofs
+  // ==========================================
+
+  public async savePdfProof(record: PdfProofRecord, ttlSeconds = 30 * 86400): Promise<void> {
+    const docKey = `pdf_proof:${record.doc_id}`;
+    const shaKey = `pdf_proof_sha256:${record.file_sha256}`;
+    await this.client.set(docKey, record, { ex: ttlSeconds });
+    await this.client.set(shaKey, record.doc_id, { ex: ttlSeconds });
+  }
+
+  public async getPdfProof(docId: string): Promise<PdfProofRecord | null> {
+    const cleanId = docId.trim();
+    const raw = await this.client.get<PdfProofRecord | string>(`pdf_proof:${cleanId}`);
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw) as PdfProofRecord;
+      } catch {
+        return null;
+      }
+    }
+    return raw as PdfProofRecord;
+  }
+
+  public async getPdfProofBySha256(fileSha256: string): Promise<PdfProofRecord | null> {
+    const docId = await this.client.get<string>(`pdf_proof_sha256:${fileSha256.trim().toLowerCase()}`);
+    if (!docId || typeof docId !== 'string') return null;
+    return this.getPdfProof(docId);
   }
 }
 

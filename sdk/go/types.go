@@ -39,6 +39,10 @@ type RenderOptions struct {
 	Async               bool              `json:"async,omitempty"`
 	WebhookURL          string            `json:"webhook_url,omitempty"`
 	WebhookHeaders      map[string]string `json:"webhook_headers,omitempty"`
+	AIReady             *bool             `json:"ai_ready,omitempty"`
+	EmbedData           map[string]any    `json:"embed_data,omitempty"`
+	Sign                bool              `json:"sign,omitempty"`
+	VerifySeal          bool              `json:"verify_seal,omitempty"`
 	IdempotencyKey      string            `json:"-"`
 }
 
@@ -285,6 +289,28 @@ type FillFormRequest struct {
 	PDF     string         `json:"pdf"`
 	Fields  map[string]any `json:"fields"`
 	Flatten *bool          `json:"flatten,omitempty"`
+}
+
+// SmartPDFVerificationReport contains the cryptographic proof-of-origin and zero-OCR extracted Dual-Brain JSON data.
+type SmartPDFVerificationReport struct {
+	Valid              bool           `json:"valid"`
+	Signed             bool           `json:"signed"`
+	Tampered           bool           `json:"tampered"`
+	AIReady            bool           `json:"ai_ready"`
+	DocID              string         `json:"doc_id"`
+	IssuedAt           string         `json:"issued_at"`
+	Issuer             string         `json:"issuer"`
+	TemplateID         string         `json:"template_id"`
+	PageCount          int            `json:"page_count"`
+	FileSHA256         string         `json:"file_sha256"`
+	ContentFingerprint string         `json:"content_fingerprint"`
+	SignatureValid     bool           `json:"signature_valid"`
+	ContentIntact      bool           `json:"content_intact"`
+	LedgerVerified     bool           `json:"ledger_verified"`
+	VerificationURL    string         `json:"verification_url"`
+	DataHash           string         `json:"data_hash"`
+	Data               map[string]any `json:"data"`
+	Reasons            []string       `json:"reasons"`
 }
 
 // ValidationIssue describes a single field validation error on a hosted template or request.

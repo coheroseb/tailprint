@@ -17,6 +17,7 @@ import { redisService } from '../services/redis.js';
 import { storageService } from '../services/storage.js';
 import { eInvoiceService } from '../services/eInvoice.js';
 import { jobsService } from '../services/jobs.js';
+import { smartPdfService, type SmartPdfEnrichResult } from '../services/smartPdf.js';
 import {
   resolveTemplateRequest,
   resolveTemplateRequestForCustomer,
@@ -186,6 +187,64 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     return { token, apiKey, quota, idempotency: idempotencyContext };
   }
 
+  async function enrichRenderedPdfIfRequested(
+    rawPdfBuffer: Buffer,
+    body: any,
+    originalTemplateData: Record<string, unknown> | undefined,
+    customerId: string,
+    reply: any,
+    extraHeaders: Record<string, string>
+  ): Promise<{ pdfBuffer: Buffer; enriched: SmartPdfEnrichResult | null }> {
+    if (body.password) {
+      return { pdfBuffer: rawPdfBuffer, enriched: null };
+    }
+
+    const shouldEnrich =
+      Boolean(body.sign) ||
+      Boolean(body.verify_seal) ||
+      Boolean(body.ai_ready) ||
+      Boolean(body.embed_data) ||
+      (Boolean(body.template_id) && body.ai_ready !== false);
+
+    if (!shouldEnrich) {
+      return { pdfBuffer: rawPdfBuffer, enriched: null };
+    }
+
+    let combinedData: Record<string, unknown> | null = null;
+    if (originalTemplateData && body.embed_data) {
+      combinedData = { ...originalTemplateData, ...body.embed_data };
+    } else if (body.embed_data) {
+      combinedData = body.embed_data;
+    } else if (originalTemplateData) {
+      combinedData = originalTemplateData;
+    }
+
+    const enriched = await smartPdfService.enrichPdf(rawPdfBuffer, {
+      customerId,
+      templateId: body.template_id || null,
+      data: combinedData,
+      aiReady: body.ai_ready !== undefined ? body.ai_ready : true,
+      sign: Boolean(body.sign || body.verify_seal),
+      verifySeal: Boolean(body.verify_seal),
+      noStore: Boolean(body.no_store),
+    });
+
+    reply.header('X-Tailprint-Doc-Id', enriched.docId);
+    reply.header('X-Tailprint-AI-Ready', String(enriched.manifest.ai_ready));
+    reply.header('X-Tailprint-Verify-Url', enriched.manifest.verification_url);
+    extraHeaders['X-Tailprint-Doc-Id'] = enriched.docId;
+    extraHeaders['X-Tailprint-AI-Ready'] = String(enriched.manifest.ai_ready);
+    extraHeaders['X-Tailprint-Verify-Url'] = enriched.manifest.verification_url;
+
+    if (enriched.manifest.signed && enriched.manifest.signature) {
+      const sigHeader = `sha256=${enriched.manifest.signature}`;
+      reply.header('X-Tailprint-Signature', sigHeader);
+      extraHeaders['X-Tailprint-Signature'] = sigHeader;
+    }
+
+    return { pdfBuffer: enriched.buffer, enriched };
+  }
+
   async function saveIdempotencyIfPresent(
     auth: NonNullable<Awaited<ReturnType<typeof authenticateAndCheckQuota>>>,
     reply: any,
@@ -251,6 +310,9 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
+      const originalTemplateData = request.body.data
+        ? { ...(request.body.data as Record<string, unknown>) }
+        : undefined;
       const resolvedBody = await resolveTemplate(request.body, reply, '', request);
       if (!resolvedBody) return;
       request.body = resolvedBody;
@@ -314,7 +376,15 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
       }
 
-      const pdfBuffer = await browserService.renderPdf(request.body);
+      const rawPdfBuffer = await browserService.renderPdf(request.body);
+      const { pdfBuffer, enriched } = await enrichRenderedPdfIfRequested(
+        rawPdfBuffer,
+        request.body,
+        originalTemplateData,
+        auth.apiKey.customer_id,
+        reply,
+        templateHeaders
+      );
 
       if (request.body.store) {
         const stored = await storageService.saveFile(pdfBuffer, {
@@ -332,6 +402,15 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           mimeType: stored.mimeType,
           sizeBytes: stored.sizeBytes,
           expiresAt: stored.expiresAt,
+          ...(enriched
+            ? {
+                docId: enriched.docId,
+                aiReady: enriched.manifest.ai_ready,
+                signed: enriched.manifest.signed,
+                signature: enriched.manifest.signature,
+                verifyUrl: enriched.manifest.verification_url,
+              }
+            : {}),
         };
 
         await saveIdempotencyIfPresent(auth, reply, {
@@ -481,6 +560,9 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
+      const originalTemplateData = request.body.data
+        ? { ...(request.body.data as Record<string, unknown>) }
+        : undefined;
       const resolvedBody = await resolveTemplate(request.body, reply, '', request);
       if (!resolvedBody) return;
       request.body = resolvedBody;
@@ -502,10 +584,18 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         reply.header('Cache-Control', 'no-store, no-cache, must-revalidate');
       }
 
-      const pdfBuffer = await browserService.renderPdf(request.body);
       const templateHeaders: Record<string, string> = resolvedBody.template_id
         ? { 'X-Tailprint-Template': resolvedBody.template_id }
         : {};
+      const rawPdfBuffer = await browserService.renderPdf(request.body);
+      const { pdfBuffer, enriched } = await enrichRenderedPdfIfRequested(
+        rawPdfBuffer,
+        request.body,
+        originalTemplateData,
+        auth.apiKey.customer_id,
+        reply,
+        templateHeaders
+      );
 
       if (request.body.store) {
         const stored = await storageService.saveFile(pdfBuffer, {
@@ -523,6 +613,15 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           mimeType: stored.mimeType,
           sizeBytes: stored.sizeBytes,
           expiresAt: stored.expiresAt,
+          ...(enriched
+            ? {
+                docId: enriched.docId,
+                aiReady: enriched.manifest.ai_ready,
+                signed: enriched.manifest.signed,
+                signature: enriched.manifest.signature,
+                verifyUrl: enriched.manifest.verification_url,
+              }
+            : {}),
         };
 
         await saveIdempotencyIfPresent(auth, reply, {

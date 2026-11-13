@@ -9,11 +9,15 @@ import {
   StampPdfRequestSchema,
   ValidateEInvoiceRequestSchema,
   EInvoiceValidationResponseSchema,
+  VerifyOrExtractPdfRequestSchema,
+  SmartPdfVerificationResponseSchema,
+  PdfProofLookupResponseSchema,
 } from '../schemas/pdfOperations.js';
 import { HostedFileResponseSchema, ErrorResponseSchema } from '../schemas/render.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
 import { pdfStamperService } from '../services/pdfStamper.js';
 import { eInvoiceService } from '../services/eInvoice.js';
+import { smartPdfService } from '../services/smartPdf.js';
 import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
 
@@ -491,5 +495,109 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     validateEInvoiceHandler
+  );
+
+  // 7. POST /v1/pdf/verify & POST /v1/pdf/extract - Dual-Brain Zero-OCR Extraction & Cryptographic Verification
+  const verifyOrExtractHandler = async (request: any, reply: any) => {
+    const { pdf } = request.body;
+
+    try {
+      const pdfBuffer = await pdfOperationsService.resolvePdfBuffer(pdf);
+      const report = await smartPdfService.inspectAndVerifyPdf(pdfBuffer);
+      return reply.code(200).send(report);
+    } catch (err: any) {
+      return reply.code(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: err.message || 'Failed to inspect or verify PDF document',
+      });
+    }
+  };
+
+  fastify.post(
+    '/v1/pdf/verify',
+    {
+      schema: {
+        tags: ['Dual-Brain & Cryptographic Proof'],
+        summary: 'Verify Cryptographic Proof-of-Origin & Tamper-Evidence of a PDF',
+        description:
+          'Verifies the HMAC-SHA256 cryptographic signature, visual page content stream fingerprint, and server-side proof ledger of a Tailprint PDF. Immediately detects if any page text, element, page count, or embedded JSON was altered after issuance, and returns the embedded Dual-Brain JSON payload.',
+        body: VerifyOrExtractPdfRequestSchema,
+        response: {
+          200: SmartPdfVerificationResponseSchema,
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    verifyOrExtractHandler
+  );
+
+  fastify.post(
+    '/v1/pdf/extract',
+    {
+      schema: {
+        tags: ['Dual-Brain & Cryptographic Proof'],
+        summary: 'Extract Dual-Brain Structured JSON from a PDF in 0ms (Zero-OCR)',
+        description:
+          'Extracts the lossless, machine-readable structured JSON-LD payload (tailprint-manifest.json) embedded inside a Tailprint Dual-Brain PDF in 0ms without OCR or LLM vision token cost, along with its cryptographic integrity status.',
+        body: VerifyOrExtractPdfRequestSchema,
+        response: {
+          200: SmartPdfVerificationResponseSchema,
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    verifyOrExtractHandler
+  );
+
+  // 8. GET /v1/pdf/verify/:docId - Public Cryptographic Proof Ledger Lookup
+  fastify.get(
+    '/v1/pdf/verify/:docId',
+    {
+      schema: {
+        tags: ['Dual-Brain & Cryptographic Proof'],
+        summary: 'Look Up Cryptographic Proof Record by Document ID',
+        description:
+          'Retrieves the public cryptographic proof-of-origin metadata (issuer, timestamp, SHA-256 fingerprint, template ID, and schema field keys) for a Tailprint document ID.',
+        params: z.object({
+          docId: z.string().min(1).describe('Tailprint Document ID (e.g. doc_...)'),
+        }),
+        response: {
+          200: PdfProofLookupResponseSchema,
+          404: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { docId } = request.params;
+      const proof = await redisService.getPdfProof(docId);
+
+      if (!proof) {
+        return reply.code(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: `No cryptographic proof record found for document ID "${docId}".`,
+        });
+      }
+
+      return reply.code(200).send({
+        found: true,
+        doc_id: proof.doc_id,
+        issued_at: proof.issued_at,
+        issuer: proof.customer_id,
+        template_id: proof.template_id,
+        signed: proof.signed,
+        ai_ready: proof.ai_ready,
+        page_count: proof.page_count,
+        file_sha256: proof.file_sha256,
+        content_fingerprint: proof.content_fingerprint,
+        data_hash: proof.data_hash,
+        data_keys: proof.data_keys || [],
+        signature: proof.signature,
+        verification_url: proof.verification_url,
+      });
+    }
   );
 };

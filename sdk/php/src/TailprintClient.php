@@ -397,8 +397,37 @@ class TailprintClient
     }
 
     // =========================================================================
-    // 4. Webhook Verification
     // =========================================================================
+    // 4. Dual-Brain Zero-OCR Extraction & Cryptographic Proof Verification
+    // =========================================================================
+
+    /**
+     * Cryptographically verify the HMAC-SHA256 proof-of-origin signature and page stream
+     * fingerprint of a Tailprint PDF, and extract its Dual-Brain JSON payload in 0ms.
+     *
+     * @return array<string, mixed>
+     */
+    public function verifyPdf(string $pdf): array
+    {
+        $payload = ['pdf' => $this->toDataUri($pdf)];
+        /** @var array<string, mixed> $res */
+        $res = $this->request('/v1/pdf/verify', 'POST', $payload, false);
+        return $res;
+    }
+
+    /**
+     * Extract the lossless Dual-Brain structured JSON-LD payload (`tailprint-manifest.json`)
+     * from a Tailprint PDF in 0ms without OCR.
+     *
+     * @return array<string, mixed>
+     */
+    public function extractPdfData(string $pdf): array
+    {
+        $payload = ['pdf' => $this->toDataUri($pdf)];
+        /** @var array<string, mixed> $res */
+        $res = $this->request('/v1/pdf/extract', 'POST', $payload, false);
+        return $res;
+    }
 
     /**
      * Verify the `X-Tailprint-Signature` HMAC-SHA256 header sent on webhook deliveries.

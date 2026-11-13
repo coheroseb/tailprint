@@ -117,3 +117,53 @@ export const EInvoiceValidationResponseSchema = z.object({
 });
 
 export type EInvoiceValidationResponse = z.infer<typeof EInvoiceValidationResponseSchema>;
+
+export const VerifyOrExtractPdfRequestSchema = z.object({
+  pdf: z
+    .string()
+    .min(1)
+    .describe('PDF document as a base64 string, base64 data URI ("data:application/pdf;base64,..."), or public HTTP/HTTPS URL'),
+});
+
+export type VerifyOrExtractPdfRequest = z.infer<typeof VerifyOrExtractPdfRequestSchema>;
+
+export const SmartPdfVerificationResponseSchema = z.object({
+  valid: z.boolean().describe('True if the document is an authentic, untampered Tailprint Dual-Brain or signed PDF'),
+  signed: z.boolean().describe('True if the document carries a cryptographic HMAC-SHA256 proof-of-origin signature'),
+  tampered: z.boolean().describe('True if visual page streams, page count, or embedded JSON data were modified after issuance'),
+  ai_ready: z.boolean().describe('True if lossless Dual-Brain structured JSON is embedded inside the PDF catalog'),
+  doc_id: z.string().nullable().describe('Unique Tailprint document identifier (e.g. doc_...)'),
+  issued_at: z.string().nullable().describe('ISO-8601 timestamp when the PDF was generated and signed'),
+  issuer: z.string().nullable().describe('Issuer account or domain identifier'),
+  template_id: z.string().nullable().describe('Hosted or custom template ID used to generate the PDF, if any'),
+  page_count: z.number().describe('Number of pages in the PDF'),
+  file_sha256: z.string().describe('SHA-256 hash of the complete PDF binary container'),
+  content_fingerprint: z.string().describe('SHA-256 fingerprint of all visual PDF page content streams and dimensions'),
+  signature_valid: z.boolean().describe('Whether the cryptographic HMAC-SHA256 signature matches the canonical manifest'),
+  content_intact: z.boolean().describe('Whether the visual PDF page streams and embedded JSON match their signed hashes'),
+  ledger_verified: z.boolean().describe('Whether the document hash matches the server-side Tailprint proof ledger'),
+  verification_url: z.string().nullable().describe('Public verification URL for this document'),
+  data_hash: z.string().nullable().describe('SHA-256 hash of the canonical Dual-Brain JSON payload'),
+  data: z.record(z.any()).nullable().describe('Zero-OCR extracted structured JSON payload from the Dual-Brain PDF'),
+  reasons: z.array(z.string()).describe('Human-readable verification and integrity details'),
+});
+
+export type SmartPdfVerificationResponse = z.infer<typeof SmartPdfVerificationResponseSchema>;
+
+export const PdfProofLookupResponseSchema = z.object({
+  found: z.boolean(),
+  doc_id: z.string(),
+  issued_at: z.string(),
+  issuer: z.string(),
+  template_id: z.string().nullable(),
+  signed: z.boolean(),
+  ai_ready: z.boolean(),
+  page_count: z.number(),
+  file_sha256: z.string(),
+  content_fingerprint: z.string(),
+  data_hash: z.string().nullable(),
+  data_keys: z.array(z.string()),
+  signature: z.string().nullable(),
+  verification_url: z.string(),
+});
+

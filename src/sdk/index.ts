@@ -54,6 +54,35 @@ export interface RenderPdfOptions {
   /** Optional Idempotency-Key (max 255 chars) to safely retry requests without duplicate renders or quota deduction. */
   idempotency_key?: string;
   idempotencyKey?: string;
+  /** Dual-Brain PDF mode: embeds lossless structured JSON-LD manifest (tailprint-manifest.json) inside the PDF catalog. */
+  ai_ready?: boolean;
+  /** Structured JSON payload to embed inside the Dual-Brain PDF container for 0ms zero-OCR extraction. */
+  embed_data?: Record<string, unknown>;
+  /** Cryptographic Proof-of-Origin: signs the PDF content streams and embedded manifest with HMAC-SHA256. */
+  sign?: boolean;
+  /** Renders a sleek vector "Verified by Tailprint" cryptographic seal onto the PDF document. */
+  verify_seal?: boolean;
+}
+
+export interface SmartPdfVerificationReport {
+  valid: boolean;
+  signed: boolean;
+  tampered: boolean;
+  ai_ready: boolean;
+  doc_id: string | null;
+  issued_at: string | null;
+  issuer: string | null;
+  template_id: string | null;
+  page_count: number;
+  file_sha256: string;
+  content_fingerprint: string;
+  signature_valid: boolean;
+  content_intact: boolean;
+  ledger_verified: boolean;
+  verification_url: string | null;
+  data_hash: string | null;
+  data: Record<string, unknown> | null;
+  reasons: string[];
 }
 
 export interface BatchItemOptions {
@@ -627,6 +656,26 @@ export class Tailprint {
   }> {
     return this.request('/v1/usage', {
       method: 'GET',
+    });
+  }
+
+  /**
+   * Cryptographically verifies the HMAC-SHA256 proof-of-origin signature and visual page stream fingerprint
+   * of a Tailprint PDF, and extracts its Dual-Brain structured JSON payload in 0ms without OCR.
+   */
+  public async verifyPdf(pdf: Buffer | Uint8Array | string): Promise<SmartPdfVerificationReport> {
+    return this.request('/v1/pdf/verify', {
+      body: { pdf: this.bufferToBase64(pdf) },
+    });
+  }
+
+  /**
+   * Extracts the lossless, machine-readable structured JSON-LD payload (`tailprint-manifest.json`)
+   * embedded inside a Tailprint Dual-Brain PDF in 0ms without OCR or LLM vision token cost.
+   */
+  public async extractPdfData(pdf: Buffer | Uint8Array | string): Promise<SmartPdfVerificationReport> {
+    return this.request('/v1/pdf/extract', {
+      body: { pdf: this.bufferToBase64(pdf) },
     });
   }
 }
