@@ -51,6 +51,9 @@ export interface RenderPdfOptions {
   async?: boolean;
   webhook_url?: string;
   webhook_headers?: Record<string, string>;
+  /** Optional Idempotency-Key (max 255 chars) to safely retry requests without duplicate renders or quota deduction. */
+  idempotency_key?: string;
+  idempotencyKey?: string;
 }
 
 export interface BatchItemOptions {
@@ -75,6 +78,8 @@ export interface RenderBatchOptions {
   webhook_url?: string;
   webhook_headers?: Record<string, string>;
   expires_in?: '1h' | '24h' | '7d';
+  idempotency_key?: string;
+  idempotencyKey?: string;
 }
 
 export interface AsyncJobAccepted {
@@ -183,6 +188,8 @@ export interface GenerateEInvoiceOptions {
   profile?: 'BASIC' | 'EN16931';
   store?: boolean;
   expires_in?: '1h' | '24h' | '7d';
+  idempotency_key?: string;
+  idempotencyKey?: string;
 }
 
 export interface ValidateEInvoiceOptions {
@@ -280,8 +287,13 @@ export class Tailprint {
 
     let bodyPayload: any;
     if (options.body) {
+      const { idempotency_key, idempotencyKey, ...restBody } = options.body;
+      const resolvedIdemp = idempotencyKey || idempotency_key;
+      if (resolvedIdemp) {
+        headers['Idempotency-Key'] = String(resolvedIdemp);
+      }
       headers['Content-Type'] = 'application/json';
-      bodyPayload = JSON.stringify(options.body);
+      bodyPayload = JSON.stringify(restBody);
     }
 
     const controller = new AbortController();

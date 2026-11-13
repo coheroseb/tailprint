@@ -93,7 +93,7 @@ func PDFBytesToDataURI(pdfBytes []byte) string {
 func (c *Client) RenderPDF(ctx context.Context, opts RenderOptions) ([]byte, error) {
 	opts.Store = false
 	opts.Async = false
-	return c.doBinary(ctx, http.MethodPost, "/v1/render/pdf", opts)
+	return c.doBinaryWithHeaders(ctx, http.MethodPost, "/v1/render/pdf", opts, opts.IdempotencyKey)
 }
 
 // RenderPDFStored compiles a PDF and stores it on Tailprint's CDN, returning a signed download URL.
@@ -101,7 +101,7 @@ func (c *Client) RenderPDFStored(ctx context.Context, opts RenderOptions) (*Stor
 	opts.Store = true
 	opts.Async = false
 	var res StoredFileResponse
-	if err := c.doJSON(ctx, http.MethodPost, "/v1/render/pdf", opts, &res); err != nil {
+	if err := c.doJSONWithHeaders(ctx, http.MethodPost, "/v1/render/pdf", opts, &res, opts.IdempotencyKey); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -260,7 +260,11 @@ func VerifyWebhookSignature(payload []byte, signatureHeader, secret string) bool
 }
 
 func (c *Client) doBinary(ctx context.Context, method, endpoint string, body any) ([]byte, error) {
-	respBody, _, err := c.doRequest(ctx, method, endpoint, body)
+	return c.doBinaryWithHeaders(ctx, method, endpoint, body, "")
+}
+
+func (c *Client) doBinaryWithHeaders(ctx context.Context, method, endpoint string, body any, idempotencyKey string) ([]byte, error) {
+	respBody, _, err := c.doRequest(ctx, method, endpoint, body, idempotencyKey)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +272,11 @@ func (c *Client) doBinary(ctx context.Context, method, endpoint string, body any
 }
 
 func (c *Client) doJSON(ctx context.Context, method, endpoint string, body any, out any) error {
-	respBody, _, err := c.doRequest(ctx, method, endpoint, body)
+	return c.doJSONWithHeaders(ctx, method, endpoint, body, out, "")
+}
+
+func (c *Client) doJSONWithHeaders(ctx context.Context, method, endpoint string, body any, out any, idempotencyKey string) error {
+	respBody, _, err := c.doRequest(ctx, method, endpoint, body, idempotencyKey)
 	if err != nil {
 		return err
 	}
@@ -278,7 +286,7 @@ func (c *Client) doJSON(ctx context.Context, method, endpoint string, body any, 
 	return json.Unmarshal(respBody, out)
 }
 
-func (c *Client) doRequest(ctx context.Context, method, endpoint string, body any) ([]byte, http.Header, error) {
+func (c *Client) doRequest(ctx context.Context, method, endpoint string, body any, idempotencyKey string) ([]byte, http.Header, error) {
 	fullURL := c.baseURL + "/" + strings.TrimLeft(endpoint, "/")
 
 	var reqReader io.Reader
@@ -298,6 +306,9 @@ func (c *Client) doRequest(ctx context.Context, method, endpoint string, body an
 	req.Header.Set("User-Agent", "Tailprint-Go-SDK/"+Version)
 	if c.apiKey != "" {
 		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
+	if idempotencyKey != "" {
+		req.Header.Set("Idempotency-Key", idempotencyKey)
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")

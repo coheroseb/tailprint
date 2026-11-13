@@ -78,8 +78,12 @@ class Tailprint:
 
         data: Optional[bytes] = None
         if payload is not None:
+            clean_payload = dict(payload)
+            idemp_key = clean_payload.pop("idempotency_key", None)
+            if idemp_key:
+                headers["Idempotency-Key"] = str(idemp_key)
             headers["Content-Type"] = "application/json"
-            data = json.dumps(payload).encode("utf-8")
+            data = json.dumps(clean_payload).encode("utf-8")
 
         req = urllib.request.Request(url, data=data, headers=headers, method=method)
 
@@ -151,6 +155,7 @@ class Tailprint:
         no_store: bool = False,
         store: bool = False,
         expires_in: str = "24h",
+        idempotency_key: Optional[str] = None,
     ) -> Union[bytes, Dict[str, Any]]:
         """Renders HTML (with Tailwind CSS classes) or a public URL to vector PDF.
 
@@ -184,6 +189,8 @@ class Tailprint:
             payload["template_id"] = template_id
         if data is not None:
             payload["data"] = data
+        if idempotency_key is not None:
+            payload["idempotency_key"] = idempotency_key
         if margin is not None:
             payload["margin"] = margin
         if header_html is not None:
@@ -240,6 +247,7 @@ class Tailprint:
         smart_pagination: bool = True,
         delay_ms: Optional[int] = None,
         expires_in: str = "24h",
+        idempotency_key: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Submits a PDF rendering job asynchronously in background.
 
@@ -260,6 +268,8 @@ class Tailprint:
             payload["template_id"] = template_id
         if data is not None:
             payload["data"] = data
+        if idempotency_key is not None:
+            payload["idempotency_key"] = idempotency_key
         if webhook_url is not None:
             payload["webhook_url"] = webhook_url
         if webhook_headers is not None:
@@ -284,6 +294,7 @@ class Tailprint:
         webhook_url: Optional[str] = None,
         webhook_headers: Optional[Dict[str, str]] = None,
         expires_in: str = "24h",
+        idempotency_key: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Submits up to 100 documents for concurrent batch rendering with optional merging."""
         payload: Dict[str, Any] = {
@@ -292,6 +303,8 @@ class Tailprint:
             "merged_filename": merged_filename,
             "expires_in": expires_in,
         }
+        if idempotency_key is not None:
+            payload["idempotency_key"] = idempotency_key
         if webhook_url is not None:
             payload["webhook_url"] = webhook_url
         if webhook_headers is not None:

@@ -19,6 +19,16 @@ export interface QuotaCheckResult {
   remaining: number;
 }
 
+export interface IdempotencyRecord {
+  requestHash: string;
+  statusCode: number;
+  contentType: string;
+  isBinary: boolean;
+  body: string;
+  headers: Record<string, string>;
+  createdAt: string;
+}
+
 // In-Memory store fallback for local development or tests when Upstash is not configured
 class MemoryRedisClient {
   private data = new Map<string, any>();
@@ -577,6 +587,46 @@ export class RedisService {
     }
 
     return accounts.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }
+
+  public hashIdempotencyPayload(payload: unknown): string {
+    const serialized = JSON.stringify(payload ?? {});
+    return crypto.createHash('sha256').update(serialized).digest('hex');
+  }
+
+  private getIdempotencyRedisKey(rawKey: string, endpoint: string, idempotencyKey: string): string {
+    const keyHash = this.hashKey(rawKey).slice(0, 24);
+    const cleanEndpoint = endpoint.replace(/^\/v1\//, '/').replace(/\/+$/, '');
+    return `idemp:${keyHash}:${cleanEndpoint}:${idempotencyKey}`;
+  }
+
+  public async getIdempotencyRecord(
+    rawKey: string,
+    endpoint: string,
+    idempotencyKey: string
+  ): Promise<IdempotencyRecord | null> {
+    const key = this.getIdempotencyRedisKey(rawKey, endpoint, idempotencyKey);
+    const raw = await this.client.get<IdempotencyRecord | string>(key);
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw) as IdempotencyRecord;
+      } catch {
+        return null;
+      }
+    }
+    return raw as IdempotencyRecord;
+  }
+
+  public async setIdempotencyRecord(
+    rawKey: string,
+    endpoint: string,
+    idempotencyKey: string,
+    record: IdempotencyRecord,
+    ttlSeconds = 86400
+  ): Promise<void> {
+    const key = this.getIdempotencyRedisKey(rawKey, endpoint, idempotencyKey);
+    await this.client.set(key, record, { ex: ttlSeconds });
   }
 }
 

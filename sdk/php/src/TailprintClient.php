@@ -438,6 +438,10 @@ class TailprintClient
 
         $body = null;
         if ($payload !== null) {
+            if (isset($payload['idempotency_key']) && is_string($payload['idempotency_key']) && $payload['idempotency_key'] !== '') {
+                $headers['Idempotency-Key'] = $payload['idempotency_key'];
+            }
+            unset($payload['idempotency_key']);
             $headers['Content-Type'] = 'application/json';
             $body = json_encode($payload, JSON_THROW_ON_ERROR);
         }

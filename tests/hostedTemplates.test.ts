@@ -249,4 +249,104 @@ describe('Hosted templates (template_id + data)', () => {
       expect(res.json().job_id).toBeTruthy();
     });
   });
+
+  describe('Idempotency-Key Header Support', () => {
+    it('replays identical PDF response without deducting extra quota', async () => {
+      const idempKey = `idem-pdf-${Date.now()}`;
+      const payload = {
+        html: '<div class="p-8 font-sans"><h1>Idempotent Invoice #101</h1></div>',
+      };
+
+      const first = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: authHeader,
+          'idempotency-key': idempKey,
+        },
+        payload,
+      });
+
+      expect(first.statusCode).toBe(200);
+      expect(first.headers['idempotency-key']).toBe(idempKey);
+      expect(first.headers['x-tailprint-idempotent-replay']).toBe('false');
+      const remainingAfterFirst = Number(first.headers['x-ratelimit-remaining']);
+
+      const second = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: authHeader,
+          'idempotency-key': idempKey,
+        },
+        payload,
+      });
+
+      expect(second.statusCode).toBe(200);
+      expect(second.headers['idempotency-key']).toBe(idempKey);
+      expect(second.headers['x-tailprint-idempotent-replay']).toBe('true');
+      expect(Number(second.headers['x-ratelimit-remaining'])).toBe(remainingAfterFirst);
+      expect(second.rawPayload.length).toBe(first.rawPayload.length);
+      expect(second.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('returns 409 Conflict when reusing an Idempotency-Key with a different payload', async () => {
+      const idempKey = `idem-conflict-${Date.now()}`;
+
+      const first = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: authHeader,
+          'idempotency-key': idempKey,
+        },
+        payload: { html: '<h1>Document A</h1>' },
+      });
+      expect(first.statusCode).toBe(200);
+
+      const conflict = await app.inject({
+        method: 'POST',
+        url: '/v1/render/pdf',
+        headers: {
+          authorization: authHeader,
+          'idempotency-key': idempKey,
+        },
+        payload: { html: '<h1>Document B (Modified)</h1>' },
+      });
+
+      expect(conflict.statusCode).toBe(409);
+      expect(conflict.json().message).toContain(idempKey);
+    });
+
+    it('replays identical batch job_id on retry with same Idempotency-Key', async () => {
+      const idempKey = `idem-batch-${Date.now()}`;
+      const payload = {
+        items: [{ html: '<h1>Batch Item 1</h1>', filename: 'item1.pdf' }],
+      };
+
+      const first = await app.inject({
+        method: 'POST',
+        url: '/v1/render/batch',
+        headers: {
+          authorization: authHeader,
+          'idempotency-key': idempKey,
+        },
+        payload,
+      });
+      expect(first.statusCode).toBe(202);
+
+      const second = await app.inject({
+        method: 'POST',
+        url: '/v1/render/batch',
+        headers: {
+          authorization: authHeader,
+          'idempotency-key': idempKey,
+        },
+        payload,
+      });
+      expect(second.statusCode).toBe(202);
+      expect(second.headers['x-tailprint-idempotent-replay']).toBe('true');
+      expect(second.json().job_id).toBe(first.json().job_id);
+    });
+  });
 });

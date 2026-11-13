@@ -43,8 +43,13 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     }
   }
 
-  // Helper to authenticate Bearer token and check monthly quota
-  async function authenticateAndCheckQuota(request: any, reply: any, units: number = 1) {
+  // Helper to authenticate Bearer token, check Idempotency-Key replay, and check monthly quota
+  async function authenticateAndCheckQuota(
+    request: any,
+    reply: any,
+    units: number = 1,
+    idempotencyPayload?: unknown
+  ) {
     const authHeader = request.headers.authorization;
     let token: string | null = null;
 
@@ -82,6 +87,55 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       return null;
     }
 
+    // Check optional Idempotency-Key header BEFORE deducting quota
+    const rawIdempHeader = request.headers['idempotency-key'];
+    const idempKey = typeof rawIdempHeader === 'string' ? rawIdempHeader.trim() : '';
+    let idempotencyContext: { key: string; endpoint: string; requestHash: string } | undefined;
+
+    if (idempKey) {
+      if (idempKey.length > 255) {
+        reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Idempotency-Key header must not exceed 255 characters.',
+        });
+        return null;
+      }
+
+      const endpoint = String(request.routerPath || request.url || '/v1/render/pdf').split('?')[0];
+      const requestHash = redisService.hashIdempotencyPayload(idempotencyPayload ?? request.body);
+      const existing = await redisService.getIdempotencyRecord(token, endpoint, idempKey);
+
+      if (existing) {
+        if (existing.requestHash !== requestHash) {
+          reply.code(409).send({
+            statusCode: 409,
+            error: 'Conflict',
+            message: `Idempotency-Key '${idempKey}' has already been used with a different request payload.`,
+          });
+          return null;
+        }
+
+        for (const [hdrKey, hdrVal] of Object.entries(existing.headers || {})) {
+          reply.header(hdrKey, hdrVal);
+        }
+        reply.header('Idempotency-Key', idempKey);
+        reply.header('X-Tailprint-Idempotent-Replay', 'true');
+
+        if (existing.isBinary) {
+          const buf = Buffer.from(existing.body, 'base64');
+          reply.header('Content-Type', existing.contentType || 'application/pdf');
+          reply.header('Content-Length', String(buf.length));
+          reply.code(existing.statusCode).send(buf);
+        } else {
+          reply.code(existing.statusCode).send(JSON.parse(existing.body));
+        }
+        return null;
+      }
+
+      idempotencyContext = { key: idempKey, endpoint, requestHash };
+    }
+
     const quota = await redisService.incrementAndCheckQuota(token, apiKey.monthly_limit, units);
     reply.header('X-RateLimit-Limit', String(quota.limit));
     reply.header('X-RateLimit-Remaining', String(quota.remaining));
@@ -95,7 +149,48 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       return null;
     }
 
-    return { token, apiKey, quota };
+    return { token, apiKey, quota, idempotency: idempotencyContext };
+  }
+
+  async function saveIdempotencyIfPresent(
+    auth: NonNullable<Awaited<ReturnType<typeof authenticateAndCheckQuota>>>,
+    reply: any,
+    opts: {
+      statusCode: number;
+      contentType: string;
+      isBinary: boolean;
+      body: Buffer | Record<string, unknown>;
+      headers?: Record<string, string>;
+      noStore?: boolean;
+    }
+  ): Promise<void> {
+    if (!auth.idempotency || opts.noStore) return;
+
+    reply.header('Idempotency-Key', auth.idempotency.key);
+    reply.header('X-Tailprint-Idempotent-Replay', 'false');
+
+    const serializedBody = opts.isBinary
+      ? (opts.body as Buffer).toString('base64')
+      : JSON.stringify(opts.body);
+
+    await redisService.setIdempotencyRecord(
+      auth.token,
+      auth.idempotency.endpoint,
+      auth.idempotency.key,
+      {
+        requestHash: auth.idempotency.requestHash,
+        statusCode: opts.statusCode,
+        contentType: opts.contentType,
+        isBinary: opts.isBinary,
+        body: serializedBody,
+        headers: {
+          'X-RateLimit-Limit': String(auth.quota.limit),
+          'X-RateLimit-Remaining': String(auth.quota.remaining),
+          ...(opts.headers || {}),
+        },
+        createdAt: new Date().toISOString(),
+      }
+    );
   }
 
   // Canonical POST /v1/render/pdf (Documented in OpenAPI / Scalar)
@@ -113,6 +208,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           202: AsyncRenderAcceptedResponseSchema.describe('Asynchronous render job accepted and processing in background'),
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
+          409: ErrorResponseSchema,
           429: ErrorResponseSchema,
           500: ErrorResponseSchema,
           504: ErrorResponseSchema,
@@ -136,6 +232,10 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
       }
 
+      const templateHeaders: Record<string, string> = resolvedBody.template_id
+        ? { 'X-Tailprint-Template': resolvedBody.template_id }
+        : {};
+
       // Asynchronous background rendering with optional webhook callback
       if (request.body.async || request.body.webhook_url) {
         const job = await jobsService.createJob({
@@ -152,15 +252,26 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           console.error(`[JobsService] Background render failed for ${job.job_id}:`, err);
         });
 
-        return reply.code(202).send({
+        const asyncResponse = {
           success: true,
           job_id: job.job_id,
-          status: 'pending',
+          status: 'pending' as const,
           message: 'Asynchronous render job queued successfully. Poll GET /v1/jobs/:jobId or listen for webhook delivery.',
           status_url: `${env.APP_URL}/v1/jobs/${job.job_id}`,
           webhook_url: request.body.webhook_url,
           created_at: job.created_at,
+        };
+
+        await saveIdempotencyIfPresent(auth, reply, {
+          statusCode: 202,
+          contentType: 'application/json',
+          isBinary: false,
+          body: asyncResponse,
+          headers: templateHeaders,
+          noStore: request.body.no_store,
         });
+
+        return reply.code(202).send(asyncResponse);
       }
 
       if (request.body.no_store) {
@@ -178,19 +289,41 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           expiresIn: request.body.expires_in,
         });
 
+        const storedBody = {
+          success: true,
+          hostedUrl: stored.hostedUrl,
+          fileId: stored.fileId,
+          filename: stored.filename,
+          mimeType: stored.mimeType,
+          sizeBytes: stored.sizeBytes,
+          expiresAt: stored.expiresAt,
+        };
+
+        await saveIdempotencyIfPresent(auth, reply, {
+          statusCode: 200,
+          contentType: 'application/json',
+          isBinary: false,
+          body: storedBody,
+          headers: { ...templateHeaders, 'X-Tailprint-Hosted-Url': stored.hostedUrl },
+        });
+
         return reply
           .code(200)
           .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
-          .send({
-            success: true,
-            hostedUrl: stored.hostedUrl,
-            fileId: stored.fileId,
-            filename: stored.filename,
-            mimeType: stored.mimeType,
-            sizeBytes: stored.sizeBytes,
-            expiresAt: stored.expiresAt,
-          });
+          .send(storedBody);
       }
+
+      await saveIdempotencyIfPresent(auth, reply, {
+        statusCode: 200,
+        contentType: 'application/pdf',
+        isBinary: true,
+        body: pdfBuffer,
+        headers: {
+          ...templateHeaders,
+          'Content-Disposition': 'inline; filename="rendered.pdf"',
+        },
+        noStore: request.body.no_store,
+      });
 
       return reply
         .code(200)
@@ -216,6 +349,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           202: AsyncRenderAcceptedResponseSchema.describe('Batch job successfully accepted and processing'),
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
+          409: ErrorResponseSchema,
           429: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
@@ -248,15 +382,24 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         console.error(`[JobsService] Background batch failed for ${job.job_id}:`, err);
       });
 
-      return reply.code(202).send({
+      const batchResponse = {
         success: true,
         job_id: job.job_id,
-        status: 'pending',
+        status: 'pending' as const,
         message: `Batch of ${itemsCount} documents queued. Poll GET /v1/jobs/${job.job_id} or listen for webhook delivery.`,
         status_url: `${env.APP_URL}/v1/jobs/${job.job_id}`,
         webhook_url: request.body.webhook_url,
         created_at: job.created_at,
+      };
+
+      await saveIdempotencyIfPresent(auth, reply, {
+        statusCode: 202,
+        contentType: 'application/json',
+        isBinary: false,
+        body: batchResponse,
       });
+
+      return reply.code(202).send(batchResponse);
     }
   );
 
@@ -324,6 +467,9 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       }
 
       const pdfBuffer = await browserService.renderPdf(request.body);
+      const templateHeaders: Record<string, string> = resolvedBody.template_id
+        ? { 'X-Tailprint-Template': resolvedBody.template_id }
+        : {};
 
       if (request.body.store) {
         const stored = await storageService.saveFile(pdfBuffer, {
@@ -333,19 +479,41 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           expiresIn: request.body.expires_in,
         });
 
+        const storedBody = {
+          success: true,
+          hostedUrl: stored.hostedUrl,
+          fileId: stored.fileId,
+          filename: stored.filename,
+          mimeType: stored.mimeType,
+          sizeBytes: stored.sizeBytes,
+          expiresAt: stored.expiresAt,
+        };
+
+        await saveIdempotencyIfPresent(auth, reply, {
+          statusCode: 200,
+          contentType: 'application/json',
+          isBinary: false,
+          body: storedBody,
+          headers: { ...templateHeaders, 'X-Tailprint-Hosted-Url': stored.hostedUrl },
+        });
+
         return reply
           .code(200)
           .header('X-Tailprint-Hosted-Url', stored.hostedUrl)
-          .send({
-            success: true,
-            hostedUrl: stored.hostedUrl,
-            fileId: stored.fileId,
-            filename: stored.filename,
-            mimeType: stored.mimeType,
-            sizeBytes: stored.sizeBytes,
-            expiresAt: stored.expiresAt,
-          });
+          .send(storedBody);
       }
+
+      await saveIdempotencyIfPresent(auth, reply, {
+        statusCode: 200,
+        contentType: 'application/pdf',
+        isBinary: true,
+        body: pdfBuffer,
+        headers: {
+          ...templateHeaders,
+          'Content-Disposition': 'inline; filename="rendered.pdf"',
+        },
+        noStore: request.body.no_store,
+      });
 
       return reply
         .code(200)
@@ -609,6 +777,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           ]),
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
+          409: ErrorResponseSchema,
           429: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
@@ -635,20 +804,46 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       });
 
       if (body.store && result.pdfStored) {
+        const storedBody = {
+          success: true,
+          hostedUrl: result.pdfStored.hostedUrl,
+          fileId: result.pdfStored.fileId,
+          filename: result.pdfStored.filename,
+          mimeType: result.pdfStored.mimeType,
+          sizeBytes: result.pdfStored.sizeBytes,
+          expiresAt: result.pdfStored.expiresAt,
+        };
+
+        await saveIdempotencyIfPresent(auth, reply, {
+          statusCode: 200,
+          contentType: 'application/json',
+          isBinary: false,
+          body: storedBody,
+          headers: {
+            'X-Tailprint-Hosted-Url': result.pdfStored.hostedUrl,
+            'X-Invoice-Total': String(result.grossTotal),
+          },
+        });
+
         return reply
           .code(200)
           .header('X-Tailprint-Hosted-Url', result.pdfStored.hostedUrl)
           .header('X-Invoice-Total', String(result.grossTotal))
-          .send({
-            success: true,
-            hostedUrl: result.pdfStored.hostedUrl,
-            fileId: result.pdfStored.fileId,
-            filename: result.pdfStored.filename,
-            mimeType: result.pdfStored.mimeType,
-            sizeBytes: result.pdfStored.sizeBytes,
-            expiresAt: result.pdfStored.expiresAt,
-          });
+          .send(storedBody);
       }
+
+      await saveIdempotencyIfPresent(auth, reply, {
+        statusCode: 200,
+        contentType: 'application/pdf',
+        isBinary: true,
+        body: result.pdfBuffer,
+        headers: {
+          'Content-Disposition': `inline; filename="factur-x-${result.invoiceNumber}.pdf"`,
+          'X-Invoice-Total': String(result.grossTotal),
+          'X-Invoice-Currency': result.currency,
+          'X-Tailprint-Hosted-Url': result.pdfStored?.hostedUrl || '',
+        },
+      });
 
       return reply
         .code(200)

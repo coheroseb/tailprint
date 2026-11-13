@@ -91,6 +91,12 @@ class PendingPdf
         return $this;
     }
 
+    public function idempotencyKey(string $key): self
+    {
+        $this->payload['idempotency_key'] = $key;
+        return $this;
+    }
+
     /**
      * Render and return raw PDF binary string.
      */

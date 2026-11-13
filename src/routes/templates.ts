@@ -105,6 +105,60 @@ const HERO_SHOWCASE_DATA: Record<string, {
       </div>
     </div>`
   },
+  template: {
+    filename: 'render-template.json',
+    badgeText: 'Hosted Template',
+    endpoint: 'POST /v1/render/pdf',
+    previewTitle: 'Server-Calculated Template Output',
+    previewBadge: 'Zero HTML Required',
+    shieldText: 'Auto-escaped • Zod Validated • Server-Computed Totals',
+    openHref: '/v1/templates',
+    openLabel: 'Browse GET /v1/templates →',
+    code: `{
+  "template_id": "invoice-modern",
+  "data": {
+    "invoice_number": "INV-2026-1042",
+    "issue_date": "2026-11-13",
+    "currency": "EUR",
+    "seller": { "name": "Tailprint ApS", "vat_number": "DK44198271" },
+    "buyer": { "name": "Cohero Technologies ApS" },
+    "items": [
+      { "description": "Pro PDF Engine Plan", "quantity": 1, "unit_price": 49 }
+    ],
+    "tax_rate": 25
+  }
+}`,
+    previewHtml: `<div class="w-full max-w-sm bg-white text-slate-900 rounded-xl p-5 shadow-2xl border border-slate-200 select-none text-left transform hover:scale-[1.02] transition duration-300">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600">INVOICE-MODERN</span>
+          <h4 class="text-sm font-black text-slate-900 mt-0.5">Tailprint ApS</h4>
+        </div>
+        <div class="text-right">
+          <span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[9px] font-mono font-bold">INV-2026-1042</span>
+          <p class="text-[9px] text-slate-400 mt-0.5">2026-11-13</p>
+        </div>
+      </div>
+      <div class="mt-3 space-y-1.5 text-[11px]">
+        <div class="flex justify-between text-slate-600">
+          <span>Pro PDF Engine Plan (1 × €49.00)</span>
+          <span class="font-semibold text-slate-900">€49.00</span>
+        </div>
+        <div class="flex justify-between text-slate-500 text-[10px]">
+          <span>VAT (25% auto-computed)</span>
+          <span>€12.25</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-2.5 border-t border-slate-200 flex justify-between items-center">
+        <span class="text-[10px] font-semibold text-slate-500">Total (Server-Calculated)</span>
+        <span class="text-sm font-black text-indigo-600">€61.25</span>
+      </div>
+      <div class="mt-3 py-1 px-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-700 flex items-center justify-between font-mono">
+        <span>✓ Schema Validated</span>
+        <span class="font-bold">4 Built-in Templates</span>
+      </div>
+    </div>`
+  },
   einvoice: {
     filename: 'factur-x.json',
     badgeText: 'EN 16931 Hybrid',
@@ -214,60 +268,57 @@ const HERO_SHOWCASE_DATA: Record<string, {
     </div>`
   },
   sdk: {
-    filename: 'client.py & client.ts',
-    badgeText: 'Python & TS SDKs',
-    endpoint: 'pip & npm install tailprint',
-    previewTitle: 'Official SDKs & MCP Protocol',
-    previewBadge: 'v1.3 Isomorphic SDK',
-    shieldText: 'Zero External Dependencies • Full Typing • MCP Ready',
-    openHref: 'https://pypi.org/project/tailprint/',
-    openLabel: 'View on PyPI & npm →',
-    code: `# 1. Python SDK (pip install tailprint)
-from tailprint import TailprintClient
+    filename: 'Python • TS • Laravel • Go',
+    badgeText: '4 Official SDKs',
+    endpoint: 'v1.4 SDKs & MCP Server',
+    previewTitle: 'Official Multi-Language SDKs',
+    previewBadge: 'v1.4 Zero-Dep SDKs',
+    shieldText: 'TypeScript • Python • PHP / Laravel • Go • Idempotency Ready',
+    openHref: 'https://github.com/coheroseb/tailprint',
+    openLabel: 'Explore SDKs on GitHub →',
+    code: `# 1. Python (pip install tailprint)
+pdf = tp.render_pdf(template_id="invoice-modern", data=invoice_data)
 
-client = TailprintClient(api_key="sec_live_...")
-pdf_bytes = client.render_pdf(
-    html="<div class='p-8 font-sans'><h1>Report</h1></div>",
-    smart_pagination=True
-)
+// 2. TypeScript / Node.js (npm install tailprint)
+const pdf = await tp.renderPdf({ template_id: "invoice-modern", data });
 
-# 2. TypeScript / Node.js (npm install tailprint)
-# import { Tailprint } from 'tailprint';
-# const tp = new Tailprint({ apiKey: 'sec_live_...' });
-# const pdf = await tp.renderPdf({ html: "..." });`,
+// 3. PHP & Laravel (composer require tailprint/tailprint)
+return Tailprint::template('invoice-modern', $data)->download('inv.pdf');
+
+// 4. Go (go get github.com/coheroseb/tailprint/sdk/go@v1.4.0)
+pdf, err := client.RenderTemplate(ctx, "invoice-modern", data, nil)`,
     previewHtml: `<div class="w-full max-w-sm bg-slate-900 text-slate-100 rounded-xl p-5 shadow-2xl border border-emerald-500/30 select-none text-left transform hover:scale-[1.02] transition duration-300">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <div class="flex items-center space-x-2">
           <span class="text-base text-emerald-400">📦</span>
           <div>
-            <span class="text-xs font-bold text-white">SDKs &amp; MCP Protocol</span>
-            <p class="text-[9px] text-slate-400 font-mono">Python • TypeScript • Cursor</p>
+            <span class="text-xs font-bold text-white">4 Official SDKs + MCP</span>
+            <p class="text-[9px] text-slate-400 font-mono">TS • Python • Laravel • Go</p>
           </div>
         </div>
-        <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">v1.3 LIVE</span>
+        <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">v1.4 LIVE</span>
       </div>
-      <div class="mt-3 p-3 rounded-lg bg-slate-950 font-mono text-[10px] space-y-2 border border-slate-800">
-        <div class="flex items-center space-x-2 text-indigo-300">
-          <span class="text-slate-500">$</span>
-          <span class="text-emerald-400 font-bold">pip install tailprint</span>
-        </div>
+      <div class="mt-3 p-3 rounded-lg bg-slate-950 font-mono text-[10px] space-y-1.5 border border-slate-800">
         <div class="flex items-center space-x-2 text-indigo-300">
           <span class="text-slate-500">$</span>
           <span class="text-sky-400 font-bold">npm install tailprint</span>
         </div>
         <div class="flex items-center space-x-2 text-indigo-300">
           <span class="text-slate-500">$</span>
-          <span class="text-purple-400 font-bold">npx tailprint</span>
-          <span class="text-slate-500 text-[9px]">(11 MCP tools)</span>
+          <span class="text-emerald-400 font-bold">pip install tailprint</span>
         </div>
-        <div class="pt-2 border-t border-slate-800 text-emerald-400 font-bold flex items-center justify-between">
-          <span>✓ Zero external dependencies</span>
-          <span class="text-[9px] text-slate-500 font-mono">&lt; 380ms</span>
+        <div class="flex items-center space-x-2 text-indigo-300">
+          <span class="text-slate-500">$</span>
+          <span class="text-purple-400 font-bold">composer require tailprint/tailprint</span>
+        </div>
+        <div class="flex items-center space-x-2 text-indigo-300">
+          <span class="text-slate-500">$</span>
+          <span class="text-cyan-400 font-bold">go get .../tailprint/sdk/go@v1.4.0</span>
         </div>
       </div>
       <div class="mt-3 flex items-center justify-between text-[10px] text-slate-400">
-        <span class="text-emerald-400 font-semibold">PyPI + npm Ready</span>
-        <span class="font-mono text-slate-500">100% Type-Safe</span>
+        <span class="text-emerald-400 font-semibold">✓ Zero external dependencies</span>
+        <span class="font-mono text-slate-500">Idempotency-Key Ready</span>
       </div>
     </div>`
   }
@@ -943,10 +994,10 @@ Cursor IDE & Windsurf:
         </a>
         <a href="/docs" class="px-5 py-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
           <span>📖 API &amp; SDK Docs</span>
-          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">v1.3</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">v1.4</span>
         </a>
       </div>
-      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • Official TypeScript (npm) &amp; Python (pip) SDKs • 11 MCP Tools</p>
+      <p class="mt-3 text-xs text-slate-500">Instant API key • Hosted Templates • Official TypeScript, Python, Laravel &amp; Go SDKs • 11 MCP Tools</p>
 
       <!-- Interactive Developer Showcase: Code on the Left -> Live Document Preview on the Right -->
       <div class="mt-12 text-left max-w-5xl mx-auto rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-xl overflow-hidden ring-1 ring-white/10">
@@ -957,26 +1008,30 @@ Cursor IDE & Windsurf:
             <span class="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
             <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
             <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
-            <span class="ml-2 text-xs font-mono text-slate-400 hidden sm:inline">tailprint-engine v1.3</span>
+            <span class="ml-2 text-xs font-mono text-slate-400 hidden sm:inline">tailprint-engine v1.4</span>
           </div>
 
           <!-- Mode Switcher Tabs -->
-          <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs font-semibold">
-            <button id="hero-tab-pdf" onclick="switchHeroShowcase('pdf')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5">
+          <div class="inline-flex flex-wrap rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs font-semibold gap-0.5">
+            <button id="hero-tab-pdf" onclick="switchHeroShowcase('pdf')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5">
               <span>📄</span>
               <span>Tailwind PDF</span>
             </button>
-            <button id="hero-tab-einvoice" onclick="switchHeroShowcase('einvoice')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+            <button id="hero-tab-template" onclick="switchHeroShowcase('template')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+              <span>✨</span>
+              <span>Hosted Templates</span>
+            </button>
+            <button id="hero-tab-einvoice" onclick="switchHeroShowcase('einvoice')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
               <span>🇪🇺</span>
               <span>Factur-X</span>
             </button>
-            <button id="hero-tab-batch" onclick="switchHeroShowcase('batch')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+            <button id="hero-tab-batch" onclick="switchHeroShowcase('batch')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
               <span>⚡</span>
               <span>Batch &amp; Webhooks</span>
             </button>
-            <button id="hero-tab-sdk" onclick="switchHeroShowcase('sdk')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
-              <span>🐍</span>
-              <span>Python &amp; TS SDK</span>
+            <button id="hero-tab-sdk" onclick="switchHeroShowcase('sdk')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+              <span>📦</span>
+              <span>Python, TS, PHP &amp; Go</span>
             </button>
           </div>
 
@@ -1068,8 +1123,8 @@ Cursor IDE & Windsurf:
         </div>
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
           <p class="text-xs text-slate-400">Official SDKs &amp; MCP</p>
-          <p class="text-2xl font-black text-cyan-400 mt-1">v1.3 Live</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">pip &amp; npm install tailprint</p>
+          <p class="text-2xl font-black text-cyan-400 mt-1">v1.4 Live</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">TS • Python • Laravel • Go</p>
         </div>
       </div>
 
@@ -2335,10 +2390,13 @@ Cursor IDE & Windsurf:
         <div class="mt-4">
           <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
             <span class="font-semibold">Quickstart Snippet:</span>
-            <div class="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[10px] font-mono">
+            <div class="inline-flex flex-wrap rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[10px] font-mono gap-0.5">
               <button type="button" onclick="switchFreeKeyTab('curl')" id="tab-fk-curl" class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">cURL</button>
+              <button type="button" onclick="switchFreeKeyTab('template')" id="tab-fk-template" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Template</button>
               <button type="button" onclick="switchFreeKeyTab('python')" id="tab-fk-python" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Python</button>
               <button type="button" onclick="switchFreeKeyTab('node')" id="tab-fk-node" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Node.js</button>
+              <button type="button" onclick="switchFreeKeyTab('laravel')" id="tab-fk-laravel" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Laravel</button>
+              <button type="button" onclick="switchFreeKeyTab('go')" id="tab-fk-go" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Go</button>
             </div>
           </div>
           <pre id="free-key-snippet" class="p-3 rounded-xl bg-slate-950 text-[10px] font-mono text-slate-300 overflow-x-auto border border-slate-800 leading-relaxed max-h-48 whitespace-pre"></pre>
@@ -2369,6 +2427,8 @@ Cursor IDE & Windsurf:
         <a href="/docs" target="_blank" class="hover:text-white transition">API Docs</a>
         <a href="https://www.npmjs.com/package/tailprint" target="_blank" class="hover:text-rose-300 transition">TypeScript SDK (npm)</a>
         <a href="https://pypi.org/project/tailprint/" target="_blank" class="hover:text-emerald-300 transition">Python SDK (PyPI)</a>
+        <a href="https://github.com/coheroseb/tailprint/tree/main/sdk/php" target="_blank" class="hover:text-purple-300 transition">PHP &amp; Laravel SDK</a>
+        <a href="https://github.com/coheroseb/tailprint/tree/main/sdk/go" target="_blank" class="hover:text-sky-300 transition">Go SDK</a>
         <a href="https://github.com/coheroseb/tailprint" target="_blank" class="hover:text-slate-200 transition">GitHub</a>
         <a href="/tools/factur-x" class="hover:text-indigo-300 transition">Factur-X Validator</a>
         <a href="/studio" class="hover:text-indigo-300 transition">Studio</a>
@@ -2382,7 +2442,7 @@ Cursor IDE & Windsurf:
 
   <!-- Script for Interactivity -->
   <script>
-    // Interactive Hero Showcase Modes (PDF, Factur-X, Social Reel, MCP)
+    // Interactive Hero Showcase Modes (PDF, Hosted Templates, Factur-X, Batch, SDKs)
     const heroShowcaseData = ${JSON.stringify(HERO_SHOWCASE_DATA)};
 
     let activeHeroMode = 'pdf';
@@ -2391,13 +2451,13 @@ Cursor IDE & Windsurf:
       if (!heroShowcaseData[mode]) return;
       activeHeroMode = mode;
 
-      ['pdf', 'einvoice', 'batch', 'sdk'].forEach(function(m) {
+      ['pdf', 'template', 'einvoice', 'batch', 'sdk'].forEach(function(m) {
         const btn = document.getElementById('hero-tab-' + m);
         if (btn) {
           if (m === mode) {
-            btn.className = 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5 font-bold';
+            btn.className = 'px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5 font-bold';
           } else {
-            btn.className = 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5';
+            btn.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5';
           }
         }
       });
@@ -2763,7 +2823,7 @@ Cursor IDE & Windsurf:
 
     window.switchFreeKeyTab = function(tab) {
       activeFreeKeyTab = tab;
-      ['curl', 'python', 'node'].forEach(function(t) {
+      ['curl', 'template', 'python', 'node', 'laravel', 'go'].forEach(function(t) {
         const btn = document.getElementById('tab-fk-' + t);
         if (btn) {
           if (t === tab) {
@@ -2785,6 +2845,16 @@ Cursor IDE & Windsurf:
       const nl = String.fromCharCode(10);
       const sq = String.fromCharCode(39);
       const demoPayload = JSON.stringify({ html: '<div class="p-8 font-sans"><h1>Hello World</h1></div>', smart_pagination: true });
+      const tplPayload = JSON.stringify({
+        template_id: 'invoice-modern',
+        data: {
+          invoice_number: 'INV-2026-001',
+          issue_date: '2026-11-13',
+          seller: { name: 'Tailprint ApS' },
+          buyer: { name: 'Acme Corp' },
+          items: [{ description: 'Pro Plan', quantity: 1, unit_price: 49 }]
+        }
+      });
 
       if (activeFreeKeyTab === 'curl') {
         snippetEl.innerText = [
@@ -2794,18 +2864,26 @@ Cursor IDE & Windsurf:
           '  -d ' + sq + demoPayload + sq + ' ' + bslash,
           '  --output output.pdf'
         ].join(nl);
+      } else if (activeFreeKeyTab === 'template') {
+        snippetEl.innerText = [
+          'curl -X POST ' + origin + '/v1/render/pdf ' + bslash,
+          '  -H "Authorization: Bearer ' + key + '" ' + bslash,
+          '  -H "Idempotency-Key: inv-2026-001" ' + bslash,
+          '  -H "Content-Type: application/json" ' + bslash,
+          '  -d ' + sq + tplPayload + sq + ' ' + bslash,
+          '  --output invoice.pdf'
+        ].join(nl);
       } else if (activeFreeKeyTab === 'python') {
         snippetEl.innerText = [
           '# pip install tailprint',
-          'from tailprint import TailprintClient',
+          'from tailprint import Tailprint',
           '',
-          'client = TailprintClient(api_key="' + key + '")',
-          'pdf_bytes = client.render_pdf(',
-          '    html=' + JSON.stringify('<div class="p-8 font-sans"><h1>Hello from Python</h1></div>') + ',',
-          '    smart_pagination=True',
+          'tp = Tailprint(api_key="' + key + '")',
+          'pdf = tp.render_pdf(',
+          '    template_id="invoice-modern",',
+          '    data={' + JSON.stringify('invoice_number') + ': "INV-1", "issue_date": "2026-11-13", "seller": {"name": "Tailprint"}, "buyer": {"name": "Acme"}, "items": [{"description": "Pro", "quantity": 1, "unit_price": 49}]}',
           ')',
-          'with open("document.pdf", "wb") as f:',
-          '    f.write(pdf_bytes)'
+          'open("invoice.pdf", "wb").write(pdf)'
         ].join(nl);
       } else if (activeFreeKeyTab === 'node') {
         snippetEl.innerText = [
@@ -2813,12 +2891,35 @@ Cursor IDE & Windsurf:
           'import { Tailprint } from "tailprint";',
           'import fs from "fs";',
           '',
-          'const client = new Tailprint({ apiKey: "' + key + '" });',
-          'const pdfBuffer = await client.renderPdf({',
+          'const tp = new Tailprint({ apiKey: "' + key + '" });',
+          'const pdfBuffer = await tp.renderPdf({',
           '  html: ' + JSON.stringify('<div class="p-8 font-sans"><h1>Hello from Node.js</h1></div>') + ',',
-          '  smartPagination: true',
+          '  smart_pagination: true',
           '});',
           'fs.writeFileSync("document.pdf", pdfBuffer);'
+        ].join(nl);
+      } else if (activeFreeKeyTab === 'laravel') {
+        snippetEl.innerText = [
+          '// composer require tailprint/tailprint',
+          '// TAILPRINT_API_KEY=' + key,
+          'use Tailprint' + bslash + 'Laravel' + bslash + 'Facades' + bslash + 'Tailprint;',
+          '',
+          'return Tailprint::template("invoice-modern", [',
+          '    "invoice_number" => "INV-2026-001",',
+          '    "issue_date"     => "2026-11-13",',
+          '    "seller"         => ["name" => "Tailprint ApS"],',
+          '    "buyer"          => ["name" => "Acme GmbH"],',
+          '    "items"          => [["description" => "Pro", "quantity" => 1, "unit_price" => 49]],',
+          '])->download("invoice.pdf");'
+        ].join(nl);
+      } else if (activeFreeKeyTab === 'go') {
+        snippetEl.innerText = [
+          '// go get github.com/coheroseb/tailprint/sdk/go@v1.4.0',
+          'client := tailprint.NewClient("' + key + '")',
+          'pdfBytes, err := client.RenderPDF(ctx, tailprint.RenderOptions{',
+          '    HTML: ' + JSON.stringify('<div class="p-8 font-sans"><h1>Hello from Go</h1></div>') + ',',
+          '    Format: "A4",',
+          '})'
         ].join(nl);
       }
     }

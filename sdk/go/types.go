@@ -39,6 +39,7 @@ type RenderOptions struct {
 	Async               bool              `json:"async,omitempty"`
 	WebhookURL          string            `json:"webhook_url,omitempty"`
 	WebhookHeaders      map[string]string `json:"webhook_headers,omitempty"`
+	IdempotencyKey      string            `json:"-"`
 }
 
 // StoredFileResponse is returned when Store: true is set on a render operation.
