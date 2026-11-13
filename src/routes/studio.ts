@@ -80,23 +80,31 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         ...(hasNeural ? { neural_implant: true } : {}),
       } as any);
 
+      const customButtons = browserService.getCustomButtonPlacement(rawPdfBuffer);
+      const effectiveNeural = Boolean(hasNeural || customButtons?.hasCustomNeuralButton);
+      const effectiveSign = Boolean(
+        sign || verify_seal || customButtons?.hasCustomVerifyButton || effectiveNeural
+      );
+
       let finalPdfBuffer = rawPdfBuffer;
 
-      if (hasNeural || sign || verify_seal || embed_data) {
+      if (effectiveNeural || effectiveSign || embed_data) {
         const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
         const enriched = await smartPdfService.enrichPdf(rawPdfBuffer, {
           customerId: 'studio-playground',
           templateId: null,
           data: embed_data || null,
           aiReady: true,
-          sign: Boolean(sign || verify_seal || hasNeural),
+          sign: effectiveSign,
           verifySeal: Boolean(verify_seal),
-          neuralImplant: hasNeural,
+          neuralImplant: effectiveNeural,
           neuralPersona: neural_persona,
           neuralContext: neural_context,
           neuralBadge: neural_badge,
           neuralCustomUrl: neural_custom_url,
           neuralBadgeLabel: neural_badge_label,
+          hasCustomNeuralButton: customButtons?.hasCustomNeuralButton,
+          hasCustomVerifyButton: customButtons?.hasCustomVerifyButton,
           domSynapses,
           noStore: false,
         });
@@ -402,6 +410,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         <!-- Quick Snippet Buttons -->
         <div class="hidden xl:flex items-center space-x-1 text-[11px]">
           <span class="text-slate-500 font-mono text-[10px] mr-1">Insert:</span>
+          <button onclick="insertSnippet('neural_btn')" class="px-2 py-0.5 rounded bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-500/40 text-indigo-300 font-mono font-bold transition" title="Insert 1-line clickable Neural Q&A button anywhere in your HTML">+ 🧠 Ask Button</button>
           <button onclick="insertSnippet('table')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert Smart Table with thead and no-split rows">+ Table</button>
           <button onclick="insertSnippet('pagebreak')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert explicit page break">+ Page Break</button>
           <button onclick="insertSnippet('signature')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert signature block protected from page break">+ Signature</button>
@@ -463,6 +472,28 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
             </div>
             <textarea id="inputNeuralContext" rows="5" spellcheck="false" class="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-violet-200 focus:outline-none focus:border-violet-500 leading-relaxed">{\n  "early_payment_discount": "4% discount if paid within 10 business days",\n  "max_negotiable_discount": "12% with VP approval for annual renewals",\n  "gdpr_data_residency": "Frankfurt EU-Central-1 with Zero-Retention enabled",\n  "sla_uptime_guarantee": "99.99% uptime with 15-minute P1 incident response",\n  "escalation_contact": "vip-billing@acmeglobal.com"\n}</textarea>
           </div>
+        </div>
+
+        <!-- Custom Button Placement (1-Line HTML) -->
+        <div class="space-y-2.5 p-3.5 rounded-xl bg-indigo-950/20 border border-indigo-500/30">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-indigo-300">📍 Custom Button Placement (1-Line HTML)</h4>
+              <p class="text-[10px] text-slate-400">Place this single HTML line anywhere in your template (header, sidebar, next to total, or footer) to control the exact position and style of the clickable Q&amp;A button:</p>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-emerald-300 flex items-center justify-between gap-2">
+            <code class="truncate">&lt;div data-neural-button&gt;&lt;/div&gt;</code>
+            <div class="flex items-center space-x-1.5 shrink-0">
+              <button type="button" onclick="navigator.clipboard.writeText('<div data-neural-button></div>')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-sans font-semibold">Copy</button>
+              <button type="button" onclick="insertSnippet('neural_btn'); switchTab('html');" class="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-sans font-bold">+ Insert in HTML</button>
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            💡 <strong class="text-slate-200">Custom Tailwind Styling:</strong> Leave it empty for the default vector badge, or put your own text &amp; Tailwind classes inside: <code class="text-indigo-300 font-mono">&lt;div data-neural-button class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold"&gt;Spørg denne PDF →&lt;/div&gt;</code>. When present, the default bottom-left badge is automatically hidden.
+          </p>
         </div>
 
         <!-- White-Label Custom Domain & Badge -->
@@ -1070,6 +1101,24 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       previewIframe.onload = function() {
         try {
           var docEl = previewIframe.contentDocument || previewIframe.contentWindow.document;
+          var customLabelEl = document.getElementById('inputNeuralBadgeLabel');
+          var defaultLabel = (customLabelEl && customLabelEl.value.trim()) ? customLabelEl.value.trim() : '🧠 Ask this PDF a Question →';
+          var neuralEls = docEl.querySelectorAll('[data-neural-button], [data-tailprint-neural-button], [data-neural-ask], tailprint-neural-button');
+          for (var i = 0; i < neuralEls.length; i++) {
+            var nel = neuralEls[i];
+            if ((nel.textContent || '').trim().length === 0 && nel.children.length === 0) {
+              var lbl = nel.getAttribute('data-label') || nel.getAttribute('data-neural-button') || defaultLabel;
+              nel.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#eef2ff;border:1px solid #6366f1;color:#312e81;font-family:system-ui,-apple-system,sans-serif;font-size:11px;font-weight:700;line-height:1.2;">' + lbl + '</span>';
+            }
+          }
+          var verifyEls = docEl.querySelectorAll('[data-verify-button], [data-tailprint-verify-seal], tailprint-verify-seal');
+          for (var j = 0; j < verifyEls.length; j++) {
+            var vel = verifyEls[j];
+            if ((vel.textContent || '').trim().length === 0 && vel.children.length === 0) {
+              var vlbl = vel.getAttribute('data-label') || vel.getAttribute('data-verify-button') || '🔐 Verified Cryptographic PDF • Inspect Proof →';
+              vel.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;font-family:system-ui,-apple-system,sans-serif;font-size:10.5px;font-weight:700;line-height:1.2;">' + vlbl + '</span>';
+            }
+          }
           var minH = parseInt(paperCanvas.style.minHeight || '1123', 10);
           var h = Math.max(docEl.body.scrollHeight, minH);
           if (h && h > 100) {
@@ -1363,7 +1412,9 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     function insertSnippet(type) {
       var snippet = '';
-      if (type === 'table') {
+      if (type === 'neural_btn') {
+        snippet = '\\n<div data-neural-button></div>\\n';
+      } else if (type === 'table') {
         snippet = '\\n<div class="my-6">\\n  <table class="w-full text-left border-collapse border border-slate-200">\\n    <thead class="bg-slate-100 font-bold text-xs uppercase text-slate-700">\\n      <tr>\\n        <th class="p-3 border border-slate-200">Item</th>\\n        <th class="p-3 border border-slate-200 text-right">Qty</th>\\n        <th class="p-3 border border-slate-200 text-right">Price</th>\\n      </tr>\\n    </thead>\\n    <tbody class="divide-y divide-slate-200 text-xs text-slate-800">\\n      <tr><td class="p-3">Enterprise Cloud License</td><td class="p-3 text-right">1</td><td class="p-3 text-right">€499.00</td></tr>\\n      <tr><td class="p-3">Professional Support</td><td class="p-3 text-right">12</td><td class="p-3 text-right">€99.00</td></tr>\\n    </tbody>\\n  </table>\\n</div>\\n';
       } else if (type === 'pagebreak') {
         snippet = '\\n<div class="page-break my-8 border-t-2 border-dashed border-indigo-400/40 text-center text-xs font-mono text-indigo-400 py-1">[--- Page Break ---]</div>\\n';

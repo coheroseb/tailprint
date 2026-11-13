@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import zlib from 'node:zlib';
-import { PDFDocument, PDFName, PDFString, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDict, PDFDocument, PDFHexString, PDFName, PDFString, StandardFonts, rgb } from 'pdf-lib';
 import { env } from '../config/env.js';
 import { redisService, type PdfProofRecord } from './redis.js';
 import type { ExtractedDomSynapse } from './browser.js';
@@ -49,6 +49,8 @@ export interface SmartPdfEnrichOptions {
   neuralBadge?: boolean;
   neuralCustomUrl?: string;
   neuralBadgeLabel?: string;
+  hasCustomNeuralButton?: boolean;
+  hasCustomVerifyButton?: boolean;
   domSynapses?: ExtractedDomSynapse[];
   noStore?: boolean;
 }
@@ -356,6 +358,51 @@ export class SmartPdfService {
   }
 
   /**
+   * Rewrites Chromium-generated `/Link` annotations for user-placed HTML buttons
+   * (`<div data-neural-button></div>` and `<div data-verify-button></div>`)
+   * so they point to the final `brainUrl` and `verificationUrl` with `docId`.
+   */
+  private rewriteCustomHtmlLinks(
+    pdfDoc: PDFDocument,
+    brainUrl: string,
+    verificationUrl: string
+  ): { rewrittenNeuralLinks: number; rewrittenVerifyLinks: number } {
+    let rewrittenNeuralLinks = 0;
+    let rewrittenVerifyLinks = 0;
+
+    for (const page of pdfDoc.getPages()) {
+      const annots = page.node.Annots();
+      if (!annots) continue;
+
+      for (let i = 0; i < annots.size(); i++) {
+        const annotDict = annots.lookupMaybe(i, PDFDict);
+        if (!annotDict) continue;
+
+        const actionDict = annotDict.lookupMaybe(PDFName.of('A'), PDFDict);
+        if (!actionDict) continue;
+
+        const uriObj = actionDict.get(PDFName.of('URI'));
+        const rawUri =
+          uriObj instanceof PDFString || uriObj instanceof PDFHexString
+            ? uriObj.decodeText()
+            : uriObj
+              ? String(uriObj)
+              : '';
+
+        if (rawUri.includes('__NEURAL_BRAIN_URL__')) {
+          actionDict.set(PDFName.of('URI'), PDFString.of(brainUrl));
+          rewrittenNeuralLinks++;
+        } else if (rawUri.includes('__VERIFY_SEAL_URL__')) {
+          actionDict.set(PDFName.of('URI'), PDFString.of(verificationUrl));
+          rewrittenVerifyLinks++;
+        }
+      }
+    }
+
+    return { rewrittenNeuralLinks, rewrittenVerifyLinks };
+  }
+
+  /**
    * Enriches a rendered PDF with:
    * 1. Dual-Brain structured JSON (`tailprint-manifest.json`),
    * 2. Cryptographic Proof-of-Origin (HMAC-SHA256 content stream signature + Redis proof ledger),
@@ -371,12 +418,15 @@ export class SmartPdfService {
     const templateId = options.templateId ?? null;
     const hasNeuralImplant = Boolean(
       options.neuralImplant ||
+        options.hasCustomNeuralButton ||
         options.neuralContext ||
         options.neuralPersona ||
         options.neuralCustomUrl ||
         options.neuralBadgeLabel
     );
-    const signed = Boolean(options.sign || options.verifySeal || hasNeuralImplant);
+    const signed = Boolean(
+      options.sign || options.verifySeal || options.hasCustomVerifyButton || hasNeuralImplant
+    );
     const aiReady = options.aiReady !== undefined ? options.aiReady : true;
     const dataPayload =
       options.data && typeof options.data === 'object' && Object.keys(options.data).length > 0
@@ -395,12 +445,21 @@ export class SmartPdfService {
       docId
     );
 
-    // 1. Load PDF and optionally stamp the cryptographic verification seal & interactive Neural Implant badge
+    // 1. Load PDF, rewrite any custom HTML buttons (<div data-neural-button>), and optionally stamp fallback badges
     const initialDoc = await PDFDocument.load(pdfBuffer);
-    if (options.verifySeal) {
+    const { rewrittenNeuralLinks, rewrittenVerifyLinks } = this.rewriteCustomHtmlLinks(
+      initialDoc,
+      brainUrl,
+      verificationUrl
+    );
+
+    const usedCustomVerifyButton = rewrittenVerifyLinks > 0 || Boolean(options.hasCustomVerifyButton);
+    const usedCustomNeuralButton = rewrittenNeuralLinks > 0 || Boolean(options.hasCustomNeuralButton);
+
+    if (options.verifySeal && !usedCustomVerifyButton) {
       await this.drawVerificationSeal(initialDoc, docId, verificationUrl);
     }
-    if (hasNeuralImplant && options.neuralBadge !== false) {
+    if (hasNeuralImplant && options.neuralBadge !== false && !usedCustomNeuralButton) {
       await this.drawNeuralImplantBadgeAndLink(
         initialDoc,
         docId,

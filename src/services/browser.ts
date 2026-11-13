@@ -32,17 +32,27 @@ export interface ExtractedDomSynapse {
   };
 }
 
+export interface CustomButtonPlacementInfo {
+  hasCustomNeuralButton: boolean;
+  hasCustomVerifyButton: boolean;
+}
+
 export class BrowserService {
   private static instance: BrowserService | null = null;
   private browser: Browser | null = null;
   private limit = pLimit(env.CONCURRENCY_LIMIT);
   private isInitializing = false;
   private domSynapseMap = new WeakMap<Buffer, ExtractedDomSynapse[]>();
+  private customButtonMap = new WeakMap<Buffer, CustomButtonPlacementInfo>();
 
   private constructor() {}
 
   public getExtractedDomSynapses(pdfBuffer: Buffer): ExtractedDomSynapse[] | undefined {
     return this.domSynapseMap.get(pdfBuffer);
+  }
+
+  public getCustomButtonPlacement(pdfBuffer: Buffer): CustomButtonPlacementInfo | undefined {
+    return this.customButtonMap.get(pdfBuffer);
   }
 
   public static getInstance(): BrowserService {
@@ -829,8 +839,11 @@ export class BrowserService {
           await this.applySmartPagination(page);
         }
 
+        const customButtons = await this.prepareInteractiveDomButtons(page, params);
+
         const shouldExtractDomSynapses = Boolean(
-          (params as any).neural_implant ||
+          customButtons.hasCustomNeuralButton ||
+            (params as any).neural_implant ||
             (params as any).neural_context ||
             (params as any).neural_persona ||
             (params as any).neural_custom_url ||
@@ -887,12 +900,96 @@ export class BrowserService {
         if (extractedSynapses && extractedSynapses.length > 0) {
           this.domSynapseMap.set(pdfBuffer, extractedSynapses);
         }
+        if (customButtons.hasCustomNeuralButton || customButtons.hasCustomVerifyButton) {
+          this.customButtonMap.set(pdfBuffer, customButtons);
+        }
 
         return pdfBuffer;
       },
       { width: 1200, height: 800 },
       shouldBlockPopups
     );
+  }
+
+  /**
+   * Detects user-placed HTML elements like `<div data-neural-button></div>` or
+   * `<div data-verify-button></div>` anywhere in the DOM, populates a sleek default
+   * vector pill if the element is empty, and wraps it in an `<a>` pointing to a
+   * canonical placeholder URI so Chromium's native PDF engine creates an exact
+   * ISO-32000 `/Link` annotation at the user's chosen coordinates.
+   */
+  public async prepareInteractiveDomButtons(
+    page: Page,
+    params: RenderPdfRequest
+  ): Promise<CustomButtonPlacementInfo> {
+    try {
+      const defaultNeuralLabel =
+        ((params as any).neural_badge_label as string | undefined)?.trim() ||
+        '🧠 Ask this PDF a Question →';
+      return await page.evaluate(
+        ({ fallbackLabel }) => {
+          const neuralEls = Array.from(
+            document.querySelectorAll(
+              '[data-neural-button], [data-tailprint-neural-button], [data-neural-ask], tailprint-neural-button'
+            )
+          );
+          const verifyEls = Array.from(
+            document.querySelectorAll(
+              '[data-verify-button], [data-tailprint-verify-seal], tailprint-verify-seal'
+            )
+          );
+
+          for (const el of neuralEls) {
+            const customLabel =
+              el.getAttribute('data-label') ||
+              el.getAttribute('data-neural-button') ||
+              el.getAttribute('data-neural-ask') ||
+              fallbackLabel;
+            const hasContent = (el.textContent || '').trim().length > 0 || el.children.length > 0;
+
+            if (!hasContent) {
+              el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#eef2ff;border:1px solid #6366f1;color:#312e81;font-family:system-ui,-apple-system,sans-serif;font-size:11px;font-weight:700;line-height:1.2;text-decoration:none;">${customLabel}</span>`;
+            }
+
+            if (el.tagName.toLowerCase() === 'a') {
+              el.setAttribute('href', 'https://tailprint.internal/__NEURAL_BRAIN_URL__');
+              (el as HTMLElement).style.textDecoration = 'none';
+            } else if (!el.querySelector('a[href*="__NEURAL_BRAIN_URL__"]')) {
+              const inner = el.innerHTML;
+              el.innerHTML = `<a href="https://tailprint.internal/__NEURAL_BRAIN_URL__" style="text-decoration:none;color:inherit;display:inline-block;">${inner}</a>`;
+            }
+          }
+
+          for (const el of verifyEls) {
+            const customLabel =
+              el.getAttribute('data-label') ||
+              el.getAttribute('data-verify-button') ||
+              '🔐 Verified Cryptographic PDF • Inspect Proof →';
+            const hasContent = (el.textContent || '').trim().length > 0 || el.children.length > 0;
+
+            if (!hasContent) {
+              el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;font-family:system-ui,-apple-system,sans-serif;font-size:10.5px;font-weight:700;line-height:1.2;text-decoration:none;">${customLabel}</span>`;
+            }
+
+            if (el.tagName.toLowerCase() === 'a') {
+              el.setAttribute('href', 'https://tailprint.internal/__VERIFY_SEAL_URL__');
+              (el as HTMLElement).style.textDecoration = 'none';
+            } else if (!el.querySelector('a[href*="__VERIFY_SEAL_URL__"]')) {
+              const inner = el.innerHTML;
+              el.innerHTML = `<a href="https://tailprint.internal/__VERIFY_SEAL_URL__" style="text-decoration:none;color:inherit;display:inline-block;">${inner}</a>`;
+            }
+          }
+
+          return {
+            hasCustomNeuralButton: neuralEls.length > 0,
+            hasCustomVerifyButton: verifyEls.length > 0,
+          };
+        },
+        { fallbackLabel: defaultNeuralLabel }
+      );
+    } catch {
+      return { hasCustomNeuralButton: false, hasCustomVerifyButton: false };
+    }
   }
 
   public async extractSpatialDomSynapses(
@@ -941,6 +1038,13 @@ export class BrowserService {
 
           for (const el of elements) {
             if (results.length >= 120) break;
+            if (
+              el.closest(
+                '[data-neural-button], [data-tailprint-neural-button], [data-neural-ask], tailprint-neural-button, [data-verify-button], [data-tailprint-verify-seal], tailprint-verify-seal'
+              )
+            ) {
+              continue;
+            }
 
             const tag = el.tagName.toLowerCase();
             const rect = el.getBoundingClientRect();

@@ -381,4 +381,36 @@ describe('Dual-Brain PDFs (Zero-OCR) & Cryptographic Proof-of-Origin', () => {
     expect(studioRender.headers['x-tailprint-brain-url']).toBe(`/brain/${docId}`);
     expect(studioRender.headers['x-tailprint-verify-url']).toBe(`/verify/${docId}`);
   });
+
+  it('supports placing a single <div data-neural-button></div> anywhere in HTML and rewrites its PDF /Link annotation to the final brainUrl', async () => {
+    const renderRes = await app.inject({
+      method: 'POST',
+      url: '/v1/render/pdf',
+      headers: { authorization: authHeader },
+      payload: {
+        html: `
+          <div class="p-10">
+            <div class="flex justify-between items-center">
+              <h1>Custom Button Placement Invoice #CB-2026</h1>
+              <div data-neural-button></div>
+            </div>
+            <p>Payment amount: 18,400 DKK due within 14 days.</p>
+          </div>
+        `,
+        neural_custom_url: 'https://chat.mitdomæne.dk/ask/{{doc_id}}',
+      },
+    });
+
+    expect(renderRes.statusCode).toBe(200);
+    expect(renderRes.headers['x-tailprint-neural-implant']).toBe('true');
+    const docId = renderRes.headers['x-tailprint-doc-id'] as string;
+    const expectedUrl = `https://chat.mitdomæne.dk/ask/${docId}`;
+    expect(renderRes.headers['x-tailprint-brain-url']).toBe(expectedUrl);
+
+    const loadedDoc = await PDFDocument.load(renderRes.rawPayload);
+    const annots = loadedDoc.getPages()[0].node.Annots();
+    expect(annots).toBeTruthy();
+    // Exactly 1 /Link annotation from the user's <div data-neural-button></div> (no duplicate bottom-left badge)
+    expect(annots!.size()).toBe(1);
+  });
 });

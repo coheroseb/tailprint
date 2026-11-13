@@ -199,7 +199,10 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       return { pdfBuffer: rawPdfBuffer, enriched: null };
     }
 
+    const customButtons = browserService.getCustomButtonPlacement(rawPdfBuffer);
+
     const hasNeuralImplant =
+      Boolean(customButtons?.hasCustomNeuralButton) ||
       Boolean(body.neural_implant) ||
       Boolean(body.neural_context) ||
       Boolean(body.neural_persona) ||
@@ -208,6 +211,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
 
     const shouldEnrich =
       hasNeuralImplant ||
+      Boolean(customButtons?.hasCustomVerifyButton) ||
       Boolean(body.sign) ||
       Boolean(body.verify_seal) ||
       Boolean(body.verify_custom_url) ||
@@ -235,7 +239,13 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       templateId: body.template_id || null,
       data: combinedData,
       aiReady: body.ai_ready !== undefined ? body.ai_ready : true,
-      sign: Boolean(body.sign || body.verify_seal || body.verify_custom_url || hasNeuralImplant),
+      sign: Boolean(
+        body.sign ||
+          body.verify_seal ||
+          body.verify_custom_url ||
+          customButtons?.hasCustomVerifyButton ||
+          hasNeuralImplant
+      ),
       verifySeal: Boolean(body.verify_seal || body.verify_custom_url),
       verifyCustomUrl: body.verify_custom_url,
       neuralImplant: hasNeuralImplant,
@@ -244,6 +254,8 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       neuralBadge: body.neural_badge,
       neuralCustomUrl: body.neural_custom_url,
       neuralBadgeLabel: body.neural_badge_label,
+      hasCustomNeuralButton: customButtons?.hasCustomNeuralButton,
+      hasCustomVerifyButton: customButtons?.hasCustomVerifyButton,
       domSynapses,
       noStore: Boolean(body.no_store),
     });
