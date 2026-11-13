@@ -22,6 +22,72 @@ const HERO_SHOWCASE_DATA: Record<string, {
   code: string;
   previewHtml: string;
 }> = {
+  neural: {
+    filename: 'neural-implant-pdf.json',
+    badgeText: '64-D Int8 Cortex + Proof',
+    endpoint: 'POST /v1/render/pdf  •  POST /v1/pdf/ask',
+    previewTitle: 'Living Neural-Implant & Verifiable PDF',
+    previewBadge: '0.8ms Query • Zero-OCR',
+    shieldText: 'Spatial DOM Bounding Boxes • Latent Memory • HMAC-SHA256 Signed',
+    openHref: '/brain',
+    openLabel: 'Try Live Neural PDF →',
+    code: `{
+  "template_id": "invoice-modern",
+  "data": {
+    "invoice_number": "INV-2026-884",
+    "seller": { "name": "Nordic Cloud Systems ApS" },
+    "buyer": { "name": "Enterprise Corp GmbH" },
+    "items": [
+      { "description": "Dedicated GPU Render Cluster", "quantity": 2, "unit_price": 7250 }
+    ]
+  },
+  "neural_implant": true,
+  "neural_persona": "Enterprise Deal Desk & Billing Assistant",
+  "neural_context": {
+    "early_payment_discount": "3% discount if paid within 10 days.",
+    "gdpr_residency": "All data hosted in EU-Central (Frankfurt) under ISO-27001."
+  },
+  "neural_custom_url": "https://portal.yourdomain.com/docs/{{doc_id}}",
+  "verify_seal": true
+}`,
+    previewHtml: `<div class="w-full max-w-sm bg-white text-slate-900 rounded-xl p-4 shadow-2xl border border-indigo-300 select-none text-left transform hover:scale-[1.01] transition duration-300 space-y-3">
+      <div class="flex justify-between items-center pb-2.5 border-b border-slate-100">
+        <div>
+          <span class="text-xs font-black text-indigo-700 tracking-tight">Nordic Cloud Systems ApS</span>
+          <p class="text-[9px] text-slate-400">INV-2026-884 • Enterprise Corp GmbH</p>
+        </div>
+        <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[9px] font-mono font-bold">🧠 NEURAL CORTEX</span>
+      </div>
+
+      <!-- Spatial Bounding-Box Laser Highlight on Visual DOM Row -->
+      <div class="p-2 rounded-lg bg-indigo-50/90 border-2 border-indigo-500 relative shadow-sm">
+        <div class="flex justify-between items-center text-[9px] font-mono text-indigo-600 font-bold mb-0.5">
+          <span>🎯 SPATIAL DOM SYNAPSE (Page 1 • x:8.4% y:24.1%)</span>
+          <span>Int8 Match: 0.96</span>
+        </div>
+        <div class="flex justify-between text-[11px] font-bold text-slate-900">
+          <span>Dedicated GPU Render Cluster (×2)</span>
+          <span>€14,500.00</span>
+        </div>
+      </div>
+
+      <!-- Subconscious Latent Memory Q&A Response -->
+      <div class="p-2.5 rounded-lg bg-slate-950 text-slate-100 border border-slate-800 space-y-1">
+        <div class="flex items-center justify-between text-[9px] font-mono text-purple-300">
+          <span>💬 POST /v1/pdf/ask ("Early payment &amp; GDPR?")</span>
+          <span class="text-emerald-400 font-bold">0.8ms</span>
+        </div>
+        <p class="text-[10px] text-slate-300 leading-snug">
+          <strong class="text-white">Latent Memory:</strong> 3% discount if paid within 10 days. Hosted in EU-Central (Frankfurt) under ISO-27001.
+        </p>
+      </div>
+
+      <div class="pt-1 flex items-center justify-between text-[9px] font-mono">
+        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">🛡️ HMAC-SHA256 Verified</span>
+        <span class="text-indigo-600 font-bold">100% White-Label API Ready</span>
+      </div>
+    </div>`
+  },
   pdf: {
     filename: 'invoice-template.html',
     badgeText: 'Tailwind JIT',
@@ -536,6 +602,18 @@ export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://tailprint.com/brain</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://tailprint.com/verify</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://tailprint.com/studio</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
@@ -751,13 +829,13 @@ Cursor IDE & Windsurf:
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tailprint — Tailwind HTML to PDF &amp; EU E-Invoicing API for Developers</title>
+  <title>Tailprint — Beyond Static Paper: Neural-Implant PDFs, Zero-OCR JSON &amp; HTML-to-PDF API</title>
   <link rel="canonical" href="https://tailprint.com" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090d16'/%3E%3Cpath d='M11 9L6 16l5 7' stroke='%23818cf8' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M21 9l5 7-5 7' stroke='%23f472b6' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cline x1='18' y1='8' x2='14' y2='24' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23f43f5e'/%3E%3C/svg%3E" />
   
   <!-- Primary Meta Tags (SEO) -->
-  <meta name="description" content="Developer-first HTML-to-PDF and European e-invoicing API. Generate pixel-perfect vector PDFs with Smart Pagination Shield and compliant Factur-X (EN 16931) hybrid invoices in under 500ms." />
-  <meta name="keywords" content="Tailwind HTML to PDF, Factur-X API, ZUGFeRD invoice generator, EN 16931, Tailwind CSS PDF API, PDF generation API, Model Context Protocol PDF, MCP server, vector PDF engine" />
+  <meta name="description" content="Beyond static paper. Compile Tailwind CSS or JSON into intelligent, verifiable vector PDFs implanted with a 64-D Neural Cortex, Zero-OCR Dual-Brain JSON, HMAC-SHA256 Proof-of-Origin, and EU Factur-X (EN 16931) in under 380ms." />
+  <meta name="keywords" content="Neural-Implant PDF, Dual-Brain PDF, Cryptographic PDF Verification, Tailwind HTML to PDF, Factur-X API, ZUGFeRD invoice generator, EN 16931, Tailwind CSS PDF API, Model Context Protocol PDF, vector PDF engine" />
   <meta name="author" content="Tailprint" />
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   <meta name="theme-color" content="#090d16" />
@@ -969,17 +1047,17 @@ Cursor IDE & Windsurf:
       <!-- Top Banner Pill -->
       <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-indigo-950/70 border border-indigo-800/60 text-indigo-300 text-xs font-semibold mb-6 backdrop-blur-md shadow-lg shadow-indigo-950/50">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Developer-First PDF &amp; Document Engine • TypeScript &amp; Python SDKs • Sub-380ms Chromium Engine</span>
+        <span>🧠 Introducing Neural-Implant PDFs™ • Zero-OCR Dual-Brain JSON • Cryptographic Proof-of-Origin • Sub-380ms Engine</span>
       </div>
 
       <!-- Main High-Impact Headline -->
       <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-5xl mx-auto">
-        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML or Data</span>.<br class="hidden sm:inline" />
-        Receive Production <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Vector PDFs &amp; E-Invoices</span>.
+        Beyond <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-300 bg-clip-text text-transparent">Static Paper</span>.<br class="hidden sm:inline" />
+        Render <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Intelligent, Verifiable PDFs</span>.
       </h1>
 
       <p class="mt-6 text-base sm:text-lg lg:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-normal">
-        The developer-first PDF and European e-invoicing engine. Compile arbitrary Tailwind CSS into crisp vector documents with <strong>Smart Pagination Shield</strong>, generate legally compliant European <strong>Factur-X / ZUGFeRD</strong> (EN 16931) hybrid invoices, run asynchronous batch rendering with signed webhooks, and manipulate PDFs via REST and official <strong>TypeScript</strong> &amp; <strong>Python SDKs</strong> — in under 380ms.
+        Stop generating dead digital paper. Tailprint compiles Tailwind CSS or JSON templates into crisp vector PDFs in under 380ms — implanted with a <strong>64-D Neural Cortex</strong> (Spatial DOM bounding boxes &amp; Subconscious Latent Memory), lossless <strong>Zero-OCR Dual-Brain JSON</strong>, <strong>HMAC-SHA256 Proof-of-Origin</strong>, and legally compliant European <strong>Factur-X / ZUGFeRD</strong> (EN 16931) e-invoices.
       </p>
 
       <!-- Primary Action Buttons -->
@@ -988,16 +1066,24 @@ Cursor IDE & Windsurf:
           <span>⚡ Claim 100 Free Renders</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-200 font-bold uppercase tracking-wider">No CC</span>
         </button>
-        <a href="/studio" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20">
-          <span>⚡ Open Live Studio</span>
-          <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 font-mono">/studio</span>
+        <a href="/brain" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/25">
+          <span>🧠 Try Live Neural PDF</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 font-mono">/brain</span>
+        </a>
+        <a href="/verify" class="px-5 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 font-bold transition flex items-center justify-center space-x-2 shadow-sm">
+          <span>🛡️ Verify &amp; Inspect PDF</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-200 font-mono">/verify</span>
+        </a>
+        <a href="/studio" class="px-5 py-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
+          <span>⚡ Live Studio</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono">/studio</span>
         </a>
         <a href="/docs" class="px-5 py-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
           <span>📖 API &amp; SDK Docs</span>
           <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">v1.4</span>
         </a>
       </div>
-      <p class="mt-3 text-xs text-slate-500">Instant API key • Hosted Templates • Official TypeScript, Python, Laravel &amp; Go SDKs • 11 MCP Tools</p>
+      <p class="mt-3 text-xs text-slate-500">100% White-Label Neural Q&amp;A API • Zero-OCR Dual-Brain JSON • HMAC-SHA256 Signed PDFs • Official TS, Python, Laravel &amp; Go SDKs</p>
 
       <!-- Interactive Developer Showcase: Code on the Left -> Live Document Preview on the Right -->
       <div class="mt-12 text-left max-w-5xl mx-auto rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-xl overflow-hidden ring-1 ring-white/10">
@@ -1013,7 +1099,11 @@ Cursor IDE & Windsurf:
 
           <!-- Mode Switcher Tabs -->
           <div class="inline-flex flex-wrap rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs font-semibold gap-0.5">
-            <button id="hero-tab-pdf" onclick="switchHeroShowcase('pdf')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5">
+            <button id="hero-tab-neural" onclick="switchHeroShowcase('neural')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5 font-bold">
+              <span>🧠</span>
+              <span>Neural &amp; Verifiable PDF</span>
+            </button>
+            <button id="hero-tab-pdf" onclick="switchHeroShowcase('pdf')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
               <span>📄</span>
               <span>Tailwind PDF</span>
             </button>
@@ -1111,20 +1201,157 @@ Cursor IDE & Windsurf:
           <p class="text-2xl font-black text-emerald-400 mt-1">&lt; 380 ms</p>
           <p class="text-[10px] text-slate-500 mt-0.5">Pre-warmed Chromium Pool</p>
         </div>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-indigo-500/30 backdrop-blur-sm">
+          <p class="text-xs text-indigo-300">Neural Cortex Query</p>
+          <p class="text-2xl font-black text-indigo-400 mt-1">~0.8 ms</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">64-D Int8 Vectors • 0 LLM Cost</p>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-cyan-500/30 backdrop-blur-sm">
+          <p class="text-xs text-cyan-300">Dual-Brain JSON Extract</p>
+          <p class="text-2xl font-black text-cyan-400 mt-1">0 ms</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Zero-OCR • HMAC-SHA256 Proof</p>
+        </div>
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-          <p class="text-xs text-slate-400">EU E-Invoicing</p>
+          <p class="text-xs text-slate-400">EU E-Invoicing &amp; SDKs</p>
           <p class="text-2xl font-black text-amber-400 mt-1">EN 16931</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">Factur-X &amp; ZUGFeRD Hybrid</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Factur-X • TS, Python, PHP &amp; Go</p>
         </div>
-        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-          <p class="text-xs text-slate-400">Async Batch Engine</p>
-          <p class="text-2xl font-black text-indigo-400 mt-1">Webhooks</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">HMAC-SHA256 &amp; Auto-Merge</p>
+      </div>
+
+      <!-- NEW FLAGSHIP SECTION: Reinventing the 30-Year-Old PDF Format -->
+      <div class="mt-20 text-left" id="next-gen-pdf">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-300 bg-indigo-950/80 border border-indigo-500/40 px-4 py-1.5 rounded-full">Reinventing the 30-Year-Old PDF Format</span>
+          <h2 class="text-3xl sm:text-4xl font-black text-white mt-4 tracking-tight">
+            Why Generate Dead Paper When Your PDFs Can <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-300 bg-clip-text text-transparent">Think, Prove Their Origin, and Speak Native JSON</span>?
+          </h2>
+          <p class="text-slate-400 text-sm sm:text-base mt-3 leading-relaxed">
+            Standard PDF APIs flatten your HTML into a dead visual image — forcing recipients and AI pipelines to rely on slow, hallucination-prone OCR. Tailprint compiles three breakthrough layers directly into the PDF binary before Chromium finishes rendering.
+          </p>
         </div>
-        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-          <p class="text-xs text-slate-400">Official SDKs &amp; MCP</p>
-          <p class="text-2xl font-black text-cyan-400 mt-1">v1.4 Live</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">TS • Python • Laravel • Go</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Breakthrough 1: Neural-Implant PDF -->
+          <div class="p-7 rounded-3xl bg-gradient-to-b from-indigo-950/50 via-slate-900/90 to-slate-950 border border-indigo-500/40 hover:border-indigo-400 transition shadow-2xl relative overflow-hidden flex flex-col justify-between group">
+            <div class="absolute -right-12 -top-12 w-36 h-36 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                  🧠
+                </div>
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">neural_implant: true</span>
+              </div>
+              <h3 class="text-xl font-black text-white group-hover:text-indigo-300 transition">1. Neural-Implant PDF™</h3>
+              <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                Every PDF is implanted with its own <strong>Neuro-Symbolic Spatial Cortex</strong> (<code class="text-indigo-300">tailprint-cortex.json</code>) containing 64-D signed <code class="text-indigo-300">Int8</code> vectors, exact physical coordinates, and unprinted domain knowledge.
+              </p>
+
+              <ul class="mt-4 space-y-2.5 text-xs text-slate-300">
+                <li class="flex items-start space-x-2">
+                  <span class="text-indigo-400 font-bold">✓</span>
+                  <span><strong>Pre-Render Spatial DOM Proprioception:</strong> Binds <code class="text-indigo-300">&lt;thead&gt;</code> headers to <code class="text-indigo-300">&lt;td&gt;</code> cells and records exact <code class="text-indigo-300">(page, x, y, w, h)</code> bounding boxes before flattening.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-indigo-400 font-bold">✓</span>
+                  <span><strong>Subconscious Latent Memory (<code class="text-purple-300">neural_context</code>):</strong> Implant 50 pages of SLA terms, GDPR details, or discount rules into a clean 1-page invoice.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-indigo-400 font-bold">✓</span>
+                  <span><strong>100% White-Label Q&amp;A API:</strong> Query via <code class="text-indigo-300">POST /v1/pdf/ask</code> in ~0.8ms with <code class="text-indigo-300">neural_custom_url</code> pointing to your own domain.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-indigo-500/20 flex items-center justify-between text-xs">
+              <a href="/brain" class="text-indigo-400 hover:text-indigo-300 font-bold flex items-center space-x-1">
+                <span>Try Live Neural Reader</span>
+                <span>→</span>
+              </a>
+              <span class="font-mono text-[11px] text-slate-500">POST /v1/pdf/ask</span>
+            </div>
+          </div>
+
+          <!-- Breakthrough 2: Dual-Brain Zero-OCR PDF -->
+          <div class="p-7 rounded-3xl bg-gradient-to-b from-cyan-950/40 via-slate-900/90 to-slate-950 border border-cyan-500/40 hover:border-cyan-400 transition shadow-2xl relative overflow-hidden flex flex-col justify-between group">
+            <div class="absolute -right-12 -top-12 w-36 h-36 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                  🧬
+                </div>
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">ai_ready: true</span>
+              </div>
+              <h3 class="text-xl font-black text-white group-hover:text-cyan-300 transition">2. Dual-Brain PDF™ (Zero-OCR)</h3>
+              <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                Eliminate brittle OCR and expensive Vision LLM parsing forever. Every Tailprint PDF carries a lossless structured JSON-LD payload (<code class="text-cyan-300">tailprint-manifest.json</code>) embedded directly inside its PDF catalog.
+              </p>
+
+              <ul class="mt-4 space-y-2.5 text-xs text-slate-300">
+                <li class="flex items-start space-x-2">
+                  <span class="text-cyan-400 font-bold">✓</span>
+                  <span><strong>0ms Machine Extraction:</strong> Call <code class="text-cyan-300">POST /v1/pdf/extract</code> on any Tailprint PDF to recover the exact structured JSON in 0ms.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-cyan-400 font-bold">✓</span>
+                  <span><strong>Zero Token &amp; Vision Cost:</strong> AI agents and ERP systems read the embedded JSON directly with 100% numeric accuracy.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-cyan-400 font-bold">✓</span>
+                  <span><strong>Automatic on Templates:</strong> Enabled automatically when rendering via <code class="text-cyan-300">template_id</code> or passing <code class="text-cyan-300">embed_data</code>.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-cyan-500/20 flex items-center justify-between text-xs">
+              <a href="/verify" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center space-x-1">
+                <span>Inspect Dual-Brain JSON</span>
+                <span>→</span>
+              </a>
+              <span class="font-mono text-[11px] text-slate-500">POST /v1/pdf/extract</span>
+            </div>
+          </div>
+
+          <!-- Breakthrough 3: Cryptographic Proof-of-Origin -->
+          <div class="p-7 rounded-3xl bg-gradient-to-b from-emerald-950/40 via-slate-900/90 to-slate-950 border border-emerald-500/40 hover:border-emerald-400 transition shadow-2xl relative overflow-hidden flex flex-col justify-between group">
+            <div class="absolute -right-12 -top-12 w-36 h-36 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+                  🛡️
+                </div>
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">verify_seal: true</span>
+              </div>
+              <h3 class="text-xl font-black text-white group-hover:text-emerald-300 transition">3. Cryptographic Proof-of-Origin</h3>
+              <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                Make invoice fraud and forged certificates mathematically impossible. Tailprint hashes every visual PDF page stream and signs the document with <strong>HMAC-SHA256</strong>.
+              </p>
+
+              <ul class="mt-4 space-y-2.5 text-xs text-slate-300">
+                <li class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong>Visual Stream Fingerprinting:</strong> Detects if even a single digit, IBAN, or line item is modified in a PDF editor after issuance.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong>Cryptographically Bound Cortex &amp; Data:</strong> Both the Dual-Brain JSON and Neural Cortex hash are locked into the signature.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span><strong>White-Label Verification Seal:</strong> Stamp a vector verification badge with <code class="text-emerald-300">verify_custom_url</code> pointing to your own portal.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-emerald-500/20 flex items-center justify-between text-xs">
+              <a href="/verify" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center space-x-1">
+                <span>Open PDF Verifier</span>
+                <span>→</span>
+              </a>
+              <span class="font-mono text-[11px] text-slate-500">POST /v1/pdf/verify</span>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -2430,6 +2657,8 @@ Cursor IDE & Windsurf:
         <a href="https://github.com/coheroseb/tailprint/tree/main/sdk/php" target="_blank" class="hover:text-purple-300 transition">PHP &amp; Laravel SDK</a>
         <a href="https://github.com/coheroseb/tailprint/tree/main/sdk/go" target="_blank" class="hover:text-sky-300 transition">Go SDK</a>
         <a href="https://github.com/coheroseb/tailprint" target="_blank" class="hover:text-slate-200 transition">GitHub</a>
+        <a href="/brain" class="hover:text-indigo-300 transition font-semibold text-indigo-400">Neural PDF Reader</a>
+        <a href="/verify" class="hover:text-cyan-300 transition font-semibold text-cyan-400">PDF Verifier</a>
         <a href="/tools/factur-x" class="hover:text-indigo-300 transition">Factur-X Validator</a>
         <a href="/studio" class="hover:text-indigo-300 transition">Studio</a>
         <a href="/guides" class="hover:text-cyan-300 transition">Guides</a>
@@ -2445,13 +2674,13 @@ Cursor IDE & Windsurf:
     // Interactive Hero Showcase Modes (PDF, Hosted Templates, Factur-X, Batch, SDKs)
     const heroShowcaseData = ${JSON.stringify(HERO_SHOWCASE_DATA)};
 
-    let activeHeroMode = 'pdf';
+    let activeHeroMode = 'neural';
 
     window.switchHeroShowcase = function(mode) {
       if (!heroShowcaseData[mode]) return;
       activeHeroMode = mode;
 
-      ['pdf', 'template', 'einvoice', 'batch', 'sdk'].forEach(function(m) {
+      ['neural', 'pdf', 'template', 'einvoice', 'batch', 'sdk'].forEach(function(m) {
         const btn = document.getElementById('hero-tab-' + m);
         if (btn) {
           if (m === mode) {
@@ -2506,11 +2735,11 @@ Cursor IDE & Windsurf:
 
     // Initialize Hero Showcase on Load
     document.addEventListener('DOMContentLoaded', function() {
-      switchHeroShowcase('pdf');
+      switchHeroShowcase('neural');
     });
     // In case DOMContentLoaded already fired:
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      setTimeout(function() { switchHeroShowcase('pdf'); }, 50);
+      setTimeout(function() { switchHeroShowcase('neural'); }, 50);
     }
 
     const templatesData = {

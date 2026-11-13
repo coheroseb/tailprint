@@ -101,7 +101,47 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <!-- Focused PDF & Document Tools Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
-      <!-- Tool Card 1: Live Interactive Template Studio -->
+      <!-- Tool Card 1: Neural-Implant PDF Reader -->
+      <a href="/brain" class="p-8 rounded-3xl bg-gradient-to-br from-indigo-950/70 via-slate-900 to-purple-950/60 border border-indigo-500/40 hover:border-indigo-400 transition shadow-2xl group flex flex-col justify-between relative overflow-hidden">
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-2xl border border-indigo-500/30 group-hover:scale-110 transition">
+            🧠
+          </div>
+          <div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/40 uppercase">64-D Int8 Spatial Cortex</span>
+            <h2 class="text-2xl font-black text-white mt-2 group-hover:text-indigo-300 transition">Neural-Implant PDF Reader</h2>
+            <p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+              Interactive split-screen reader for <strong>Neural-Implant PDFs™</strong>. Ask any question in ~1ms with zero LLM hallucinations and watch the <strong>Spatial Bounding-Box Laser</strong> pinpoint exact table rows, paragraphs, and Subconscious Latent Memory.
+            </p>
+          </div>
+        </div>
+        <div class="mt-8 pt-4 border-t border-indigo-500/20 flex items-center justify-between text-xs font-bold text-indigo-400">
+          <span>Launch Neural PDF Reader</span>
+          <span class="group-hover:translate-x-1.5 transition">→</span>
+        </div>
+      </a>
+
+      <!-- Tool Card 2: Cryptographic PDF Verifier & Zero-OCR Inspector -->
+      <a href="/verify" class="p-8 rounded-3xl bg-gradient-to-br from-cyan-950/50 via-slate-900 to-emerald-950/40 border border-cyan-500/40 hover:border-cyan-400 transition shadow-2xl group flex flex-col justify-between relative overflow-hidden">
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-2xl border border-cyan-500/30 group-hover:scale-110 transition">
+            🛡️
+          </div>
+          <div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/40 uppercase">HMAC-SHA256 &amp; Dual-Brain JSON</span>
+            <h2 class="text-2xl font-black text-white mt-2 group-hover:text-cyan-300 transition">Cryptographic PDF Verifier</h2>
+            <p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+              Verify mathematical <strong>Proof-of-Origin</strong>, detect post-issuance visual or data tampering, and extract lossless <strong>Dual-Brain JSON-LD</strong> payloads in 0ms without OCR.
+            </p>
+          </div>
+        </div>
+        <div class="mt-8 pt-4 border-t border-cyan-500/20 flex items-center justify-between text-xs font-bold text-cyan-400">
+          <span>Verify &amp; Inspect PDF</span>
+          <span class="group-hover:translate-x-1.5 transition">→</span>
+        </div>
+      </a>
+
+      <!-- Tool Card 3: Live Interactive Template Studio -->
       <a href="/studio" class="p-8 rounded-3xl bg-gradient-to-br from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-500/40 hover:border-purple-400 transition shadow-2xl group flex flex-col justify-between relative overflow-hidden">
         <div class="space-y-4">
           <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-2xl border border-purple-500/30 group-hover:scale-110 transition">
