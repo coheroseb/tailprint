@@ -10,6 +10,245 @@ import { env } from '../config/env.js';
 import { renderGlobalNavbar } from '../components/navbar.js';
 import { GUIDE_ARTICLES } from './guides.js';
 
+const HERO_SHOWCASE_DATA: Record<string, {
+  filename: string;
+  badgeText: string;
+  previewTitle: string;
+  previewBadge: string;
+  shieldText: string;
+  openHref: string;
+  openLabel: string;
+  code: string;
+  previewHtml: string;
+}> = {
+  pdf: {
+    filename: 'invoice-template.html',
+    badgeText: 'Tailwind JIT',
+    previewTitle: 'Live Vector Output (A4)',
+    previewBadge: '100% Vector PDF',
+    shieldText: 'Smart Pagination Shield Active',
+    openHref: '/studio',
+    openLabel: 'Test in Studio →',
+    code: `<div class="p-8 bg-white text-slate-900 font-sans">
+  <!-- Invoice Header -->
+  <div class="flex justify-between items-start pb-6 border-b">
+    <div>
+      <h1 class="text-2xl font-black text-indigo-600">Tailprint Inc.</h1>
+      <p class="text-xs text-slate-400">EU VAT: DK44928172</p>
+    </div>
+    <div class="text-right">
+      <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">PAID</span>
+      <p class="text-xs text-slate-500 mt-1">#INV-2026-089</p>
+    </div>
+  </div>
+
+  <!-- Smart Pagination Shield Table -->
+  <table class="w-full text-left text-xs mt-6">
+    <thead class="border-b bg-slate-50 text-slate-500 font-bold uppercase">
+      <tr>
+        <th class="py-2 px-3">Description</th>
+        <th class="py-2 px-3 text-right">Qty</th>
+        <th class="py-2 px-3 text-right">Price</th>
+        <th class="py-2 px-3 text-right">Total</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      <tr>
+        <td class="py-2.5 px-3 font-medium">Cloud Chromium Pool (100k Renders)</td>
+        <td class="py-2.5 px-3 text-right">1</td>
+        <td class="py-2.5 px-3 text-right">$49.00</td>
+        <td class="py-2.5 px-3 text-right font-bold">$49.00</td>
+      </tr>
+      <tr>
+        <td class="py-2.5 px-3 font-medium">Factur-X European XML Validation</td>
+        <td class="py-2.5 px-3 text-right">1</td>
+        <td class="py-2.5 px-3 text-right">$29.00</td>
+        <td class="py-2.5 px-3 text-right font-bold">$29.00</td>
+      </tr>
+    </tbody>
+  </table>
+</div>`,
+    previewHtml: `<div class="w-full max-w-sm bg-white text-slate-900 rounded-xl p-5 shadow-2xl border border-slate-200 select-none text-left transform hover:scale-[1.02] transition duration-300">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div>
+          <span class="text-sm font-black text-indigo-600 tracking-tight">Tailprint Inc.</span>
+          <p class="text-[9px] text-slate-400">EU VAT: DK44928172</p>
+        </div>
+        <div class="text-right">
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-bold">PAID ✓</span>
+          <p class="text-[9px] text-slate-400 mt-0.5">#INV-2026-089</p>
+        </div>
+      </div>
+      <div class="mt-4 space-y-2">
+        <div class="flex justify-between text-[10px] text-slate-400 uppercase font-bold border-b border-slate-100 pb-1">
+          <span>Item</span>
+          <span>Total</span>
+        </div>
+        <div class="flex justify-between text-[11px] font-medium text-slate-800">
+          <span>Cloud Chromium Pool (100k)</span>
+          <span class="font-bold">$49.00</span>
+        </div>
+        <div class="flex justify-between text-[11px] font-medium text-slate-800">
+          <span>Factur-X European XML</span>
+          <span class="font-bold">$29.00</span>
+        </div>
+      </div>
+      <div class="mt-5 pt-3 border-t border-slate-200 flex justify-between items-center text-xs">
+        <span class="text-[10px] text-slate-400">Total Due (VAT Incl.)</span>
+        <span class="text-base font-black text-slate-900">$78.00</span>
+      </div>
+      <div class="mt-3 py-1 px-2 rounded-lg bg-indigo-50 border border-indigo-100 text-[9px] text-indigo-700 flex items-center justify-between font-mono">
+        <span>🛡️ Pagination Shield: Safe</span>
+        <span class="font-bold">Page 1 of 1</span>
+      </div>
+    </div>`
+  },
+  einvoice: {
+    filename: 'factur-x.json',
+    badgeText: 'EN 16931 Hybrid',
+    previewTitle: 'PDF/A-3 + European XML',
+    previewBadge: 'PEPPOL & DATEV Ready',
+    shieldText: 'Compliant with German ZUGFeRD 2.2 & EU EN 16931',
+    openHref: '#einvoice',
+    openLabel: 'View E-Invoice Docs →',
+    code: `{
+  "profile": "EN16931",
+  "invoiceNumber": "INV-2026-042",
+  "issueDate": "2026-11-13",
+  "seller": {
+    "name": "Tailprint ApS",
+    "vat": "DK44928172",
+    "endpointId": "5790002341234",
+    "peppolScheme": "0184"
+  },
+  "buyer": {
+    "name": "Cohero Technologies",
+    "vat": "DK39281928"
+  },
+  "items": [
+    { "name": "Dedicated PDF Engine", "net": 490.00, "vatPct": 25 }
+  ]
+}`,
+    previewHtml: `<div class="w-full max-w-sm bg-slate-900 text-white rounded-xl p-5 shadow-2xl border border-slate-700 select-none text-left transform hover:scale-[1.02] transition duration-300">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <span class="text-lg">🇪🇺</span>
+          <div>
+            <span class="text-xs font-bold text-white">Factur-X / ZUGFeRD</span>
+            <p class="text-[9px] text-emerald-400 font-mono font-bold">PDF/A-3 Hybrid Container</p>
+          </div>
+        </div>
+        <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">VALID EN16931</span>
+      </div>
+      <div class="mt-3 p-3 rounded-lg bg-slate-950 font-mono text-[10px] text-indigo-300 space-y-1 border border-slate-800">
+        <div class="text-slate-500">&lt;!-- Embedded XML Attachment --&gt;</div>
+        <div>&lt;<span class="text-rose-400">rsm:CrossIndustryInvoice</span>&gt;</div>
+        <div class="pl-3">&lt;<span class="text-sky-400">ram:ID</span>&gt;INV-2026-042&lt;/<span class="text-sky-400">ram:ID</span>&gt;</div>
+        <div class="pl-3">&lt;<span class="text-amber-400">ram:SellerTradeParty</span>&gt;</div>
+        <div class="pl-6">&lt;ram:SpecifiedTaxRegistration&gt;</div>
+        <div class="pl-9 text-emerald-400">DK44928172</div>
+        <div>&lt;/<span class="text-rose-400">rsm:CrossIndustryInvoice</span>&gt;</div>
+      </div>
+      <div class="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+        <span class="text-emerald-400 font-bold">✓ Ready for Dinero, Billy, SAP & DATEV</span>
+        <span class="font-mono">0.00 XML Errors</span>
+      </div>
+    </div>`
+  },
+  reel: {
+    filename: 'generate-reel.json',
+    badgeText: 'Kinetic Video Deck',
+    previewTitle: 'Animated 9:16 Reel Export',
+    previewBadge: '1:1 H.264 MP4',
+    shieldText: 'Direct Chromium Screen Recording & Kinetic Typography',
+    openHref: '/tools/reel',
+    openLabel: 'Open Reel Maker →',
+    code: `{
+  "url": "https://tailprint.com",
+  "aspectRatio": "9:16",
+  "theme": "nordic",
+  "layout": "editorial",
+  "screenrecordMode": "backdrop",
+  "slides": [
+    {
+      "badge": "BREAKTHROUGH",
+      "headline": "Sub-380ms Vector PDFs",
+      "body": "Stop wrestling with fragile Puppeteer instances.",
+      "highlightWords": ["Sub-380ms"]
+    }
+  ]
+}`,
+    previewHtml: `<div class="w-56 h-[330px] rounded-3xl bg-slate-950 border border-slate-700/80 shadow-2xl p-3 flex flex-col justify-between text-left relative overflow-hidden select-none transform hover:scale-[1.03] transition duration-300">
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-indigo-950/40 pointer-events-none"></div>
+      <div class="relative z-10 flex items-center justify-between pt-1">
+        <div class="flex items-center space-x-1.5">
+          <span class="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">T</span>
+          <span class="text-[10px] font-bold text-white">Tailprint</span>
+        </div>
+        <span class="text-[8px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold font-mono">01/04</span>
+      </div>
+      <div class="relative z-10 my-auto space-y-2 py-4">
+        <span class="text-[8px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-widest font-black inline-block">BREAKTHROUGH</span>
+        <h4 class="text-sm font-black text-white leading-tight">
+          Sub-380ms <mark class="bg-indigo-500/30 text-indigo-300 px-1 rounded">Vector PDFs</mark>
+        </h4>
+        <p class="text-[10px] text-slate-300 leading-snug">
+          Stop wrestling with fragile Puppeteer instances and slow local compilers.
+        </p>
+      </div>
+      <div class="relative z-10 pt-2 border-t border-slate-800 flex items-center justify-between text-[9px] text-slate-400">
+        <span class="text-rose-400 font-bold">● 9:16 Video Deck</span>
+        <span class="font-mono text-emerald-400">30 FPS H.264</span>
+      </div>
+    </div>`
+  },
+  mcp: {
+    filename: 'claude-desktop.json',
+    badgeText: '22 Native Tools',
+    previewTitle: 'Claude & Cursor Native Server',
+    previewBadge: 'Sub-500ms MCP Tool',
+    shieldText: 'Direct SSE / stdio Model Context Protocol',
+    openHref: '/docs',
+    openLabel: 'Explore MCP Tools →',
+    code: `{
+  "mcpServers": {
+    "tailprint": {
+      "command": "npx",
+      "args": ["-y", "@tailprint/mcp"],
+      "env": {
+        "TAILPRINT_API_KEY": "sec_live_..."
+      }
+    }
+  }
+}
+// AI Prompt:
+// "Render an investor report for Q4 with charts and export as vector PDF"`,
+    previewHtml: `<div class="w-full max-w-sm bg-slate-900 text-slate-100 rounded-xl p-5 shadow-2xl border border-purple-500/30 select-none text-left transform hover:scale-[1.02] transition duration-300">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <span class="text-purple-400 font-bold">🤖</span>
+          <span class="text-xs font-bold text-white">Claude Desktop / Cursor</span>
+        </div>
+        <span class="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">MCP SSE CONNECTED</span>
+      </div>
+      <div class="mt-3 p-3 rounded-lg bg-slate-950 font-mono text-[10px] text-slate-300 space-y-2 border border-slate-800">
+        <div class="text-purple-400 font-bold">→ Calling tool: tailprint.render_pdf</div>
+        <div class="text-slate-400 text-[9px] pl-2 leading-relaxed">
+          { "html": "&lt;div class='p-8'&gt;...&lt;/div&gt;", "smartPagination": true }
+        </div>
+        <div class="pt-2 border-t border-slate-800 text-emerald-400 font-bold flex items-center justify-between">
+          <span>✓ Vector PDF Generated</span>
+          <span class="text-[9px] text-slate-500 font-mono">361ms</span>
+        </div>
+      </div>
+      <div class="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+        <span class="text-indigo-400 font-semibold">13 Tools Registered</span>
+        <span class="font-mono text-slate-500">Fastify SSE</span>
+      </div>
+    </div>`
+  }
+};
+
 export const templateRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // GET /templates - Return JSON catalog of templates
   fastify.get(
@@ -647,152 +886,151 @@ Cursor IDE & Windsurf:
   <!-- Hero Section -->
   <section class="relative pt-12 pb-20 overflow-hidden">
     <!-- Ambient Gradient Backdrops -->
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-indigo-600/20 via-purple-600/15 to-cyan-500/15 rounded-full blur-[110px] pointer-events-none"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[400px] bg-gradient-to-tr from-indigo-600/20 via-purple-600/15 to-cyan-500/15 rounded-full blur-[130px] pointer-events-none"></div>
     <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-25"></div>
 
     <div class="max-w-6xl mx-auto px-6 relative z-10 text-center">
       
       <!-- Top Banner Pill -->
-      <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-950/70 border border-indigo-800/60 text-indigo-300 text-xs font-semibold mb-6 backdrop-blur-md shadow-lg shadow-indigo-950/50">
+      <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-indigo-950/70 border border-indigo-800/60 text-indigo-300 text-xs font-semibold mb-6 backdrop-blur-md shadow-lg shadow-indigo-950/50">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span>Developer &amp; AI Output Infrastructure • Sub-500ms Chromium Engine • Tailwind v3 &amp; v4 JIT</span>
       </div>
 
-      <!-- Avatar & Floating Interactive Mascot Unit -->
-      <div class="relative max-w-xl mx-auto mb-8 flex items-center justify-center">
-        
-        <!-- Left Floating Card (PDF Result) -->
-        <div class="hidden sm:flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/70 backdrop-blur-xl shadow-xl shadow-black/40 animate-float-left absolute -left-8 lg:-left-16 top-4 z-20">
-          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-500/30">
-            📄
-          </div>
-          <div class="text-left">
-            <div class="text-xs font-bold text-white flex items-center space-x-1.5">
-              <span>invoice.pdf</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono leading-none">382ms</span>
-            </div>
-            <div class="text-[10px] text-slate-400">100% Vector • Tailwind styled</div>
-          </div>
-        </div>
-
-        <!-- Center: Interactive Avatar Character -->
-        <div class="relative flex flex-col items-center cursor-pointer group" onclick="cycleAvatarTip()">
-          <!-- Speech Bubble on hover / dynamic tips -->
-          <div id="speech-bubble" class="mb-3 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-indigo-500/40 text-xs font-medium text-indigo-200 shadow-xl backdrop-blur-md flex items-center space-x-2 transition-all duration-300 group-hover:border-indigo-400 group-hover:scale-105">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span id="speech-text" class="transition-opacity duration-150">Hey dev! Click me for quick tips ⚡</span>
-          </div>
-
-          <!-- Avatar Illustration -->
-          <div class="animate-avatar relative">
-            <div class="absolute -inset-3 bg-gradient-to-r from-indigo-500/30 to-cyan-500/30 rounded-full blur-xl pointer-events-none group-hover:opacity-100 opacity-60 transition duration-300"></div>
-            <svg class="w-28 h-28 sm:w-32 sm:h-32 filter drop-shadow-[0_10px_25px_rgba(99,102,241,0.35)] cursor-pointer select-none transition-transform duration-300 group-hover:scale-105" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" id="hero-avatar">
-              <defs>
-                <linearGradient id="botBody" x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#1e1b4b"/>
-                  <stop offset="50%" stop-color="#0f172a"/>
-                  <stop offset="100%" stop-color="#020617"/>
-                </linearGradient>
-                <linearGradient id="antennaBeam" x1="60" y1="12" x2="60" y2="28" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#38bdf8"/>
-                  <stop offset="100%" stop-color="#6366f1"/>
-                </linearGradient>
-                <filter id="glowEyes" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#38bdf8" flood-opacity="0.9"/>
-                </filter>
-              </defs>
-
-              <!-- Antenna with pinging radar -->
-              <line x1="60" y1="14" x2="60" y2="28" stroke="url(#antennaBeam)" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="60" cy="12" r="5" fill="#38bdf8" class="animate-ping origin-center" opacity="0.75"/>
-              <circle cx="60" cy="12" r="4.5" fill="#38bdf8"/>
-              <circle cx="60" cy="12" r="2" fill="#ffffff"/>
-
-              <!-- Head Base with Metallic Bevel -->
-              <rect x="22" y="26" width="76" height="66" rx="24" fill="url(#botBody)" stroke="#334155" stroke-width="2"/>
-              <rect x="23" y="27" width="74" height="64" rx="23" stroke="#6366f1" stroke-width="1.2" stroke-opacity="0.4"/>
-
-              <!-- Cute Audio Ports / Ears -->
-              <rect x="14" y="46" width="8" height="26" rx="4" fill="#334155" stroke="#475569" stroke-width="1.5"/>
-              <circle cx="18" cy="59" r="2" fill="#38bdf8"/>
-              <rect x="98" y="46" width="8" height="26" rx="4" fill="#334155" stroke="#475569" stroke-width="1.5"/>
-              <circle cx="102" cy="59" r="2" fill="#c084fc"/>
-
-              <!-- Visor Screen -->
-              <rect x="28" y="38" width="64" height="42" rx="15" fill="#030712" stroke="#1e293b" stroke-width="1.5"/>
-              <path d="M30 46 C45 42, 75 42, 90 46" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round"/>
-
-              <!-- Glowing Cyan Eyes (Blinks with CSS animation) -->
-              <g filter="url(#glowEyes)">
-                <ellipse cx="46" cy="58" rx="6" ry="8" fill="#38bdf8" class="avatar-eye-left"/>
-                <circle cx="48" cy="56" r="2.2" fill="#ffffff"/>
-                <ellipse cx="74" cy="58" rx="6" ry="8" fill="#38bdf8" class="avatar-eye-right"/>
-                <circle cx="76" cy="56" r="2.2" fill="#ffffff"/>
-              </g>
-
-              <!-- Friendly Smile -->
-              <path d="M52 70 Q60 74 68 70" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/>
-
-              <!-- Cheeks Blush -->
-              <circle cx="36" cy="65" r="3" fill="#f43f5e" opacity="0.4"/>
-              <circle cx="84" cy="65" r="3" fill="#f43f5e" opacity="0.4"/>
-
-              <!-- Floating Paper / PDF sheet being held/printed -->
-              <rect x="42" y="86" width="36" height="24" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
-              <line x1="48" y1="92" x2="72" y2="92" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
-              <line x1="48" y1="97" x2="68" y2="97" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
-              <line x1="48" y1="102" x2="62" y2="102" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
-              <circle cx="71" cy="102" r="1.5" fill="#f43f5e"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Right Floating Card (MCP & AI Agent) -->
-        <div class="hidden sm:flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-700/70 backdrop-blur-xl shadow-xl shadow-black/40 animate-float-right absolute -right-8 lg:-right-16 top-6 z-20">
-          <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm border border-purple-500/30">
-            🤖
-          </div>
-          <div class="text-left">
-            <div class="text-xs font-bold text-white flex items-center space-x-1.5">
-              <span>MCP Protocol</span>
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            </div>
-            <div class="text-[10px] text-slate-400">Claude Desktop & Cursor</div>
-          </div>
-        </div>
-
-      </div>
-
-      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight">
-        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML or Prompts</span>.<br>
+      <!-- Main High-Impact Headline -->
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-5xl mx-auto">
+        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML or Prompts</span>.<br class="hidden sm:inline" />
         Receive Production <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Vector PDFs &amp; E-Invoices</span>.
       </h1>
 
-      <p class="mt-6 text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-        The developer-first HTML-to-PDF and European e-invoicing API. Compile arbitrary Tailwind CSS into crisp vector PDFs with <strong>Smart Pagination Shield</strong>, legally compliant European Factur-X (EN 16931) hybrid invoices, and automated document workflows in under 500ms.
+      <p class="mt-6 text-base sm:text-lg lg:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-normal">
+        The developer-first PDF and European e-invoicing engine. Compile arbitrary Tailwind CSS into crisp vector documents with <strong>Smart Pagination Shield</strong>, generate legally compliant European Factur-X (EN 16931) hybrid invoices, and auto-produce animated 9:16 video decks — in under 380ms.
       </p>
 
-      <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-3.5">
-        <button onclick="startCheckout('free')" class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2.5 group">
+      <!-- Primary Action Buttons -->
+      <div class="mt-8 flex flex-wrap justify-center items-center gap-3.5">
+        <button onclick="startCheckout('free')" class="px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2.5 group">
           <span>⚡ Claim 100 Free Renders</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-200 font-bold uppercase tracking-wider">No CC</span>
         </button>
-        <a href="/studio" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20">
-          <span>⚡ Open PDF Studio</span>
+        <a href="/studio" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20">
+          <span>⚡ Open Live Studio</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 font-mono">/studio</span>
         </a>
-        <a href="#einvoice" class="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 font-semibold transition flex items-center justify-center space-x-2">
-          <span>🇪🇺 EU Factur-X API</span>
+        <a href="/tools/reel" class="px-5 py-3.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 font-semibold transition flex items-center justify-center space-x-2">
+          <span>🎬 Social Reel Maker</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/30 text-rose-200 font-mono font-bold">9:16</span>
         </a>
       </div>
-      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • Native MCP server for Claude &amp; Cursor</p>
+      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • 22 native MCP tools for Claude &amp; Cursor</p>
 
-      <!-- System Stats -->
-      <div class="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
+      <!-- Interactive Developer Showcase: Code on the Left -> Live Document Preview on the Right -->
+      <div class="mt-12 text-left max-w-5xl mx-auto rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-xl overflow-hidden ring-1 ring-white/10">
+        
+        <!-- Showcase Topbar with Mode Switchers -->
+        <div class="flex flex-wrap items-center justify-between px-5 py-3.5 bg-slate-950/90 border-b border-slate-800/80 gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+            <span class="ml-2 text-xs font-mono text-slate-400 hidden sm:inline">tailprint-engine v1.3</span>
+          </div>
+
+          <!-- Mode Switcher Tabs -->
+          <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs font-semibold">
+            <button id="hero-tab-pdf" onclick="switchHeroShowcase('pdf')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5">
+              <span>📄</span>
+              <span>Tailwind PDF</span>
+            </button>
+            <button id="hero-tab-einvoice" onclick="switchHeroShowcase('einvoice')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+              <span>🇪🇺</span>
+              <span>Factur-X</span>
+            </button>
+            <button id="hero-tab-reel" onclick="switchHeroShowcase('reel')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+              <span>🎬</span>
+              <span>Social Reel</span>
+            </button>
+            <button id="hero-tab-mcp" onclick="switchHeroShowcase('mcp')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+              <span>🤖</span>
+              <span>AI Agent MCP</span>
+            </button>
+          </div>
+
+          <!-- Fast Latency Pill -->
+          <div class="hidden md:flex items-center space-x-2 text-xs font-mono text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="text-emerald-400 font-bold">382ms</span>
+            <span class="text-[10px] text-slate-500">Latency</span>
+          </div>
+        </div>
+
+        <!-- Showcase Body Grid (Code Left, Live Preview Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[460px]">
+          
+          <!-- Left Column: Syntax-Highlighted Code Editor (6 cols) -->
+          <div class="lg:col-span-6 p-5 sm:p-6 bg-slate-950/80 border-b lg:border-b-0 lg:border-r border-slate-800/80 flex flex-col justify-between font-mono text-xs">
+            <div>
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-850 text-slate-400 text-[11px]">
+                <div class="flex items-center space-x-2" id="hero-code-filename">
+                  <span class="text-indigo-400">⚡</span>
+                  <span class="font-bold text-slate-200">invoice-template.html</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Tailwind JIT</span>
+                </div>
+                <button onclick="copyHeroCode()" id="btn-hero-copy" class="hover:text-white transition text-[11px] flex items-center space-x-1">
+                  <span>📋</span>
+                  <span>Copy</span>
+                </button>
+              </div>
+
+              <!-- Code Snippet Area -->
+              <pre id="hero-code-block" class="overflow-x-auto text-[11.5px] leading-relaxed text-indigo-200 select-all font-mono py-1"></pre>
+            </div>
+
+            <!-- cURL API Command Callout -->
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <span class="font-mono text-emerald-400">POST /v1/render/pdf</span>
+              <span class="text-slate-500">HTTP/2 • Pre-warmed</span>
+            </div>
+          </div>
+
+          <!-- Right Column: Live Production Document Preview (6 cols) -->
+          <div class="lg:col-span-6 p-5 sm:p-6 bg-gradient-to-br from-slate-900/60 to-slate-950 flex flex-col justify-between items-center relative overflow-hidden">
+            <div class="w-full flex items-center justify-between text-[11px] text-slate-400 pb-3 mb-3 border-b border-slate-800/60">
+              <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span id="hero-preview-title" class="font-bold text-white">Live Vector Output (A4)</span>
+              </div>
+              <span id="hero-preview-badge" class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono text-[10px] font-bold">100% Vector PDF</span>
+            </div>
+
+            <!-- Dynamic Preview Container -->
+            <div id="hero-preview-container" class="w-full my-auto flex items-center justify-center py-2">
+              <!-- Content dynamically populated by switchHeroShowcase -->
+            </div>
+
+            <!-- Bottom Inspect Bar -->
+            <div class="w-full pt-3 mt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+              <div class="flex items-center space-x-1.5" id="hero-shield-indicator">
+                <span class="text-emerald-400">✓</span>
+                <span class="text-slate-300 font-medium">Smart Pagination Shield Active</span>
+              </div>
+              <a id="hero-open-link" href="/studio" class="text-indigo-400 hover:text-indigo-300 font-bold transition flex items-center space-x-1">
+                <span>Test in Studio</span>
+                <span>→</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- System Stats Grid -->
+      <div class="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
           <p class="text-xs text-slate-400">PDF Render Latency</p>
-          <p class="text-2xl font-black text-emerald-400 mt-1">&lt; 500 ms</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">Pre-warmed Chromium</p>
+          <p class="text-2xl font-black text-emerald-400 mt-1">&lt; 380 ms</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Pre-warmed Chromium Pool</p>
         </div>
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
           <p class="text-xs text-slate-400">EU E-Invoicing</p>
@@ -2113,36 +2351,72 @@ Cursor IDE & Windsurf:
 
   <!-- Script for Interactivity -->
   <script>
-    // Interactive Avatar Mascot Easter Eggs & Tips
-    const botTips = [
-      "⚡ Ultra-fast rendering: Sub-500ms execution from Tailwind HTML to vector PDF!",
-      "🤖 22 Native MCP Tools: Connect Claude Desktop, Cursor, or Windsurf directly via /v1/mcp/sse.",
-      "🛡️ Smart Pagination Shield: Repeating thead across pages and zero sliced table rows!",
-      "🎨 Live Template Studio: Design and test Tailwind templates directly in your browser at /studio.",
-      "🇪🇺 EU Factur-X & PEPPOL: Generate hybrid PDFs with embedded XML for DATEV, SAP, Dinero & Billy.",
-      "🔒 Zero-Retention Mode: 100% GDPR/HIPAA privacy with transient volatile memory rendering.",
-      "📐 Mermaid & 16:9 Slides: Convert architecture diagrams and markdown into presentation decks.",
-      "🚀 Zero headless browser setup: Just send a POST request or prompt your AI agent."
-    ];
-    let tipIdx = 0;
-    window.cycleAvatarTip = function() {
-      tipIdx = (tipIdx + 1) % botTips.length;
-      const el = document.getElementById('speech-text');
-      const avatar = document.getElementById('hero-avatar');
-      if (el) {
-        el.style.opacity = '0';
-        setTimeout(function() {
-          el.innerText = botTips[tipIdx];
-          el.style.opacity = '1';
-        }, 150);
+    // Interactive Hero Showcase Modes (PDF, Factur-X, Social Reel, MCP)
+    const heroShowcaseData = ${JSON.stringify(HERO_SHOWCASE_DATA)};
+
+    let activeHeroMode = 'pdf';
+
+    window.switchHeroShowcase = function(mode) {
+      if (!heroShowcaseData[mode]) return;
+      activeHeroMode = mode;
+
+      ['pdf', 'einvoice', 'reel', 'mcp'].forEach(function(m) {
+        const btn = document.getElementById('hero-tab-' + m);
+        if (btn) {
+          if (m === mode) {
+            btn.className = 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition flex items-center space-x-1.5 font-bold';
+          } else {
+            btn.className = 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5';
+          }
+        }
+      });
+
+      const data = heroShowcaseData[mode];
+      const codeBlock = document.getElementById('hero-code-block');
+      const filenameEl = document.getElementById('hero-code-filename');
+      const previewTitle = document.getElementById('hero-preview-title');
+      const previewBadge = document.getElementById('hero-preview-badge');
+      const previewContainer = document.getElementById('hero-preview-container');
+      const shieldIndicator = document.getElementById('hero-shield-indicator');
+      const openLink = document.getElementById('hero-open-link');
+
+      if (codeBlock) codeBlock.textContent = data.code;
+      if (filenameEl) {
+        filenameEl.innerHTML = '<span class="text-indigo-400">⚡</span><span class="font-bold text-slate-200">' + data.filename + '</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">' + data.badgeText + '</span>';
       }
-      if (avatar) {
-        avatar.classList.add('rotate-6', 'scale-110');
-        setTimeout(function() {
-          avatar.classList.remove('rotate-6', 'scale-110');
-        }, 300);
+      if (previewTitle) previewTitle.textContent = data.previewTitle;
+      if (previewBadge) previewBadge.textContent = data.previewBadge;
+      if (previewContainer) previewContainer.innerHTML = data.previewHtml;
+      if (shieldIndicator) {
+        shieldIndicator.innerHTML = '<span class="text-emerald-400">✓</span><span class="text-slate-300 font-medium">' + data.shieldText + '</span>';
+      }
+      if (openLink) {
+        openLink.href = data.openHref;
+        openLink.innerHTML = '<span>' + data.openLabel + '</span>';
       }
     };
+
+    window.copyHeroCode = function() {
+      const data = heroShowcaseData[activeHeroMode];
+      if (!data) return;
+      navigator.clipboard.writeText(data.code);
+      const btn = document.getElementById('btn-hero-copy');
+      if (btn) {
+        btn.innerHTML = '<span>✓</span><span>Copied!</span>';
+        setTimeout(function() {
+          btn.innerHTML = '<span>📋</span><span>Copy</span>';
+        }, 2000);
+      }
+    };
+
+    // Initialize Hero Showcase on Load
+    document.addEventListener('DOMContentLoaded', function() {
+      switchHeroShowcase('pdf');
+    });
+    // In case DOMContentLoaded already fired:
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(function() { switchHeroShowcase('pdf'); }, 50);
+    }
 
     const templatesData = {
       ${TEMPLATES.map((t) => `'${t.id}': ${JSON.stringify(t.html)}`).join(',\n      ')}
