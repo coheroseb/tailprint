@@ -513,5 +513,19 @@ describe('Dual-Brain PDFs (Zero-OCR) & Cryptographic Proof-of-Origin', () => {
     for (const match of spliceScripts) {
       expect(() => new vm.Script(match[1])).not.toThrow();
     }
+
+    // 6. Verify GET /v1/mcp/tools exposes splice_pdfs, sequence_pdf_genome, ask_pdf, and verify_pdf
+    const mcpToolsRes = await app.inject({
+      method: 'GET',
+      url: '/v1/mcp/tools',
+    });
+    expect(mcpToolsRes.statusCode).toBe(200);
+    const mcpCatalog = mcpToolsRes.json();
+    expect(mcpCatalog.totalTools).toBe(15);
+    const toolNames = mcpCatalog.tools.map((t: any) => t.name);
+    expect(toolNames).toContain('splice_pdfs');
+    expect(toolNames).toContain('sequence_pdf_genome');
+    expect(toolNames).toContain('ask_pdf');
+    expect(toolNames).toContain('verify_pdf');
   });
 });

@@ -121,11 +121,11 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
   }> = [
     {
       name: 'render_pdf',
-      category: 'Document Generation',
-      description: 'Converts HTML with Tailwind CSS classes, a public web URL, or a hosted template (template_id + JSON data) into a vector PDF with Smart Pagination Shield. Automatically saves to CDN and returns both a clickable download link and base64.',
-      outputType: 'application/pdf (CDN hosted URL + base64)',
+      category: 'Document Generation & Neural-Implant',
+      description: 'Converts HTML with Tailwind CSS classes (supports <div data-neural-button></div> and <div data-verify-button></div>), a public web URL, or a hosted template (template_id + JSON data) into a vector PDF with Smart Pagination Shield, optional 64-D Neural-Implant Cortex, Dual-Brain JSON, and HMAC-SHA256 Proof-of-Origin.',
+      outputType: 'application/pdf (CDN hosted URL + doc_id + brain_url + verify_url + base64)',
       arguments: {
-        html: 'string (optional) - Raw HTML with Tailwind utility classes',
+        html: 'string (optional) - Raw HTML with Tailwind utility classes (and optional <div data-neural-button></div>)',
         url: 'string (optional) - Public web URL to render directly',
         template_id: 'string (optional) - Hosted template: invoice-modern, receipt-minimal, certificate-classic, report-executive',
         data: 'object (optional) - JSON data for template_id',
@@ -136,8 +136,14 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
         footer_html: 'string (optional) - Page footer template',
         password: 'string (optional) - AES-256 PDF encryption password',
         delay_ms: 'number (optional) - Render delay in milliseconds',
+        neural_implant: 'boolean (optional) - Compiles a 64-D Int8 Spatial Cortex into the PDF',
+        neural_persona: 'string (optional) - AI persona for the implanted Neural Cortex',
+        neural_context: 'object (optional) - Subconscious Latent Memory implanted into the PDF Cortex',
+        neural_custom_url: 'string (optional) - White-label URL for the clickable Neural button',
+        embed_data: 'object (optional) - Structured Dual-Brain JSON payload',
+        sign: 'boolean (optional) - Cryptographic HMAC-SHA256 Proof-of-Origin signature',
       },
-      examplePrompt: 'Read this financial data and generate an executive 1-page PDF summary with benchmark bars.',
+      examplePrompt: 'Generate an enterprise invoice PDF with neural_implant enabled, a <div data-neural-button></div> in the header, and latent SLA rules.',
     },
     {
       name: 'generate_einvoice',
@@ -267,6 +273,54 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
       },
       examplePrompt: 'Convert this quarterly roadmap into a 5-slide dark 16:9 presentation PDF for our board meeting.',
     },
+    {
+      name: 'verify_pdf',
+      category: 'Dual-Brain & Cryptographic Proof',
+      description: 'Verifies the cryptographic HMAC-SHA256 signature and visual content fingerprint of a Tailprint PDF to detect tampering, and extracts its embedded Dual-Brain structured JSON payload in 0ms without OCR.',
+      outputType: 'application/json (Verification Report + Extracted Dual-Brain JSON)',
+      arguments: {
+        pdf: 'string - PDF document as a base64 string, base64 data URI, or public HTTP/HTTPS URL',
+      },
+      examplePrompt: 'Verify whether this vendor invoice PDF has been tampered with and extract its Dual-Brain JSON payload.',
+    },
+    {
+      name: 'ask_pdf',
+      category: 'Neural-Implant Cortex',
+      description: 'Executes a sub-millisecond neuro-symbolic query against a Neural-Implant PDF Cortex (tailprint-cortex.json) by doc_id or PDF binary. Searches visual DOM synapses (with exact page + x,y,w,h coordinates) and subconscious latent memory (neural_context).',
+      outputType: 'application/json (Answer + Confidence + Spatial Bounding-Box Citations)',
+      arguments: {
+        question: 'string - Natural language question to ask the PDF Neural Cortex',
+        doc_id: 'string (optional) - Tailprint Document ID (e.g. "doc_...")',
+        pdf: 'string (optional) - PDF document as base64 string or public HTTP/HTTPS URL',
+      },
+      examplePrompt: 'Ask doc_8f91a2b3c4d5e6f7 what the early payment discount is and how GDPR data residency is handled.',
+    },
+    {
+      name: 'splice_pdfs',
+      category: 'CRISPR-PDF™ Genetic Splicing',
+      description: 'Sequences 2 to 10 parent PDFs (or Tailprint doc_ids) into chromosomes (Visual Exons, Dual-Brain Data Proteome, and Subconscious Latent Epigenome), excises Cas9 knockout terms, resolves cross-document conflicting clauses, applies point mutations, and expresses a unified Vector Master Offspring PDF with a fused Multi-Parent Neural Cortex.',
+      outputType: 'application/pdf + CrisprSplicingReport (hosted URL + offspring doc_id + brain_url + conflict log)',
+      arguments: {
+        pdfs: 'string[] (2 to 10 items) - Parent PDFs as Tailprint doc_ids ("doc_..."), public URLs, or base64 strings',
+        title: 'string (optional) - Title of the synthesized Offspring Master PDF',
+        subtitle: 'string (optional) - Subtitle displayed in the Offspring PDF header',
+        phenotype: '"executive-indigo" | "legal-contract" | "board-dossier" (default: "executive-indigo")',
+        knockout_terms: 'string[] (optional) - Cas9 knockout terms to excise from parent chromosomes',
+        mutations: 'object (optional) - Point mutations (key-value overrides) injected into the Offspring genome',
+        neural_persona: 'string (optional) - Custom AI persona for the fused Offspring Neural Cortex',
+      },
+      examplePrompt: 'Splice our Mutual NDA PDF, Cloud Proposal PDF, and GDPR SLA PDF into a single Master Agreement, knocking out "Legacy Non-Compete" and mutating discount_rate to "25%".',
+    },
+    {
+      name: 'sequence_pdf_genome',
+      category: 'CRISPR-PDF™ Genetic Splicing',
+      description: 'Sequences 1 to 10 PDFs (or Tailprint doc_ids) into their constituent chromosomes: Visual Exons (sections, tables, callouts), Structured Data Proteome (Dual-Brain JSON alleles), and Subconscious Latent Epigenome (hidden neural_context clauses).',
+      outputType: 'application/json (DocumentGenome[])',
+      arguments: {
+        pdfs: 'string[] (1 to 10 items) - PDFs as Tailprint doc_ids ("doc_..."), public URLs, or base64 strings',
+      },
+      examplePrompt: 'Sequence the genome of these two contract PDFs so we can inspect their exons and conflicting proteome alleles before splicing.',
+    },
   ];
 
   // GET /v1/mcp/tools - Comprehensive Tool Catalog & Documentation
@@ -275,8 +329,8 @@ export const mcpRoutes: FastifyPluginAsyncZod = async (fastify) => {
     {
       schema: {
         tags: ['MCP'],
-        summary: 'List All 11 Model Context Protocol (MCP) PDF & Document Tools & Schemas',
-        description: 'Returns the full catalog of 11 native PDF & Document MCP tools supported by Tailprint, including argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
+        summary: 'List All 15 Model Context Protocol (MCP) PDF & Document Tools & Schemas',
+        description: 'Returns the full catalog of 15 native PDF & Document MCP tools supported by Tailprint (including Neural-Implant Q&A and CRISPR-PDF™ Genetic Splicing), with argument definitions, output types, and real-world prompt examples for Claude Desktop, Cursor, and autonomous agents.',
         response: {
           200: z.object({
             totalTools: z.number().describe('Number of registered tools'),

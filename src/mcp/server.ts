@@ -7,6 +7,7 @@ import { eInvoiceService } from '../services/eInvoice.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
 import { presentationService } from '../services/presentation.js';
 import { smartPdfService } from '../services/smartPdf.js';
+import { crisprPdfService } from '../services/crisprPdf.js';
 import { TEMPLATES } from '../config/templates.js';
 import { resolveTemplateRequest } from '../services/templateEngine.js';
 
@@ -50,9 +51,9 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   // Tool 1: render_pdf
   server.tool(
     'render_pdf',
-    'Converts HTML with full Tailwind CSS classes, a public URL, or a hosted template (template_id + JSON data, e.g. "invoice-modern") into a pixel-perfect, vector PDF document with Smart Pagination Shield. Returns a hosted CDN link and base64 data URI.',
+    'Converts HTML with full Tailwind CSS classes, a public URL, or a hosted template (template_id + JSON data, e.g. "invoice-modern") into a pixel-perfect, vector PDF document with Smart Pagination Shield, optional Neural-Implant 64-D Cortex (<div data-neural-button></div> supported), Dual-Brain JSON, and Cryptographic Proof-of-Origin. Returns a hosted CDN link, doc_id, brain_url, verify_url, and base64 data URI.',
     {
-      html: z.string().optional().describe('HTML markup to render. Tailwind CSS utility classes are supported automatically. Provide exactly one of html, url or template_id.'),
+      html: z.string().optional().describe('HTML markup to render. Tailwind CSS utility classes are supported automatically. You can also place <div data-neural-button></div> or <div data-verify-button></div> anywhere in the HTML. Provide exactly one of html, url or template_id.'),
       url: z.string().url().optional().describe('Public web URL to render directly to PDF (e.g. https://news.ycombinator.com). Provide exactly one of html, url or template_id.'),
       template_id: z.string().optional().describe('Hosted template id: invoice-modern, receipt-minimal, certificate-classic or report-executive. Requires "data". Provide exactly one of html, url or template_id.'),
       data: z.record(z.any()).optional().describe('JSON data for template_id (e.g. seller, buyer and items for invoice-modern). Validation errors name the offending fields.'),
@@ -64,23 +65,60 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       password: z.string().optional().describe('Optional password to encrypt the PDF with AES-256'),
       wait_for: z.string().optional().describe('Optional CSS selector to wait for before rendering'),
       delay_ms: z.number().optional().describe('Optional delay in milliseconds before rendering (max 5000)'),
+      neural_implant: z.boolean().optional().describe('When true, implants a 64-D Int8 Neuro-Symbolic Spatial Cortex into the PDF so it can answer questions in ~1ms via ask_pdf or /brain/:docId'),
+      neural_persona: z.string().optional().describe('Custom AI persona for the implanted Neural Cortex (e.g. "Nordisk Cloud Billing & SLA Concierge")'),
+      neural_context: z.record(z.any()).optional().describe('Subconscious Latent Memory (unprinted policy rules, SLAs, discount terms, FAQs) implanted directly into the PDF Cortex'),
+      neural_custom_url: z.string().url().optional().describe('Optional white-label URL for the clickable Neural Q&A button in the PDF'),
+      neural_badge_label: z.string().optional().describe('Custom label for the clickable Neural Q&A button in the PDF'),
+      embed_data: z.record(z.any()).optional().describe('Structured JSON payload to embed inside the Dual-Brain PDF catalog (tailprint-manifest.json) for 0ms zero-OCR extraction'),
+      sign: z.boolean().optional().describe('When true, signs the PDF visual streams and data manifest with HMAC-SHA256 Cryptographic Proof-of-Origin'),
+      verify_seal: z.boolean().optional().describe('When true, renders a clickable cryptographic verification seal on the PDF'),
     },
-    async ({ html, url, template_id, data, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms }) => {
+    async ({
+      html,
+      url,
+      template_id,
+      data,
+      format,
+      landscape,
+      print_background,
+      header_html,
+      footer_html,
+      password,
+      wait_for,
+      delay_ms,
+      neural_implant,
+      neural_persona,
+      neural_context,
+      neural_custom_url,
+      neural_badge_label,
+      embed_data,
+      sign,
+      verify_seal,
+    }) => {
       try {
         if (template_id && (html || url)) {
           throw new Error('Provide only one of html, url or template_id.');
         }
         if (data !== undefined && !template_id) {
-          throw new Error('"data" can only be used together with template_id.');
+          throw new Error('"data" can only be be used together with template_id.');
         }
-        // Validate template input before counting usage
         const resolved = resolveTemplateRequest({ html, url, template_id, data });
 
         if (options.onUsage) {
           await options.onUsage('render_pdf');
         }
 
-        const buffer = await browserService.renderPdf({
+        const rawHtml = resolved.html || '';
+        const hasCustomNeuralTag = /data-neural-button\b/i.test(rawHtml);
+        const hasCustomVerifyTag = /data-verify-button\b/i.test(rawHtml);
+        const enableNeural = Boolean(
+          neural_implant || neural_persona || neural_context || neural_custom_url || hasCustomNeuralTag
+        );
+        const enableSign = Boolean(sign || verify_seal || hasCustomVerifyTag || enableNeural);
+        const enableAiReady = Boolean(template_id || embed_data || enableNeural || enableSign);
+
+        const rawBuffer = await browserService.renderPdf({
           html: resolved.html,
           url: resolved.url,
           format: format || 'A4',
@@ -91,22 +129,58 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           password,
           wait_for,
           delay_ms,
-        });
+          neural_implant: enableNeural,
+          neural_badge_label,
+        } as any);
 
-        const base64Pdf = buffer.toString('base64');
-        const sizeKb = (buffer.byteLength / 1024).toFixed(1);
+        let finalBuffer = rawBuffer;
+        let docId: string | undefined;
+        let brainUrl: string | undefined;
+        let verifyUrl: string | undefined;
 
-        const stored = await storageService.saveFile(buffer, {
+        if (!password && (enableAiReady || enableSign || enableNeural)) {
+          const domSynapses = browserService.getExtractedDomSynapses(rawBuffer);
+          const customButtons = browserService.getCustomButtonPlacement(rawBuffer);
+          const enriched = await smartPdfService.enrichPdf(rawBuffer, {
+            customerId: 'mcp_agent',
+            templateId: template_id || null,
+            data: embed_data || data || null,
+            aiReady: enableAiReady,
+            sign: enableSign,
+            verifySeal: Boolean(verify_seal || hasCustomVerifyTag),
+            neuralImplant: enableNeural,
+            neuralPersona: neural_persona,
+            neuralContext: neural_context,
+            neuralCustomUrl: neural_custom_url,
+            neuralBadgeLabel: neural_badge_label,
+            hasCustomNeuralButton: customButtons?.hasCustomNeuralButton,
+            hasCustomVerifyButton: customButtons?.hasCustomVerifyButton,
+            domSynapses,
+          });
+          finalBuffer = enriched.buffer;
+          docId = enriched.docId;
+          brainUrl = enriched.cortex?.brain_url || `/brain/${enriched.docId}`;
+          verifyUrl = enriched.manifest.verification_url;
+        }
+
+        const base64Pdf = finalBuffer.toString('base64');
+        const sizeKb = (finalBuffer.byteLength / 1024).toFixed(1);
+
+        const stored = await storageService.saveFile(finalBuffer, {
           mimeType: 'application/pdf',
           extension: 'pdf',
-          filename: 'rendered.pdf',
+          filename: docId ? `${docId}.pdf` : 'rendered.pdf',
         });
+
+        const extraLines = docId
+          ? `\n🧠 **Document ID:** \`${docId}\`${enableNeural ? `\n🔮 **Interactive Neural Reader:** [https://tailprint.com${brainUrl}](https://tailprint.com${brainUrl})` : ''}\n🛡️ **Cryptographic Verifier:** [${verifyUrl}](${verifyUrl})`
+          : '';
 
         return {
           content: [
             {
               type: 'text',
-              text: `✅ **PDF successfully generated!** (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}${password ? ', Encrypted' : ''})\n\n🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Link hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
+              text: `✅ **PDF successfully generated!** (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}${enableNeural ? ', Neural-Implant 64-D Cortex' : ''}${password ? ', Encrypted' : ''})${extraLines}\n\n🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Link hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
             },
           ],
         };
@@ -868,6 +942,238 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             {
               type: 'text',
               text: `Error verifying/extracting PDF: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 13: ask_pdf (Sub-Millisecond Neuro-Symbolic PDF Cortex Q&A)
+  server.tool(
+    'ask_pdf',
+    'Executes a sub-millisecond neuro-symbolic query against a Neural-Implant PDF Cortex (tailprint-cortex.json) by doc_id or PDF binary. Searches visual DOM synapses (returning exact page + x,y,w,h coordinates) and subconscious latent memory (neural_context) using 64-D Int8 Hyperdimensional Vectors.',
+    {
+      question: z.string().min(1).describe('Natural language question to ask the PDF Neural Cortex (e.g. "What is the early payment discount and how is GDPR handled?")'),
+      doc_id: z.string().optional().describe('Tailprint Document ID (e.g. "doc_...") of a Neural-Implant PDF. Provide either doc_id or pdf.'),
+      pdf: z.string().optional().describe('PDF document as a base64 string, base64 data URI, or public HTTP/HTTPS URL. Provide either doc_id or pdf.'),
+    },
+    async ({ question, doc_id, pdf }) => {
+      try {
+        if (!doc_id && !pdf) {
+          throw new Error('Provide either "doc_id" or "pdf" to query the PDF Neural Cortex.');
+        }
+
+        let pdfBuffer: Buffer | undefined;
+        if (pdf) {
+          pdfBuffer = await resolvePdfBuffer(pdf);
+        }
+
+        const result = await smartPdfService.askPdf({
+          pdfBuffer,
+          docId: doc_id,
+          question,
+        });
+
+        const topCitations = (result.citations || [])
+          .slice(0, 3)
+          .map(
+            (c, i) =>
+              `${i + 1}. **[${c.layer}] ${c.section}** (Score: ${c.score.toFixed(2)}${c.bbox ? `, Page ${c.bbox.page} @ [${c.bbox.x_pt}, ${c.bbox.y_pt}, ${c.bbox.w_pt}×${c.bbox.h_pt}pt]` : ''}):\n   > ${c.content}`
+          )
+          .join('\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `🧠 **Neural-Implant PDF Answer** (${result.execution_time_ms}ms • Confidence: ${Math.round(result.confidence * 100)}% • Primary Layer: \`${result.primary_source_layer}\`)`,
+                ``,
+                result.answer,
+                ``,
+                `### 📍 Cited Synapses & Spatial Coordinates:`,
+                topCitations || 'No citations matched.',
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error querying PDF Neural Cortex: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 14: splice_pdfs (🧬 CRISPR-PDF™ Composable Genetic Document Splicing)
+  server.tool(
+    'splice_pdfs',
+    'CRISPR-PDF™ Genetic Document Splicing Engine: Unlike dumb PDF page merging (merge_pdfs), splice_pdfs sequences 2 to 10 parent PDFs (or Tailprint doc_ids) into their chromosomes (Visual Exons, Dual-Brain Data Proteome, and Subconscious Latent Epigenome), excises Cas9 knockout terms, resolves cross-document conflicting clauses, applies point mutations, and expresses a newly typeset Vector Master Offspring PDF with a fused Multi-Parent 64-D Neural Cortex.',
+    {
+      pdfs: z
+        .array(z.string().min(1))
+        .min(2)
+        .max(10)
+        .describe('Array of 2 to 10 parent PDFs: each item can be a Tailprint doc_id (e.g. "doc_..."), a public HTTP/HTTPS URL, or a base64 PDF string'),
+      title: z.string().optional().describe('Title of the synthesized Offspring Master PDF (e.g. "Master Enterprise Cloud & GDPR Agreement")'),
+      subtitle: z.string().optional().describe('Subtitle displayed in the Offspring PDF header'),
+      phenotype: z
+        .enum(['executive-indigo', 'legal-contract', 'board-dossier'])
+        .optional()
+        .default('executive-indigo')
+        .describe('Visual CSS phenotype applied when expressing the spliced genome into a vector PDF'),
+      knockout_terms: z
+        .array(z.string())
+        .optional()
+        .describe('CRISPR-Cas9 knockout terms: any visual section or latent clause matching these terms is cleanly excised from the Offspring PDF (e.g. ["Legacy Non-Compete", "auto_renewal_policy"])'),
+      mutations: z
+        .record(z.any())
+        .optional()
+        .describe('Point mutations (key-value overrides) injected into the Offspring proteome, epigenome, and visual exons (e.g. {"discount_rate": "25%", "governing_law": "Danish Law"})'),
+      neural_persona: z.string().optional().describe('Custom AI persona for the fused Offspring Neural Cortex'),
+      neural_custom_url: z.string().url().optional().describe('Optional white-label URL for the interactive <div data-neural-button></div> in the Offspring PDF'),
+      verify_custom_url: z.string().url().optional().describe('Optional white-label URL for the interactive <div data-verify-button></div> in the Offspring PDF'),
+    },
+    async ({
+      pdfs,
+      title,
+      subtitle,
+      phenotype,
+      knockout_terms,
+      mutations,
+      neural_persona,
+      neural_custom_url,
+      verify_custom_url,
+    }) => {
+      try {
+        if (options.onUsage) {
+          await options.onUsage('splice_pdfs');
+        }
+
+        const inputs = await Promise.all(
+          pdfs.map(async (item, idx) => {
+            const trimmed = item.trim();
+            if (trimmed.startsWith('doc_')) {
+              return { docId: trimmed, label: `Parent #${idx + 1} (${trimmed})` };
+            }
+            const pdfBuffer = await resolvePdfBuffer(trimmed);
+            return { pdfBuffer, label: `Parent #${idx + 1}` };
+          })
+        );
+
+        const result = await crisprPdfService.splicePdfs({
+          inputs,
+          title,
+          subtitle,
+          phenotype: phenotype || 'executive-indigo',
+          knockout_terms,
+          mutations,
+          neural_persona,
+          neural_custom_url,
+          verify_custom_url,
+          customer_id: 'mcp_crispr_agent',
+        });
+
+        const stored = await storageService.saveFile(result.pdfBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: `crispr-offspring-${result.report.offspring_doc_id}.pdf`,
+        });
+
+        const rep = result.report;
+        const conflictsText =
+          rep.conflicts_resolved.length > 0
+            ? rep.conflicts_resolved
+                .map(
+                  (c) =>
+                    `- **\`${c.locus}\`** (${c.layer}): \`${String(c.parent_a.value)}\` → **\`${String(c.resolved_value)}\`** [${c.resolution_strategy}]`
+                )
+                .join('\n')
+            : '- None (all parent alleles were harmonious)';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                `🧬 **CRISPR-PDF™ Offspring Master PDF Synthesized!**`,
+                ``,
+                `- **Offspring Document ID:** \`${rep.offspring_doc_id}\``,
+                `- **Parents Sequenced:** ${rep.parent_count} (${rep.parents.map((p) => p.label).join(' + ')})`,
+                `- **Visual Exons Expressed:** ${rep.total_exons_spliced} (Cas9 Knockouts Excised: ${rep.knockout_exons_excised}, Duplicates Excised: ${rep.duplicate_exons_excised})`,
+                `- **Fused Neural Synapses:** ${rep.total_synapses_in_offspring}`,
+                `- **Phenotype:** \`${rep.phenotype}\``,
+                ``,
+                `### ⚖️ Allele Conflicts Resolved (${rep.conflicts_resolved.length}):`,
+                conflictsText,
+                ``,
+                `🔗 **Download Offspring PDF:** [${stored.hostedUrl}](${stored.hostedUrl})`,
+                `🧠 **Ask Offspring Neural Cortex:** [https://tailprint.com${rep.brain_url}](https://tailprint.com${rep.brain_url})`,
+                `🛡️ **Verify Lineage & Signature:** [${rep.verify_url}](${rep.verify_url})`,
+              ].join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error splicing PDFs with CRISPR-PDF: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 15: sequence_pdf_genome (🧬 CRISPR-PDF™ Chromosome Sequencer)
+  server.tool(
+    'sequence_pdf_genome',
+    'Sequences 1 to 10 PDFs (or Tailprint doc_ids) into their constituent chromosomes: Visual Exons (sections, tables, callouts), Structured Data Proteome (Dual-Brain JSON alleles), and Subconscious Latent Epigenome (hidden neural_context clauses).',
+    {
+      pdfs: z
+        .array(z.string().min(1))
+        .min(1)
+        .max(10)
+        .describe('Array of 1 to 10 PDFs (Tailprint doc_id "doc_...", public HTTP/HTTPS URL, or base64 PDF string) to sequence'),
+    },
+    async ({ pdfs }) => {
+      try {
+        const genomes = await Promise.all(
+          pdfs.map(async (item, idx) => {
+            const trimmed = item.trim();
+            if (trimmed.startsWith('doc_')) {
+              return crisprPdfService.sequenceGenome({ docId: trimmed, label: `Parent #${idx + 1}` }, idx);
+            }
+            const pdfBuffer = await resolvePdfBuffer(trimmed);
+            return crisprPdfService.sequenceGenome({ pdfBuffer, label: `Parent #${idx + 1}` }, idx);
+          })
+        );
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ count: genomes.length, genomes }, null, 2),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error sequencing PDF genome: ${err.message || 'Unknown error'}`,
             },
           ],
         };
