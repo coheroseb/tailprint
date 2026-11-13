@@ -14,6 +14,7 @@ import { redisService } from '../services/redis.js';
 import { qrService } from '../services/qr.js';
 import { browserService } from '../services/browser.js';
 import { smartPdfService } from '../services/smartPdf.js';
+import { crisprPdfService } from '../services/crisprPdf.js';
 import { resolveTemplateRequest } from '../services/templateEngine.js';
 import { HOSTED_TEMPLATES } from '../config/hostedTemplates.js';
 import { env } from '../config/env.js';
@@ -101,6 +102,28 @@ export const toolsRoutes: FastifyPluginAsyncZod = async (fastify) => {
     <!-- Focused PDF & Document Tools Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
+      <!-- Tool Card 0: CRISPR-PDF Genetic Document Splicer -->
+      <a href="/splice" class="md:col-span-2 p-8 rounded-3xl bg-gradient-to-r from-fuchsia-950/70 via-slate-900 to-indigo-950/70 border border-fuchsia-500/40 hover:border-fuchsia-400 transition shadow-2xl group flex flex-col justify-between relative overflow-hidden">
+        <div class="space-y-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl bg-fuchsia-500/20 text-fuchsia-300 flex items-center justify-center text-2xl border border-fuchsia-500/30 group-hover:scale-110 transition">
+              🧬
+            </div>
+            <div>
+              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-400/40 uppercase tracking-wider">New Breakthrough • Composable Genetic Documents</span>
+              <h2 class="text-2xl sm:text-3xl font-black text-white mt-1 group-hover:text-fuchsia-300 transition">CRISPR-PDF™ Genetic Document Splicer</h2>
+            </div>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-4xl">
+            Stop concatenating mismatched PDF pages with dumb merge tools. <strong>CRISPR-PDF™</strong> sequences 2 to 10 parent PDFs into their constituent chromosomes (<strong>Visual Exons</strong>, <strong>Dual-Brain Data Proteome</strong>, and <strong>Subconscious Latent Epigenome</strong>), excises unwanted clauses via <strong>Cas9 Knockouts</strong>, resolves cross-document conflicting terms, applies <strong>Point Mutations</strong>, and expresses a newly typeset <strong>Vector Master Offspring PDF</strong> with a fused Multi-Parent Neural Cortex.
+          </p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-fuchsia-500/20 flex items-center justify-between text-xs font-bold text-fuchsia-300">
+          <span>Launch Interactive CRISPR-PDF™ Splicing Lab</span>
+          <span class="group-hover:translate-x-1.5 transition">→</span>
+        </div>
+      </a>
+
       <!-- Tool Card 1: Neural-Implant PDF Reader -->
       <a href="/brain" class="p-8 rounded-3xl bg-gradient-to-br from-indigo-950/70 via-slate-900 to-purple-950/60 border border-indigo-500/40 hover:border-indigo-400 transition shadow-2xl group flex flex-col justify-between relative overflow-hidden">
         <div class="space-y-4">
@@ -7269,5 +7292,481 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
   fastify.get('/tools/brain', { schema: { hide: true } }, async (_request, reply) => {
     return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderBrainPageHtml(''));
+  });
+
+  // ==========================================
+  // PAGE 9: /splice & /tools/splice (🧬 CRISPR-PDF™ Genetic Document Splicer Lab)
+  // ==========================================
+
+  // POST /v1/tools/crispr-demo - Generates 3 Parent Neural-Implant PDFs and splices them into a live Offspring Master PDF
+  fastify.post(
+    '/v1/tools/crispr-demo',
+    {
+      schema: {
+        hide: true,
+        body: z
+          .object({
+            title: z.string().max(200).optional(),
+            phenotype: z.enum(['executive-indigo', 'legal-contract', 'board-dossier']).optional(),
+            knockout_terms: z.array(z.string()).optional(),
+            mutations: z.record(z.string(), z.unknown()).optional(),
+          })
+          .optional(),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const body = request.body || {};
+
+        // Synthesize 3 rich Parent Neural-Implant PDFs with distinct Visual Exons, Data Proteomes, and Latent Epigenomes
+        // Including deliberate conflicting alleles (discount_rate, payment_terms, governing_law) to showcase CRISPR conflict resolution!
+        const parent1Html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="p-10 font-sans text-slate-900">
+  <h1 class="text-2xl font-bold text-indigo-950">Mutual Non-Disclosure &amp; IP Protection Agreement</h1>
+  <h2 class="text-lg font-semibold mt-4">Confidentiality &amp; Trade Secret Scope</h2>
+  <p class="text-sm mt-2">Both Nordisk Cloud ApS and Acme Global Corp agree to hold all proprietary source code, cryptographic keys, and neural weights in strict confidence for 5 years from disclosure.</p>
+  <h2 class="text-lg font-semibold mt-4">Legacy Non-Compete Restriction</h2>
+  <p class="text-sm mt-2">During the term of this agreement, Recipient shall not build competing optical character recognition (OCR) pipelines in the Nordic region.</p>
+</body></html>`;
+
+        const parent2Html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="p-10 font-sans text-slate-900">
+  <h1 class="text-2xl font-bold text-indigo-950">Enterprise Cloud Infrastructure Proposal &amp; Pricing</h1>
+  <h2 class="text-lg font-semibold mt-4">Subscription Tiers &amp; Volume Commitment</h2>
+  <p class="text-sm mt-2">Enterprise Neural-Implant PDF Engine license for 2,500,000 monthly vector renders at EUR 4,800/month with dedicated Hetzner EU bare-metal workers.</p>
+  <table class="w-full text-sm mt-3 border-collapse border border-slate-300">
+    <thead><tr class="bg-slate-900 text-white"><th class="p-2 text-left">SKU</th><th class="p-2 text-left">Included Volume</th><th class="p-2 text-left">Annual Fee</th></tr></thead>
+    <tbody>
+      <tr><td class="p-2 border">TP-ENT-CORE</td><td class="p-2 border">2,500,000 PDFs / mo</td><td class="p-2 border">EUR 57,600</td></tr>
+      <tr><td class="p-2 border">TP-CRISPR-LAB</td><td class="p-2 border">Unlimited Genetic Splicing</td><td class="p-2 border">Included</td></tr>
+    </tbody>
+  </table>
+</body></html>`;
+
+        const parent3Html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="p-10 font-sans text-slate-900">
+  <h1 class="text-2xl font-bold text-indigo-950">EU GDPR Data Processing &amp; SLA Addendum</h1>
+  <h2 class="text-lg font-semibold mt-4">Zero-Retention Sovereign EU Processing</h2>
+  <p class="text-sm mt-2">All document chromosomes, DOM coordinates, and 64-D Int8 vectors are processed exclusively within Frankfurt and Helsinki ISO-27001 data centers under sub-millisecond ephemeral memory.</p>
+  <h2 class="text-lg font-semibold mt-4">Uptime Guarantee &amp; Remedies</h2>
+  <p class="text-sm mt-2">Provider guarantees 99.99% monthly API availability with automatic 15% service credit remedies if p99 latency exceeds 800ms.</p>
+</body></html>`;
+
+        const [p1Raw, p2Raw, p3Raw] = await Promise.all([
+          browserService.renderPdf({ html: parent1Html, format: 'A4', print_background: true, neural_implant: true } as any),
+          browserService.renderPdf({ html: parent2Html, format: 'A4', print_background: true, neural_implant: true } as any),
+          browserService.renderPdf({ html: parent3Html, format: 'A4', print_background: true, neural_implant: true } as any),
+        ]);
+
+        const [p1Enriched, p2Enriched, p3Enriched] = await Promise.all([
+          smartPdfService.enrichPdf(p1Raw, {
+            customerId: 'crispr_demo',
+            templateId: 'parent_nda_v1',
+            aiReady: true,
+            sign: true,
+            neuralImplant: true,
+            domSynapses: browserService.getExtractedDomSynapses(p1Raw),
+            data: {
+              counterparty: 'Acme Global Corp',
+              confidentiality_period: '5 Years',
+              discount_rate: '10%',
+              payment_terms: 'Net 45 Days',
+              governing_law: 'English Law (London)',
+            },
+            neuralContext: {
+              ip_ownership_clause: 'All pre-existing intellectual property remains strictly with the disclosing party.',
+              payment_terms: 'Standard NDA fallback payment window is Net 45 Days.',
+            },
+          }),
+          smartPdfService.enrichPdf(p2Raw, {
+            customerId: 'crispr_demo',
+            templateId: 'parent_proposal_v2',
+            aiReady: true,
+            sign: true,
+            neuralImplant: true,
+            domSynapses: browserService.getExtractedDomSynapses(p2Raw),
+            data: {
+              annual_contract_value: 'EUR 57,600',
+              monthly_render_quota: '2,500,000 PDFs',
+              discount_rate: '18%',
+              payment_terms: 'Net 30 Days',
+            },
+            neuralContext: {
+              early_payment_discount: 'Invoices settled within 10 business days qualify for an extra 4% wire rebate.',
+              auto_renewal_policy: 'Legacy automatic 36-month lock-in renewal applies unless cancelled 180 days prior.',
+            },
+          }),
+          smartPdfService.enrichPdf(p3Raw, {
+            customerId: 'crispr_demo',
+            templateId: 'parent_gdpr_sla_v3',
+            aiReady: true,
+            sign: true,
+            neuralImplant: true,
+            domSynapses: browserService.getExtractedDomSynapses(p3Raw),
+            data: {
+              sla_uptime_guarantee: '99.99%',
+              eu_data_residency: 'Frankfurt & Helsinki (ISO-27001)',
+              governing_law: 'Danish Law (Copenhagen Venue)',
+              payment_terms: 'Net 14 Days (Enterprise SLA)',
+            },
+            neuralContext: {
+              gdpr_dpa_audit_rights: 'Customer may inspect cryptographic SHA-256 Proof-of-Origin ledgers 24/7 via /verify.',
+              breach_notification_window: 'Mandatory cryptographic incident notification within 12 hours.',
+            },
+          }),
+        ]);
+
+        const spliceResult = await crisprPdfService.splicePdfs({
+          inputs: [
+            { pdfBuffer: p1Enriched.buffer, docId: p1Enriched.docId, label: 'Parent 1: Mutual NDA (v1)' },
+            { pdfBuffer: p2Enriched.buffer, docId: p2Enriched.docId, label: 'Parent 2: Enterprise Cloud Proposal (v2)' },
+            { pdfBuffer: p3Enriched.buffer, docId: p3Enriched.docId, label: 'Parent 3: EU GDPR & SLA Addendum (v3)' },
+          ],
+          title: body.title || 'Master Enterprise Cloud, NDA & GDPR Agreement',
+          subtitle: 'Synthesized by Tailprint CRISPR-PDF™ from 3 Parent Chromosomes with Cas9 Knockouts & Point Mutations',
+          phenotype: body.phenotype || 'executive-indigo',
+          knockout_terms: body.knockout_terms ?? ['Legacy Non-Compete', 'auto_renewal_policy'],
+          mutations: body.mutations ?? {
+            discount_rate: '25% (Executive Board Override)',
+            early_payment_discount: '6% instant wire rebate within 10 days (Mutated)',
+          },
+          customer_id: 'crispr_demo',
+        });
+
+        const stored = await storageService.saveFile(spliceResult.pdfBuffer, {
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          filename: `crispr-offspring-${spliceResult.report.offspring_doc_id}.pdf`,
+        });
+
+        return reply.code(200).send({
+          status: 'spliced',
+          offspring_doc_id: spliceResult.report.offspring_doc_id,
+          hosted_url: stored.hostedUrl,
+          brain_url: spliceResult.report.brain_url,
+          verify_url: spliceResult.report.verify_url,
+          report: spliceResult.report,
+        });
+      } catch (err: any) {
+        return reply.code(500).send({
+          statusCode: 500,
+          error: 'Internal Server Error',
+          message: err.message || 'Failed to run CRISPR-PDF demo splice',
+        });
+      }
+    }
+  );
+
+  function renderCrisprSplicePageHtml() {
+    return `<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRISPR-PDF™ Genetic Document Splicer Lab — Tailprint</title>
+  <meta name="description" content="Sequence 2 to 10 parent PDFs into chromosomes (Visual Exons, Data Proteome, Latent Epigenome), apply Cas9 knockouts and point mutations, and express a unified Offspring Master PDF." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #030712; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+    .dna-grid {
+      background-image: radial-gradient(rgba(217, 70, 239, 0.14) 1px, transparent 1px), radial-gradient(rgba(99, 102, 241, 0.12) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-position: 0 0, 14px 14px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between dna-grid">
+  ${renderHeader('splice')}
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex-1 w-full space-y-8">
+    <!-- Hero Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-slate-900/90 border border-fuchsia-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl">
+      <div class="space-y-3 max-w-3xl">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-fuchsia-500/15 border border-fuchsia-500/40 text-fuchsia-300 text-xs font-bold">
+          <span>🧬</span>
+          <span>CRISPR-PDF™ • Composable Genetic Document Splicing Engine</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          Stop Merging Pages. <span class="bg-gradient-to-r from-fuchsia-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">Splice Document DNA.</span>
+        </h1>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          Traditional PDF merge tools blindly staple mismatched pages together. <strong>CRISPR-PDF™</strong> sequences 2 to 10 parent PDFs into their constituent chromosomes (<strong>Visual Exons</strong>, <strong>Dual-Brain Data Proteome</strong>, and <strong>Subconscious Latent Epigenome</strong>), excises unwanted clauses with <strong>Cas9 Knockouts</strong>, resolves cross-document conflicts, applies <strong>Point Mutations</strong>, and expresses a newly typeset <strong>Vector Master Offspring PDF</strong> with a fused Multi-Parent Neural Cortex.
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+        <button id="btn-run-crispr" onclick="runCrisprSplice()" class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-indigo-600 to-emerald-600 hover:from-fuchsia-500 hover:to-emerald-500 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-fuchsia-600/25 transition flex items-center justify-center space-x-2 cursor-pointer">
+          <span>🧬</span>
+          <span>Splice Chromosomes &amp; Express Offspring PDF</span>
+        </button>
+        <a href="/guides/crispr-pdf-genetic-document-splicing" class="px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-slate-300 font-bold text-xs text-center border border-slate-700 transition">
+          Read CRISPR-PDF™ Architecture Whitepaper →
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Workbench Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left Column (5 cols): Parent Chromosomes + Cas9 Knockouts + Point Mutations -->
+      <div class="lg:col-span-5 space-y-6">
+        <!-- 1. Parent Chromosomes Panel -->
+        <div class="bg-slate-900/95 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-black uppercase tracking-wider text-fuchsia-300 flex items-center space-x-2">
+              <span>🧪</span>
+              <span>1. Parent Chromosomes (3 Loaded)</span>
+            </h2>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">Recessive → Dominant</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs">
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white">Parent #1: Mutual NDA &amp; IP Protection</span>
+                <span class="text-[10px] font-mono text-slate-400">parent_nda_v1</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Exons: Confidentiality Scope, <span class="text-rose-400 line-through">Legacy Non-Compete</span> • Alleles: <code>discount_rate=10%</code>, <code>payment_terms=Net 45</code></p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white">Parent #2: Enterprise Cloud Proposal</span>
+                <span class="text-[10px] font-mono text-slate-400">parent_proposal_v2</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Exons: Subscription Pricing Table • Alleles: <code>discount_rate=18%</code>, <code>payment_terms=Net 30</code>, <span class="text-rose-400 line-through">auto_renewal_policy</span></p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-indigo-500/40 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-indigo-300">Parent #3: EU GDPR &amp; SLA Addendum (Dominant)</span>
+                <span class="text-[10px] font-mono text-indigo-400">parent_gdpr_sla_v3</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Exons: Sovereign EU Processing, 99.99% Uptime SLA • Alleles: <code>governing_law=Danish Law</code>, <code>payment_terms=Net 14</code></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. CRISPR-Cas9 Knockouts & Point Mutations -->
+        <div class="bg-slate-900/95 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-black uppercase tracking-wider text-rose-400 flex items-center space-x-2">
+              <span>✂️</span>
+              <span>2. Cas9 Knockouts &amp; Point Mutations</span>
+            </h2>
+            <span class="text-[10px] font-mono text-slate-400">Live Genome Editor</span>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-300 mb-1">Offspring Document Title</label>
+              <input id="crispr-title" type="text" value="Master Enterprise Cloud, NDA &amp; GDPR Agreement" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-fuchsia-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-300 mb-1">Visual Phenotype (CSS Expression)</label>
+              <select id="crispr-phenotype" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-fuchsia-500 focus:outline-none">
+                <option value="executive-indigo">Executive Indigo (Modern Corporate Master Agreement)</option>
+                <option value="legal-contract">Legal Contract (Serif Numbered Instrument)</option>
+                <option value="board-dossier">Board Dossier (Emerald High-Contrast Audit Report)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-rose-300 mb-1">✂️ Cas9 Knockout Terms (Comma-separated clauses/genes to excise)</label>
+              <input id="crispr-knockouts" type="text" value="Legacy Non-Compete, auto_renewal_policy" class="w-full bg-slate-950 border border-rose-500/40 rounded-xl px-3 py-2 text-xs text-rose-200 font-mono focus:border-rose-400 focus:outline-none" />
+              <p class="text-[10px] text-slate-500 mt-1">Any visual section or latent clause matching these terms is cleanly excised before PDF synthesis.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-emerald-300 mb-1">🧬 Mutate: <code>discount_rate</code></label>
+                <input id="mut-discount" type="text" value="25% (Executive Board Override)" class="w-full bg-slate-950 border border-emerald-500/40 rounded-xl px-3 py-2 text-xs text-emerald-200 font-mono focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-emerald-300 mb-1">🧬 Mutate: <code>governing_law</code></label>
+                <input id="mut-law" type="text" value="Danish Law (Copenhagen Venue)" class="w-full bg-slate-950 border border-emerald-500/40 rounded-xl px-3 py-2 text-xs text-emerald-200 font-mono focus:outline-none" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column (7 cols): Splicing Report, Conflict Resolution Matrix & Live Offspring PDF Preview -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="bg-slate-900/95 border border-slate-800 rounded-2xl p-5 space-y-5 shadow-2xl">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div>
+              <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold" id="offspring-status-badge">Ready to Splice Chromosomes</span>
+              <h2 class="text-lg font-black text-white mt-0.5" id="offspring-doc-heading">Offspring Master PDF &amp; Genetic Lineage Report</h2>
+            </div>
+            <div class="flex flex-wrap items-center gap-2" id="offspring-action-links">
+              <a id="btn-open-offspring-brain" href="/brain" target="_blank" class="hidden px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
+                🧠 Ask Offspring Brain
+              </a>
+              <a id="btn-open-offspring-verify" href="/verify" target="_blank" class="hidden px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition">
+                🛡️ Verify Lineage
+              </a>
+              <a id="btn-download-offspring-pdf" href="#" target="_blank" class="hidden px-3 py-1.5 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold text-xs transition">
+                📥 Download Offspring PDF
+              </a>
+            </div>
+          </div>
+
+          <!-- Stats Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <div class="text-xl font-black text-fuchsia-400" id="stat-parents">3</div>
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Parents Sequenced</div>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <div class="text-xl font-black text-indigo-400" id="stat-exons">—</div>
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Exons Expressed</div>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <div class="text-xl font-black text-amber-400" id="stat-conflicts">—</div>
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Conflicts Resolved</div>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <div class="text-xl font-black text-rose-400" id="stat-knockouts">—</div>
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Cas9 Knockouts</div>
+            </div>
+          </div>
+
+          <!-- Conflict Resolution & Knockout Matrix -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Allele Conflict Resolution &amp; Cas9 Excision Log</h3>
+            <div id="crispr-conflict-log" class="space-y-2 max-h-52 overflow-y-auto pr-1 text-xs">
+              <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">
+                Click <strong>"🧬 Splice Chromosomes &amp; Express Offspring PDF"</strong> above to sequence the 3 parent PDFs, resolve conflicting alleles, execute Cas9 knockouts, and render the live Vector Offspring PDF.
+              </div>
+            </div>
+          </div>
+
+          <!-- Embedded PDF Preview Iframe -->
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Synthesized Vector Offspring PDF (with Embedded <code>data-neural-button</code> &amp; <code>data-verify-button</code>)</h3>
+            <div class="w-full h-[520px] rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center relative">
+              <iframe id="offspring-pdf-iframe" class="w-full h-full hidden" title="Synthesized Offspring PDF"></iframe>
+              <div id="offspring-pdf-placeholder" class="text-center p-8 space-y-3 max-w-md">
+                <div class="text-4xl">🧬</div>
+                <p class="text-sm font-bold text-white">Ready to Express Offspring Genome</p>
+                <p class="text-xs text-slate-400">The synthesized vector PDF will appear here with clickable 1-line HTML Neural &amp; Verify buttons in its header and footer.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${renderConversionCallout(
+      'CRISPR-PDF™ Genetic Document Splicing',
+      'curl -X POST https://tailprint.com/v1/pdf/splice \\\n' +
+        '  -H "Authorization: Bearer YOUR_API_KEY" \\\n' +
+        '  -H "Content-Type: application/json" \\\n' +
+        '  -d \'{\n' +
+        '    "pdfs": ["doc_nda_1", "doc_proposal_2", "doc_gdpr_3"],\n' +
+        '    "title": "Master Enterprise Agreement",\n' +
+        '    "phenotype": "executive-indigo",\n' +
+        '    "knockout_terms": ["Legacy Non-Compete"],\n' +
+        '    "mutations": {"discount_rate": "25%"}\n' +
+        '  }\' \\\n' +
+        '  --output master-offspring.pdf'
+    )}
+  </main>
+
+  <script>
+    async function runCrisprSplice() {
+      var btn = document.getElementById('btn-run-crispr');
+      var statusBadge = document.getElementById('offspring-status-badge');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span><span>Sequencing Chromosomes &amp; Expressing Offspring PDF...</span>';
+      statusBadge.textContent = 'Sequencing 3 Parent PDFs in Chromium...';
+
+      var title = document.getElementById('crispr-title').value || 'Master Enterprise Agreement';
+      var phenotype = document.getElementById('crispr-phenotype').value || 'executive-indigo';
+      var knockoutRaw = document.getElementById('crispr-knockouts').value || '';
+      var knockoutTerms = knockoutRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+      var mutDiscount = document.getElementById('mut-discount').value || '';
+      var mutLaw = document.getElementById('mut-law').value || '';
+      var mutations = {};
+      if (mutDiscount) mutations.discount_rate = mutDiscount;
+      if (mutLaw) mutations.governing_law = mutLaw;
+
+      try {
+        var res = await fetch('/v1/tools/crispr-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title,
+            phenotype: phenotype,
+            knockout_terms: knockoutTerms,
+            mutations: mutations
+          })
+        });
+        var data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'CRISPR splice failed');
+          return;
+        }
+
+        var rep = data.report;
+        statusBadge.textContent = '✓ Spliced ' + rep.parents.length + ' Chromosomes • ' + rep.offspring_doc_id;
+        document.getElementById('offspring-doc-heading').textContent = title + ' (' + rep.total_synapses_in_offspring + ' neural synapses)';
+        document.getElementById('stat-parents').textContent = String(rep.parents.length);
+        document.getElementById('stat-exons').textContent = String(rep.total_exons_spliced);
+        document.getElementById('stat-conflicts').textContent = String(rep.conflicts_resolved.length);
+        document.getElementById('stat-knockouts').textContent = String(rep.knockout_exons_excised);
+
+        var logHtml = '';
+        rep.conflicts_resolved.forEach(function(c) {
+          logHtml += '<div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2">' +
+            '<div><span class="font-mono font-bold text-amber-300">' + c.locus + '</span> <span class="text-slate-400">(' + c.parent_a.label + ': <s>' + String(c.parent_a.value) + '</s> → ' + c.parent_b.label + ')</span></div>' +
+            '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[11px]">✓ ' + String(c.resolved_value) + '</span>' +
+          '</div>';
+        });
+        if (rep.knockout_exons_excised > 0) {
+          logHtml += '<div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-mono text-[11px]">✂️ Cas9 Excised ' + rep.knockout_exons_excised + ' matching exon(s) from parent chromosomes</div>';
+        }
+        document.getElementById('crispr-conflict-log').innerHTML = logHtml || '<div class="p-3 rounded-xl bg-slate-950 text-slate-400">No conflicts detected.</div>';
+
+        var brainBtn = document.getElementById('btn-open-offspring-brain');
+        brainBtn.href = '/brain/' + encodeURIComponent(rep.offspring_doc_id);
+        brainBtn.classList.remove('hidden');
+
+        var verifyBtn = document.getElementById('btn-open-offspring-verify');
+        verifyBtn.href = '/verify/' + encodeURIComponent(rep.offspring_doc_id);
+        verifyBtn.classList.remove('hidden');
+
+        if (data.hosted_url) {
+          var dlBtn = document.getElementById('btn-download-offspring-pdf');
+          dlBtn.href = data.hosted_url;
+          dlBtn.classList.remove('hidden');
+
+          var iframe = document.getElementById('offspring-pdf-iframe');
+          var placeholder = document.getElementById('offspring-pdf-placeholder');
+          iframe.src = data.hosted_url;
+          iframe.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+        }
+      } catch (err) {
+        alert('Error splicing chromosomes');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🧬</span><span>Splice Chromosomes &amp; Express Offspring PDF</span>';
+      }
+    }
+  </script>
+</body>
+</html>`;
+  }
+
+  fastify.get('/splice', { schema: { hide: true } }, async (_request, reply) => {
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderCrisprSplicePageHtml());
+  });
+
+  fastify.get('/tools/splice', { schema: { hide: true } }, async (_request, reply) => {
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderCrisprSplicePageHtml());
   });
 };

@@ -266,3 +266,103 @@ export const PdfProofLookupResponseSchema = z.object({
   verification_url: z.string(),
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 🧬 CRISPR-PDF™: Composable Genetic Document Splicing Schemas
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CrisprParentInputSchema = z.union([
+  z.string().min(1).describe('Parent PDF as a base64 string, base64 data URI, or public HTTP/HTTPS URL'),
+  z
+    .object({
+      pdf: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Parent PDF as a base64 string, base64 data URI, or public HTTP/HTTPS URL'),
+      doc_id: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Tailprint Document ID (e.g. doc_...) of an existing Neural-Implant or Proof-of-Origin PDF'),
+      label: z
+        .string()
+        .max(120)
+        .optional()
+        .describe('Human-readable label for this parent chromosome (e.g. "Parent 1: Mutual NDA")'),
+    })
+    .refine((d) => Boolean(d.pdf || d.doc_id), {
+      message: 'Each parent object must include either "pdf" or "doc_id"',
+    }),
+]);
+
+export const CrisprSplicePdfRequestSchema = z.object({
+  pdfs: z
+    .array(CrisprParentInputSchema)
+    .min(2)
+    .max(10)
+    .describe('2 to 10 parent PDFs (or Tailprint doc_ids) whose chromosomes will be sequenced and spliced into a unified Offspring PDF'),
+  title: z
+    .string()
+    .max(200)
+    .optional()
+    .describe('Title of the synthesized Offspring Master PDF (e.g. "Master Enterprise Agreement & Cloud SLA")'),
+  subtitle: z
+    .string()
+    .max(300)
+    .optional()
+    .describe('Subtitle displayed in the Offspring PDF header'),
+  phenotype: z
+    .enum(['executive-indigo', 'legal-contract', 'board-dossier'])
+    .optional()
+    .default('executive-indigo')
+    .describe('Visual CSS phenotype applied when expressing the spliced genome into a vector PDF'),
+  mutations: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Point mutations (key-value overrides) injected into the Offspring proteome, epigenome, and visual exons (e.g. {"discount_rate": "25%", "governing_law": "Danish Law (Copenhagen)"})'),
+  knockout_terms: z
+    .array(z.string().min(1).max(120))
+    .max(25)
+    .optional()
+    .describe('CRISPR-Cas9 knockout terms: any visual exon or latent clause matching these terms is cleanly excised from the Offspring PDF'),
+  neural_persona: z
+    .string()
+    .max(160)
+    .optional()
+    .describe('Custom AI persona for the fused Offspring Neural Cortex'),
+  neural_custom_url: z
+    .string()
+    .url()
+    .optional()
+    .describe('Optional white-label URL for the interactive <div data-neural-button></div> in the Offspring PDF'),
+  neural_badge_label: z
+    .string()
+    .max(80)
+    .optional()
+    .describe('Custom text for the embedded Neural Q&A button in the Offspring PDF'),
+  verify_custom_url: z
+    .string()
+    .url()
+    .optional()
+    .describe('Optional white-label URL for the interactive <div data-verify-button></div> in the Offspring PDF'),
+  store: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, stores the Offspring PDF and returns a JSON response with hosted_url and the full CrisprSplicingReport'),
+  return_report: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, returns a JSON payload containing pdf_base64, doc_id, brain_url, verify_url, and the complete CrisprSplicingReport instead of raw binary bytes'),
+});
+
+export const SequenceGenomeRequestSchema = z.object({
+  pdfs: z
+    .array(CrisprParentInputSchema)
+    .min(1)
+    .max(10)
+    .describe('1 to 10 PDFs (or Tailprint doc_ids) to sequence into their constituent chromosomes (Visual Exons, Data Proteome, and Latent Epigenome)'),
+});
+
+
