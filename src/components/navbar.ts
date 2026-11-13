@@ -198,7 +198,7 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
                       <span>NPM Package</span>
                       <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5">TypeScript SDK &amp; MCP CLI (v1.3)</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">TypeScript SDK &amp; MCP CLI (v1.4)</p>
                   </div>
                 </a>
 
@@ -209,10 +209,37 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
                   <div>
                     <div class="text-xs font-bold text-white group-hover/item:text-emerald-300 flex items-center space-x-1">
                       <span>Python SDK (PyPI)</span>
-                      <span class="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-semibold">New</span>
                       <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-0.5">pip install tailprint for Python &amp; Django</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">pip install tailprint (v1.4)</p>
+                  </div>
+                </a>
+
+                <a href="https://github.com/coheroseb/tailprint/tree/main/sdk/php" target="_blank" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                    🐘
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-purple-300 flex items-center space-x-1">
+                      <span>PHP &amp; Laravel SDK</span>
+                      <span class="text-[9px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono font-semibold">New</span>
+                      <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">tailprint/tailprint + Laravel Facade</p>
+                  </div>
+                </a>
+
+                <a href="https://github.com/coheroseb/tailprint/tree/main/sdk/go" target="_blank" class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-800/60 transition group/item">
+                  <div class="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 mt-0.5">
+                    🐹
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white group-hover/item:text-sky-300 flex items-center space-x-1">
+                      <span>Go SDK</span>
+                      <span class="text-[9px] px-1 py-0.2 rounded bg-sky-500/20 text-sky-300 font-mono font-semibold">New</span>
+                      <svg class="w-2.5 h-2.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">github.com/coheroseb/tailprint/sdk/go</p>
                   </div>
                 </a>
 

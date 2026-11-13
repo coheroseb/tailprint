@@ -143,6 +143,58 @@ batch = tp.render_batch(
 
 ---
 
+## 🐘 Official PHP & Laravel SDK (`sdk/php`)
+
+Zero-dependency PHP 8.1+ client with first-class Laravel ServiceProvider, `Tailprint` Facade, Blade `view()` support, and fluent `->download()` / `->stream()` responses:
+
+```bash
+composer require tailprint/tailprint
+```
+
+```php
+use Tailprint\Laravel\Facades\Tailprint;
+
+// Render a hosted template directly to a Laravel HTTP download response
+return Tailprint::template('invoice-modern', [
+    'invoice_number' => 'INV-2026-1042',
+    'issue_date'     => '2026-11-13',
+    'seller'         => ['name' => 'Tailprint ApS'],
+    'buyer'          => ['name' => 'Acme GmbH'],
+    'items'          => [['description' => 'Pro Plan', 'quantity' => 1, 'unit_price' => 49]],
+])->download('invoice.pdf');
+
+// Or render a Laravel Blade view with Tailwind CSS
+return Tailprint::view('pdfs.invoice', ['order' => $order])->stream('invoice.pdf');
+```
+
+See [`sdk/php/README.md`](./sdk/php/README.md) for full documentation.
+
+---
+
+## 🐹 Official Go SDK (`sdk/go`)
+
+Zero-dependency, context-aware Go client (`go >= 1.21`):
+
+```bash
+go get github.com/coheroseb/tailprint/sdk/go@v1.4.0
+```
+
+```go
+client := tailprint.NewClient(os.Getenv("TAILPRINT_API_KEY"))
+
+pdfBytes, err := client.RenderTemplate(ctx, "invoice-modern", map[string]any{
+    "invoice_number": "INV-2026-1042",
+    "issue_date":     "2026-11-13",
+    "seller":         map[string]any{"name": "Tailprint ApS"},
+    "buyer":          map[string]any{"name": "Acme GmbH"},
+    "items":          []map[string]any{{"description": "Pro Plan", "quantity": 1, "unit_price": 49}},
+}, nil)
+```
+
+See [`sdk/go/README.md`](./sdk/go/README.md) for full documentation.
+
+---
+
 ## 🤖 Model Context Protocol (MCP) Setup
 
 Tailprint provides an official, 100% spec-compliant MCP server exposing **11 Document & PDF Tools** enabling AI coding assistants and autonomous agents to generate and inspect documents on command.

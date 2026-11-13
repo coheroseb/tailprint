@@ -70,7 +70,7 @@ class Tailprint:
         """Executes an HTTP request to the Tailprint API."""
         url = f"{self.base_url}{endpoint}"
         headers = {
-            "User-Agent": "Tailprint-Python-SDK/1.3.0",
+            "User-Agent": "Tailprint-Python-SDK/1.4.0",
         }
 
         if self.api_key:

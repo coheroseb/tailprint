@@ -10,3 +10,5 @@ storage/
 **/.venv/
 sdk/python/dist/
 sdk/python/build/
+sdk/php/vendor/
+sdk/php/.phpunit.result.cache
