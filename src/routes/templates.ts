@@ -13,6 +13,7 @@ import { GUIDE_ARTICLES } from './guides.js';
 const HERO_SHOWCASE_DATA: Record<string, {
   filename: string;
   badgeText: string;
+  endpoint: string;
   previewTitle: string;
   previewBadge: string;
   shieldText: string;
@@ -24,6 +25,7 @@ const HERO_SHOWCASE_DATA: Record<string, {
   pdf: {
     filename: 'invoice-template.html',
     badgeText: 'Tailwind JIT',
+    endpoint: 'POST /v1/render/pdf',
     previewTitle: 'Live Vector Output (A4)',
     previewBadge: '100% Vector PDF',
     shieldText: 'Smart Pagination Shield Active',
@@ -106,11 +108,12 @@ const HERO_SHOWCASE_DATA: Record<string, {
   einvoice: {
     filename: 'factur-x.json',
     badgeText: 'EN 16931 Hybrid',
+    endpoint: 'POST /v1/render/einvoice',
     previewTitle: 'PDF/A-3 + European XML',
     previewBadge: 'PEPPOL & DATEV Ready',
     shieldText: 'Compliant with German ZUGFeRD 2.2 & EU EN 16931',
-    openHref: '#einvoice',
-    openLabel: 'View E-Invoice Docs →',
+    openHref: '/tools/factur-x',
+    openLabel: 'Validate Factur-X XML →',
     code: `{
   "profile": "EN16931",
   "invoiceNumber": "INV-2026-042",
@@ -155,95 +158,116 @@ const HERO_SHOWCASE_DATA: Record<string, {
       </div>
     </div>`
   },
-  reel: {
-    filename: 'generate-reel.json',
-    badgeText: 'Kinetic Video Deck',
-    previewTitle: 'Animated 9:16 Reel Export',
-    previewBadge: '1:1 H.264 MP4',
-    shieldText: 'Direct Chromium Screen Recording & Kinetic Typography',
-    openHref: '/tools/reel',
-    openLabel: 'Open Reel Maker →',
+  batch: {
+    filename: 'batch-render.json',
+    badgeText: 'Async & Webhooks',
+    endpoint: 'POST /v1/render/batch',
+    previewTitle: 'Async Batch Rendering Engine',
+    previewBadge: 'Job Completed (200)',
+    shieldText: 'Parallel Worker Pool • HMAC-SHA256 Webhook Dispatch',
+    openHref: '/docs',
+    openLabel: 'View Batch API Docs →',
     code: `{
-  "url": "https://tailprint.com",
-  "aspectRatio": "9:16",
-  "theme": "nordic",
-  "layout": "editorial",
-  "screenrecordMode": "backdrop",
-  "slides": [
+  "webhook_url": "https://api.yourdomain.com/webhooks/tailprint",
+  "webhook_secret": "whsec_live_9a8f...",
+  "merge_output": true,
+  "items": [
     {
-      "badge": "BREAKTHROUGH",
-      "headline": "Sub-380ms Vector PDFs",
-      "body": "Stop wrestling with fragile Puppeteer instances.",
-      "highlightWords": ["Sub-380ms"]
+      "html": "<div class='p-8 font-sans'><h1>Quarterly Report</h1>...</div>",
+      "smart_pagination": true
+    },
+    {
+      "html": "<div class='p-8 font-sans'><h1>Executive Summary</h1>...</div>",
+      "smart_pagination": true
     }
   ]
 }`,
-    previewHtml: `<div class="w-56 h-[330px] rounded-3xl bg-slate-950 border border-slate-700/80 shadow-2xl p-3 flex flex-col justify-between text-left relative overflow-hidden select-none transform hover:scale-[1.03] transition duration-300">
-      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-indigo-950/40 pointer-events-none"></div>
-      <div class="relative z-10 flex items-center justify-between pt-1">
-        <div class="flex items-center space-x-1.5">
-          <span class="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">T</span>
-          <span class="text-[10px] font-bold text-white">Tailprint</span>
-        </div>
-        <span class="text-[8px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold font-mono">01/04</span>
-      </div>
-      <div class="relative z-10 my-auto space-y-2 py-4">
-        <span class="text-[8px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-widest font-black inline-block">BREAKTHROUGH</span>
-        <h4 class="text-sm font-black text-white leading-tight">
-          Sub-380ms <mark class="bg-indigo-500/30 text-indigo-300 px-1 rounded">Vector PDFs</mark>
-        </h4>
-        <p class="text-[10px] text-slate-300 leading-snug">
-          Stop wrestling with fragile Puppeteer instances and slow local compilers.
-        </p>
-      </div>
-      <div class="relative z-10 pt-2 border-t border-slate-800 flex items-center justify-between text-[9px] text-slate-400">
-        <span class="text-rose-400 font-bold">● 9:16 Video Deck</span>
-        <span class="font-mono text-emerald-400">30 FPS H.264</span>
-      </div>
-    </div>`
-  },
-  mcp: {
-    filename: 'claude-desktop.json',
-    badgeText: '22 Native Tools',
-    previewTitle: 'Claude & Cursor Native Server',
-    previewBadge: 'Sub-500ms MCP Tool',
-    shieldText: 'Direct SSE / stdio Model Context Protocol',
-    openHref: '/docs',
-    openLabel: 'Explore MCP Tools →',
-    code: `{
-  "mcpServers": {
-    "tailprint": {
-      "command": "npx",
-      "args": ["-y", "@tailprint/mcp"],
-      "env": {
-        "TAILPRINT_API_KEY": "sec_live_..."
-      }
-    }
-  }
-}
-// AI Prompt:
-// "Render an investor report for Q4 with charts and export as vector PDF"`,
-    previewHtml: `<div class="w-full max-w-sm bg-slate-900 text-slate-100 rounded-xl p-5 shadow-2xl border border-purple-500/30 select-none text-left transform hover:scale-[1.02] transition duration-300">
+    previewHtml: `<div class="w-full max-w-sm bg-slate-900 text-white rounded-xl p-5 shadow-2xl border border-indigo-500/30 select-none text-left transform hover:scale-[1.02] transition duration-300">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <div class="flex items-center space-x-2">
-          <span class="text-purple-400 font-bold">🤖</span>
-          <span class="text-xs font-bold text-white">Claude Desktop / Cursor</span>
+          <span class="text-base text-indigo-400">⚡</span>
+          <div>
+            <span class="text-xs font-bold text-white">Batch Job Status</span>
+            <p class="text-[9px] text-emerald-400 font-mono">job_8a92f0c13b</p>
+          </div>
         </div>
-        <span class="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">MCP SSE CONNECTED</span>
+        <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">COMPLETED</span>
       </div>
-      <div class="mt-3 p-3 rounded-lg bg-slate-950 font-mono text-[10px] text-slate-300 space-y-2 border border-slate-800">
-        <div class="text-purple-400 font-bold">→ Calling tool: tailprint.render_pdf</div>
-        <div class="text-slate-400 text-[9px] pl-2 leading-relaxed">
-          { "html": "&lt;div class='p-8'&gt;...&lt;/div&gt;", "smartPagination": true }
+      <div class="mt-3 p-3 rounded-lg bg-slate-950 font-mono text-[10px] space-y-2 border border-slate-800">
+        <div class="flex justify-between text-slate-400">
+          <span>Processed Items:</span>
+          <span class="text-emerald-400 font-bold">2 / 2 (100%)</span>
         </div>
-        <div class="pt-2 border-t border-slate-800 text-emerald-400 font-bold flex items-center justify-between">
-          <span>✓ Vector PDF Generated</span>
-          <span class="text-[9px] text-slate-500 font-mono">361ms</span>
+        <div class="flex justify-between text-slate-400">
+          <span>Merged Output:</span>
+          <span class="text-indigo-300 font-bold">merged.pdf (42 kB)</span>
+        </div>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-slate-400">
+          <span>Webhook Dispatch:</span>
+          <span class="text-emerald-400">HTTP 200 OK ✓</span>
         </div>
       </div>
       <div class="mt-3 flex items-center justify-between text-[10px] text-slate-400">
-        <span class="text-indigo-400 font-semibold">13 Tools Registered</span>
-        <span class="font-mono text-slate-500">Fastify SSE</span>
+        <span class="text-slate-300 font-mono">HMAC-SHA256 Signature Verified</span>
+        <span class="font-mono text-slate-500">Duration: 412ms</span>
+      </div>
+    </div>`
+  },
+  sdk: {
+    filename: 'client.py & client.ts',
+    badgeText: 'Python & TS SDKs',
+    endpoint: 'pip & npm install tailprint',
+    previewTitle: 'Official SDKs & MCP Protocol',
+    previewBadge: 'v1.3 Isomorphic SDK',
+    shieldText: 'Zero External Dependencies • Full Typing • MCP Ready',
+    openHref: 'https://pypi.org/project/tailprint/',
+    openLabel: 'View on PyPI & npm →',
+    code: `# 1. Python SDK (pip install tailprint)
+from tailprint import TailprintClient
+
+client = TailprintClient(api_key="sec_live_...")
+pdf_bytes = client.render_pdf(
+    html="<div class='p-8 font-sans'><h1>Report</h1></div>",
+    smart_pagination=True
+)
+
+# 2. TypeScript / Node.js (npm install tailprint)
+# import { Tailprint } from 'tailprint';
+# const tp = new Tailprint({ apiKey: 'sec_live_...' });
+# const pdf = await tp.renderPdf({ html: "..." });`,
+    previewHtml: `<div class="w-full max-w-sm bg-slate-900 text-slate-100 rounded-xl p-5 shadow-2xl border border-emerald-500/30 select-none text-left transform hover:scale-[1.02] transition duration-300">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <span class="text-base text-emerald-400">📦</span>
+          <div>
+            <span class="text-xs font-bold text-white">SDKs &amp; MCP Protocol</span>
+            <p class="text-[9px] text-slate-400 font-mono">Python • TypeScript • Cursor</p>
+          </div>
+        </div>
+        <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">v1.3 LIVE</span>
+      </div>
+      <div class="mt-3 p-3 rounded-lg bg-slate-950 font-mono text-[10px] space-y-2 border border-slate-800">
+        <div class="flex items-center space-x-2 text-indigo-300">
+          <span class="text-slate-500">$</span>
+          <span class="text-emerald-400 font-bold">pip install tailprint</span>
+        </div>
+        <div class="flex items-center space-x-2 text-indigo-300">
+          <span class="text-slate-500">$</span>
+          <span class="text-sky-400 font-bold">npm install tailprint</span>
+        </div>
+        <div class="flex items-center space-x-2 text-indigo-300">
+          <span class="text-slate-500">$</span>
+          <span class="text-purple-400 font-bold">npx tailprint</span>
+          <span class="text-slate-500 text-[9px]">(11 MCP tools)</span>
+        </div>
+        <div class="pt-2 border-t border-slate-800 text-emerald-400 font-bold flex items-center justify-between">
+          <span>✓ Zero external dependencies</span>
+          <span class="text-[9px] text-slate-500 font-mono">&lt; 380ms</span>
+        </div>
+      </div>
+      <div class="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+        <span class="text-emerald-400 font-semibold">PyPI + npm Ready</span>
+        <span class="font-mono text-slate-500">100% Type-Safe</span>
       </div>
     </div>`
   }
@@ -894,17 +918,17 @@ Cursor IDE & Windsurf:
       <!-- Top Banner Pill -->
       <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-indigo-950/70 border border-indigo-800/60 text-indigo-300 text-xs font-semibold mb-6 backdrop-blur-md shadow-lg shadow-indigo-950/50">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Developer &amp; AI Output Infrastructure • Sub-500ms Chromium Engine • Tailwind v3 &amp; v4 JIT</span>
+        <span>Developer-First PDF &amp; Document Engine • TypeScript &amp; Python SDKs • Sub-380ms Chromium Engine</span>
       </div>
 
       <!-- Main High-Impact Headline -->
       <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] max-w-5xl mx-auto">
-        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML or Prompts</span>.<br class="hidden sm:inline" />
+        Send <span class="bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 bg-clip-text text-transparent">Tailwind HTML or Data</span>.<br class="hidden sm:inline" />
         Receive Production <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Vector PDFs &amp; E-Invoices</span>.
       </h1>
 
       <p class="mt-6 text-base sm:text-lg lg:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-normal">
-        The developer-first PDF and European e-invoicing engine. Compile arbitrary Tailwind CSS into crisp vector documents with <strong>Smart Pagination Shield</strong>, generate legally compliant European Factur-X (EN 16931) hybrid invoices, and auto-produce animated 9:16 video decks — in under 380ms.
+        The developer-first PDF and European e-invoicing engine. Compile arbitrary Tailwind CSS into crisp vector documents with <strong>Smart Pagination Shield</strong>, generate legally compliant European <strong>Factur-X / ZUGFeRD</strong> (EN 16931) hybrid invoices, run asynchronous batch rendering with signed webhooks, and manipulate PDFs via REST and official <strong>TypeScript</strong> &amp; <strong>Python SDKs</strong> — in under 380ms.
       </p>
 
       <!-- Primary Action Buttons -->
@@ -917,12 +941,12 @@ Cursor IDE & Windsurf:
           <span>⚡ Open Live Studio</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 font-mono">/studio</span>
         </a>
-        <a href="/tools/reel" class="px-5 py-3.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 font-semibold transition flex items-center justify-center space-x-2">
-          <span>🎬 Social Reel Maker</span>
-          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-rose-500/30 text-rose-200 font-mono font-bold">9:16</span>
+        <a href="/docs" class="px-5 py-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
+          <span>📖 API &amp; SDK Docs</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">v1.3</span>
         </a>
       </div>
-      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • 22 native MCP tools for Claude &amp; Cursor</p>
+      <p class="mt-3 text-xs text-slate-500">Instant API key • Zero configuration • Official TypeScript (npm) &amp; Python (pip) SDKs • 11 MCP Tools</p>
 
       <!-- Interactive Developer Showcase: Code on the Left -> Live Document Preview on the Right -->
       <div class="mt-12 text-left max-w-5xl mx-auto rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-xl overflow-hidden ring-1 ring-white/10">
@@ -946,13 +970,13 @@ Cursor IDE & Windsurf:
               <span>🇪🇺</span>
               <span>Factur-X</span>
             </button>
-            <button id="hero-tab-reel" onclick="switchHeroShowcase('reel')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
-              <span>🎬</span>
-              <span>Social Reel</span>
+            <button id="hero-tab-batch" onclick="switchHeroShowcase('batch')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+              <span>⚡</span>
+              <span>Batch &amp; Webhooks</span>
             </button>
-            <button id="hero-tab-mcp" onclick="switchHeroShowcase('mcp')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
-              <span>🤖</span>
-              <span>AI Agent MCP</span>
+            <button id="hero-tab-sdk" onclick="switchHeroShowcase('sdk')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition flex items-center space-x-1.5">
+              <span>🐍</span>
+              <span>Python &amp; TS SDK</span>
             </button>
           </div>
 
@@ -988,7 +1012,7 @@ Cursor IDE & Windsurf:
 
             <!-- cURL API Command Callout -->
             <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-              <span class="font-mono text-emerald-400">POST /v1/render/pdf</span>
+              <span id="hero-api-endpoint" class="font-mono text-emerald-400">POST /v1/render/pdf</span>
               <span class="text-slate-500">HTTP/2 • Pre-warmed</span>
             </div>
           </div>
@@ -1035,17 +1059,17 @@ Cursor IDE & Windsurf:
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
           <p class="text-xs text-slate-400">EU E-Invoicing</p>
           <p class="text-2xl font-black text-amber-400 mt-1">EN 16931</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">Factur-X &amp; ZUGFeRD XML</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">Factur-X &amp; ZUGFeRD Hybrid</p>
         </div>
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-          <p class="text-xs text-slate-400">Smart Pagination</p>
-          <p class="text-2xl font-black text-indigo-400 mt-1">Shield Active</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">Repeating thead, no row cuts</p>
+          <p class="text-xs text-slate-400">Async Batch Engine</p>
+          <p class="text-2xl font-black text-indigo-400 mt-1">Webhooks</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">HMAC-SHA256 &amp; Auto-Merge</p>
         </div>
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-          <p class="text-xs text-slate-400">Compliance &amp; GDPR</p>
-          <p class="text-2xl font-black text-cyan-400 mt-1">Zero-Retention</p>
-          <p class="text-[10px] text-slate-500 mt-0.5">Transient memory only</p>
+          <p class="text-xs text-slate-400">Official SDKs &amp; MCP</p>
+          <p class="text-2xl font-black text-cyan-400 mt-1">v1.3 Live</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">pip &amp; npm install tailprint</p>
         </div>
       </div>
 
@@ -2360,7 +2384,7 @@ Cursor IDE & Windsurf:
       if (!heroShowcaseData[mode]) return;
       activeHeroMode = mode;
 
-      ['pdf', 'einvoice', 'reel', 'mcp'].forEach(function(m) {
+      ['pdf', 'einvoice', 'batch', 'sdk'].forEach(function(m) {
         const btn = document.getElementById('hero-tab-' + m);
         if (btn) {
           if (m === mode) {
@@ -2374,6 +2398,7 @@ Cursor IDE & Windsurf:
       const data = heroShowcaseData[mode];
       const codeBlock = document.getElementById('hero-code-block');
       const filenameEl = document.getElementById('hero-code-filename');
+      const endpointEl = document.getElementById('hero-api-endpoint');
       const previewTitle = document.getElementById('hero-preview-title');
       const previewBadge = document.getElementById('hero-preview-badge');
       const previewContainer = document.getElementById('hero-preview-container');
@@ -2383,6 +2408,9 @@ Cursor IDE & Windsurf:
       if (codeBlock) codeBlock.textContent = data.code;
       if (filenameEl) {
         filenameEl.innerHTML = '<span class="text-indigo-400">⚡</span><span class="font-bold text-slate-200">' + data.filename + '</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">' + data.badgeText + '</span>';
+      }
+      if (endpointEl && data.endpoint) {
+        endpointEl.textContent = data.endpoint;
       }
       if (previewTitle) previewTitle.textContent = data.previewTitle;
       if (previewBadge) previewBadge.textContent = data.previewBadge;
