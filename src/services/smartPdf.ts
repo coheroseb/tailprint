@@ -1,8 +1,16 @@
 import crypto from 'node:crypto';
 import zlib from 'node:zlib';
-import { PDFDocument, PDFName, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFString, StandardFonts, rgb } from 'pdf-lib';
 import { env } from '../config/env.js';
 import { redisService, type PdfProofRecord } from './redis.js';
+import type { ExtractedDomSynapse } from './browser.js';
+import {
+  neuralCortexService,
+  NEURAL_CORTEX_CONTEXT,
+  CORTEX_FILENAME,
+  type TailprintNeuralCortex,
+  type NeuralAskResponse,
+} from './neuralCortex.js';
 
 export const DUAL_BRAIN_CONTEXT = 'https://tailprint.com/schema/dual-brain/v1';
 export const MANIFEST_FILENAME = 'tailprint-manifest.json';
@@ -16,6 +24,9 @@ export interface TailprintManifest {
   template_id: string | null;
   ai_ready: boolean;
   signed: boolean;
+  neural_implant?: boolean;
+  cortex_hash?: string | null;
+  brain_url?: string | null;
   page_count: number;
   content_fingerprint: string;
   data_hash: string | null;
@@ -31,6 +42,10 @@ export interface SmartPdfEnrichOptions {
   aiReady?: boolean;
   sign?: boolean;
   verifySeal?: boolean;
+  neuralImplant?: boolean;
+  neuralPersona?: string;
+  neuralContext?: Record<string, unknown> | string | null;
+  domSynapses?: ExtractedDomSynapse[];
   noStore?: boolean;
 }
 
@@ -38,6 +53,7 @@ export interface SmartPdfEnrichResult {
   buffer: Buffer;
   docId: string;
   manifest: TailprintManifest;
+  cortex: TailprintNeuralCortex | null;
   fileSha256: string;
 }
 
@@ -46,6 +62,7 @@ export interface SmartPdfVerificationReport {
   signed: boolean;
   tampered: boolean;
   ai_ready: boolean;
+  neural_implant: boolean;
   doc_id: string | null;
   issued_at: string | null;
   issuer: string | null;
@@ -57,6 +74,15 @@ export interface SmartPdfVerificationReport {
   content_intact: boolean;
   ledger_verified: boolean;
   verification_url: string | null;
+  brain_url: string | null;
+  cortex_hash: string | null;
+  cortex_summary: {
+    total_synapses: number;
+    visual_synapses_count: number;
+    latent_synapses_count: number;
+    data_synapses_count: number;
+    suggested_questions: string[];
+  } | null;
   data_hash: string | null;
   data: Record<string, unknown> | null;
   reasons: string[];
@@ -103,10 +129,6 @@ export class SmartPdfService {
   /**
    * Computes a deterministic SHA-256 fingerprint of all visual page streams,
    * dimensions, rotations, and annotations inside a PDFDocument.
-   * Because embedded files live in the document catalog (/Names -> /EmbeddedFiles)
-   * rather than page nodes, this fingerprint remains identical before and after
-   * attaching `tailprint-manifest.json`, while immediately changing if any page text,
-   * drawing stream, watermark, or page count is altered.
    */
   public computeContentFingerprint(pdfDoc: PDFDocument): string {
     const hash = crypto.createHash('sha256');
@@ -172,6 +194,7 @@ export class SmartPdfService {
     page_count: number;
     content_fingerprint: string;
     data_hash: string | null;
+    cortex_hash?: string | null;
   }): string {
     const canonical = canonicalizeJson(payload);
     return crypto
@@ -181,7 +204,7 @@ export class SmartPdfService {
   }
 
   /**
-   * Draws a sleek vector "Verified by Tailprint" cryptographic badge on the first page.
+   * Draws a sleek vector "Verified by Tailprint" cryptographic badge on the first page (bottom-right).
    */
   private async drawVerificationSeal(
     pdfDoc: PDFDocument,
@@ -201,7 +224,6 @@ export class SmartPdfService {
     const x = Math.max(16, width - badgeWidth - 18);
     const y = 12;
 
-    // Subtle slate/emerald cryptographic seal box
     firstPage.drawRectangle({
       x,
       y,
@@ -213,7 +235,6 @@ export class SmartPdfService {
       opacity: 0.96,
     });
 
-    // Left accent bar
     firstPage.drawRectangle({
       x,
       y,
@@ -241,8 +262,85 @@ export class SmartPdfService {
   }
 
   /**
-   * Enriches a rendered PDF with Dual-Brain structured JSON (`tailprint-manifest.json`)
-   * and/or Cryptographic Proof-of-Origin (HMAC-SHA256 content stream signature + Redis proof ledger).
+   * Draws an interactive, clickable "NEURAL CORTEX ACTIVE — Click to ask this PDF" badge
+   * on the first page (bottom-left) AND attaches an ISO-32000 PDF /Link Annotation
+   * so clicking the badge in Apple Preview, Chrome, or Adobe Reader opens `/brain/:docId`.
+   */
+  private async drawNeuralImplantBadgeAndLink(
+    pdfDoc: PDFDocument,
+    docId: string,
+    brainUrl: string
+  ): Promise<void> {
+    const pages = pdfDoc.getPages();
+    if (pages.length === 0) return;
+
+    const firstPage = pages[0];
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    const badgeWidth = 262;
+    const badgeHeight = 24;
+    const x = 18;
+    const y = 12;
+
+    // Futuristic indigo/violet Neural Cortex pill
+    firstPage.drawRectangle({
+      x,
+      y,
+      width: badgeWidth,
+      height: badgeHeight,
+      color: rgb(0.96, 0.96, 1.0),
+      borderColor: rgb(0.38, 0.35, 0.92),
+      borderWidth: 0.75,
+      opacity: 0.97,
+    });
+
+    firstPage.drawRectangle({
+      x,
+      y,
+      width: 4,
+      height: badgeHeight,
+      color: rgb(0.35, 0.32, 0.9),
+    });
+
+    firstPage.drawText(`NEURAL-IMPLANT PDF  •  CLICK TO ASK THIS DOCUMENT`, {
+      x: x + 10,
+      y: y + 13,
+      size: 6.4,
+      font: fontBold,
+      color: rgb(0.24, 0.2, 0.72),
+    });
+
+    const displayUrl = brainUrl.replace(/^https?:\/\//i, '');
+    firstPage.drawText(`Interactive Brain & Latent Memory: ${displayUrl}`, {
+      x: x + 10,
+      y: y + 4.5,
+      size: 5.8,
+      font: fontRegular,
+      color: rgb(0.32, 0.35, 0.48),
+    });
+
+    // Attach clickable ISO-32000 /Link URI annotation over the badge rectangle
+    const linkAnnot = pdfDoc.context.obj({
+      Type: 'Annot',
+      Subtype: 'Link',
+      Rect: [x, y, x + badgeWidth, y + badgeHeight],
+      Border: [0, 0, 0],
+      A: {
+        Type: 'Action',
+        S: 'URI',
+        URI: PDFString.of(brainUrl),
+      },
+    });
+    const linkAnnotRef = pdfDoc.context.register(linkAnnot);
+    firstPage.node.addAnnot(linkAnnotRef);
+  }
+
+  /**
+   * Enriches a rendered PDF with:
+   * 1. Dual-Brain structured JSON (`tailprint-manifest.json`),
+   * 2. Cryptographic Proof-of-Origin (HMAC-SHA256 content stream signature + Redis proof ledger),
+   * 3. Neural-Implant Cortex (`tailprint-cortex.json` with 64-D Int8 vectors, DOM bounding boxes, and latent memory).
    */
   public async enrichPdf(
     pdfBuffer: Buffer,
@@ -252,7 +350,10 @@ export class SmartPdfService {
     const issuedAt = new Date().toISOString();
     const issuer = options.customerId || 'tailprint.com';
     const templateId = options.templateId ?? null;
-    const signed = Boolean(options.sign || options.verifySeal);
+    const hasNeuralImplant = Boolean(
+      options.neuralImplant || options.neuralContext || options.neuralPersona
+    );
+    const signed = Boolean(options.sign || options.verifySeal || hasNeuralImplant);
     const aiReady = options.aiReady !== undefined ? options.aiReady : true;
     const dataPayload =
       options.data && typeof options.data === 'object' && Object.keys(options.data).length > 0
@@ -261,11 +362,15 @@ export class SmartPdfService {
 
     const appBaseUrl = (env.APP_URL || 'https://tailprint.com').replace(/\/+$/, '');
     const verificationUrl = `${appBaseUrl}/verify/${docId}`;
+    const brainUrl = `${appBaseUrl}/brain/${docId}`;
 
-    // 1. Load PDF and optionally stamp the cryptographic verification seal
+    // 1. Load PDF and optionally stamp the cryptographic verification seal & interactive Neural Implant badge
     const initialDoc = await PDFDocument.load(pdfBuffer);
     if (options.verifySeal) {
       await this.drawVerificationSeal(initialDoc, docId, verificationUrl);
+    }
+    if (hasNeuralImplant) {
+      await this.drawNeuralImplantBadgeAndLink(initialDoc, docId, brainUrl);
     }
 
     // 2. Normalize streams with useObjectStreams: false so content_fingerprint is 100% deterministic
@@ -278,6 +383,28 @@ export class SmartPdfService {
       ? crypto.createHash('sha256').update(canonicalizeJson(dataPayload)).digest('hex')
       : null;
 
+    // 3. Compile Neural-Implant Cortex if enabled
+    let cortex: TailprintNeuralCortex | null = null;
+    if (hasNeuralImplant) {
+      cortex = neuralCortexService.compileCortex({
+        docId,
+        persona: options.neuralPersona,
+        domSynapses: options.domSynapses,
+        latentContext: options.neuralContext,
+        structuredData: dataPayload,
+        appBaseUrl,
+      });
+
+      const cortexJson = JSON.stringify(cortex, null, 2);
+      await pdfDoc.attach(Buffer.from(cortexJson, 'utf-8'), CORTEX_FILENAME, {
+        mimeType: 'application/json',
+        description:
+          'Tailprint Neural-Implant Spatial Cortex (64-D Int8 Vectors, DOM Bounding Boxes & Latent Memory)',
+        creationDate: new Date(issuedAt),
+        modificationDate: new Date(issuedAt),
+      });
+    }
+
     const signature = signed
       ? this.signManifestPayload({
           doc_id: docId,
@@ -287,6 +414,7 @@ export class SmartPdfService {
           page_count: pageCount,
           content_fingerprint: contentFingerprint,
           data_hash: dataHash,
+          ...(cortex ? { cortex_hash: cortex.cortex_hash } : {}),
         })
       : null;
 
@@ -299,6 +427,9 @@ export class SmartPdfService {
       template_id: templateId,
       ai_ready: aiReady,
       signed,
+      neural_implant: hasNeuralImplant,
+      cortex_hash: cortex ? cortex.cortex_hash : null,
+      brain_url: hasNeuralImplant ? brainUrl : null,
       page_count: pageCount,
       content_fingerprint: contentFingerprint,
       data_hash: dataHash,
@@ -309,7 +440,7 @@ export class SmartPdfService {
 
     const manifestJson = JSON.stringify(manifest, null, 2);
 
-    // 3. Attach tailprint-manifest.json into the PDF's /EmbeddedFiles catalog
+    // 4. Attach tailprint-manifest.json into the PDF's /EmbeddedFiles catalog
     await pdfDoc.attach(Buffer.from(manifestJson, 'utf-8'), MANIFEST_FILENAME, {
       mimeType: 'application/json',
       description: 'Tailprint Dual-Brain Structured Payload & Cryptographic Proof Manifest',
@@ -317,11 +448,12 @@ export class SmartPdfService {
       modificationDate: new Date(issuedAt),
     });
 
-    pdfDoc.setProducer('Tailprint Dual-Brain PDF Engine (https://tailprint.com)');
+    pdfDoc.setProducer('Tailprint Dual-Brain & Neural-Implant PDF Engine (https://tailprint.com)');
     pdfDoc.setKeywords([
       `tailprint:doc_id=${docId}`,
       `tailprint:ai_ready=${String(aiReady)}`,
       `tailprint:signed=${String(signed)}`,
+      `tailprint:neural_implant=${String(hasNeuralImplant)}`,
       ...(templateId ? [`tailprint:template=${templateId}`] : []),
     ]);
 
@@ -329,7 +461,7 @@ export class SmartPdfService {
     const finalBuffer = Buffer.from(finalBytes);
     const fileSha256 = crypto.createHash('sha256').update(finalBuffer).digest('hex');
 
-    // 4. Store cryptographic proof record in Redis (unless zero-retention no_store is active)
+    // 5. Store cryptographic proof & neural cortex in Redis (unless zero-retention no_store is active)
     if (!options.noStore) {
       const proofRecord: PdfProofRecord = {
         doc_id: docId,
@@ -347,24 +479,30 @@ export class SmartPdfService {
         verification_url: verificationUrl,
       };
       await redisService.savePdfProof(proofRecord);
+
+      if (cortex) {
+        await redisService.savePdfCortex(docId, cortex as unknown as Record<string, unknown>);
+      }
     }
 
     return {
       buffer: finalBuffer,
       docId,
       manifest,
+      cortex,
       fileSha256,
     };
   }
 
   /**
-   * Extracts `tailprint-manifest.json` from a PDF document's /EmbeddedFiles catalog
-   * in 0ms without OCR.
+   * Extracts an embedded JSON file from a PDF's /Names -> /EmbeddedFiles catalog by filename or context URI.
    */
-  public extractManifestFromPdfDoc(
+  private extractEmbeddedJson<T>(
     pdfDoc: PDFDocument,
-    rawBuffer: Buffer
-  ): TailprintManifest | null {
+    rawBuffer: Buffer,
+    targetFilename: string,
+    contextUri: string
+  ): T | null {
     try {
       const names = pdfDoc.catalog.lookup(PDFName.of('Names'));
       if (names && typeof (names as any).lookup === 'function') {
@@ -380,7 +518,7 @@ export class SmartPdfService {
                   : String(rawName);
               const lowerName = fileName.toLowerCase();
 
-              if (lowerName.includes('tailprint-manifest') || lowerName.endsWith('.json')) {
+              if (lowerName.includes(targetFilename.toLowerCase()) || lowerName.endsWith('.json')) {
                 const fileSpec = efNames.lookup(i + 1);
                 if (!fileSpec || typeof (fileSpec as any).lookup !== 'function') continue;
 
@@ -398,8 +536,8 @@ export class SmartPdfService {
                   jsonText = Buffer.from(stream.contents).toString('utf-8');
                 }
 
-                if (jsonText.includes(DUAL_BRAIN_CONTEXT) || jsonText.includes('"doc_id"')) {
-                  return JSON.parse(jsonText) as TailprintManifest;
+                if (jsonText.includes(contextUri)) {
+                  return JSON.parse(jsonText) as T;
                 }
               }
             }
@@ -410,10 +548,9 @@ export class SmartPdfService {
       // Fall through to raw scan
     }
 
-    // Fallback scan for uncompressed JSON manifest stream
     try {
       const rawText = rawBuffer.toString('utf-8');
-      const idx = rawText.indexOf(DUAL_BRAIN_CONTEXT);
+      const idx = rawText.indexOf(contextUri);
       if (idx !== -1) {
         const startBrace = rawText.lastIndexOf('{', idx);
         if (startBrace !== -1) {
@@ -440,7 +577,7 @@ export class SmartPdfService {
                 depth--;
                 if (depth === 0) {
                   const candidate = rawText.slice(startBrace, i + 1);
-                  return JSON.parse(candidate) as TailprintManifest;
+                  return JSON.parse(candidate) as T;
                 }
               }
             }
@@ -454,9 +591,88 @@ export class SmartPdfService {
     return null;
   }
 
+  public extractManifestFromPdfDoc(
+    pdfDoc: PDFDocument,
+    rawBuffer: Buffer
+  ): TailprintManifest | null {
+    return this.extractEmbeddedJson<TailprintManifest>(
+      pdfDoc,
+      rawBuffer,
+      MANIFEST_FILENAME,
+      DUAL_BRAIN_CONTEXT
+    );
+  }
+
+  public extractCortexFromPdfDoc(
+    pdfDoc: PDFDocument,
+    rawBuffer: Buffer
+  ): TailprintNeuralCortex | null {
+    return this.extractEmbeddedJson<TailprintNeuralCortex>(
+      pdfDoc,
+      rawBuffer,
+      CORTEX_FILENAME,
+      NEURAL_CORTEX_CONTEXT
+    );
+  }
+
+  /**
+   * Queries a PDF's Neural-Implant Cortex either directly from a PDF buffer (100% stateless/offline)
+   * or by `docId` from the Redis Cortex store.
+   */
+  public async askPdf(options: {
+    pdfBuffer?: Buffer;
+    docId?: string;
+    question: string;
+  }): Promise<NeuralAskResponse> {
+    if (options.pdfBuffer) {
+      const pdfDoc = await PDFDocument.load(options.pdfBuffer, { ignoreEncryption: true });
+      let cortex = this.extractCortexFromPdfDoc(pdfDoc, options.pdfBuffer);
+      const manifest = this.extractManifestFromPdfDoc(pdfDoc, options.pdfBuffer);
+
+      // Verify cryptographic integrity if manifest is present
+      let verified = false;
+      if (manifest) {
+        const actualFp = this.computeContentFingerprint(pdfDoc);
+        verified = manifest.content_fingerprint === actualFp;
+      }
+
+      // If the PDF is a Dual-Brain PDF without a pre-compiled cortex, dynamically compile a cortex from its manifest data!
+      if (!cortex && manifest && manifest.data) {
+        cortex = neuralCortexService.compileCortex({
+          docId: manifest.doc_id,
+          structuredData: manifest.data,
+        });
+      }
+
+      if (!cortex && manifest?.doc_id) {
+        cortex = await redisService.getPdfCortex<TailprintNeuralCortex>(manifest.doc_id);
+      }
+
+      if (!cortex) {
+        throw new Error(
+          'This PDF does not contain an implanted Tailprint Neural Cortex (tailprint-cortex.json) or Dual-Brain manifest.'
+        );
+      }
+
+      return neuralCortexService.askCortex(cortex, options.question, verified);
+    }
+
+    if (options.docId) {
+      const cortex = await redisService.getPdfCortex<TailprintNeuralCortex>(options.docId);
+      if (!cortex) {
+        throw new Error(
+          `No Neural Cortex found in ledger for document ID "${options.docId}". Upload the PDF file directly to query its embedded cortex.`
+        );
+      }
+      return neuralCortexService.askCortex(cortex, options.question, true);
+    }
+
+    throw new Error('Either "pdf" or "doc_id" must be provided to query a Neural-Implant PDF.');
+  }
+
   /**
    * Inspects a PDF buffer to:
-   * 1. Extract its Dual-Brain structured JSON (`data`) in 0ms without OCR.
+   * 1. Extract its Dual-Brain structured JSON (`data`) and Neural-Implant Cortex summary in 0ms without OCR.
    * 2. Cryptographically verify its HMAC-SHA256 signature, visual page stream fingerprint,
    *    embedded data hash, and Redis proof ledger to detect any tampering.
    */
@@ -474,9 +690,9 @@ export class SmartPdfService {
     const pageCount = pdfDoc.getPageCount();
     const actualFingerprint = this.computeContentFingerprint(pdfDoc);
     const manifest = this.extractManifestFromPdfDoc(pdfDoc, pdfBuffer);
+    const cortex = this.extractCortexFromPdfDoc(pdfDoc, pdfBuffer);
 
     if (!manifest) {
-      // Check if exact file hash exists in Redis ledger
       const bySha = await redisService.getPdfProofBySha256(fileSha256);
       if (bySha) {
         return {
@@ -484,6 +700,7 @@ export class SmartPdfService {
           signed: bySha.signed,
           tampered: false,
           ai_ready: bySha.ai_ready,
+          neural_implant: false,
           doc_id: bySha.doc_id,
           issued_at: bySha.issued_at,
           issuer: bySha.customer_id,
@@ -495,6 +712,9 @@ export class SmartPdfService {
           content_intact: true,
           ledger_verified: true,
           verification_url: bySha.verification_url,
+          brain_url: null,
+          cortex_hash: null,
+          cortex_summary: null,
           data_hash: bySha.data_hash,
           data: null,
           reasons: ['Verified via Tailprint cryptographic SHA-256 ledger.'],
@@ -506,6 +726,7 @@ export class SmartPdfService {
         signed: false,
         tampered: false,
         ai_ready: false,
+        neural_implant: false,
         doc_id: null,
         issued_at: null,
         issuer: null,
@@ -517,6 +738,9 @@ export class SmartPdfService {
         content_intact: true,
         ledger_verified: false,
         verification_url: null,
+        brain_url: null,
+        cortex_hash: null,
+        cortex_summary: null,
         data_hash: null,
         data: null,
         reasons: [
@@ -525,7 +749,6 @@ export class SmartPdfService {
       };
     }
 
-    // 1. Check content stream fingerprint (detects any visual edits, added pages, or watermarks)
     const contentIntact =
       manifest.content_fingerprint === actualFingerprint && manifest.page_count === pageCount;
     if (!contentIntact) {
@@ -540,7 +763,6 @@ export class SmartPdfService {
       }
     }
 
-    // 2. Check embedded JSON data integrity against data_hash
     const actualDataHash = manifest.data
       ? crypto.createHash('sha256').update(canonicalizeJson(manifest.data)).digest('hex')
       : null;
@@ -551,7 +773,6 @@ export class SmartPdfService {
       );
     }
 
-    // 3. Verify cryptographic HMAC-SHA256 signature if signed
     let signatureValid = false;
     if (manifest.signed && manifest.signature) {
       const expectedSig = this.signManifestPayload({
@@ -562,6 +783,7 @@ export class SmartPdfService {
         page_count: manifest.page_count,
         content_fingerprint: manifest.content_fingerprint,
         data_hash: manifest.data_hash,
+        ...(manifest.cortex_hash ? { cortex_hash: manifest.cortex_hash } : {}),
       });
 
       const sigBufA = Buffer.from(manifest.signature, 'utf-8');
@@ -576,7 +798,6 @@ export class SmartPdfService {
       }
     }
 
-    // 4. Cross-check Redis ledger if record is stored
     const ledgerRecord = manifest.doc_id
       ? await redisService.getPdfProof(manifest.doc_id)
       : null;
@@ -608,7 +829,11 @@ export class SmartPdfService {
     const valid = !tampered && (manifest.signed ? signatureValid : contentIntact && dataIntact);
 
     if (valid && reasons.length === 0) {
-      if (manifest.signed) {
+      if (cortex) {
+        reasons.push(
+          `Cryptographic signature & Neural-Implant Cortex verified (${cortex.total_synapses} synapses: ${cortex.visual_synapses_count} visual DOM, ${cortex.latent_synapses_count} latent memory).`
+        );
+      } else if (manifest.signed) {
         reasons.push(
           'Cryptographic HMAC-SHA256 signature and PDF page content streams verified with 100% integrity.'
         );
@@ -624,6 +849,7 @@ export class SmartPdfService {
       signed: Boolean(manifest.signed),
       tampered,
       ai_ready: Boolean(manifest.ai_ready),
+      neural_implant: Boolean(manifest.neural_implant || cortex),
       doc_id: manifest.doc_id,
       issued_at: manifest.issued_at,
       issuer: manifest.issuer,
@@ -635,6 +861,17 @@ export class SmartPdfService {
       content_intact: contentIntact && dataIntact,
       ledger_verified: ledgerVerified,
       verification_url: manifest.verification_url,
+      brain_url: manifest.brain_url || (cortex ? cortex.brain_url : null),
+      cortex_hash: manifest.cortex_hash || (cortex ? cortex.cortex_hash : null),
+      cortex_summary: cortex
+        ? {
+            total_synapses: cortex.total_synapses,
+            visual_synapses_count: cortex.visual_synapses_count,
+            latent_synapses_count: cortex.latent_synapses_count,
+            data_synapses_count: cortex.data_synapses_count,
+            suggested_questions: cortex.suggested_questions,
+          }
+        : null,
       data_hash: manifest.data_hash,
       data: manifest.data ?? null,
       reasons,

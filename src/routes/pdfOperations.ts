@@ -12,6 +12,8 @@ import {
   VerifyOrExtractPdfRequestSchema,
   SmartPdfVerificationResponseSchema,
   PdfProofLookupResponseSchema,
+  AskPdfRequestSchema,
+  NeuralAskResponseSchema,
 } from '../schemas/pdfOperations.js';
 import { HostedFileResponseSchema, ErrorResponseSchema } from '../schemas/render.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
@@ -598,6 +600,83 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         signature: proof.signature,
         verification_url: proof.verification_url,
       });
+    }
+  );
+
+  // 9. POST /v1/pdf/ask - Query a Neural-Implant PDF's Spatial Cortex & Latent Memory
+  fastify.post(
+    '/v1/pdf/ask',
+    {
+      schema: {
+        tags: ['Dual-Brain & Cryptographic Proof'],
+        summary: 'Ask a Question to a Neural-Implant PDF Cortex (Sub-Millisecond Neuro-Symbolic Engine)',
+        description:
+          'Executes a sub-millisecond neuro-symbolic query against a PDF implanted with a Tailprint Neural Cortex (tailprint-cortex.json). Searches both visual DOM synapses (returning exact page + x,y,w,h coordinates) and implanted subconscious latent memory (neural_context) using 64-D Int8 Hyperdimensional Vectors and Cross-Lingual Concept Anchors.',
+        body: AskPdfRequestSchema,
+        response: {
+          200: NeuralAskResponseSchema,
+          400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { pdf, doc_id, question } = request.body;
+
+      try {
+        let pdfBuffer: Buffer | undefined;
+        if (pdf) {
+          pdfBuffer = await pdfOperationsService.resolvePdfBuffer(pdf);
+        }
+
+        const result = await smartPdfService.askPdf({
+          pdfBuffer,
+          docId: doc_id,
+          question,
+        });
+
+        return reply.code(200).send(result);
+      } catch (err: any) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: err.message || 'Failed to query PDF Neural Cortex',
+        });
+      }
+    }
+  );
+
+  // 10. GET /v1/pdf/cortex/:docId - Retrieve the Compiled Neural Cortex of a Document
+  fastify.get(
+    '/v1/pdf/cortex/:docId',
+    {
+      schema: {
+        tags: ['Dual-Brain & Cryptographic Proof'],
+        summary: 'Retrieve the Compiled Neural-Implant Cortex by Document ID',
+        description:
+          'Returns the complete Neuro-Symbolic Spatial Cortex (synapses, 64-D Int8 vectors, physical page bounding boxes, knowledge graph, and starter questions) for a Neural-Implant PDF.',
+        params: z.object({
+          docId: z.string().min(1).describe('Tailprint Document ID (e.g. doc_...)'),
+        }),
+        response: {
+          200: z.any().describe('TailprintNeuralCortex object'),
+          404: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { docId } = request.params;
+      const cortex = await redisService.getPdfCortex(docId);
+
+      if (!cortex) {
+        return reply.code(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: `No Neural Cortex found in ledger for document ID "${docId}".`,
+        });
+      }
+
+      return reply.code(200).send(cortex);
     }
   );
 };

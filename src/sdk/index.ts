@@ -62,6 +62,12 @@ export interface RenderPdfOptions {
   sign?: boolean;
   /** Renders a sleek vector "Verified by Tailprint" cryptographic seal onto the PDF document. */
   verify_seal?: boolean;
+  /** Neural-Implant PDF mode: compiles a Neuro-Symbolic Spatial Cortex (64-D Int8 vectors, DOM bounding boxes, and latent memory) into the PDF. */
+  neural_implant?: boolean;
+  /** Persona and instructions implanted into the PDF Neural Cortex. */
+  neural_persona?: string;
+  /** Subconscious Latent Memory implanted into the PDF Cortex (unprinted domain knowledge, FAQs, SLA, GDPR). */
+  neural_context?: Record<string, unknown> | string;
 }
 
 export interface SmartPdfVerificationReport {
@@ -676,6 +682,21 @@ export class Tailprint {
   public async extractPdfData(pdf: Buffer | Uint8Array | string): Promise<SmartPdfVerificationReport> {
     return this.request('/v1/pdf/extract', {
       body: { pdf: this.bufferToBase64(pdf) },
+    });
+  }
+
+  /**
+   * Queries a Neural-Implant PDF's Spatial Cortex & Subconscious Latent Memory in sub-milliseconds.
+   */
+  public async askPdf(
+    pdfOrDocId: Buffer | Uint8Array | string,
+    question: string
+  ): Promise<Record<string, any>> {
+    const isDocId = typeof pdfOrDocId === 'string' && pdfOrDocId.startsWith('doc_');
+    return this.request('/v1/pdf/ask', {
+      body: isDocId
+        ? { doc_id: pdfOrDocId, question }
+        : { pdf: this.bufferToBase64(pdfOrDocId), question },
     });
   }
 }

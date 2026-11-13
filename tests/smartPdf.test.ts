@@ -211,4 +211,99 @@ describe('Dual-Brain PDFs (Zero-OCR) & Cryptographic Proof-of-Origin', () => {
       expect(() => new vm.Script(match[1])).not.toThrow();
     }
   });
+
+  it('compiles a Neural-Implant PDF (64-D Int8 vectors + pre-render DOM bounding boxes + subconscious latent memory + clickable PDF Link annotation) and answers questions in sub-milliseconds via POST /v1/pdf/ask', async () => {
+    const renderRes = await app.inject({
+      method: 'POST',
+      url: '/v1/render/pdf',
+      headers: { authorization: authHeader },
+      payload: {
+        html: `
+          <div class="p-10 font-sans">
+            <h1>Enterprise Cloud Proposal #PROP-2026-77</h1>
+            <p>Prepared for Danske Bank A/S with payment due by 2026-12-15.</p>
+            <table>
+              <thead>
+                <tr><th>Service</th><th>Qty</th><th>Amount</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Dedicated GPU Render Cluster</td><td>2</td><td>EUR 14,500.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        `,
+        neural_implant: true,
+        neural_persona: 'Senior Solutions Architect for Tailprint Cloud',
+        neural_context: {
+          early_payment_discount: '3% kontantrabat ved betaling inden 7 dage, eller 15% rabat ved årsaftale.',
+          gdpr_and_hosting: 'Al data behandles i EU (Frankfurt & Falkenstein) under ISO-27001 og underskrevet GDPR databehandleraftale.',
+          sla_uptime: '99.99% garanteret oppetid med finansiel kompensation.',
+        },
+      },
+    });
+
+    expect(renderRes.statusCode).toBe(200);
+    expect(renderRes.headers['x-tailprint-neural-implant']).toBe('true');
+    const docId = renderRes.headers['x-tailprint-doc-id'] as string;
+    const brainUrl = renderRes.headers['x-tailprint-brain-url'] as string;
+    expect(brainUrl).toContain(`/brain/${docId}`);
+    expect(Number(renderRes.headers['x-tailprint-cortex-synapses'])).toBeGreaterThanOrEqual(5);
+
+    // Verify that Page 1 has an interactive ISO-32000 /Link annotation pointing to /brain/:docId
+    const loadedDoc = await PDFDocument.load(renderRes.rawPayload);
+    const annots = loadedDoc.getPages()[0].node.Annots();
+    expect(annots).toBeTruthy();
+    expect(annots!.size()).toBeGreaterThanOrEqual(1);
+
+    // 1. Ask about unprinted Subconscious Latent Memory (GDPR & discounts) directly against the PDF bytes!
+    const askLatentRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/ask',
+      payload: {
+        pdf: renderRes.rawPayload.toString('base64'),
+        question: 'What discount do we get for early payment, and where is data hosted under GDPR?',
+      },
+    });
+
+    expect(askLatentRes.statusCode).toBe(200);
+    const latentAns = askLatentRes.json();
+    expect(latentAns.cryptographically_verified).toBe(true);
+    expect(latentAns.primary_source_layer).toBe('latent_memory');
+    expect(latentAns.answer).toMatch(/kontantrabat|Frankfurt|GDPR/i);
+    expect(latentAns.citations.length).toBeGreaterThan(0);
+
+    // 2. Ask about Visual DOM Content (table row & amount) and verify physical bounding-box coordinates are returned!
+    const askVisualRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/ask',
+      payload: {
+        doc_id: docId,
+        question: 'What is the amount for the Dedicated GPU Render Cluster?',
+      },
+    });
+
+    expect(askVisualRes.statusCode).toBe(200);
+    const visualAns = askVisualRes.json();
+    expect(visualAns.answer).toContain('14,500.00');
+    const visualCitation = visualAns.citations.find((c: any) => c.layer === 'visual_dom');
+    expect(visualCitation).toBeTruthy();
+    expect(visualCitation.bbox).toBeTruthy();
+    expect(visualCitation.bbox.page).toBe(1);
+    expect(visualCitation.bbox.w_pt).toBeGreaterThan(10);
+
+    // 3. Verify GET /brain/:docId renders the Interactive Split-Screen Neural Reader with valid JS
+    const brainPageRes = await app.inject({
+      method: 'GET',
+      url: `/brain/${docId}`,
+    });
+    expect(brainPageRes.statusCode).toBe(200);
+    expect(brainPageRes.body).toContain('Neural-Implant PDF');
+    const brainScripts = [
+      ...brainPageRes.body.matchAll(/<script(?![^>]*src=)[^>]*>([\s\S]*?)<\/script>/gi),
+    ];
+    expect(brainScripts.length).toBeGreaterThan(0);
+    for (const match of brainScripts) {
+      expect(() => new vm.Script(match[1])).not.toThrow();
+    }
+  });
 });

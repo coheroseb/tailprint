@@ -132,6 +132,7 @@ export const SmartPdfVerificationResponseSchema = z.object({
   signed: z.boolean().describe('True if the document carries a cryptographic HMAC-SHA256 proof-of-origin signature'),
   tampered: z.boolean().describe('True if visual page streams, page count, or embedded JSON data were modified after issuance'),
   ai_ready: z.boolean().describe('True if lossless Dual-Brain structured JSON is embedded inside the PDF catalog'),
+  neural_implant: z.boolean().optional().describe('True if a Neural-Implant Spatial Cortex (tailprint-cortex.json) is embedded inside the PDF'),
   doc_id: z.string().nullable().describe('Unique Tailprint document identifier (e.g. doc_...)'),
   issued_at: z.string().nullable().describe('ISO-8601 timestamp when the PDF was generated and signed'),
   issuer: z.string().nullable().describe('Issuer account or domain identifier'),
@@ -143,12 +144,92 @@ export const SmartPdfVerificationResponseSchema = z.object({
   content_intact: z.boolean().describe('Whether the visual PDF page streams and embedded JSON match their signed hashes'),
   ledger_verified: z.boolean().describe('Whether the document hash matches the server-side Tailprint proof ledger'),
   verification_url: z.string().nullable().describe('Public verification URL for this document'),
+  brain_url: z.string().nullable().optional().describe('Interactive Neural-Implant PDF Reader URL'),
+  cortex_hash: z.string().nullable().optional().describe('SHA-256 hash of the compiled Neural Cortex'),
+  cortex_summary: z
+    .object({
+      total_synapses: z.number(),
+      visual_synapses_count: z.number(),
+      latent_synapses_count: z.number(),
+      data_synapses_count: z.number(),
+      suggested_questions: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
   data_hash: z.string().nullable().describe('SHA-256 hash of the canonical Dual-Brain JSON payload'),
   data: z.record(z.any()).nullable().describe('Zero-OCR extracted structured JSON payload from the Dual-Brain PDF'),
   reasons: z.array(z.string()).describe('Human-readable verification and integrity details'),
 });
 
 export type SmartPdfVerificationResponse = z.infer<typeof SmartPdfVerificationResponseSchema>;
+
+export const AskPdfRequestSchema = z
+  .object({
+    pdf: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('PDF document as a base64 string, base64 data URI, or public HTTP/HTTPS URL'),
+    doc_id: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('Tailprint Document ID (e.g. doc_...) to query its stored Neural Cortex directly'),
+    question: z
+      .string()
+      .min(1)
+      .max(1000)
+      .describe('Natural language question to ask the PDF Neural Cortex (e.g. "What is the early payment discount and how is GDPR handled?")'),
+  })
+  .refine((d) => Boolean(d.pdf || d.doc_id), {
+    message: 'Either "pdf" or "doc_id" must be provided',
+    path: ['pdf'],
+  });
+
+export const NeuralAskResponseSchema = z.object({
+  doc_id: z.string().nullable(),
+  question: z.string(),
+  answer: z.string(),
+  persona: z.string(),
+  confidence: z.number(),
+  primary_source_layer: z.enum(['visual_dom', 'latent_memory', 'structured_data', 'none']),
+  execution_time_ms: z.number(),
+  cryptographically_verified: z.boolean(),
+  cortex_hash: z.string().nullable(),
+  brain_url: z.string().nullable(),
+  citations: z.array(
+    z.object({
+      synapse_id: z.string(),
+      layer: z.enum(['visual_dom', 'latent_memory', 'structured_data']),
+      section: z.string(),
+      content: z.string(),
+      score: z.number(),
+      bbox: z
+        .object({
+          page: z.number(),
+          x_pct: z.number(),
+          y_pct: z.number(),
+          w_pct: z.number(),
+          h_pct: z.number(),
+          x_pt: z.number(),
+          y_pt: z.number(),
+          w_pt: z.number(),
+          h_pt: z.number(),
+        })
+        .nullable(),
+    })
+  ),
+  matched_facts: z.array(
+    z.object({
+      subject: z.string(),
+      predicate: z.string(),
+      object: z.string(),
+      source_synapse_id: z.string(),
+      layer: z.enum(['visual_dom', 'latent_memory', 'structured_data']),
+    })
+  ),
+  suggested_followups: z.array(z.string()),
+});
 
 export const PdfProofLookupResponseSchema = z.object({
   found: z.boolean(),

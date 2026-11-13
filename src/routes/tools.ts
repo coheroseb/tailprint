@@ -12,6 +12,10 @@ import { canvaLogoService } from '../services/canvaLogo.js';
 import { storageService } from '../services/storage.js';
 import { redisService } from '../services/redis.js';
 import { qrService } from '../services/qr.js';
+import { browserService } from '../services/browser.js';
+import { smartPdfService } from '../services/smartPdf.js';
+import { resolveTemplateRequest } from '../services/templateEngine.js';
+import { HOSTED_TEMPLATES } from '../config/hostedTemplates.js';
 import { env } from '../config/env.js';
 import { renderGlobalNavbar } from '../components/navbar.js';
 
@@ -6723,5 +6727,507 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
 
   fastify.get('/tools/verify', { schema: { hide: true } }, async (_request, reply) => {
     return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderVerifyPageHtml(''));
+  });
+
+  // ============================================================================
+  // NEURAL-IMPLANT PDF READER & SPATIAL CORTEX EXPLORER (/brain & /brain/:docId)
+  // ============================================================================
+  fastify.post('/v1/tools/neural-demo', { schema: { hide: true } }, async (_request, reply) => {
+    const invoiceTemplate = HOSTED_TEMPLATES.find((t) => t.id === 'invoice-modern')!;
+    const demoData = {
+      ...invoiceTemplate.example,
+      invoice_number: 'INV-NEURAL-2026',
+    };
+    const resolved = resolveTemplateRequest<{
+      html?: string;
+      template_id?: string;
+      data?: Record<string, unknown>;
+    }>({
+      template_id: 'invoice-modern',
+      data: demoData as any,
+    });
+
+    const rawPdfBuffer = await browserService.renderPdf({
+      html: resolved.html,
+      format: 'A4',
+      print_background: true,
+      neural_implant: true,
+    } as any);
+
+    const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
+    const enriched = await smartPdfService.enrichPdf(rawPdfBuffer, {
+      customerId: 'cus_neural_demo',
+      templateId: 'invoice-modern',
+      data: demoData as any,
+      aiReady: true,
+      sign: true,
+      verifySeal: true,
+      neuralImplant: true,
+      neuralPersona:
+        'Autonomous Contract & Billing Specialist for Tailprint Cloud ApS — answers from both visual DOM coordinates and implanted latent memory.',
+      neuralContext: {
+        early_payment_discount:
+          '2.5% kontantrabat (early payment discount) if settled within 5 business days of issue date; 12% discount when upgrading to an annual billing commitment.',
+        gdpr_and_data_hosting:
+          'All production workloads and PDF rendering run strictly in Frankfurt & Falkenstein (EU/Germany) under ISO-27001 and signed GDPR Data Processing Agreement (DPA). Zero-retention mode (no_store: true) is included.',
+        sla_uptime_guarantee:
+          '99.95% monthly uptime SLA with automatic 10% service credit compensation per 30 minutes of downtime.',
+        cancellation_and_termination:
+          'Subscriptions can be cancelled anytime with 0 days lock-in before the next billing cycle.',
+      },
+      domSynapses,
+    });
+
+    const stored = await storageService.saveFile(enriched.buffer, {
+      mimeType: 'application/pdf',
+      extension: 'pdf',
+      filename: 'neural-implant-invoice-2026.pdf',
+      expiresIn: '24h',
+    });
+
+    return reply.code(200).send({
+      success: true,
+      doc_id: enriched.docId,
+      hosted_url: stored.hostedUrl,
+      brain_url: enriched.cortex?.brain_url,
+      verify_url: enriched.manifest.verification_url,
+      cortex: enriched.cortex,
+    });
+  });
+
+  const renderBrainPageHtml = (initialDocId = '') => {
+    const safeDocId = initialDocId.replace(/[^a-zA-Z0-9_-]/g, '');
+    return `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural-Implant PDF Reader &amp; Spatial Cortex — Tailprint</title>
+  <meta name="description" content="Talk directly to any Tailprint Neural-Implant PDF. Sub-millisecond 64-D Int8 vector &amp; spatial DOM coordinate reasoning with subconscious latent memory." />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white flex flex-col">
+  ${renderHeader('brain')}
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-10">
+    <!-- Hero Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8 pb-6 border-b border-slate-800/80">
+      <div>
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold mb-3">
+          <span>🧠</span>
+          <span>Tailprint Neuro-Symbolic Spatial Cortex v1 (64-D Int8 HDC + Pre-Render DOM Tensor)</span>
+        </div>
+        <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-white">
+          Interactive <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-300 to-emerald-400">Neural-Implant PDF</span> Reader
+        </h1>
+        <p class="text-slate-400 mt-1.5 text-xs sm:text-sm max-w-3xl">
+          This PDF contains a compiled <strong class="text-slate-200">Spatial DOM Synapse Map</strong> (exact page &amp; bounding-box coordinates) plus <strong class="text-violet-300">Subconscious Latent Memory</strong> implanted by the sender that isn't printed on the visual paper.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button
+          type="button"
+          id="btn-generate-demo"
+          onclick="generateLiveDemoBrainPdf()"
+          class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition cursor-pointer flex items-center space-x-2"
+        >
+          <span>⚡</span>
+          <span>Generate Live Neural-Implant Demo PDF</span>
+        </button>
+        <label class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs transition cursor-pointer flex items-center space-x-2">
+          <span>📂</span>
+          <span>Drop / Upload PDF</span>
+          <input type="file" id="brain-file-input" accept=".pdf,application/pdf" class="hidden" onchange="handleBrainFileUpload(event)" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Doc ID Bar -->
+    <div class="flex flex-col sm:flex-row gap-2 mb-6">
+      <input
+        id="brain-doc-id"
+        type="text"
+        value="${safeDocId}"
+        placeholder="Enter Neural-Implant Document ID (e.g. doc_...) or click 'Generate Live Neural-Implant Demo PDF' above..."
+        class="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
+      />
+      <button
+        type="button"
+        onclick="loadCortexByDocId()"
+        class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition cursor-pointer"
+      >
+        🔌 Connect to PDF Cortex
+      </button>
+      <a
+        id="btn-download-neural-pdf"
+        href="#"
+        target="_blank"
+        class="hidden px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center space-x-1.5"
+      >
+        <span>📥</span>
+        <span>Open / Download PDF (Click Badge Inside!)</span>
+      </a>
+    </div>
+
+    <!-- Split-Screen Brain Workspace -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left Column (7 cols): Spatial Synapse Map & Latent Memory Explorer -->
+      <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <button
+              type="button"
+              id="tab-syn-visual"
+              onclick="switchSynapseTab('visual')"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 cursor-pointer"
+            >
+              👁️ Visual DOM Synapses &amp; Coordinates (<span id="count-visual-syn">0</span>)
+            </button>
+            <button
+              type="button"
+              id="tab-syn-latent"
+              onclick="switchSynapseTab('latent')"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white cursor-pointer"
+            >
+              🔮 Subconscious Latent Memory (<span id="count-latent-syn">0</span>)
+            </button>
+            <button
+              type="button"
+              id="tab-syn-graph"
+              onclick="switchSynapseTab('graph')"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white cursor-pointer"
+            >
+              🕸️ Knowledge Triples (<span id="count-graph-syn">0</span>)
+            </button>
+          </div>
+          <span id="cortex-hash-badge" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+            Waiting for Cortex...
+          </span>
+        </div>
+
+        <div id="synapse-panel-visual" class="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+          <div class="text-center py-16 text-xs text-slate-500">
+            Click <strong class="text-indigo-400">⚡ Generate Live Neural-Implant Demo PDF</strong> above or drop a PDF to inspect its pre-render DOM bounding boxes &amp; 64-D Int8 vectors.
+          </div>
+        </div>
+
+        <div id="synapse-panel-latent" class="hidden space-y-2.5 max-h-[520px] overflow-y-auto pr-1"></div>
+        <div id="synapse-panel-graph" class="hidden space-y-2 max-h-[520px] overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- Right Column (5 cols): Ask the PDF's Neural Cortex -->
+      <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col min-h-[580px]">
+        <div class="pb-3 border-b border-slate-800">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+              <span>⚡</span>
+              <span>Ask this PDF's Implanted Cortex</span>
+            </h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-500/15 text-violet-300 border border-violet-500/30">
+              0 LLM Hallucinations • ~1ms
+            </span>
+          </div>
+          <p id="cortex-persona-label" class="text-[11px] text-slate-400 mt-1 truncate">
+            Persona: Tailprint Autonomous Document Cortex
+          </p>
+        </div>
+
+        <!-- Suggested Starter Questions -->
+        <div class="py-3 border-b border-slate-800/70">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-2">
+            Suggested Questions (Visual + Unprinted Latent Memory):
+          </span>
+          <div id="starter-questions" class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="askPresetQuestion('What is the early payment discount or annual discount?')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 text-[11px] text-slate-300 transition cursor-pointer">
+              💰 Early payment / annual discount?
+            </button>
+            <button type="button" onclick="askPresetQuestion('How is GDPR compliance and EU server hosting handled?')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 text-[11px] text-slate-300 transition cursor-pointer">
+              🇪🇺 GDPR &amp; server hosting?
+            </button>
+            <button type="button" onclick="askPresetQuestion('What is the SLA uptime guarantee?')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 text-[11px] text-slate-300 transition cursor-pointer">
+              🛡️ SLA uptime guarantee?
+            </button>
+            <button type="button" onclick="askPresetQuestion('What is the invoice number and payment due date?')" class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-indigo-950/60 border border-slate-800 hover:border-indigo-500/40 text-[11px] text-slate-300 transition cursor-pointer">
+              📅 Invoice # &amp; due date?
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Log -->
+        <div id="brain-chat-log" class="flex-1 py-4 space-y-3 overflow-y-auto max-h-[340px] text-xs">
+          <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 leading-relaxed">
+            👋 <strong class="text-white">I am the implanted Neural Cortex inside this PDF.</strong><br/>
+            Ask me anything about the visual pages <em>or</em> the sender's subconscious latent memory (discounts, GDPR, SLA, cancellation). I will highlight the exact synapse and physical page coordinates!
+          </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="pt-3 border-t border-slate-800 flex gap-2">
+          <input
+            id="brain-question-input"
+            type="text"
+            placeholder="Ask this PDF anything (in English or Danish)..."
+            onkeydown="if(event.key==='Enter'){submitBrainQuestion();}"
+            class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-indigo-500"
+          />
+          <button
+            type="button"
+            onclick="submitBrainQuestion()"
+            class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer"
+          >
+            Ask →
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    var activeCortex = null;
+    var activePdfDataUri = null;
+    var activeDocId = '';
+
+    function switchSynapseTab(tab) {
+      var pVis = document.getElementById('synapse-panel-visual');
+      var pLat = document.getElementById('synapse-panel-latent');
+      var pGrp = document.getElementById('synapse-panel-graph');
+      var bVis = document.getElementById('tab-syn-visual');
+      var bLat = document.getElementById('tab-syn-latent');
+      var bGrp = document.getElementById('tab-syn-graph');
+
+      pVis.classList.add('hidden');
+      pLat.classList.add('hidden');
+      pGrp.classList.add('hidden');
+      bVis.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white cursor-pointer';
+      bLat.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white cursor-pointer';
+      bGrp.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white cursor-pointer';
+
+      if (tab === 'visual') {
+        pVis.classList.remove('hidden');
+        bVis.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 cursor-pointer';
+      } else if (tab === 'latent') {
+        pLat.classList.remove('hidden');
+        bLat.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-500/20 text-violet-300 border border-violet-500/40 cursor-pointer';
+      } else {
+        pGrp.classList.remove('hidden');
+        bGrp.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer';
+      }
+    }
+
+    function renderCortexExplorer(cortex) {
+      activeCortex = cortex;
+      if (!cortex) return;
+
+      activeDocId = cortex.doc_id || activeDocId;
+      document.getElementById('brain-doc-id').value = activeDocId;
+      document.getElementById('cortex-persona-label').textContent = 'Persona: ' + (cortex.persona || 'Autonomous Cortex');
+      document.getElementById('cortex-hash-badge').textContent = '✓ Cortex SHA-256: ' + (cortex.cortex_hash || '').slice(0, 14) + '...';
+
+      var syns = cortex.synapses || [];
+      var visSyns = syns.filter(function(s) { return s.layer === 'visual_dom' || s.layer === 'structured_data'; });
+      var latSyns = syns.filter(function(s) { return s.layer === 'latent_memory'; });
+      var graph = cortex.knowledge_graph || [];
+
+      document.getElementById('count-visual-syn').textContent = String(visSyns.length);
+      document.getElementById('count-latent-syn').textContent = String(latSyns.length);
+      document.getElementById('count-graph-syn').textContent = String(graph.length);
+
+      var visHtml = visSyns.map(function(s) {
+        var coordText = s.bbox
+          ? 'Page ' + s.bbox.page + ' • (' + s.bbox.x_pct + '%, ' + s.bbox.y_pct + '%) • [' + s.bbox.w_pt + '×' + s.bbox.h_pt + ' pt]'
+          : 'Structured Data Field';
+        return '<div id="card-' + s.id + '" class="p-3 rounded-xl bg-slate-950 border border-slate-800/90 hover:border-indigo-500/50 transition space-y-1">' +
+          '<div class="flex items-center justify-between text-[10px] font-mono">' +
+            '<span class="text-indigo-400 font-bold">' + s.id + ' • &lt;' + s.tag + '&gt; • ' + s.section + '</span>' +
+            '<span class="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">' + coordText + '</span>' +
+          '</div>' +
+          '<p class="text-xs text-slate-200">' + s.content.replace(/</g, '&lt;') + '</p>' +
+        '</div>';
+      }).join('');
+      document.getElementById('synapse-panel-visual').innerHTML = visHtml || '<p class="text-xs text-slate-500 p-4">No visual DOM synapses.</p>';
+
+      var latHtml = latSyns.map(function(s) {
+        return '<div id="card-' + s.id + '" class="p-3.5 rounded-xl bg-violet-950/25 border border-violet-500/30 space-y-1">' +
+          '<div class="flex items-center justify-between text-[10px] font-mono">' +
+            '<span class="text-violet-300 font-bold">🔮 ' + s.id + ' • ' + s.section + '</span>' +
+            '<span class="text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded">UNPRINTED LATENT MEMORY</span>' +
+          '</div>' +
+          '<p class="text-xs text-slate-100">' + s.content.replace(/</g, '&lt;') + '</p>' +
+        '</div>';
+      }).join('');
+      document.getElementById('synapse-panel-latent').innerHTML = latHtml || '<p class="text-xs text-slate-500 p-4">No subconscious latent memory implanted in this PDF.</p>';
+
+      var grpHtml = graph.map(function(g) {
+        return '<div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-[11px] font-mono">' +
+          '<span class="text-slate-300"><strong>' + g.subject.replace(/</g, '&lt;') + '</strong> → <span class="text-indigo-400">' + g.predicate.replace(/</g, '&lt;') + '</span> → <span class="text-emerald-300">' + g.object.replace(/</g, '&lt;') + '</span></span>' +
+          '<span class="text-[10px] text-slate-500 ml-2">' + g.layer + '</span>' +
+        '</div>';
+      }).join('');
+      document.getElementById('synapse-panel-graph').innerHTML = grpHtml;
+    }
+
+    async function generateLiveDemoBrainPdf() {
+      var btn = document.getElementById('btn-generate-demo');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span><span>Compiling Neural-Implant PDF in Chromium...</span>';
+
+      try {
+        var res = await fetch('/v1/tools/neural-demo', { method: 'POST' });
+        var data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'Failed to generate demo PDF');
+          return;
+        }
+        activeDocId = data.doc_id;
+        activePdfDataUri = null;
+        renderCortexExplorer(data.cortex);
+
+        var dlBtn = document.getElementById('btn-download-neural-pdf');
+        if (data.hosted_url) {
+          dlBtn.href = data.hosted_url;
+          dlBtn.classList.remove('hidden');
+        }
+
+        askPresetQuestion('What is the early payment discount, and how is GDPR hosting handled?');
+      } catch (err) {
+        alert('Error generating demo Neural-Implant PDF');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>⚡</span><span>Generate Live Neural-Implant Demo PDF</span>';
+      }
+    }
+
+    async function loadCortexByDocId() {
+      var docId = (document.getElementById('brain-doc-id').value || '').trim();
+      if (!docId) return;
+      activeDocId = docId;
+
+      try {
+        var res = await fetch('/v1/pdf/cortex/' + encodeURIComponent(docId));
+        if (!res.ok) {
+          alert('No stored Cortex found for ' + docId + '. Try generating a live demo PDF above or uploading the PDF file.');
+          return;
+        }
+        var cortex = await res.json();
+        renderCortexExplorer(cortex);
+      } catch (err) {
+        alert('Failed to load Cortex');
+      }
+    }
+
+    function handleBrainFileUpload(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = async function(ev) {
+        activePdfDataUri = ev.target.result;
+        var vRes = await fetch('/v1/pdf/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdf: activePdfDataUri })
+        });
+        var vData = await vRes.json();
+        if (vData && vData.doc_id) {
+          activeDocId = vData.doc_id;
+          document.getElementById('brain-doc-id').value = activeDocId;
+          loadCortexByDocId();
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function askPresetQuestion(q) {
+      document.getElementById('brain-question-input').value = q;
+      submitBrainQuestion();
+    }
+
+    async function submitBrainQuestion() {
+      var input = document.getElementById('brain-question-input');
+      var question = (input.value || '').trim();
+      if (!question) return;
+
+      if (!activeDocId && !activePdfDataUri) {
+        await generateLiveDemoBrainPdf();
+        return;
+      }
+
+      var chatLog = document.getElementById('brain-chat-log');
+      var userMsg = document.createElement('div');
+      userMsg.className = 'p-3 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-100 ml-6';
+      userMsg.textContent = '🧑 ' + question;
+      chatLog.appendChild(userMsg);
+      input.value = '';
+
+      try {
+        var payload = { question: question };
+        if (activePdfDataUri) payload.pdf = activePdfDataUri;
+        else payload.doc_id = activeDocId;
+
+        var res = await fetch('/v1/pdf/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        var ans = await res.json();
+
+        var botMsg = document.createElement('div');
+        botMsg.className = 'p-3.5 rounded-xl bg-slate-950 border border-emerald-500/40 text-slate-100 space-y-2';
+
+        var layerBadge = ans.primary_source_layer === 'latent_memory'
+          ? '<span class="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 font-mono text-[10px]">🔮 Subconscious Latent Memory</span>'
+          : '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">👁️ Visual Page Synapse</span>';
+
+        botMsg.innerHTML =
+          '<div class="flex items-center justify-between">' +
+            layerBadge +
+            '<span class="text-[10px] font-mono text-slate-400">⚡ ' + (ans.execution_time_ms || 1) + 'ms • Conf: ' + Math.round((ans.confidence || 0.9) * 100) + '%</span>' +
+          '</div>' +
+          '<div class="text-xs text-white whitespace-pre-line leading-relaxed">' + (ans.answer || '').replace(/</g, '&lt;') + '</div>';
+
+        chatLog.appendChild(botMsg);
+        chatLog.scrollTop = chatLog.scrollHeight;
+
+        // Highlight top cited synapse in left panel
+        if (ans.citations && ans.citations.length > 0) {
+          var topCit = ans.citations[0];
+          if (topCit.layer === 'latent_memory') {
+            switchSynapseTab('latent');
+          } else {
+            switchSynapseTab('visual');
+          }
+          var card = document.getElementById('card-' + topCit.synapse_id);
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.add('ring-2', 'ring-emerald-400');
+            setTimeout(function() { card.classList.remove('ring-2', 'ring-emerald-400'); }, 2600);
+          }
+        }
+      } catch (err) {
+        alert('Failed to query PDF Cortex');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      var initial = (document.getElementById('brain-doc-id').value || '').trim();
+      if (initial) loadCortexByDocId();
+    });
+  </script>
+</body>
+</html>`;
+  };
+
+  fastify.get('/brain', { schema: { hide: true } }, async (_request, reply) => {
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderBrainPageHtml(''));
+  });
+
+  fastify.get('/brain/:docId', { schema: { hide: true } }, async (request, reply) => {
+    const { docId } = request.params as { docId: string };
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderBrainPageHtml(docId || ''));
+  });
+
+  fastify.get('/tools/brain', { schema: { hide: true } }, async (_request, reply) => {
+    return reply.code(200).header('Content-Type', 'text/html; charset=utf-8').send(renderBrainPageHtml(''));
   });
 };

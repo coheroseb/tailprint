@@ -780,6 +780,27 @@ export class RedisService {
     if (!docId || typeof docId !== 'string') return null;
     return this.getPdfProof(docId);
   }
+
+  public async savePdfCortex(
+    docId: string,
+    cortexRecord: Record<string, unknown>,
+    ttlSeconds = 30 * 86400
+  ): Promise<void> {
+    await this.client.set(`pdf_cortex:${docId.trim()}`, cortexRecord, { ex: ttlSeconds });
+  }
+
+  public async getPdfCortex<T = Record<string, unknown>>(docId: string): Promise<T | null> {
+    const raw = await this.client.get<T | string>(`pdf_cortex:${docId.trim()}`);
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw) as T;
+      } catch {
+        return null;
+      }
+    }
+    return raw as T;
+  }
 }
 
 export const redisService = RedisService.getInstance();

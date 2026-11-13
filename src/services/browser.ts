@@ -15,13 +15,35 @@ export class RenderTimeoutError extends Error {
   }
 }
 
+export interface ExtractedDomSynapse {
+  tag: string;
+  section: string;
+  content: string;
+  bbox: {
+    page: number;
+    x_pct: number;
+    y_pct: number;
+    w_pct: number;
+    h_pct: number;
+    x_pt: number;
+    y_pt: number;
+    w_pt: number;
+    h_pt: number;
+  };
+}
+
 export class BrowserService {
   private static instance: BrowserService | null = null;
   private browser: Browser | null = null;
   private limit = pLimit(env.CONCURRENCY_LIMIT);
   private isInitializing = false;
+  private domSynapseMap = new WeakMap<Buffer, ExtractedDomSynapse[]>();
 
   private constructor() {}
+
+  public getExtractedDomSynapses(pdfBuffer: Buffer): ExtractedDomSynapse[] | undefined {
+    return this.domSynapseMap.get(pdfBuffer);
+  }
 
   public static getInstance(): BrowserService {
     if (!BrowserService.instance) {
@@ -807,6 +829,21 @@ export class BrowserService {
           await this.applySmartPagination(page);
         }
 
+        const shouldExtractDomSynapses = Boolean(
+          (params as any).neural_implant ||
+            (params as any).neural_context ||
+            (params as any).neural_persona
+        );
+
+        let extractedSynapses: ExtractedDomSynapse[] | undefined;
+        if (shouldExtractDomSynapses) {
+          extractedSynapses = await this.extractSpatialDomSynapses(
+            page,
+            params.format || 'A4',
+            Boolean(params.landscape)
+          );
+        }
+
         const hasHeaderFooter = Boolean(
           params.display_header_footer || params.header_html || params.footer_html
         );
@@ -845,11 +882,157 @@ export class BrowserService {
           pdfBuffer = Buffer.from(encrypted);
         }
 
+        if (extractedSynapses && extractedSynapses.length > 0) {
+          this.domSynapseMap.set(pdfBuffer, extractedSynapses);
+        }
+
         return pdfBuffer;
       },
       { width: 1200, height: 800 },
       shouldBlockPopups
     );
+  }
+
+  public async extractSpatialDomSynapses(
+    page: Page,
+    format: 'A4' | 'Letter' | 'Legal' = 'A4',
+    landscape = false
+  ): Promise<ExtractedDomSynapse[]> {
+    const baseDims =
+      format === 'Letter'
+        ? { wPx: 816, hPx: 1056, wPt: 612, hPt: 792 }
+        : format === 'Legal'
+          ? { wPx: 816, hPx: 1344, wPt: 612, hPt: 1008 }
+          : { wPx: 794, hPx: 1123, wPt: 595, hPt: 842 };
+
+    const pageWidthPx = landscape ? baseDims.hPx : baseDims.wPx;
+    const pageHeightPx = landscape ? baseDims.wPx : baseDims.hPx;
+    const pageWidthPt = landscape ? baseDims.hPt : baseDims.wPt;
+    const pageHeightPt = landscape ? baseDims.wPt : baseDims.hPt;
+
+    try {
+      return await page.evaluate(
+        ({ pWidthPx, pHeightPx, pWidthPt, pHeightPt }) => {
+          const results: Array<{
+            tag: string;
+            section: string;
+            content: string;
+            bbox: {
+              page: number;
+              x_pct: number;
+              y_pct: number;
+              w_pct: number;
+              h_pct: number;
+              x_pt: number;
+              y_pt: number;
+              w_pt: number;
+              h_pt: number;
+            };
+          }> = [];
+
+          const seenTexts = new Set<string>();
+          let currentSection = (document.title || 'Document Overview').trim();
+
+          const selectors =
+            'h1, h2, h3, h4, p, li, tr, blockquote, [data-synapse], [data-neural]';
+          const elements = Array.from(document.querySelectorAll(selectors));
+
+          for (const el of elements) {
+            if (results.length >= 120) break;
+
+            const tag = el.tagName.toLowerCase();
+            const rect = el.getBoundingClientRect();
+            if (rect.width < 4 || rect.height < 4) continue;
+
+            let cleanText = '';
+
+            if (tag === 'tr') {
+              const cells = Array.from(el.querySelectorAll('th, td')).map((c) =>
+                (c.textContent || '').replace(/\s+/g, ' ').trim()
+              );
+              if (cells.filter(Boolean).length === 0) continue;
+
+              const parentTable = el.closest('table');
+              let headers: string[] = [];
+              if (parentTable) {
+                const thEls = Array.from(parentTable.querySelectorAll('thead th, tr:first-child th'));
+                headers = thEls.map((th) => (th.textContent || '').replace(/\s+/g, ' ').trim());
+              }
+
+              // Skip header row itself if it matches headers
+              const isHeaderRow = el.querySelectorAll('th').length > 0 && el.querySelectorAll('td').length === 0;
+              if (isHeaderRow) continue;
+
+              if (headers.length > 0 && headers.length === cells.length) {
+                cleanText = cells
+                  .map((val, idx) => (headers[idx] ? `${headers[idx]}: ${val}` : val))
+                  .filter(Boolean)
+                  .join(' | ');
+              } else {
+                cleanText = cells.filter(Boolean).join(' | ');
+              }
+            } else {
+              // Skip container if it has child block elements already matched
+              cleanText = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            }
+
+            const customNote = el.getAttribute('data-synapse') || el.getAttribute('data-neural');
+            if (customNote) {
+              cleanText = cleanText ? `${customNote}: ${cleanText}` : customNote;
+            }
+
+            if (!cleanText || cleanText.length < 3 || cleanText.length > 900) continue;
+
+            if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4') {
+              currentSection = cleanText.slice(0, 120);
+            }
+
+            const dedupeKey = `${tag}:${cleanText}`;
+            if (seenTexts.has(dedupeKey)) continue;
+            seenTexts.add(dedupeKey);
+
+            const absTop = Math.max(0, rect.top + window.scrollY);
+            const absLeft = Math.max(0, rect.left + window.scrollX);
+            const docWidth = Math.max(pWidthPx, document.documentElement.scrollWidth || pWidthPx);
+
+            const pageNum = Math.max(1, Math.floor(absTop / pHeightPx) + 1);
+            const yWithinPage = absTop % pHeightPx;
+
+            const xPct = Number(Math.min(100, Math.max(0, (absLeft / docWidth) * 100)).toFixed(1));
+            const yPct = Number(Math.min(100, Math.max(0, (yWithinPage / pHeightPx) * 100)).toFixed(1));
+            const wPct = Number(Math.min(100, Math.max(1, (rect.width / docWidth) * 100)).toFixed(1));
+            const hPct = Number(Math.min(100, Math.max(0.5, (rect.height / pHeightPx) * 100)).toFixed(1));
+
+            results.push({
+              tag,
+              section: currentSection,
+              content: cleanText,
+              bbox: {
+                page: pageNum,
+                x_pct: xPct,
+                y_pct: yPct,
+                w_pct: wPct,
+                h_pct: hPct,
+                x_pt: Number(((xPct / 100) * pWidthPt).toFixed(1)),
+                y_pt: Number(((yPct / 100) * pHeightPt).toFixed(1)),
+                w_pt: Number(((wPct / 100) * pWidthPt).toFixed(1)),
+                h_pt: Number(((hPct / 100) * pHeightPt).toFixed(1)),
+              },
+            });
+          }
+
+          return results;
+        },
+        {
+          pWidthPx: pageWidthPx,
+          pHeightPx: pageHeightPx,
+          pWidthPt: pageWidthPt,
+          pHeightPt: pageHeightPt,
+        }
+      );
+    } catch {
+      return [];
+    }
   }
 
   public async renderImage(params: RenderImageRequest): Promise<Buffer> {

@@ -37,6 +37,9 @@ export const RenderPdfRequestSchema = z
     embed_data: z.record(z.any()).optional().describe('Structured JSON payload to embed inside the Dual-Brain PDF container (tailprint-manifest.json) for instant zero-OCR extraction via POST /v1/pdf/extract.'),
     sign: z.boolean().optional().describe('Cryptographic Proof-of-Origin: signs the PDF content streams and embedded manifest with HMAC-SHA256 and registers a tamper-proof verification record.'),
     verify_seal: z.boolean().optional().describe('Renders a sleek vector "Verified by Tailprint" cryptographic seal and verification link onto the PDF document. Automatically enables sign: true.'),
+    neural_implant: z.boolean().optional().describe('Neural-Implant PDF mode: compiles a Neuro-Symbolic Spatial Cortex (64-D Int8 vectors, pre-render DOM bounding boxes, and latent memory) into tailprint-cortex.json inside the PDF and stamps a clickable "Ask this PDF" link annotation.'),
+    neural_persona: z.string().max(500).optional().describe('Optional persona and instructions implanted into the PDF Neural Cortex (e.g. "Financial & Contract Assistant for Acme Corp").'),
+    neural_context: z.union([z.record(z.any()), z.string()]).optional().describe('Subconscious Latent Memory implanted into the PDF Cortex (knowledge, FAQs, SLA, GDPR, discount rules) that the PDF can answer from even though it is not printed on the visual page.'),
   })
   .superRefine(validateRenderSource);
 
@@ -76,8 +79,10 @@ export const HostedFileResponseSchema = z.object({
   docId: z.string().optional().describe('Tailprint Dual-Brain & Cryptographic Proof document ID (e.g. doc_...)'),
   aiReady: z.boolean().optional().describe('Whether Dual-Brain structured JSON manifest is embedded'),
   signed: z.boolean().optional().describe('Whether the PDF is cryptographically signed'),
+  neuralImplant: z.boolean().optional().describe('Whether a Neural-Implant Spatial Cortex is embedded in the PDF'),
   signature: z.string().nullable().optional().describe('HMAC-SHA256 cryptographic signature'),
   verifyUrl: z.string().url().optional().describe('Public cryptographic verification URL'),
+  brainUrl: z.string().url().nullable().optional().describe('Interactive Neural-Implant PDF Reader URL'),
 });
 
 export type HostedFileResponse = z.infer<typeof HostedFileResponseSchema>;

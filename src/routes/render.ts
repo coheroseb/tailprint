@@ -199,7 +199,13 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       return { pdfBuffer: rawPdfBuffer, enriched: null };
     }
 
+    const hasNeuralImplant =
+      Boolean(body.neural_implant) ||
+      Boolean(body.neural_context) ||
+      Boolean(body.neural_persona);
+
     const shouldEnrich =
+      hasNeuralImplant ||
       Boolean(body.sign) ||
       Boolean(body.verify_seal) ||
       Boolean(body.ai_ready) ||
@@ -219,13 +225,19 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       combinedData = originalTemplateData;
     }
 
+    const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
+
     const enriched = await smartPdfService.enrichPdf(rawPdfBuffer, {
       customerId,
       templateId: body.template_id || null,
       data: combinedData,
       aiReady: body.ai_ready !== undefined ? body.ai_ready : true,
-      sign: Boolean(body.sign || body.verify_seal),
+      sign: Boolean(body.sign || body.verify_seal || hasNeuralImplant),
       verifySeal: Boolean(body.verify_seal),
+      neuralImplant: hasNeuralImplant,
+      neuralPersona: body.neural_persona,
+      neuralContext: body.neural_context,
+      domSynapses,
       noStore: Boolean(body.no_store),
     });
 
@@ -235,6 +247,15 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     extraHeaders['X-Tailprint-Doc-Id'] = enriched.docId;
     extraHeaders['X-Tailprint-AI-Ready'] = String(enriched.manifest.ai_ready);
     extraHeaders['X-Tailprint-Verify-Url'] = enriched.manifest.verification_url;
+
+    if (enriched.cortex) {
+      reply.header('X-Tailprint-Neural-Implant', 'true');
+      reply.header('X-Tailprint-Brain-Url', enriched.cortex.brain_url);
+      reply.header('X-Tailprint-Cortex-Synapses', String(enriched.cortex.total_synapses));
+      extraHeaders['X-Tailprint-Neural-Implant'] = 'true';
+      extraHeaders['X-Tailprint-Brain-Url'] = enriched.cortex.brain_url;
+      extraHeaders['X-Tailprint-Cortex-Synapses'] = String(enriched.cortex.total_synapses);
+    }
 
     if (enriched.manifest.signed && enriched.manifest.signature) {
       const sigHeader = `sha256=${enriched.manifest.signature}`;
