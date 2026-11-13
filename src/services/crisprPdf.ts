@@ -17,6 +17,8 @@ export interface DocumentExon {
   section: string;
   content: string;
   is_table_row: boolean;
+  source_page?: number;
+  source_y_pt?: number;
 }
 
 export interface DocumentGenome {
@@ -113,24 +115,66 @@ export class CrisprPdfService {
    * Fallback text extractor for plain third-party PDFs that do not yet have an embedded
    * Tailprint Neural Cortex or Dual-Brain manifest.
    */
-  private extractFallbackTextLinesFromPdf(pdfDoc: PDFDocument, rawBuffer: Buffer): string[] {
-    const lines: string[] = [];
+  /**
+   * Decodes a PDF string token (`(literal)` with octal escapes or `<hex>` WinAnsi bytes) into UTF-8 text.
+   */
+  private decodePdfStringToken(token: string): string {
+    if (token.startsWith('<') && token.endsWith('>')) {
+      const hex = token.slice(1, -1).replace(/\s+/g, '');
+      const bytes: number[] = [];
+      for (let i = 0; i < hex.length; i += 2) {
+        const b = parseInt(hex.slice(i, i + 2), 16);
+        if (!Number.isNaN(b)) bytes.push(b);
+      }
+      return Buffer.from(bytes).toString('latin1');
+    }
+    if (token.startsWith('(') && token.endsWith(')')) {
+      let inner = token.slice(1, -1);
+      inner = inner.replace(/\\([0-7]{1,3})/g, (_, oct) =>
+        String.fromCharCode(parseInt(oct, 8))
+      );
+      inner = inner
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r')
+        .replace(/\\t/g, '\t')
+        .replace(/\\([()\\])/g, '$1');
+      return inner;
+    }
+    return '';
+  }
+
+  /**
+   * Coordinate-aware PDF text line extractor for third-party PDFs (without `tailprint-cortex.json`).
+   * Groups `BT ... ET` text runs by their physical `Tm` Y-coordinate on each page and decodes both
+   * `(literal)` and `<hex>` WinAnsi tokens so Danish/Nordic characters (æ, ø, å, §) and full sentences stay intact.
+   */
+  private extractFallbackTextLinesFromPdf(
+    pdfDoc: PDFDocument,
+    rawBuffer: Buffer
+  ): Array<{ text: string; page: number; y_pt: number }> {
+    const extracted: Array<{ text: string; page: number; y_pt: number }> = [];
     const seen = new Set<string>();
 
-    const pushLine = (txt: string) => {
+    const pushLine = (txt: string, pageNum: number, yPt: number) => {
       const cleaned = txt
-        .replace(/\\([()\\])/g, '$1')
-        .replace(/[^\x20-\x7E\u00A0-\u00FF€]/g, ' ')
+        .replace(/[^\x20-\x7E\u00A0-\u00FF€–—•]/g, ' ')
+        .replace(/\.{4,}/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-      if (cleaned.length >= 4 && cleaned.length <= 400 && !seen.has(cleaned.toLowerCase())) {
-        seen.add(cleaned.toLowerCase());
-        lines.push(cleaned);
+      if (cleaned.length >= 4 && cleaned.length <= 450 && !/^[0-9.\s-]+$/.test(cleaned)) {
+        const dedupKey = `${pageNum}:${cleaned.toLowerCase()}`;
+        if (!seen.has(dedupKey)) {
+          seen.add(dedupKey);
+          extracted.push({ text: cleaned, page: pageNum, y_pt: yPt });
+        }
       }
     };
 
     try {
-      for (const page of pdfDoc.getPages()) {
+      const pages = pdfDoc.getPages();
+      for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
+        const page = pages[pageIdx];
+        const pageHeight = page.getSize().height || 842;
         const contents = page.node.Contents();
         if (!contents) continue;
 
@@ -143,6 +187,10 @@ export class CrisprPdfService {
           streams.push(contents);
         }
 
+        const linesByY = new Map<number, Array<{ x: number; text: string }>>();
+        let currentY = pageHeight - 72;
+        let currentX = 50;
+
         for (const s of streams) {
           if (!s || !s.contents) continue;
           let decoded = '';
@@ -152,34 +200,67 @@ export class CrisprPdfService {
             decoded = Buffer.from(s.contents).toString('latin1');
           }
 
-          const matches = decoded.matchAll(/\(([^()]{3,250})\)\s*Tj/g);
-          for (const m of matches) {
-            pushLine(m[1]);
-          }
-          // Also extract TJ array text blocks e.g. [(Hello ) -15 (World)] TJ
-          const tjArrayMatches = decoded.matchAll(/\[([^\]]{4,600})\]\s*TJ/g);
-          for (const arrMatch of tjArrayMatches) {
-            const innerParts = Array.from(arrMatch[1].matchAll(/\(([^()]*)\)/g)).map((p) => p[1]);
-            if (innerParts.length > 0) {
-              pushLine(innerParts.join(''));
+          const btBlocks = decoded.matchAll(/BT([\s\S]*?)ET/g);
+          for (const b of btBlocks) {
+            const block = b[1];
+            const tmMatch = block.match(
+              /([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\s+Tm/
+            );
+            if (tmMatch) {
+              currentX = parseFloat(tmMatch[5]);
+              currentY = parseFloat(tmMatch[6]);
+            } else {
+              const tdMatch = block.match(/([0-9.-]+)\s+([0-9.-]+)\s+T[dD]/);
+              if (tdMatch) {
+                currentX += parseFloat(tdMatch[1]);
+                currentY += parseFloat(tdMatch[2]);
+              }
+            }
+
+            const tokens = block.matchAll(/(<[0-9A-Fa-f\s]+>|\((?:\\.|[^\\()])*\))/g);
+            let piece = '';
+            for (const t of tokens) {
+              piece += this.decodePdfStringToken(t[0]);
+            }
+            if (piece) {
+              // Bucket by 3pt vertical tolerance so words on the same baseline merge into one line
+              const yBucket = Math.round(currentY / 3) * 3;
+              if (!linesByY.has(yBucket)) linesByY.set(yBucket, []);
+              linesByY.get(yBucket)!.push({ x: currentX, text: piece });
             }
           }
+        }
+
+        const sortedYs = Array.from(linesByY.keys()).sort((a, b) => b - a);
+        for (const yKey of sortedYs) {
+          const segs = linesByY.get(yKey)!.sort((a, b) => a.x - b.x);
+          let line = '';
+          let lastX = -9999;
+          for (const seg of segs) {
+            if (line && seg.x - lastX > 18 && !line.endsWith(' ') && !seg.text.startsWith(' ')) {
+              line += ' ';
+            }
+            line += seg.text;
+            lastX = seg.x + seg.text.length * 4.5;
+          }
+          const topDownYPt = Math.max(20, Math.round(pageHeight - yKey));
+          pushLine(line, pageIdx + 1, topDownYPt);
         }
       }
     } catch {
       // Fallback to raw buffer scan
     }
 
-    if (lines.length === 0) {
+    if (extracted.length === 0) {
       const rawStr = rawBuffer.toString('latin1');
       const matches = rawStr.matchAll(/\(([^()]{4,200})\)\s*Tj/g);
       for (const m of matches) {
-        pushLine(m[1]);
-        if (lines.length >= 40) break;
+        pushLine(this.decodePdfStringToken(`(${m[1]})`), 1, 120);
+        if (extracted.length >= 40) break;
       }
     }
 
-    return lines.slice(0, 50);
+    return extracted.slice(0, 180);
   }
 
   /**
@@ -194,7 +275,7 @@ export class CrisprPdfService {
     let cortex: TailprintNeuralCortex | null = null;
     let fileSha256 = '';
     let pageCount = 1;
-    let fallbackLines: string[] = [];
+    let fallbackLines: Array<{ text: string; page: number; y_pt: number }> = [];
 
     if (input.pdfBuffer) {
       fileSha256 = crypto.createHash('sha256').update(input.pdfBuffer).digest('hex');
@@ -301,17 +382,29 @@ export class CrisprPdfService {
     }
 
     if (exons.length === 0 && fallbackLines.length > 0) {
-      detectedTitle = fallbackLines[0];
+      detectedTitle =
+        fallbackLines.find((l) => l.text.length >= 6 && l.text.length <= 90)?.text ||
+        fallbackLines[0].text;
+      let currentSection = detectedTitle.slice(0, 80) || label;
       for (let i = 0; i < fallbackLines.length; i++) {
+        const lineObj = fallbackLines[i];
+        const isHeading =
+          i === 0 ||
+          (/^[0-9]+(\.[0-9]+)*\s+[A-ZÆØÅ]/.test(lineObj.text) && lineObj.text.length < 90);
+        if (isHeading) {
+          currentSection = lineObj.text.slice(0, 80);
+        }
         exons.push({
           exon_id: `chr${parentIndex + 1}_ex_${i + 1}`,
           parent_index: parentIndex,
           parent_doc_id: docId,
           parent_label: label,
-          tag: i === 0 ? 'h1' : 'p',
-          section: detectedTitle.slice(0, 80) || label,
-          content: fallbackLines[i],
-          is_table_row: fallbackLines[i].includes('|'),
+          tag: isHeading ? 'h2' : 'p',
+          section: currentSection,
+          content: lineObj.text,
+          is_table_row: lineObj.text.includes('|') || /§\s*[0-9]+/.test(lineObj.text),
+          source_page: lineObj.page,
+          source_y_pt: lineObj.y_pt,
         });
       }
     }
@@ -423,13 +516,18 @@ export class CrisprPdfService {
               tableHead: 'bg-indigo-950 text-white',
             };
 
-    // Group exons by parent chromosome & section for a clean, structured master document
+    // Separate exons from Tailprint-native parents vs. External third-party PDFs (whose original vector pages are appended directly)
+    const nativeExons = splicedExons.filter((e) => {
+      const g = genomes[e.parent_index];
+      return g ? g.has_neural_cortex : true;
+    });
+
     const groupedBySection = new Map<
       string,
       { parentLabel: string; parentDocId: string; items: DocumentExon[] }
     >();
 
-    for (const exon of splicedExons) {
+    for (const exon of nativeExons) {
       const groupKey = `${exon.parent_label} — ${exon.section}`;
       if (!groupedBySection.has(groupKey)) {
         groupedBySection.set(groupKey, {
@@ -442,19 +540,34 @@ export class CrisprPdfService {
     }
 
     const parentLineagePills = genomes
-      .map(
-        (g, idx) => `
-        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-          <div>
-            <span class="font-mono font-bold text-indigo-600">CHR-${idx + 1}</span>
-            <span class="font-bold text-slate-900 ml-1.5">${escapeHtml(g.title)}</span>
-            <p class="text-[10px] font-mono text-slate-500 mt-0.5">ID: ${escapeHtml(g.doc_id)} • SHA-256: ${escapeHtml(g.file_sha256.slice(0, 12))}…</p>
+      .map((g, idx) => {
+        const previewLines = splicedExons
+          .filter((e) => e.parent_index === idx && e.content.length > 12)
+          .slice(0, 3)
+          .map((e) => `<li class="truncate">• ${escapeHtml(e.content)}</li>`)
+          .join('');
+        const modeBadge = g.has_neural_cortex
+          ? `${g.exons.length} exons • ${Object.keys(g.epigenome).length} latent genes`
+          : `${g.page_count} vector page${g.page_count === 1 ? '' : 's'} attached • ${g.exons.length} indexed clauses`;
+        return `
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs avoid-break">
+          <div class="flex items-center justify-between gap-2">
+            <div class="truncate">
+              <span class="font-mono font-bold text-indigo-600">CHR-${idx + 1}</span>
+              <span class="font-bold text-slate-900 ml-1.5">${escapeHtml(g.title)}</span>
+              <p class="text-[10px] font-mono text-slate-500 mt-0.5">ID: ${escapeHtml(g.doc_id)} • SHA-256: ${escapeHtml(g.file_sha256.slice(0, 12))}…</p>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-white border border-slate-200 font-mono text-[10px] text-slate-600 shrink-0">
+              ${modeBadge}
+            </span>
           </div>
-          <span class="px-2 py-0.5 rounded bg-white border border-slate-200 font-mono text-[10px] text-slate-600">
-            ${g.exons.length} exons • ${Object.keys(g.epigenome).length} latent genes
-          </span>
-        </div>`
-      )
+          ${
+            !g.has_neural_cortex && previewLines
+              ? `<ul class="text-[11px] text-slate-600 space-y-0.5 pt-1.5 border-t border-slate-200/80">${previewLines}</ul>`
+              : ''
+          }
+        </div>`;
+      })
       .join('');
 
     const proteomeEntries = Object.entries(splicedProteome).filter(
@@ -464,14 +577,14 @@ export class CrisprPdfService {
     const proteomeGridHtml =
       proteomeEntries.length > 0
         ? `
-      <div class="mt-6">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Harmonized Master Data Proteome (Unified Across Parents)</h2>
+      <div class="mt-5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Harmonized Master Data Proteome (Unified Across Parents)</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           ${proteomeEntries
             .slice(0, 12)
             .map(
               ([k, v]) => `
-            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 avoid-break">
               <div class="text-[10px] font-mono uppercase text-slate-400">${escapeHtml(k.replace(/_/g, ' '))}</div>
               <div class="text-xs font-bold text-slate-900 mt-0.5 truncate">${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</div>
             </div>`
@@ -482,7 +595,7 @@ export class CrisprPdfService {
         : '';
 
     const sectionsHtml = Array.from(groupedBySection.entries())
-      .map(([ _, group]) => {
+      .map(([_, group]) => {
         const tableRows = group.items.filter((i) => i.is_table_row);
         const proseItems = group.items.filter((i) => !i.is_table_row);
 
@@ -520,8 +633,8 @@ export class CrisprPdfService {
             : '';
 
         return `
-        <div class="mt-6 p-5 rounded-xl bg-white border border-slate-200 shadow-sm avoid-break">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2.5">
+        <div class="mt-4 p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
             <span class="text-xs font-bold ${theme.accentText} uppercase tracking-wider">${escapeHtml(group.parentLabel)}</span>
             <span class="text-[10px] font-mono text-slate-400">Source: ${escapeHtml(group.parentDocId)}</span>
           </div>
@@ -534,7 +647,7 @@ export class CrisprPdfService {
     const conflictsHtml =
       conflictsResolved.length > 0
         ? `
-      <div class="mt-6 p-4 rounded-xl bg-amber-50/70 border border-amber-200 avoid-break">
+      <div class="mt-5 p-4 rounded-xl bg-amber-50/70 border border-amber-200 avoid-break">
         <div class="text-xs font-bold text-amber-900 mb-1.5">🧬 CRISPR Genetic Conflict Resolution Log (${conflictsResolved.length} Alleles Harmonized)</div>
         <div class="space-y-1 text-[11px] font-mono text-amber-800">
           ${conflictsResolved
@@ -547,10 +660,23 @@ export class CrisprPdfService {
       </div>`
         : '';
 
+    const nativeSectionsBlock = sectionsHtml
+      ? `
+        <!-- Spliced Chromosomes & Exons -->
+        <div class="mt-5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Spliced Clauses, Schedules &amp; Semantic Exons</h2>
+          ${sectionsHtml}
+        </div>`
+      : `
+        <div class="mt-5 p-4 rounded-xl bg-indigo-50/60 border border-indigo-200/80 text-xs text-slate-700 leading-relaxed">
+          <strong class="text-indigo-950">✓ Full-Fidelity Vector Pages Attached &amp; Neural-Indexed:</strong>
+          All ${splicedExons.length} extracted clauses, tables, and §-references across the ${genomes.length} parent documents have been compiled into this document's <strong>64-D Neural Cortex</strong>. Click <strong>"Ask this PDF a Question →"</strong> above to query any page in ~1ms, or scroll down to inspect the attached original vector pages.
+        </div>`;
+
     return `
       <div class="max-w-4xl mx-auto p-10 bg-white text-slate-900 font-sans">
         <!-- Master Header with Built-In 1-Line Neural Button -->
-        <div class="border-b-2 ${theme.borderAccent} pb-6 flex justify-between items-start gap-4">
+        <div class="border-b-2 ${theme.borderAccent} pb-5 flex justify-between items-start gap-4">
           <div>
             <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full ${theme.badgeBg} border text-[10px] font-mono font-bold mb-2">
               <span>🧬 CRISPR-SPLICED MASTER DOCUMENT • ${genomes.length} PARENT GENOMES FUSED</span>
@@ -565,24 +691,19 @@ export class CrisprPdfService {
         </div>
 
         <!-- Genetic Lineage Provenance -->
-        <div class="mt-6">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Parent Document Lineage (Cryptographic Provenance)</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div class="mt-5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Parent Document Lineage &amp; Executive Digest (Cryptographic Provenance)</h2>
+          <div class="grid grid-cols-1 gap-2.5">
             ${parentLineagePills}
           </div>
         </div>
 
         ${proteomeGridHtml}
         ${conflictsHtml}
-
-        <!-- Spliced Chromosomes & Exons -->
-        <div class="mt-6">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Spliced Clauses, Schedules &amp; Semantic Exons</h2>
-          ${sectionsHtml}
-        </div>
+        ${nativeSectionsBlock}
 
         <!-- Footer Cryptographic Seal -->
-        <div class="mt-8 pt-4 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-500 font-mono avoid-break">
+        <div class="mt-6 pt-4 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-500 font-mono avoid-break">
           <span>Synthesized by Tailprint CRISPR-PDF™ Engine</span>
           <div data-verify-button></div>
         </div>
@@ -743,27 +864,55 @@ export class CrisprPdfService {
       neural_implant: true,
     } as any);
 
-    const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
+    const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer) || [];
     const customButtons = browserService.getCustomButtonPlacement(rawPdfBuffer);
 
     // If any parent PDF is an external third-party PDF (no native Tailprint Cortex embedded),
-    // also append its original vector pages after the CRISPR Master Dossier pages so 100% of original visual graphics/tables are preserved!
-    const externalParentBuffers: Buffer[] = [];
+    // append its original vector pages right after the 1-page CRISPR Master Cover Sheet AND map its extracted lines
+    // with their exact physical page numbers and Y-coordinates into domSynapses!
+    const externalParents: Array<{ parentIndex: number; buffer: Buffer }> = [];
     for (let i = 0; i < options.inputs.length; i++) {
       const inp = options.inputs[i];
       if (inp.pdfBuffer && !genomes[i].has_neural_cortex) {
-        externalParentBuffers.push(inp.pdfBuffer);
+        externalParents.push({ parentIndex: i, buffer: inp.pdfBuffer });
       }
     }
-    if (externalParentBuffers.length > 0) {
+    if (externalParents.length > 0) {
       try {
         const masterDoc = await PDFDocument.load(rawPdfBuffer, { ignoreEncryption: true });
-        for (const extBuf of externalParentBuffers) {
-          const extDoc = await PDFDocument.load(extBuf, { ignoreEncryption: true });
+        let runningPageOffset = masterDoc.getPageCount();
+
+        for (const ext of externalParents) {
+          const extDoc = await PDFDocument.load(ext.buffer, { ignoreEncryption: true });
           const copiedPages = await masterDoc.copyPages(extDoc, extDoc.getPageIndices());
           for (const p of copiedPages) {
             masterDoc.addPage(p);
           }
+
+          // Map all spliced exons from this external parent onto their true page & Y-coordinate in the combined PDF
+          const extExons = splicedExons.filter((e) => e.parent_index === ext.parentIndex);
+          for (const ex of extExons) {
+            const targetPage = runningPageOffset + (ex.source_page || 1);
+            const yPt = ex.source_y_pt || 120;
+            domSynapses.push({
+              tag: ex.tag || 'p',
+              section: `${ex.parent_label} — ${ex.section}`,
+              content: ex.content,
+              bbox: {
+                page: targetPage,
+                x_pct: 8,
+                y_pct: Math.min(92, Math.max(4, Math.round((yPt / 842) * 1000) / 10)),
+                w_pct: 84,
+                h_pct: 2.5,
+                x_pt: 48,
+                y_pt: yPt,
+                w_pt: 500,
+                h_pt: 20,
+              },
+            });
+          }
+
+          runningPageOffset += extDoc.getPageCount();
         }
         rawPdfBuffer = Buffer.from(await masterDoc.save());
       } catch {
