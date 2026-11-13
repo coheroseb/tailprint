@@ -267,7 +267,7 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
         <a href="/dashboard" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${isDashboardActive ? 'bg-indigo-950/60 border border-indigo-500/30 text-indigo-300' : 'text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800'} transition">
           Customer Portal
         </a>
-        <button onclick="if(window.startCheckout){window.startCheckout('free')}else{window.location.href='/#pricing'}" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/20 flex items-center space-x-1.5">
+        <button onclick="if(window.openFreeKeyModal){window.openFreeKeyModal()}else if(window.startCheckout){window.startCheckout('free')}else{window.location.href='/#pricing'}" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-600/20 flex items-center space-x-1.5">
           <span class="text-xs">⚡</span>
           <span>Claim Free Key</span>
         </button>
@@ -369,7 +369,7 @@ export function renderGlobalNavbar(options: NavbarOptions = {}): string {
         <a href="/dashboard" class="block w-full py-2.5 text-center rounded-xl bg-slate-900 border border-slate-800 text-sm font-semibold text-slate-200 hover:bg-slate-800">
           Customer Portal
         </a>
-        <button onclick="if(window.startCheckout){window.startCheckout('free')}else{window.location.href='/#pricing'}" class="w-full py-2.5 text-center rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30">
+        <button onclick="if(window.openFreeKeyModal){window.openFreeKeyModal()}else if(window.startCheckout){window.startCheckout('free')}else{window.location.href='/#pricing'}" class="w-full py-2.5 text-center rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30">
           ⚡ Claim 100 Free Renders
         </button>
       </div>

@@ -933,7 +933,7 @@ Cursor IDE & Windsurf:
 
       <!-- Primary Action Buttons -->
       <div class="mt-8 flex flex-wrap justify-center items-center gap-3.5">
-        <button onclick="startCheckout('free')" class="px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2.5 group">
+        <button onclick="openFreeKeyModal()" class="px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2.5 group">
           <span>⚡ Claim 100 Free Renders</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-200 font-bold uppercase tracking-wider">No CC</span>
         </button>
@@ -2047,8 +2047,8 @@ Cursor IDE & Windsurf:
               ${PLANS.free.features.map((f) => `<li class="flex items-start space-x-2"><span class="text-emerald-400 font-bold mt-0.5">✓</span><span>${f}</span></li>`).join('')}
             </ul>
           </div>
-          <button onclick="startCheckout('free')" class="mt-6 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-xs shadow-lg shadow-emerald-600/20">
-            Start Free via Stripe (No Card) ⚡
+          <button onclick="openFreeKeyModal()" class="mt-6 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-xs shadow-lg shadow-emerald-600/20">
+            Claim 100 Free Renders ⚡
           </button>
         </div>
 
@@ -2297,8 +2297,8 @@ Cursor IDE & Windsurf:
   </div>
 
   <!-- Claim Free API Key Modal -->
-  <div id="free-key-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-    <div class="relative w-full max-w-md rounded-2xl bg-slate-900 border border-emerald-500/40 p-6 sm:p-8 shadow-2xl shadow-emerald-500/10">
+  <div id="free-key-modal" onclick="if(event.target === this) closeFreeKeyModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div class="relative w-full max-w-lg rounded-2xl bg-slate-900 border border-emerald-500/40 p-6 sm:p-8 shadow-2xl shadow-emerald-500/10">
       <button onclick="closeFreeKeyModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
 
       <div id="free-key-form-view">
@@ -2333,13 +2333,20 @@ Cursor IDE & Windsurf:
         </div>
 
         <div class="mt-4">
-          <span class="text-xs font-semibold text-slate-400">cURL Quickstart:</span>
-          <pre id="free-key-curl" class="mt-1.5 p-3 rounded-xl bg-slate-950 text-[10px] font-mono text-slate-300 overflow-x-auto border border-slate-800"></pre>
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+            <span class="font-semibold">Quickstart Snippet:</span>
+            <div class="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[10px] font-mono">
+              <button type="button" onclick="switchFreeKeyTab('curl')" id="tab-fk-curl" class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">cURL</button>
+              <button type="button" onclick="switchFreeKeyTab('python')" id="tab-fk-python" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Python</button>
+              <button type="button" onclick="switchFreeKeyTab('node')" id="tab-fk-node" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">Node.js</button>
+            </div>
+          </div>
+          <pre id="free-key-snippet" class="p-3 rounded-xl bg-slate-950 text-[10px] font-mono text-slate-300 overflow-x-auto border border-slate-800 leading-relaxed max-h-48 whitespace-pre"></pre>
         </div>
 
         <div class="mt-6 flex space-x-3">
-          <a href="/dashboard" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold text-center transition">
-            Open Dashboard →
+          <a href="/studio" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold text-center transition">
+            Test in Studio →
           </a>
           <button onclick="closeFreeKeyModal()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
             Done
@@ -2621,6 +2628,10 @@ Cursor IDE & Windsurf:
     };
 
     window.startCheckout = async function(planId) {
+      if (planId === 'free') {
+        window.openFreeKeyModal();
+        return;
+      }
       const activeBtn = (typeof event !== 'undefined' && event && event.currentTarget) ? event.currentTarget : null;
       const origText = activeBtn ? activeBtn.innerHTML : '';
       if (activeBtn) {
@@ -2717,14 +2728,100 @@ Cursor IDE & Windsurf:
       window.history.replaceState({}, document.title, window.location.pathname);
     };
 
+    let activeFreeKey = '';
+    let activeFreeKeyTab = 'curl';
+
     window.openFreeKeyModal = function() {
-      window.startCheckout('free');
+      const modal = document.getElementById('free-key-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        const formView = document.getElementById('free-key-form-view');
+        const successView = document.getElementById('free-key-success-view');
+        const keyDisplay = document.getElementById('free-key-display');
+        const savedKey = localStorage.getItem('tailprint_api_key');
+
+        if (savedKey) {
+          activeFreeKey = savedKey;
+          if (keyDisplay) keyDisplay.innerText = savedKey;
+          renderFreeKeySnippet();
+          if (formView) formView.classList.add('hidden');
+          if (successView) successView.classList.remove('hidden');
+        } else {
+          if (formView) formView.classList.remove('hidden');
+          if (successView) successView.classList.add('hidden');
+        }
+
+        const emailInput = document.getElementById('free-key-email');
+        if (emailInput && !savedKey) setTimeout(function() { emailInput.focus(); }, 80);
+      }
     };
 
     window.closeFreeKeyModal = function() {
       const modal = document.getElementById('free-key-modal');
       if (modal) modal.classList.add('hidden');
     };
+
+    window.switchFreeKeyTab = function(tab) {
+      activeFreeKeyTab = tab;
+      ['curl', 'python', 'node'].forEach(function(t) {
+        const btn = document.getElementById('tab-fk-' + t);
+        if (btn) {
+          if (t === tab) {
+            btn.className = 'px-2 py-0.5 rounded bg-emerald-600 text-white font-bold';
+          } else {
+            btn.className = 'px-2 py-0.5 rounded text-slate-400 hover:text-white';
+          }
+        }
+      });
+      renderFreeKeySnippet();
+    };
+
+    function renderFreeKeySnippet() {
+      const snippetEl = document.getElementById('free-key-snippet');
+      if (!snippetEl) return;
+      const key = activeFreeKey || localStorage.getItem('tailprint_api_key') || 'sec_live_...';
+      const origin = window.location.origin;
+      const bslash = String.fromCharCode(92);
+      const nl = String.fromCharCode(10);
+      const sq = String.fromCharCode(39);
+      const demoPayload = JSON.stringify({ html: '<div class="p-8 font-sans"><h1>Hello World</h1></div>', smart_pagination: true });
+
+      if (activeFreeKeyTab === 'curl') {
+        snippetEl.innerText = [
+          'curl -X POST ' + origin + '/v1/render/pdf ' + bslash,
+          '  -H "Authorization: Bearer ' + key + '" ' + bslash,
+          '  -H "Content-Type: application/json" ' + bslash,
+          '  -d ' + sq + demoPayload + sq + ' ' + bslash,
+          '  --output output.pdf'
+        ].join(nl);
+      } else if (activeFreeKeyTab === 'python') {
+        snippetEl.innerText = [
+          '# pip install tailprint',
+          'from tailprint import TailprintClient',
+          '',
+          'client = TailprintClient(api_key="' + key + '")',
+          'pdf_bytes = client.render_pdf(',
+          '    html=' + JSON.stringify('<div class="p-8 font-sans"><h1>Hello from Python</h1></div>') + ',',
+          '    smart_pagination=True',
+          ')',
+          'with open("document.pdf", "wb") as f:',
+          '    f.write(pdf_bytes)'
+        ].join(nl);
+      } else if (activeFreeKeyTab === 'node') {
+        snippetEl.innerText = [
+          '// npm install tailprint',
+          'import { Tailprint } from "tailprint";',
+          'import fs from "fs";',
+          '',
+          'const client = new Tailprint({ apiKey: "' + key + '" });',
+          'const pdfBuffer = await client.renderPdf({',
+          '  html: ' + JSON.stringify('<div class="p-8 font-sans"><h1>Hello from Node.js</h1></div>') + ',',
+          '  smartPagination: true',
+          '});',
+          'fs.writeFileSync("document.pdf", pdfBuffer);'
+        ].join(nl);
+      }
+    }
 
     window.handleClaimFreeKey = async function(e) {
       e.preventDefault();
@@ -2734,7 +2831,6 @@ Cursor IDE & Windsurf:
       const formView = document.getElementById('free-key-form-view');
       const successView = document.getElementById('free-key-success-view');
       const keyDisplay = document.getElementById('free-key-display');
-      const curlDisplay = document.getElementById('free-key-curl');
 
       if (!emailInput || !emailInput.value) return;
 
@@ -2758,23 +2854,14 @@ Cursor IDE & Windsurf:
           return;
         }
 
+        activeFreeKey = data.apiKey;
         localStorage.setItem('tailprint_api_key', data.apiKey);
-        keyDisplay.innerText = data.apiKey;
+        if (keyDisplay) keyDisplay.innerText = data.apiKey;
+        renderFreeKeySnippet();
+
         if (typeof window.switchMcpTab === 'function') {
           window.switchMcpTab('claude');
         }
-
-        const sq = String.fromCharCode(39);
-        const bslash = String.fromCharCode(92);
-        const nl = String.fromCharCode(10);
-        const demoPayload = JSON.stringify({ html: '<h1 class="text-2xl font-bold text-indigo-600">Hello from Tailprint</h1>' });
-        curlDisplay.innerText = [
-          'curl -X POST ' + window.location.origin + '/v1/render/pdf ' + bslash,
-          '  -H "Authorization: Bearer ' + data.apiKey + '" ' + bslash,
-          '  -H "Content-Type: application/json" ' + bslash,
-          '  -d ' + sq + demoPayload + sq + ' ' + bslash,
-          '  --output invoice.pdf'
-        ].join(nl);
 
         formView.classList.add('hidden');
         successView.classList.remove('hidden');
@@ -2795,6 +2882,13 @@ Cursor IDE & Windsurf:
         setTimeout(function() { if (btn) btn.innerText = 'Copy'; }, 2000);
       });
     };
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeFreeKeyModal();
+        closeSuccessModal();
+      }
+    });
 
     // Initialize default MCP config on page load
     setTimeout(function() {
