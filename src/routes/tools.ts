@@ -6539,6 +6539,30 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
             <span id="verify-badge" class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">SIGNED</span>
           </div>
 
+          <!-- Isotope Time-Limited Lifecycle Panel -->
+          <div id="isotope-panel" class="hidden p-4 rounded-xl border border-amber-500/40 bg-amber-950/20 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">⏱️</span>
+                <div>
+                  <h5 id="isotope-status-title" class="text-xs font-bold text-amber-300">Time-Limited Isotope PDF Active</h5>
+                  <p id="isotope-status-sub" class="text-[11px] text-slate-300 font-mono">Expires at: -</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <a id="isotope-hosted-link" href="#" target="_blank" class="hidden px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-bold text-amber-300">
+                  📄 Open Hosted PDF ↗
+                </a>
+                <button type="button" onclick="triggerLifecycleAction('expire_now')" class="px-2.5 py-1 rounded-lg bg-rose-600/90 hover:bg-rose-500 text-white text-[11px] font-bold cursor-pointer">
+                  🔴 Expire Now (SCRAM)
+                </button>
+                <button type="button" onclick="triggerLifecycleAction('extend')" class="px-2.5 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-[11px] font-bold cursor-pointer">
+                  🟢 Extend +7d
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
               <span class="text-[10px] text-slate-500 block uppercase font-bold">Document ID</span>
@@ -6645,12 +6669,19 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         subtitle.textContent = (report.reasons && report.reasons[0]) || 'Signature or content fingerprint mismatch';
         badge.textContent = 'TAMPERED';
         badge.className = 'px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+      } else if (report.expired) {
+        banner.className = 'p-4 rounded-xl border border-rose-500/50 bg-rose-950/40 flex items-center justify-between';
+        icon.textContent = '⛔';
+        title.textContent = report.revoked ? 'Document Revoked (SCRAM Kill Switch Triggered)' : 'Time-Limited Document Expired';
+        subtitle.textContent = report.expire_message || (report.reasons && report.reasons[0]) || 'Document half-life reached — prices & terms are no longer valid';
+        badge.textContent = report.revoked ? 'REVOKED' : 'EXPIRED / DECAYED';
+        badge.className = 'px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40';
       } else if (report.valid) {
         banner.className = 'p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 flex items-center justify-between';
         icon.textContent = '✅';
-        title.textContent = report.signed ? 'Cryptographically Verified Tailprint PDF' : 'Valid Dual-Brain Tailprint PDF';
+        title.textContent = report.isotope ? 'Active Time-Limited Isotope PDF' : (report.signed ? 'Cryptographically Verified Tailprint PDF' : 'Valid Dual-Brain Tailprint PDF');
         subtitle.textContent = (report.reasons && report.reasons[0]) || '100% content integrity verified';
-        badge.textContent = report.signed ? 'SIGNED & VERIFIED' : 'DUAL-BRAIN READY';
+        badge.textContent = report.isotope ? 'ACTIVE & VALID' : (report.signed ? 'SIGNED & VERIFIED' : 'DUAL-BRAIN READY');
         badge.className = 'px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
       } else {
         banner.className = 'p-4 rounded-xl border border-amber-500/40 bg-amber-950/30 flex items-center justify-between';
@@ -6659,6 +6690,39 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
         subtitle.textContent = (report.reasons && report.reasons[0]) || 'No Dual-Brain manifest found';
         badge.textContent = 'UNVERIFIED';
         badge.className = 'px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      }
+
+      var isoPanel = document.getElementById('isotope-panel');
+      var isoTitle = document.getElementById('isotope-status-title');
+      var isoSub = document.getElementById('isotope-status-sub');
+      var isoLink = document.getElementById('isotope-hosted-link');
+      if (isoPanel) {
+        if (report.isotope || report.expires_at || report.expired) {
+          isoPanel.classList.remove('hidden');
+          var readsInfo = report.max_reads ? (' • Reads: ' + (report.reads_count || 0) + '/' + report.max_reads) : (report.reads_count ? (' • Reads: ' + report.reads_count) : '');
+          if (report.expired) {
+            isoPanel.className = 'p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 space-y-3';
+            isoTitle.className = 'text-xs font-bold text-rose-300';
+            isoTitle.textContent = report.revoked ? '⛔ Document Revoked via Remote Kill Switch' : '⛔ Time-Limited Document Expired (Decayed State Active)';
+            isoSub.textContent = 'Expired at: ' + (report.expires_at ? report.expires_at.slice(0, 19).replace('T', ' ') + ' UTC' : 'Now') + readsInfo;
+          } else {
+            isoPanel.className = 'p-4 rounded-xl border border-amber-500/40 bg-amber-950/20 space-y-3';
+            isoTitle.className = 'text-xs font-bold text-amber-300';
+            isoTitle.textContent = '⏱️ Time-Limited Isotope PDF — Active & Valid';
+            var remStr = typeof report.remaining_seconds === 'number'
+              ? (' (' + Math.max(0, Math.round(report.remaining_seconds / 60)) + ' min left)')
+              : '';
+            isoSub.textContent = 'Valid until: ' + (report.expires_at ? report.expires_at.slice(0, 19).replace('T', ' ') + ' UTC' : 'Active') + remStr + readsInfo;
+          }
+          if (report.hosted_file_id && isoLink) {
+            isoLink.href = '/d/' + encodeURIComponent(report.hosted_file_id);
+            isoLink.classList.remove('hidden');
+          } else if (isoLink) {
+            isoLink.classList.add('hidden');
+          }
+        } else {
+          isoPanel.classList.add('hidden');
+        }
       }
 
       document.getElementById('res-doc-id').textContent = report.doc_id || 'None';
@@ -6720,7 +6784,7 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           return;
         }
         renderReportUI({
-          valid: true,
+          valid: !data.expired,
           signed: data.signed,
           tampered: false,
           ai_ready: data.ai_ready,
@@ -6733,10 +6797,51 @@ Takeaway: Visit tailprint.com for 100 free renders.`;
           content_fingerprint: data.content_fingerprint,
           data_keys: data.data_keys,
           data: null,
-          reasons: ['Registered in Tailprint Cryptographic Proof Ledger. Drop the PDF file on the left to extract its full Dual-Brain JSON payload and verify byte integrity.']
+          isotope: data.isotope,
+          expired: data.expired,
+          revoked: data.revoked,
+          expires_at: data.expires_at,
+          remaining_seconds: data.remaining_seconds,
+          reads_count: data.reads_count,
+          max_reads: data.max_reads,
+          expire_message: data.expire_message,
+          hosted_file_id: data.hosted_file_id,
+          reasons: [
+            data.expired
+              ? (data.expire_message || 'Time-limited document has expired or been revoked via Remote Lifecycle API.')
+              : 'Registered in Tailprint Cryptographic Proof Ledger. Drop the PDF file on the left to extract its full Dual-Brain JSON payload and verify byte integrity.'
+          ]
         });
       } catch (err) {
         alert('Lookup failed');
+      }
+    }
+
+    async function triggerLifecycleAction(action) {
+      var docId = (document.getElementById('doc-id-input').value || '').trim();
+      if (!docId) return;
+      try {
+        var res = await fetch('/v1/pdf/expire', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            doc_id: docId,
+            action: action,
+            extend_by: action === 'extend' ? '7d' : undefined
+          })
+        });
+        var data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'Lifecycle action failed');
+          return;
+        }
+        if (selectedPdfDataUri) {
+          await runFileVerification();
+        } else {
+          await lookupByDocId();
+        }
+      } catch (err) {
+        alert('Lifecycle update failed');
       }
     }
 

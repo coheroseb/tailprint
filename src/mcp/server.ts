@@ -7,6 +7,7 @@ import { eInvoiceService } from '../services/eInvoice.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
 import { presentationService } from '../services/presentation.js';
 import { smartPdfService } from '../services/smartPdf.js';
+import { redisService } from '../services/redis.js';
 import { TEMPLATES } from '../config/templates.js';
 import { resolveTemplateRequest } from '../services/templateEngine.js';
 
@@ -64,8 +65,12 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       password: z.string().optional().describe('Optional password to encrypt the PDF with AES-256'),
       wait_for: z.string().optional().describe('Optional CSS selector to wait for before rendering'),
       delay_ms: z.number().optional().describe('Optional delay in milliseconds before rendering (max 5000)'),
+      document_ttl: z.string().optional().describe('Optional Time-Limited Isotope PDF half-life duration (e.g. "24h", "7d", "14d"). Supports <span data-isotope="14d" data-decayed="[EXPIRED]"> in HTML.'),
+      expire_mode: z.enum(['replace_and_stamp', 'replace_only', 'lockout']).optional().describe('How the hosted PDF behaves after expiration: "replace_and_stamp" (selective field decay + EXPIRED stamp), "replace_only" (field replacement only), or "lockout" (1-page expired certificate)'),
+      max_reads: z.number().int().positive().optional().describe('Optional maximum number of reads/downloads before automatic expiration (Geiger read limit)'),
+      expire_message: z.string().optional().describe('Optional custom expiration notice'),
     },
-    async ({ html, url, template_id, data, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms }) => {
+    async ({ html, url, template_id, data, format, landscape, print_background, header_html, footer_html, password, wait_for, delay_ms, document_ttl, expire_mode, max_reads, expire_message }) => {
       try {
         if (template_id && (html || url)) {
           throw new Error('Provide only one of html, url or template_id.');
@@ -80,7 +85,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           await options.onUsage('render_pdf');
         }
 
-        const buffer = await browserService.renderPdf({
+        const rawBuffer = await browserService.renderPdf({
           html: resolved.html,
           url: resolved.url,
           format: format || 'A4',
@@ -91,7 +96,31 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           password,
           wait_for,
           delay_ms,
+          document_ttl,
+          expire_mode,
+          expire_message,
+          max_reads,
         });
+        const customButtons = browserService.getCustomButtonPlacement(rawBuffer);
+        const rawDecayedBuffer = browserService.getDecayedPdfBuffer(rawBuffer);
+        const domSynapses = browserService.getExtractedDomSynapses(rawBuffer);
+
+        const enriched = await smartPdfService.enrichPdf(rawBuffer, {
+          data: resolved.data || null,
+          templateId: resolved.template_id || null,
+          sign: true,
+          documentTtl: document_ttl,
+          expireMode: expire_mode,
+          expireMessage: expire_message,
+          maxReads: max_reads,
+          hasCustomExpireButton: customButtons?.hasCustomExpireButton,
+          isotopeElementCount: customButtons?.isotopeElementCount,
+          inferredIsotopeTtl: customButtons?.inferredIsotopeTtl,
+          isotope: Boolean(document_ttl || max_reads || expire_mode || expire_message || customButtons?.hasCustomExpireButton || (customButtons?.isotopeElementCount && customButtons.isotopeElementCount > 0)),
+          rawDecayedBuffer,
+          domSynapses,
+        });
+        const buffer = enriched.buffer;
 
         const base64Pdf = buffer.toString('base64');
         const sizeKb = (buffer.byteLength / 1024).toFixed(1);
@@ -100,13 +129,25 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           mimeType: 'application/pdf',
           extension: 'pdf',
           filename: 'rendered.pdf',
+          expiresIn: document_ttl,
+          expiresAt: enriched.expiresAt || undefined,
+          docId: enriched.docId,
+          isotope: enriched.isotope,
+          decayedBuffer: enriched.decayedBuffer,
+          expireMessage: expire_message || null,
+          maxReads: max_reads ?? null,
         });
+        if (enriched.docId) {
+          await redisService.updatePdfProof(enriched.docId, {
+            hosted_file_id: stored.fileId,
+          });
+        }
 
         return {
           content: [
             {
               type: 'text',
-              text: `✅ **PDF successfully generated!** (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}${password ? ', Encrypted' : ''})\n\n🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n*(Link hosted on Tailprint CDN, expires in 24 hours)*\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
+              text: `✅ **PDF successfully generated!** (${sizeKb} KB, ${format || 'A4'}${landscape ? ', Landscape' : ''}${password ? ', Encrypted' : ''}${enriched.isotope ? `, Time-Limited until ${enriched.expiresAt}` : ''})\n\n🆔 **Document ID:** \`${enriched.docId}\`\n🔗 **Direct Download Link:** [${stored.hostedUrl}](${stored.hostedUrl})\n\nBase64 Data URI:\ndata:application/pdf;base64,${base64Pdf}`,
             },
           ],
         };
@@ -840,13 +881,16 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
               text: [
                 report.tampered
                   ? `🚨 **TAMPERING DETECTED — PDF Altered After Issuance**`
-                  : report.valid
-                    ? `✅ **Cryptographically Verified & Intact Tailprint PDF**`
-                    : `ℹ️ **Standard / Unsigned PDF Document**`,
+                  : report.expired
+                    ? `⛔ **TIME-LIMITED DOCUMENT EXPIRED / REVOKED**`
+                    : report.valid
+                      ? `✅ **Cryptographically Verified & Intact Tailprint PDF**`
+                      : `ℹ️ **Standard / Unsigned PDF Document**`,
                 ``,
                 `- **Document ID:** \`${report.doc_id || 'N/A'}\``,
                 `- **Signed:** \`${report.signed}\` (Signature Valid: \`${report.signature_valid}\`)`,
                 `- **Tampered:** \`${report.tampered}\` (Content Intact: \`${report.content_intact}\`)`,
+                `- **Time-Limited (Isotope):** \`${Boolean(report.isotope)}\` (Expired: \`${Boolean(report.expired)}\`, Expires At: \`${report.expires_at || 'N/A'}\`)`,
                 `- **AI-Ready (Dual-Brain):** \`${report.ai_ready}\``,
                 `- **Template:** \`${report.template_id || 'Custom HTML'}\``,
                 `- **File SHA-256:** \`${report.file_sha256}\``,
@@ -868,6 +912,61 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
             {
               type: 'text',
               text: `Error verifying/extracting PDF: ${err.message || 'Unknown error'}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Tool 13: manage_pdf_lifecycle (Time-Limited Isotope PDF Kill Switch & Extension)
+  server.tool(
+    'manage_pdf_lifecycle',
+    'Manages the real-time lifecycle of a Time-Limited Isotope PDF document by doc_id or file_id: check expiration status ("status"), immediately revoke/expire the document via remote SCRAM Kill Switch ("expire_now"), or extend its validity window ("extend").',
+    {
+      doc_id: z.string().optional().describe('Document ID (e.g. doc_a94f82c1e0b319a4)'),
+      file_id: z.string().optional().describe('Hosted File ID (e.g. f_3b8e9a12c4d5e6f7.pdf)'),
+      action: z.enum(['status', 'expire_now', 'extend']).default('status').describe('Lifecycle action: "status", "expire_now" (remote kill switch), or "extend"'),
+      extend_by: z.string().optional().describe('Duration to extend by when action="extend" (e.g. "24h", "7d", "14d")'),
+      expire_message: z.string().optional().describe('Optional custom expiration reason/message'),
+    },
+    async ({ doc_id, file_id, action, extend_by, expire_message }) => {
+      try {
+        const result = await smartPdfService.manageDocumentLifecycle({
+          docId: doc_id,
+          fileId: file_id,
+          action: action || 'status',
+          extendBy: extend_by,
+          expireMessage: expire_message,
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: [
+                result.expired
+                  ? `⛔ **Document Expired / Revoked** (\`${result.doc_id}\`)`
+                  : `✅ **Document Active & Valid** (\`${result.doc_id}\`)`,
+                ``,
+                `- **Action:** \`${action || 'status'}\``,
+                `- **Status:** ${result.message}`,
+                `- **Expires At:** \`${result.expires_at || 'None'}\``,
+                `- **Remaining Seconds:** \`${result.remaining_seconds ?? 'N/A'}\``,
+                `- **Geiger Reads:** \`${result.reads_count}${result.max_reads ? ` / ${result.max_reads}` : ''}\``,
+                result.hosted_url ? `- **Hosted URL:** ${result.hosted_url}` : '',
+              ]
+                .filter(Boolean)
+                .join('\n'),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Error managing PDF lifecycle: ${err.message || 'Unknown error'}`,
             },
           ],
         };

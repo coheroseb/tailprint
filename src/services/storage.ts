@@ -12,14 +12,76 @@ export interface StoredFileMetadata {
   createdAt: string;
   expiresAt: string;
   hostedUrl: string;
+  docId?: string | null;
+  isotope?: boolean;
+  hasDecayedFile?: boolean;
+  revoked?: boolean;
+  revokedAt?: string | null;
+  expireMessage?: string | null;
+  maxReads?: number | null;
+  readsCount?: number;
+  hardDeleteAt?: string;
 }
 
 export interface SaveFileOptions {
   mimeType: string;
   extension: string;
   filename?: string;
-  expiresIn?: '1h' | '24h' | '7d';
+  expiresIn?: string;
+  expiresAt?: string;
   isPermanent?: boolean;
+  docId?: string | null;
+  isotope?: boolean;
+  decayedBuffer?: Buffer;
+  expireMessage?: string | null;
+  maxReads?: number | null;
+}
+
+/**
+ * Parses a human-friendly duration string (e.g. "500ms", "30s", "15m", "1h", "24h", "7d", "14d", "30d")
+ * into milliseconds. Defaults to 24 hours if unrecognized.
+ */
+export function parseDurationToMs(duration?: string | null): number {
+  if (!duration || typeof duration !== 'string') {
+    return 24 * 60 * 60 * 1000;
+  }
+  const trimmed = duration.trim().toLowerCase();
+  const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(ms|s|sec|secs|m|min|mins|h|hr|hrs|d|day|days|w|wk|wks)$/i);
+  if (!match) {
+    const asDate = Date.parse(duration.trim());
+    if (!Number.isNaN(asDate)) {
+      return Math.max(0, asDate - Date.now());
+    }
+    return 24 * 60 * 60 * 1000;
+  }
+  const value = parseFloat(match[1]);
+  const unit = match[2].toLowerCase();
+  switch (unit) {
+    case 'ms':
+      return Math.round(value);
+    case 's':
+    case 'sec':
+    case 'secs':
+      return Math.round(value * 1000);
+    case 'm':
+    case 'min':
+    case 'mins':
+      return Math.round(value * 60 * 1000);
+    case 'h':
+    case 'hr':
+    case 'hrs':
+      return Math.round(value * 60 * 60 * 1000);
+    case 'd':
+    case 'day':
+    case 'days':
+      return Math.round(value * 24 * 60 * 60 * 1000);
+    case 'w':
+    case 'wk':
+    case 'wks':
+      return Math.round(value * 7 * 24 * 60 * 60 * 1000);
+    default:
+      return 24 * 60 * 60 * 1000;
+  }
 }
 
 export class StorageService {
@@ -69,20 +131,22 @@ export class StorageService {
     const randomToken = crypto.randomBytes(12).toString('hex');
     const fileId = `f_${randomToken}.${rawExt}`;
     const filePath = path.join(this.storageDir, fileId);
+    const decayedPath = path.join(this.storageDir, `${fileId}.decayed`);
     const metaPath = path.join(this.storageDir, `${fileId}.meta.json`);
 
     const now = Date.now();
-    let ttlMs = 24 * 60 * 60 * 1000; // 24 hours default
-
-    if (options.expiresIn === '1h') {
-      ttlMs = 60 * 60 * 1000;
-    } else if (options.expiresIn === '7d') {
-      ttlMs = 7 * 24 * 60 * 60 * 1000;
+    let expiresAt: string;
+    if (options.expiresAt && !Number.isNaN(Date.parse(options.expiresAt))) {
+      expiresAt = new Date(Date.parse(options.expiresAt)).toISOString();
+    } else {
+      const ttlMs = parseDurationToMs(options.expiresIn || '24h');
+      expiresAt = new Date(now + ttlMs).toISOString();
     }
 
-    const expiresAt = new Date(now + ttlMs).toISOString();
     const cleanAppUrl = env.APP_URL.replace(/\/+$/, '');
     const hostedUrl = `${cleanAppUrl}/d/${fileId}`;
+    const hasDecayedFile = Boolean(options.decayedBuffer && options.decayedBuffer.length > 0);
+    const isIsotope = Boolean(options.isotope || hasDecayedFile || options.maxReads);
 
     const metadata: StoredFileMetadata = {
       fileId,
@@ -92,22 +156,41 @@ export class StorageService {
       createdAt: new Date(now).toISOString(),
       expiresAt,
       hostedUrl,
+      ...(options.docId ? { docId: options.docId } : {}),
+      ...(isIsotope
+        ? {
+            isotope: true,
+            hasDecayedFile,
+            revoked: false,
+            revokedAt: null,
+            expireMessage: options.expireMessage || null,
+            maxReads: options.maxReads ?? null,
+            readsCount: 0,
+            hardDeleteAt: new Date(now + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          }
+        : {}),
     };
 
     await fs.promises.writeFile(filePath, buffer);
+    if (hasDecayedFile && options.decayedBuffer) {
+      await fs.promises.writeFile(decayedPath, options.decayedBuffer);
+    }
     await fs.promises.writeFile(metaPath, JSON.stringify(metadata, null, 2), 'utf-8');
 
     return metadata;
   }
 
   /**
-   * Retrieves a stored file by ID if it exists and has not expired.
+   * Retrieves a stored file by ID if it exists.
+   * For Isotope / time-limited PDFs with a decayed state, automatically transitions to serving
+   * the decayed PDF buffer once `expiresAt` is reached, `maxReads` is exceeded, or `revoked` is true.
    */
   public async getFile(
     fileId: string
-  ): Promise<{ buffer: Buffer; metadata: StoredFileMetadata } | null> {
+  ): Promise<{ buffer: Buffer; metadata: StoredFileMetadata; decayed?: boolean } | null> {
     const safeFileId = path.basename(fileId);
     const filePath = path.join(this.storageDir, safeFileId);
+    const decayedPath = path.join(this.storageDir, `${safeFileId}.decayed`);
     const metaPath = path.join(this.storageDir, `${safeFileId}.meta.json`);
 
     if (!fs.existsSync(filePath) || !fs.existsSync(metaPath)) {
@@ -120,17 +203,122 @@ export class StorageService {
 
       const now = Date.now();
       const expiresAtMs = new Date(metadata.expiresAt).getTime();
+      const isTimeExpired = now > expiresAtMs;
+      const isRevoked = Boolean(metadata.revoked);
+      const isMaxReadsReached =
+        typeof metadata.maxReads === 'number' &&
+        metadata.maxReads > 0 &&
+        (metadata.readsCount || 0) >= metadata.maxReads;
 
-      if (now > expiresAtMs) {
-        // Expired - clean up immediately
+      if (metadata.isotope || metadata.hasDecayedFile) {
+        const hardDeleteMs = metadata.hardDeleteAt
+          ? new Date(metadata.hardDeleteAt).getTime()
+          : expiresAtMs + 30 * 24 * 60 * 60 * 1000;
+
+        if (now > hardDeleteMs) {
+          await fs.promises.unlink(filePath).catch(() => {});
+          await fs.promises.unlink(decayedPath).catch(() => {});
+          await fs.promises.unlink(metaPath).catch(() => {});
+          return null;
+        }
+
+        if (isTimeExpired || isRevoked || isMaxReadsReached) {
+          if (fs.existsSync(decayedPath)) {
+            const decayedBuffer = await fs.promises.readFile(decayedPath);
+            return { buffer: decayedBuffer, metadata, decayed: true };
+          }
+          return null;
+        }
+
+        // Still active: increment Geiger counter (`readsCount`)
+        metadata.readsCount = (metadata.readsCount || 0) + 1;
+        await fs.promises.writeFile(metaPath, JSON.stringify(metadata, null, 2), 'utf-8');
+
+        const buffer = await fs.promises.readFile(filePath);
+        return { buffer, metadata, decayed: false };
+      }
+
+      if (isTimeExpired) {
+        // Non-isotope file expired - clean up immediately
         await fs.promises.unlink(filePath).catch(() => {});
         await fs.promises.unlink(metaPath).catch(() => {});
         return null;
       }
 
       const buffer = await fs.promises.readFile(filePath);
-      return { buffer, metadata };
+      return { buffer, metadata, decayed: false };
     } catch (err) {
+      return null;
+    }
+  }
+
+  /**
+   * Reads file metadata without incrementing the Geiger counter (`readsCount`).
+   */
+  public async getFileMetadata(fileId: string): Promise<StoredFileMetadata | null> {
+    const safeFileId = path.basename(fileId);
+    const metaPath = path.join(this.storageDir, `${safeFileId}.meta.json`);
+    if (!fs.existsSync(metaPath)) return null;
+    try {
+      const raw = await fs.promises.readFile(metaPath, 'utf-8');
+      return JSON.parse(raw) as StoredFileMetadata;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Finds a stored file's metadata by its associated `docId`.
+   */
+  public async findFileByDocId(docId: string): Promise<StoredFileMetadata | null> {
+    try {
+      const files = await fs.promises.readdir(this.storageDir);
+      const metaFiles = files.filter((f) => f.endsWith('.meta.json'));
+      for (const metaFile of metaFiles) {
+        const metaPath = path.join(this.storageDir, metaFile);
+        try {
+          const raw = await fs.promises.readFile(metaPath, 'utf-8');
+          const meta: StoredFileMetadata = JSON.parse(raw);
+          if (meta.docId === docId) {
+            return meta;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+
+  /**
+   * Updates the lifecycle metadata (`expiresAt`, `revoked`, `revokedAt`, `maxReads`, `readsCount`, `expireMessage`)
+   * for a stored file by `fileId`.
+   */
+  public async updateFileLifecycle(
+    fileId: string,
+    patch: Partial<
+      Pick<
+        StoredFileMetadata,
+        'expiresAt' | 'revoked' | 'revokedAt' | 'maxReads' | 'readsCount' | 'expireMessage' | 'isotope'
+      >
+    >
+  ): Promise<StoredFileMetadata | null> {
+    const safeFileId = path.basename(fileId);
+    const metaPath = path.join(this.storageDir, `${safeFileId}.meta.json`);
+    if (!fs.existsSync(metaPath)) return null;
+
+    try {
+      const raw = await fs.promises.readFile(metaPath, 'utf-8');
+      const metadata: StoredFileMetadata = JSON.parse(raw);
+      const updated: StoredFileMetadata = {
+        ...metadata,
+        ...patch,
+      };
+      await fs.promises.writeFile(metaPath, JSON.stringify(updated, null, 2), 'utf-8');
+      return updated;
+    } catch {
       return null;
     }
   }
@@ -150,13 +338,20 @@ export class StorageService {
         try {
           const raw = await fs.promises.readFile(metaPath, 'utf-8');
           const meta: StoredFileMetadata = JSON.parse(raw);
-          const expiresAtMs = new Date(meta.expiresAt).getTime();
+          const deleteAtMs =
+            meta.isotope || meta.hasDecayedFile
+              ? meta.hardDeleteAt
+                ? new Date(meta.hardDeleteAt).getTime()
+                : new Date(meta.expiresAt).getTime() + 30 * 24 * 60 * 60 * 1000
+              : new Date(meta.expiresAt).getTime();
 
-          if (now > expiresAtMs) {
+          if (now > deleteAtMs) {
             const dataFile = metaFile.replace(/\.meta\.json$/, '');
             const dataPath = path.join(this.storageDir, dataFile);
+            const decayedPath = path.join(this.storageDir, `${dataFile}.decayed`);
 
             await fs.promises.unlink(dataPath).catch(() => {});
+            await fs.promises.unlink(decayedPath).catch(() => {});
             await fs.promises.unlink(metaPath).catch(() => {});
             purgedCount++;
           }

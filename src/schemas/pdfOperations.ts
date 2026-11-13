@@ -133,6 +133,14 @@ export const SmartPdfVerificationResponseSchema = z.object({
   tampered: z.boolean().describe('True if visual page streams, page count, or embedded JSON data were modified after issuance'),
   ai_ready: z.boolean().describe('True if lossless Dual-Brain structured JSON is embedded inside the PDF catalog'),
   neural_implant: z.boolean().optional().describe('True if a Neural-Implant Spatial Cortex (tailprint-cortex.json) is embedded inside the PDF'),
+  isotope: z.boolean().optional().describe('True if the document is a Time-Limited Isotope PDF with a half-life expiration or Geiger read limit'),
+  expired: z.boolean().optional().describe('True if the Time-Limited Isotope PDF has expired or reached its max_reads limit'),
+  revoked: z.boolean().optional().describe('True if the document was manually revoked/expired (SCRAM) by the issuer'),
+  expires_at: z.string().nullable().optional().describe('ISO-8601 expiration timestamp of the document'),
+  remaining_seconds: z.number().nullable().optional().describe('Remaining validity seconds before automatic Isotope decay'),
+  reads_count: z.number().nullable().optional().describe('Geiger Counter: number of times the document has been opened/verified/queried'),
+  max_reads: z.number().nullable().optional().describe('Geiger Counter: maximum allowed reads before automatic expiration'),
+  expire_message: z.string().nullable().optional().describe('Custom expiration notice set by the issuer'),
   doc_id: z.string().nullable().describe('Unique Tailprint document identifier (e.g. doc_...)'),
   issued_at: z.string().nullable().describe('ISO-8601 timestamp when the PDF was generated and signed'),
   issuer: z.string().nullable().describe('Issuer account or domain identifier'),
@@ -264,5 +272,85 @@ export const PdfProofLookupResponseSchema = z.object({
   data_keys: z.array(z.string()),
   signature: z.string().nullable(),
   verification_url: z.string(),
+  isotope: z.boolean().optional(),
+  expired: z.boolean().optional(),
+  revoked: z.boolean().optional(),
+  expires_at: z.string().nullable().optional(),
+  remaining_seconds: z.number().nullable().optional(),
+  reads_count: z.number().nullable().optional(),
+  max_reads: z.number().nullable().optional(),
+  expire_message: z.string().nullable().optional(),
+  hosted_file_id: z.string().nullable().optional(),
 });
+
+export const DocumentLifecycleRequestSchema = z
+  .object({
+    doc_id: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('Tailprint Document ID (e.g. "doc_...") to inspect, expire, or extend'),
+    file_id: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('Hosted File ID (e.g. "f_...pdf") to inspect, expire, or extend'),
+    action: z
+      .enum(['status', 'expire_now', 'extend'])
+      .default('status')
+      .describe('Lifecycle action: "status" (inspect live countdown & reads), "expire_now" (SCRAM / immediate Kill Switch), or "extend" (extend or reactivate validity window)'),
+    extend_by: z
+      .string()
+      .max(64)
+      .optional()
+      .describe('Duration to extend the document validity by when action is "extend" (e.g. "24h", "7d", "14d", "30d"). Defaults to "7d".'),
+    expires_at: z
+      .string()
+      .max(128)
+      .optional()
+      .describe('Explicit new ISO-8601 expiration timestamp when action is "extend"'),
+    expire_message: z
+      .string()
+      .max(500)
+      .optional()
+      .describe('Optional custom expiration notice displayed to recipients after expiration/revocation'),
+    max_reads: z
+      .coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100000)
+      .optional()
+      .describe('Optional updated Geiger Counter maximum read limit'),
+  })
+  .refine((d) => Boolean(d.doc_id || d.file_id), {
+    message: 'Either "doc_id" or "file_id" must be provided',
+    path: ['doc_id'],
+  });
+
+export type DocumentLifecycleRequest = z.infer<typeof DocumentLifecycleRequestSchema>;
+
+export const DocumentLifecycleResponseSchema = z.object({
+  success: z.boolean(),
+  doc_id: z.string().nullable(),
+  file_id: z.string().nullable(),
+  hosted_url: z.string().nullable(),
+  verify_url: z.string().nullable(),
+  status: z.enum(['active', 'expired', 'revoked']),
+  isotope: z.boolean(),
+  expired: z.boolean(),
+  revoked: z.boolean(),
+  issued_at: z.string().nullable(),
+  expires_at: z.string().nullable(),
+  revoked_at: z.string().nullable(),
+  remaining_seconds: z.number(),
+  reads_count: z.number(),
+  max_reads: z.number().nullable(),
+  expire_message: z.string().nullable(),
+  decayed_elements_count: z.number(),
+  message: z.string(),
+});
+
+export type DocumentLifecycleResponse = z.infer<typeof DocumentLifecycleResponseSchema>;
+
 

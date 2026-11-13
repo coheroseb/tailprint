@@ -1827,6 +1827,97 @@ pdfBytes, err := client.RenderTemplate(
       </section>
     `,
   },
+
+  'time-limited-isotope-pdf-self-expiring-quotes': {
+    slug: 'time-limited-isotope-pdf-self-expiring-quotes',
+    title: 'Time-Limited Isotope PDFs: Self-Expiring Sales Quotes, Selective Field Decay & Remote Kill Switch',
+    seoTitle: 'Time-Limited Expiring PDF API: Selective Field Decay & Remote Kill Switch | Tailprint',
+    description: 'How to render Time-Limited Isotope PDFs with half-life expiration (document_ttl), selective DOM field decay (<span data-isotope="14d" data-decayed="[EXPIRED]">), AES-256-GCM time-locked Dual-Brain JSON, and instant remote revocation (POST /v1/pdf/expire).',
+    category: 'Smart PDF Architecture',
+    readTime: '7 min read',
+    datePublished: '2026-11-13T18:00:00Z',
+    dateModified: '2026-11-13T19:00:00Z',
+    keywords: 'expiring pdf api, time limited pdf quote, self expiring pdf document, revoke pdf remotely, data-isotope html pdf, pdf kill switch api, geiger read limit pdf',
+    relatedTool: {
+      name: 'Interactive PDF Verifier & Kill Switch (/verify)',
+      url: '/verify',
+    },
+    contentHtml: `
+      <section class="space-y-6">
+        <p class="text-lg text-slate-300 leading-relaxed">
+          Traditional PDFs are immortal the moment you email them. If a sales rep sends a discounted enterprise quote valid for 14 days, or a temporary access pass valid for 3 views, that PDF still displays the original price and credentials in the customer's inbox 6 months later.
+        </p>
+
+        <div class="p-5 rounded-2xl bg-amber-950/40 border border-amber-500/30">
+          <h3 class="text-amber-300 font-bold text-sm uppercase tracking-wider mb-2">⏱️ Inspired by Radioactive Half-Life: Time-Limited Isotope PDFs</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Tailprint's <strong>Isotope PDF Engine</strong> introduces programmable half-life decay to PDF documents. In a single Chromium render pass, Tailprint compiles both the <strong>Active Vector PDF</strong> and the <strong>Decayed Vector PDF</strong>, encrypts the embedded Dual-Brain JSON payload with <code>AES-256-GCM</code>, and binds the document to a real-time lifecycle ledger.
+          </p>
+        </div>
+
+        <h2 class="text-2xl font-bold text-white pt-6">1. Selective Field Decay with <code>data-isotope</code></h2>
+        <p class="text-slate-300 leading-relaxed">
+          Instead of returning a broken 404 link when a quote expires, mark sensitive prices, discount codes, or terms in your HTML with <code>data-isotope</code> and <code>data-decayed</code>. While active, the recipient sees the live offer; once the half-life expires (or you trigger the remote Kill Switch), the hosted PDF link seamlessly serves the decayed state where only those specific fields have decayed:
+        </p>
+
+        <pre class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-amber-200 font-mono text-xs overflow-x-auto leading-relaxed"><code>&lt;div class="p-10 font-sans"&gt;
+  &lt;h1 class="text-2xl font-bold"&gt;Enterprise Cloud Proposal #Q-2026-89&lt;/h1&gt;
+  &lt;p class="mt-4 text-lg"&gt;
+    Special Promotional Price:
+    &lt;span data-isotope="14d" data-decayed="[OFFER EXPIRED — CONTACT SALES]" class="font-bold text-emerald-600"&gt;
+      85,000 DKK / year (25% Discount)
+    &lt;/span&gt;
+  &lt;/p&gt;
+
+  &lt;!-- Custom clickable live validity check button --&gt;
+  &lt;div data-expire-button class="mt-6 inline-block px-4 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs"&gt;
+    ⏱️ Verify Live Quote Validity
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+        <h2 class="text-2xl font-bold text-white pt-6">2. Rendering a Time-Limited PDF via API</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Pass <code>document_ttl</code> (e.g. <code>"30m"</code>, <code>"24h"</code>, <code>"14d"</code>), <code>expire_mode</code> (<code>"redact"</code> for selective field decay or <code>"lockout"</code> for a 1-page Expired Certificate), and optional <code>max_reads</code> (Geiger counter read limit):
+        </p>
+
+        <pre class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-indigo-200 font-mono text-xs overflow-x-auto leading-relaxed"><code>curl -X POST https://tailprint.com/v1/render/pdf \\
+  -H "Authorization: Bearer sec_live_your_api_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "template_id": "invoice-modern",
+    "data": { ... },
+    "store": true,
+    "document_ttl": "14d",
+    "expire_mode": "redact",
+    "max_reads": 10,
+    "expire_message": "Quote #Q-2026-89 expired after 14 days."
+  }'</code></pre>
+
+        <h2 class="text-2xl font-bold text-white pt-6">3. Remote Kill Switch (SCRAM) &amp; Deadline Extension (<code>POST /v1/pdf/expire</code>)</h2>
+        <p class="text-slate-300 leading-relaxed">
+          Need to revoke a leaked proposal immediately, or extend a customer's quote deadline by 7 days without generating a new file? Call <code>POST /v1/pdf/expire</code> with <code>doc_id</code> or <code>file_id</code>:
+        </p>
+
+        <pre class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-emerald-300 font-mono text-xs overflow-x-auto leading-relaxed"><code># Immediately expire/revoke a document (SCRAM Kill Switch)
+curl -X POST https://tailprint.com/v1/pdf/expire \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "doc_id": "doc_a94f82c1e0b319a4",
+    "action": "expire_now",
+    "expire_message": "Proposal superseded by revised contract v2."
+  }'
+
+# Or extend the validity window by +7 days
+curl -X POST https://tailprint.com/v1/pdf/expire \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "doc_id": "doc_a94f82c1e0b319a4",
+    "action": "extend",
+    "extend_by": "7d"
+  }'</code></pre>
+      </section>
+    `,
+  },
 };
 
 export const guidesRoutes: FastifyPluginAsyncZod = async (fastify) => {
@@ -1860,6 +1951,7 @@ export const guidesRoutes: FastifyPluginAsyncZod = async (fastify) => {
   // 1. GET /guides - Knowledge Hub Listing
   fastify.get('/guides', { schema: { hide: true } }, async (_request, reply) => {
     const orderedSlugs = [
+      'time-limited-isotope-pdf-self-expiring-quotes',
       'neural-implant-pdf-spatial-cortex',
       'white-label-conversational-pdf-api',
       'dual-brain-pdf-zero-ocr-ai-extraction',

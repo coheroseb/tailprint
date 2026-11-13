@@ -76,6 +76,20 @@ export interface RenderPdfOptions {
   neural_custom_url?: string;
   /** Custom white-label title text on the clickable PDF badge. */
   neural_badge_label?: string;
+  /** Time-Limited Isotope PDF mode: half-life duration before expiration (e.g. "30m", "24h", "7d", "14d"). */
+  document_ttl?: string;
+  /** Alias for document_ttl. */
+  isotope_ttl?: string;
+  /** Explicit ISO-8601 expiration timestamp (e.g. "2026-12-31T23:59:59Z"). */
+  expires_at?: string;
+  /** How the hosted PDF behaves after expiration: "replace_and_stamp" (selective field decay + EXPIRED stamp), "replace_only" (field replacement only), or "lockout" (1-page expired certificate). */
+  expire_mode?: 'replace_and_stamp' | 'replace_only' | 'lockout';
+  /** Whether to draw a clickable "Check Live Validity" badge on the PDF when no custom [data-expire-button] is present. */
+  expire_badge?: boolean;
+  /** Custom expiration notice displayed when the document expires or is revoked. */
+  expire_message?: string;
+  /** Optional maximum number of reads/downloads before automatic expiration (Geiger read limit). */
+  max_reads?: number;
 }
 
 export interface SmartPdfVerificationReport {
@@ -97,6 +111,43 @@ export interface SmartPdfVerificationReport {
   data_hash: string | null;
   data: Record<string, unknown> | null;
   reasons: string[];
+  isotope?: boolean;
+  expired?: boolean;
+  revoked?: boolean;
+  expires_at?: string | null;
+  remaining_seconds?: number | null;
+  reads_count?: number;
+  max_reads?: number | null;
+  expire_message?: string | null;
+  hosted_file_id?: string | null;
+}
+
+export interface DocumentLifecycleOptions {
+  doc_id?: string;
+  file_id?: string;
+  action?: 'status' | 'expire_now' | 'extend';
+  extend_by?: string;
+  expires_at?: string;
+  expire_message?: string;
+  max_reads?: number;
+}
+
+export interface DocumentLifecycleResponse {
+  success: boolean;
+  doc_id: string;
+  file_id: string | null;
+  hosted_url: string | null;
+  verification_url: string;
+  action: 'status' | 'expire_now' | 'extend';
+  isotope: boolean;
+  expired: boolean;
+  revoked: boolean;
+  expires_at: string | null;
+  remaining_seconds: number | null;
+  reads_count: number;
+  max_reads: number | null;
+  expire_message: string | null;
+  message: string;
 }
 
 export interface BatchItemOptions {
@@ -720,6 +771,36 @@ export class Tailprint {
       body: isDocId
         ? { doc_id: pdfOrDocId }
         : { pdf: this.bufferToBase64(pdfOrDocId) },
+    });
+  }
+
+  /**
+   * Manages the real-time lifecycle of a Time-Limited Isotope PDF document (`status`, `expire_now`, or `extend`).
+   */
+  public async managePdfLifecycle(
+    options: DocumentLifecycleOptions
+  ): Promise<DocumentLifecycleResponse> {
+    return this.request('/v1/pdf/expire', {
+      body: options,
+    });
+  }
+
+  /**
+   * Immediately triggers the remote SCRAM Kill Switch on a Time-Limited Isotope PDF (`action: "expire_now"`),
+   * causing its hosted URL to transition to the pre-compiled Decayed PDF and locking its Dual-Brain / Neural Cortex data.
+   */
+  public async expirePdf(
+    docOrFileId: string,
+    expireMessage?: string
+  ): Promise<DocumentLifecycleResponse> {
+    const isDocId = docOrFileId.startsWith('doc_');
+    return this.request('/v1/pdf/expire', {
+      body: {
+        doc_id: isDocId ? docOrFileId : undefined,
+        file_id: isDocId ? undefined : docOrFileId,
+        action: 'expire_now',
+        expire_message: expireMessage,
+      },
     });
   }
 }

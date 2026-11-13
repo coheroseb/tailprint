@@ -30,6 +30,11 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           neural_badge_label: z.string().max(60).optional(),
           sign: z.boolean().default(false),
           verify_seal: z.boolean().default(false),
+          document_ttl: z.string().max(64).optional(),
+          expire_mode: z.enum(['replace_and_stamp', 'replace_only', 'lockout']).optional(),
+          expire_badge: z.boolean().default(true).optional(),
+          expire_message: z.string().max(500).optional(),
+          max_reads: z.coerce.number().int().min(1).max(100000).optional(),
           embed_data: z.record(z.unknown()).optional(),
         }),
       },
@@ -64,6 +69,11 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         neural_badge_label,
         sign,
         verify_seal,
+        document_ttl,
+        expire_mode,
+        expire_badge,
+        expire_message,
+        max_reads,
         embed_data,
       } = request.body;
 
@@ -78,18 +88,35 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         smart_pagination,
         print_background: true,
         ...(hasNeural ? { neural_implant: true } : {}),
+        ...(document_ttl ? { document_ttl } : {}),
+        ...(expire_mode ? { expire_mode } : {}),
+        ...(expire_message ? { expire_message } : {}),
+        ...(max_reads ? { max_reads } : {}),
       } as any);
 
       const customButtons = browserService.getCustomButtonPlacement(rawPdfBuffer);
       const effectiveNeural = Boolean(hasNeural || customButtons?.hasCustomNeuralButton);
+      const effectiveIsotope = Boolean(
+        document_ttl ||
+          max_reads ||
+          expire_mode ||
+          expire_message ||
+          customButtons?.hasCustomExpireButton ||
+          (customButtons?.isotopeElementCount && customButtons.isotopeElementCount > 0)
+      );
       const effectiveSign = Boolean(
-        sign || verify_seal || customButtons?.hasCustomVerifyButton || effectiveNeural
+        sign ||
+          verify_seal ||
+          customButtons?.hasCustomVerifyButton ||
+          effectiveNeural ||
+          effectiveIsotope
       );
 
       let finalPdfBuffer = rawPdfBuffer;
 
-      if (effectiveNeural || effectiveSign || embed_data) {
+      if (effectiveNeural || effectiveSign || effectiveIsotope || embed_data) {
         const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
+        const rawDecayedBuffer = browserService.getDecayedPdfBuffer(rawPdfBuffer);
         const enriched = await smartPdfService.enrichPdf(rawPdfBuffer, {
           customerId: 'studio-playground',
           templateId: null,
@@ -105,6 +132,16 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
           neuralBadgeLabel: neural_badge_label,
           hasCustomNeuralButton: customButtons?.hasCustomNeuralButton,
           hasCustomVerifyButton: customButtons?.hasCustomVerifyButton,
+          hasCustomExpireButton: customButtons?.hasCustomExpireButton,
+          isotopeElementCount: customButtons?.isotopeElementCount,
+          inferredIsotopeTtl: customButtons?.inferredIsotopeTtl,
+          isotope: effectiveIsotope,
+          documentTtl: document_ttl,
+          expireMode: expire_mode,
+          expireBadge: expire_badge,
+          expireMessage: expire_message,
+          maxReads: max_reads,
+          rawDecayedBuffer,
           domSynapses,
           noStore: false,
         });
@@ -112,6 +149,10 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         finalPdfBuffer = enriched.buffer;
         reply.header('X-Tailprint-Doc-Id', enriched.docId);
         reply.header('X-Tailprint-Verify-Url', `/verify/${enriched.docId}`);
+        if (enriched.isotope && enriched.expiresAt) {
+          reply.header('X-Tailprint-Isotope', 'true');
+          reply.header('X-Tailprint-Expires-At', enriched.expiresAt);
+        }
         if (enriched.cortex) {
           reply.header('X-Tailprint-Neural-Implant', 'true');
           reply.header('X-Tailprint-Brain-Url', `/brain/${enriched.docId}`);
@@ -411,6 +452,7 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         <div class="hidden xl:flex items-center space-x-1 text-[11px]">
           <span class="text-slate-500 font-mono text-[10px] mr-1">Insert:</span>
           <button onclick="insertSnippet('neural_btn')" class="px-2 py-0.5 rounded bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-500/40 text-indigo-300 font-mono font-bold transition" title="Insert 1-line clickable Neural Q&A button anywhere in your HTML">+ 🧠 Ask Button</button>
+          <button onclick="insertSnippet('isotope_span')" class="px-2 py-0.5 rounded bg-amber-950/90 hover:bg-amber-900 border border-amber-500/40 text-amber-300 font-mono font-bold transition" title="Insert Time-Limited Isotope field that auto-decays upon expiration">+ ⏱️ Isotope Field</button>
           <button onclick="insertSnippet('table')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert Smart Table with thead and no-split rows">+ Table</button>
           <button onclick="insertSnippet('pagebreak')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert explicit page break">+ Page Break</button>
           <button onclick="insertSnippet('signature')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition" title="Insert signature block protected from page break">+ Signature</button>
@@ -537,6 +579,61 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
                 <input id="chkVerifySeal" type="checkbox" checked onchange="syncNeuralControlsFromForm()" class="rounded bg-slate-950 border-slate-700 text-cyan-500" />
                 <span>Visual Seal (<code class="text-cyan-400 font-mono">verify_seal</code>)</span>
               </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time-Limited Isotope PDF (Half-Life & Auto-Decay) -->
+        <div class="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-amber-300 flex items-center space-x-1.5">
+                <span>⏱️ Time-Limited Isotope PDF (Half-Life &amp; Auto-Decay)</span>
+                <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] font-bold">NEW</span>
+              </h4>
+              <p class="text-[10px] text-slate-400 mt-0.5">
+                Set a half-life expiration window or Geiger read limit. Upon expiration (or manual SCRAM kill-switch), sensitive <code class="text-amber-300 font-mono">&lt;span data-isotope&gt;</code> fields self-redact and embedded AI/JSON payloads lock automatically.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Half-Life (<code class="text-amber-400 font-mono">document_ttl</code>)</label>
+              <select id="inputDocumentTtl" onchange="syncNeuralControlsFromForm()" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-white focus:outline-none focus:border-amber-500 font-mono">
+                <option value="">No expiration (Permanent)</option>
+                <option value="15m">15 minutes (15m)</option>
+                <option value="1h">1 hour (1h)</option>
+                <option value="24h">24 hours (24h)</option>
+                <option value="7d">7 days (7d)</option>
+                <option value="14d">14 days — Sales Quote (14d)</option>
+                <option value="30d">30 days — Contract Offer (30d)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Decay Mode (<code class="text-amber-400 font-mono">expire_mode</code>)</label>
+              <select id="inputExpireMode" onchange="syncNeuralControlsFromForm()" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-white focus:outline-none focus:border-amber-500 font-mono">
+                <option value="replace_and_stamp">Replace Fields + EXPIRED Stamp</option>
+                <option value="replace_only">Clean Field Replacement Only</option>
+                <option value="lockout">1-Page Lockout Certificate</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Geiger Limit (<code class="text-amber-400 font-mono">max_reads</code>)</label>
+              <input id="inputMaxReads" type="number" min="1" max="10000" placeholder="Unlimited reads" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-white focus:outline-none focus:border-amber-500 font-mono" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-semibold text-slate-400 mb-1">Expiration Notice (<code class="text-amber-400 font-mono">expire_message</code>)</label>
+            <input id="inputExpireMessage" type="text" placeholder="This quote has expired. Contact sales@company.com for an updated offer." class="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-white focus:outline-none focus:border-amber-500 font-mono" />
+          </div>
+
+          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-amber-300 flex flex-wrap items-center justify-between gap-2">
+            <code class="truncate">&lt;span data-isotope="14d" data-decayed="[EXPIRED]"&gt;85,000 DKK&lt;/span&gt;</code>
+            <div class="flex items-center space-x-1.5 shrink-0">
+              <button type="button" onclick="insertSnippet('isotope_span'); switchTab('html');" class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-slate-950 text-[10px] font-sans font-bold">+ Insert Isotope Field</button>
+              <button type="button" onclick="insertSnippet('expire_btn'); switchTab('html');" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 text-[10px] font-sans font-bold">+ Validity Button</button>
             </div>
           </div>
         </div>
@@ -788,6 +885,23 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
         if (badgeLabelEl && badgeLabelEl.value.trim()) {
           payload.neural_badge_label = badgeLabelEl.value.trim();
         }
+      }
+
+      var ttlEl = document.getElementById('inputDocumentTtl');
+      if (ttlEl && ttlEl.value) {
+        payload.document_ttl = ttlEl.value;
+      }
+      var modeEl = document.getElementById('inputExpireMode');
+      if (modeEl && modeEl.value && payload.document_ttl) {
+        payload.expire_mode = modeEl.value;
+      }
+      var maxReadsEl = document.getElementById('inputMaxReads');
+      if (maxReadsEl && maxReadsEl.value && parseInt(maxReadsEl.value, 10) > 0) {
+        payload.max_reads = parseInt(maxReadsEl.value, 10);
+      }
+      var expMsgEl = document.getElementById('inputExpireMessage');
+      if (expMsgEl && expMsgEl.value.trim()) {
+        payload.expire_message = expMsgEl.value.trim();
       }
 
       var varsEl = document.getElementById('varsEditor');
@@ -1119,6 +1233,14 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
               vel.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;font-family:system-ui,-apple-system,sans-serif;font-size:10.5px;font-weight:700;line-height:1.2;">' + vlbl + '</span>';
             }
           }
+          var expireEls = docEl.querySelectorAll('[data-expire-button], [data-isotope-button], [data-tailprint-expire-button], tailprint-expire-button');
+          for (var k = 0; k < expireEls.length; k++) {
+            var eel = expireEls[k];
+            if ((eel.textContent || '').trim().length === 0 && eel.children.length === 0) {
+              var elbl = eel.getAttribute('data-label') || eel.getAttribute('data-expire-button') || '⏱️ Time-Limited Document • Check Live Validity →';
+              eel.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;background:#fffbeb;border:1px solid #f59e0b;color:#92400e;font-family:system-ui,-apple-system,sans-serif;font-size:10.5px;font-weight:700;line-height:1.2;">' + elbl + '</span>';
+            }
+          }
           var minH = parseInt(paperCanvas.style.minHeight || '1123', 10);
           var h = Math.max(docEl.body.scrollHeight, minH);
           if (h && h > 100) {
@@ -1414,6 +1536,10 @@ export const studioRoutes: FastifyPluginAsyncZod = async (fastify) => {
       var snippet = '';
       if (type === 'neural_btn') {
         snippet = '\\n<div data-neural-button></div>\\n';
+      } else if (type === 'isotope_span') {
+        snippet = '<span data-isotope="14d" data-decayed="[QUOTE EXPIRED]">85,000 DKK (incl. 20% discount)</span>';
+      } else if (type === 'expire_btn') {
+        snippet = '\\n<div data-expire-button></div>\\n';
       } else if (type === 'table') {
         snippet = '\\n<div class="my-6">\\n  <table class="w-full text-left border-collapse border border-slate-200">\\n    <thead class="bg-slate-100 font-bold text-xs uppercase text-slate-700">\\n      <tr>\\n        <th class="p-3 border border-slate-200">Item</th>\\n        <th class="p-3 border border-slate-200 text-right">Qty</th>\\n        <th class="p-3 border border-slate-200 text-right">Price</th>\\n      </tr>\\n    </thead>\\n    <tbody class="divide-y divide-slate-200 text-xs text-slate-800">\\n      <tr><td class="p-3">Enterprise Cloud License</td><td class="p-3 text-right">1</td><td class="p-3 text-right">€499.00</td></tr>\\n      <tr><td class="p-3">Professional Support</td><td class="p-3 text-right">12</td><td class="p-3 text-right">€99.00</td></tr>\\n    </tbody>\\n  </table>\\n</div>\\n';
       } else if (type === 'pagebreak') {

@@ -35,6 +35,9 @@ export interface ExtractedDomSynapse {
 export interface CustomButtonPlacementInfo {
   hasCustomNeuralButton: boolean;
   hasCustomVerifyButton: boolean;
+  hasCustomExpireButton?: boolean;
+  isotopeElementCount?: number;
+  inferredIsotopeTtl?: string | null;
 }
 
 export class BrowserService {
@@ -44,6 +47,7 @@ export class BrowserService {
   private isInitializing = false;
   private domSynapseMap = new WeakMap<Buffer, ExtractedDomSynapse[]>();
   private customButtonMap = new WeakMap<Buffer, CustomButtonPlacementInfo>();
+  private decayedPdfMap = new WeakMap<Buffer, Buffer>();
 
   private constructor() {}
 
@@ -53,6 +57,10 @@ export class BrowserService {
 
   public getCustomButtonPlacement(pdfBuffer: Buffer): CustomButtonPlacementInfo | undefined {
     return this.customButtonMap.get(pdfBuffer);
+  }
+
+  public getDecayedPdfBuffer(pdfBuffer: Buffer): Buffer | undefined {
+    return this.decayedPdfMap.get(pdfBuffer);
   }
 
   public static getInstance(): BrowserService {
@@ -887,6 +895,103 @@ export class BrowserService {
           margin,
         });
 
+        const isIsotopeRender = Boolean(
+          (params as any).document_ttl ||
+            (params as any).isotope_ttl ||
+            (params as any).expires_at ||
+            (params as any).max_reads ||
+            (params as any).expire_mode ||
+            (params as any).expire_message ||
+            customButtons.hasCustomExpireButton ||
+            (customButtons.isotopeElementCount && customButtons.isotopeElementCount > 0)
+        );
+
+        let decayedPdfBuffer: Buffer | undefined;
+        if (isIsotopeRender && !params.password) {
+          try {
+            const expireMode = (params as any).expire_mode || 'replace_and_stamp';
+            const expireMessage =
+              ((params as any).expire_message as string | undefined)?.trim() ||
+              'This time-limited document has expired and is no longer valid.';
+
+            await page.evaluate(
+              ({ mode, msg }) => {
+                if (mode === 'lockout') {
+                  const docTitle = (document.title || 'Time-Limited Document').trim();
+                  document.body.innerHTML = `
+                    <div style="min-height:90vh;display:flex;align-items:center;justify-content:center;padding:48px;font-family:system-ui,-apple-system,sans-serif;background:#ffffff;color:#0f172a;">
+                      <div style="max-width:560px;width:100%;border:2px solid #ef4444;border-radius:16px;padding:40px;background:#fef2f2;box-shadow:0 10px 25px -5px rgba(239,68,68,0.12);">
+                        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:9999px;background:#fee2e2;color:#991b1b;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:20px;">
+                          ⛔ ISOTOPE HALF-LIFE EXPIRED • DOCUMENT LOCKED
+                        </div>
+                        <h1 style="font-size:26px;font-weight:800;color:#7f1d1d;margin:0 0 12px 0;line-height:1.25;">
+                          ${docTitle} — Expired
+                        </h1>
+                        <p style="font-size:14px;color:#991b1b;line-height:1.6;margin:0 0 24px 0;">
+                          ${msg}
+                        </p>
+                        <div style="padding:16px;border-radius:10px;background:#ffffff;border:1px solid #fecaca;font-size:12px;color:#475569;line-height:1.6;">
+                          <strong>Cryptographic Lifecycle Notice:</strong> The validity window or maximum read count for this document has elapsed. Sensitive figures, pricing terms, and Dual-Brain JSON payloads have been permanently decayed.
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                  return;
+                }
+
+                // Mutate all selective [data-isotope], [data-expire-replace], [data-decayed] elements in-place
+                const isotopeEls = Array.from(
+                  document.querySelectorAll('[data-isotope], [data-expire-replace], [data-decayed]')
+                );
+                for (const el of isotopeEls) {
+                  const replacement =
+                    el.getAttribute('data-decayed') ||
+                    el.getAttribute('data-expire-replace') ||
+                    (el.getAttribute('data-isotope') &&
+                    !/^\d+\s*(ms|s|m|h|d|w)$/i.test(el.getAttribute('data-isotope')!.trim())
+                      ? el.getAttribute('data-isotope')
+                      : null) ||
+                    '[EXPIRED]';
+
+                  el.textContent = replacement;
+                  const htmlEl = el as HTMLElement;
+                  htmlEl.style.backgroundColor = '#fef2f2';
+                  htmlEl.style.color = '#991b1b';
+                  htmlEl.style.border = '1px solid #fca5a5';
+                  htmlEl.style.borderRadius = '4px';
+                  htmlEl.style.padding = '1px 6px';
+                  htmlEl.style.fontWeight = '700';
+                  htmlEl.style.textDecoration = 'none';
+                }
+
+                // Update custom expire buttons to show EXPIRED state
+                const expireBtns = Array.from(
+                  document.querySelectorAll(
+                    '[data-expire-button], [data-isotope-button], [data-tailprint-expire-button], tailprint-expire-button'
+                  )
+                );
+                for (const btn of expireBtns) {
+                  btn.innerHTML = `<a href="https://tailprint.internal/__EXPIRE_STATUS_URL__" style="text-decoration:none;display:inline-block;"><span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#fef2f2;border:1px solid #ef4444;color:#991b1b;font-family:system-ui,-apple-system,sans-serif;font-size:10.5px;font-weight:800;line-height:1.2;">⛔ DOCUMENT EXPIRED • NO LONGER VALID</span></a>`;
+                }
+              },
+              { mode: expireMode, msg: expireMessage }
+            );
+
+            const rawDecayed = await page.pdf({
+              format: params.format,
+              landscape: params.landscape,
+              printBackground: params.print_background,
+              displayHeaderFooter: hasHeaderFooter,
+              headerTemplate: params.header_html || '<span></span>',
+              footerTemplate: params.footer_html || '<span></span>',
+              margin,
+            });
+            decayedPdfBuffer = Buffer.from(rawDecayed);
+          } catch {
+            // Ignore decayed pre-render fallback error
+          }
+        }
+
         // Optional AES-256 PDF encryption with user and optional owner password
         if (params.password) {
           const encrypted = await encryptPDF(
@@ -900,8 +1005,16 @@ export class BrowserService {
         if (extractedSynapses && extractedSynapses.length > 0) {
           this.domSynapseMap.set(pdfBuffer, extractedSynapses);
         }
-        if (customButtons.hasCustomNeuralButton || customButtons.hasCustomVerifyButton) {
+        if (
+          customButtons.hasCustomNeuralButton ||
+          customButtons.hasCustomVerifyButton ||
+          customButtons.hasCustomExpireButton ||
+          (customButtons.isotopeElementCount && customButtons.isotopeElementCount > 0)
+        ) {
           this.customButtonMap.set(pdfBuffer, customButtons);
+        }
+        if (decayedPdfBuffer) {
+          this.decayedPdfMap.set(pdfBuffer, decayedPdfBuffer);
         }
 
         return pdfBuffer;
@@ -912,11 +1025,12 @@ export class BrowserService {
   }
 
   /**
-   * Detects user-placed HTML elements like `<div data-neural-button></div>` or
-   * `<div data-verify-button></div>` anywhere in the DOM, populates a sleek default
-   * vector pill if the element is empty, and wraps it in an `<a>` pointing to a
-   * canonical placeholder URI so Chromium's native PDF engine creates an exact
-   * ISO-32000 `/Link` annotation at the user's chosen coordinates.
+   * Detects user-placed HTML elements like `<div data-neural-button></div>`,
+   * `<div data-verify-button></div>`, `<div data-expire-button></div>`, or
+   * `<span data-isotope="14d" data-decayed="[EXPIRED]">...</span>` anywhere in the DOM,
+   * populates sleek default vector pills if the button elements are empty, and wraps them
+   * in an `<a>` pointing to a canonical placeholder URI so Chromium's native PDF engine
+   * creates an exact ISO-32000 `/Link` annotation at the user's chosen coordinates.
    */
   public async prepareInteractiveDomButtons(
     page: Page,
@@ -938,6 +1052,26 @@ export class BrowserService {
               '[data-verify-button], [data-tailprint-verify-seal], tailprint-verify-seal'
             )
           );
+          const expireEls = Array.from(
+            document.querySelectorAll(
+              '[data-expire-button], [data-isotope-button], [data-tailprint-expire-button], tailprint-expire-button'
+            )
+          );
+          const isotopeSpanEls = Array.from(
+            document.querySelectorAll('[data-isotope], [data-expire-replace], [data-decayed]')
+          );
+
+          let inferredIsotopeTtl: string | null = null;
+          for (const el of isotopeSpanEls) {
+            const attrTtl =
+              el.getAttribute('data-ttl') ||
+              el.getAttribute('data-expires-in') ||
+              el.getAttribute('data-isotope');
+            if (attrTtl && /^\d+(?:\.\d+)?\s*(ms|s|sec|secs|m|min|mins|h|hr|hrs|d|day|days|w|wk|wks)$/i.test(attrTtl.trim())) {
+              inferredIsotopeTtl = attrTtl.trim();
+              break;
+            }
+          }
 
           for (const el of neuralEls) {
             const customLabel =
@@ -980,15 +1114,45 @@ export class BrowserService {
             }
           }
 
+          for (const el of expireEls) {
+            const customLabel =
+              el.getAttribute('data-label') ||
+              el.getAttribute('data-expire-button') ||
+              el.getAttribute('data-isotope-button') ||
+              '⏱️ Time-Limited Document • Check Live Validity →';
+            const hasContent = (el.textContent || '').trim().length > 0 || el.children.length > 0;
+
+            if (!hasContent) {
+              el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;background:#fffbeb;border:1px solid #f59e0b;color:#92400e;font-family:system-ui,-apple-system,sans-serif;font-size:10.5px;font-weight:700;line-height:1.2;text-decoration:none;">${customLabel}</span>`;
+            }
+
+            if (el.tagName.toLowerCase() === 'a') {
+              el.setAttribute('href', 'https://tailprint.internal/__EXPIRE_STATUS_URL__');
+              (el as HTMLElement).style.textDecoration = 'none';
+            } else if (!el.querySelector('a[href*="__EXPIRE_STATUS_URL__"]')) {
+              const inner = el.innerHTML;
+              el.innerHTML = `<a href="https://tailprint.internal/__EXPIRE_STATUS_URL__" style="text-decoration:none;color:inherit;display:inline-block;">${inner}</a>`;
+            }
+          }
+
           return {
             hasCustomNeuralButton: neuralEls.length > 0,
             hasCustomVerifyButton: verifyEls.length > 0,
+            hasCustomExpireButton: expireEls.length > 0,
+            isotopeElementCount: isotopeSpanEls.length,
+            inferredIsotopeTtl,
           };
         },
         { fallbackLabel: defaultNeuralLabel }
       );
     } catch {
-      return { hasCustomNeuralButton: false, hasCustomVerifyButton: false };
+      return {
+        hasCustomNeuralButton: false,
+        hasCustomVerifyButton: false,
+        hasCustomExpireButton: false,
+        isotopeElementCount: 0,
+        inferredIsotopeTtl: null,
+      };
     }
   }
 
@@ -1040,7 +1204,7 @@ export class BrowserService {
             if (results.length >= 120) break;
             if (
               el.closest(
-                '[data-neural-button], [data-tailprint-neural-button], [data-neural-ask], tailprint-neural-button, [data-verify-button], [data-tailprint-verify-seal], tailprint-verify-seal'
+                '[data-neural-button], [data-tailprint-neural-button], [data-neural-ask], tailprint-neural-button, [data-verify-button], [data-tailprint-verify-seal], tailprint-verify-seal, [data-expire-button], [data-isotope-button], [data-tailprint-expire-button], tailprint-expire-button'
               )
             ) {
               continue;

@@ -209,8 +209,19 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       Boolean(body.neural_custom_url) ||
       Boolean(body.neural_badge_label);
 
+    const hasIsotope =
+      Boolean(body.document_ttl) ||
+      Boolean(body.isotope_ttl) ||
+      Boolean(body.expires_at) ||
+      Boolean(body.max_reads) ||
+      Boolean(body.expire_mode) ||
+      Boolean(body.expire_message) ||
+      Boolean(customButtons?.hasCustomExpireButton) ||
+      Boolean(customButtons?.isotopeElementCount && customButtons.isotopeElementCount > 0);
+
     const shouldEnrich =
       hasNeuralImplant ||
+      hasIsotope ||
       Boolean(customButtons?.hasCustomVerifyButton) ||
       Boolean(body.sign) ||
       Boolean(body.verify_seal) ||
@@ -233,6 +244,7 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     }
 
     const domSynapses = browserService.getExtractedDomSynapses(rawPdfBuffer);
+    const rawDecayedBuffer = browserService.getDecayedPdfBuffer(rawPdfBuffer);
 
     const enriched = await smartPdfService.enrichPdf(rawPdfBuffer, {
       customerId,
@@ -244,7 +256,8 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           body.verify_seal ||
           body.verify_custom_url ||
           customButtons?.hasCustomVerifyButton ||
-          hasNeuralImplant
+          hasNeuralImplant ||
+          hasIsotope
       ),
       verifySeal: Boolean(body.verify_seal || body.verify_custom_url),
       verifyCustomUrl: body.verify_custom_url,
@@ -256,6 +269,17 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
       neuralBadgeLabel: body.neural_badge_label,
       hasCustomNeuralButton: customButtons?.hasCustomNeuralButton,
       hasCustomVerifyButton: customButtons?.hasCustomVerifyButton,
+      hasCustomExpireButton: customButtons?.hasCustomExpireButton,
+      isotopeElementCount: customButtons?.isotopeElementCount,
+      inferredIsotopeTtl: customButtons?.inferredIsotopeTtl,
+      isotope: hasIsotope,
+      documentTtl: body.document_ttl || body.isotope_ttl,
+      expiresAt: body.expires_at,
+      expireMode: body.expire_mode,
+      expireBadge: body.expire_badge,
+      expireMessage: body.expire_message,
+      maxReads: body.max_reads,
+      rawDecayedBuffer,
       domSynapses,
       noStore: Boolean(body.no_store),
     });
@@ -266,6 +290,13 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
     extraHeaders['X-Tailprint-Doc-Id'] = enriched.docId;
     extraHeaders['X-Tailprint-AI-Ready'] = String(enriched.manifest.ai_ready);
     extraHeaders['X-Tailprint-Verify-Url'] = enriched.manifest.verification_url;
+
+    if (enriched.isotope && enriched.expiresAt) {
+      reply.header('X-Tailprint-Isotope', 'true');
+      reply.header('X-Tailprint-Expires-At', enriched.expiresAt);
+      extraHeaders['X-Tailprint-Isotope'] = 'true';
+      extraHeaders['X-Tailprint-Expires-At'] = enriched.expiresAt;
+    }
 
     if (enriched.cortex) {
       reply.header('X-Tailprint-Neural-Implant', 'true');
@@ -431,8 +462,23 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           mimeType: 'application/pdf',
           extension: 'pdf',
           filename: 'document.pdf',
-          expiresIn: request.body.expires_in,
+          expiresIn:
+            request.body.document_ttl ||
+            request.body.isotope_ttl ||
+            request.body.expires_in,
+          expiresAt: enriched?.expiresAt || request.body.expires_at,
+          docId: enriched?.docId || null,
+          isotope: enriched?.isotope,
+          decayedBuffer: enriched?.decayedBuffer,
+          expireMessage: request.body.expire_message || null,
+          maxReads: request.body.max_reads ?? null,
         });
+
+        if (enriched?.docId && !request.body.no_store) {
+          await redisService.updatePdfProof(enriched.docId, {
+            hosted_file_id: stored.fileId,
+          });
+        }
 
         const storedBody = {
           success: true,
@@ -447,8 +493,12 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
                 docId: enriched.docId,
                 aiReady: enriched.manifest.ai_ready,
                 signed: enriched.manifest.signed,
+                neuralImplant: Boolean(enriched.cortex),
+                isotope: enriched.isotope,
+                maxReads: enriched.manifest.max_reads ?? null,
                 signature: enriched.manifest.signature,
                 verifyUrl: enriched.manifest.verification_url,
+                brainUrl: enriched.cortex ? enriched.cortex.brain_url : null,
               }
             : {}),
         };
@@ -642,8 +692,23 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
           mimeType: 'application/pdf',
           extension: 'pdf',
           filename: 'document.pdf',
-          expiresIn: request.body.expires_in,
+          expiresIn:
+            request.body.document_ttl ||
+            request.body.isotope_ttl ||
+            request.body.expires_in,
+          expiresAt: enriched?.expiresAt || request.body.expires_at,
+          docId: enriched?.docId || null,
+          isotope: enriched?.isotope,
+          decayedBuffer: enriched?.decayedBuffer,
+          expireMessage: request.body.expire_message || null,
+          maxReads: request.body.max_reads ?? null,
         });
+
+        if (enriched?.docId && !request.body.no_store) {
+          await redisService.updatePdfProof(enriched.docId, {
+            hosted_file_id: stored.fileId,
+          });
+        }
 
         const storedBody = {
           success: true,
@@ -658,8 +723,12 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
                 docId: enriched.docId,
                 aiReady: enriched.manifest.ai_ready,
                 signed: enriched.manifest.signed,
+                neuralImplant: Boolean(enriched.cortex),
+                isotope: enriched.isotope,
+                maxReads: enriched.manifest.max_reads ?? null,
                 signature: enriched.manifest.signature,
                 verifyUrl: enriched.manifest.verification_url,
+                brainUrl: enriched.cortex ? enriched.cortex.brain_url : null,
               }
             : {}),
         };
@@ -1061,14 +1130,35 @@ export const renderRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
       }
 
+      if (file.metadata.docId && file.metadata.isotope && !file.decayed) {
+        await redisService.updatePdfProof(file.metadata.docId, {
+          reads_count: file.metadata.readsCount || 1,
+        });
+      }
+
       const disposition = download ? 'attachment' : 'inline';
+      const isIsotopeFile = Boolean(file.metadata.isotope || file.metadata.hasDecayedFile);
+      const cacheControl = isIsotopeFile
+        ? 'no-store, no-cache, must-revalidate'
+        : 'public, max-age=86400, immutable';
+
+      if (isIsotopeFile) {
+        reply.header('X-Tailprint-Isotope', 'true');
+        reply.header('X-Tailprint-Isotope-Status', file.decayed ? 'decayed' : 'active');
+        if (file.metadata.readsCount !== undefined) {
+          reply.header('X-Tailprint-Reads-Count', String(file.metadata.readsCount));
+        }
+        if (file.metadata.maxReads) {
+          reply.header('X-Tailprint-Max-Reads', String(file.metadata.maxReads));
+        }
+      }
 
       return reply
         .code(200)
         .header('Content-Type', file.metadata.mimeType)
         .header('Content-Length', String(file.buffer.length))
         .header('Content-Disposition', `${disposition}; filename="${file.metadata.filename}"`)
-        .header('Cache-Control', 'public, max-age=86400, immutable')
+        .header('Cache-Control', cacheControl)
         .header('X-Tailprint-Expires-At', file.metadata.expiresAt)
         .send(file.buffer);
     }

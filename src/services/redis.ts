@@ -60,6 +60,15 @@ export interface PdfProofRecord {
   data_keys: string[];
   signature: string | null;
   verification_url: string;
+  isotope?: boolean;
+  expires_at?: string | null;
+  revoked?: boolean;
+  revoked_at?: string | null;
+  expire_message?: string | null;
+  max_reads?: number | null;
+  reads_count?: number;
+  hosted_file_id?: string | null;
+  decayed_elements_count?: number;
 }
 
 // In-Memory store fallback for local development or tests when Upstash is not configured
@@ -779,6 +788,21 @@ export class RedisService {
     const docId = await this.client.get<string>(`pdf_proof_sha256:${fileSha256.trim().toLowerCase()}`);
     if (!docId || typeof docId !== 'string') return null;
     return this.getPdfProof(docId);
+  }
+
+  public async updatePdfProof(
+    docId: string,
+    patch: Partial<PdfProofRecord>,
+    ttlSeconds = 30 * 86400
+  ): Promise<PdfProofRecord | null> {
+    const existing = await this.getPdfProof(docId);
+    if (!existing) return null;
+    const updated: PdfProofRecord = {
+      ...existing,
+      ...patch,
+    };
+    await this.savePdfProof(updated, ttlSeconds);
+    return updated;
   }
 
   public async savePdfCortex(

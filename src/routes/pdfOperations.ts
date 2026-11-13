@@ -15,6 +15,8 @@ import {
   AskPdfRequestSchema,
   GetCortexRequestSchema,
   NeuralAskResponseSchema,
+  DocumentLifecycleRequestSchema,
+  DocumentLifecycleResponseSchema,
 } from '../schemas/pdfOperations.js';
 import { HostedFileResponseSchema, ErrorResponseSchema } from '../schemas/render.js';
 import { pdfOperationsService } from '../services/pdfOperations.js';
@@ -585,6 +587,8 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
       }
 
+      const isoState = await smartPdfService.evaluateIsotopeState(docId, null, false);
+
       return reply.code(200).send({
         found: true,
         doc_id: proof.doc_id,
@@ -592,7 +596,7 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         issuer: proof.customer_id,
         template_id: proof.template_id,
         signed: proof.signed,
-        ai_ready: proof.ai_ready,
+        ai_ready: proof.ai_ready && !isoState.expired,
         page_count: proof.page_count,
         file_sha256: proof.file_sha256,
         content_fingerprint: proof.content_fingerprint,
@@ -600,6 +604,15 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         data_keys: proof.data_keys || [],
         signature: proof.signature,
         verification_url: proof.verification_url,
+        isotope: isoState.isotope,
+        expired: isoState.expired,
+        revoked: isoState.revoked,
+        expires_at: isoState.expires_at,
+        remaining_seconds: isoState.remaining_seconds,
+        reads_count: isoState.reads_count,
+        max_reads: isoState.max_reads,
+        expire_message: isoState.expire_message,
+        hosted_file_id: proof.hosted_file_id || null,
       });
     }
   );
@@ -720,5 +733,61 @@ export const pdfOperationsRoutes: FastifyPluginAsyncZod = async (fastify) => {
         });
       }
     }
+  );
+
+  // 12. POST /v1/pdf/expire & POST /v1/pdf/lifecycle - Real-Time Isotope PDF Lifecycle Control (Status, Expire Now / SCRAM, Extend TTL)
+  const lifecycleHandler = async (request: any, reply: any) => {
+    const { doc_id, file_id, action, extend_by, expires_at, expire_message, max_reads } =
+      request.body;
+
+    try {
+      const report = await smartPdfService.manageDocumentLifecycle({
+        docId: doc_id,
+        fileId: file_id,
+        action: action || 'status',
+        extendBy: extend_by,
+        expiresAt: expires_at,
+        expireMessage: expire_message,
+        maxReads: max_reads,
+      });
+
+      return reply.code(200).send(report);
+    } catch (err: any) {
+      return reply.code(404).send({
+        statusCode: 404,
+        error: 'Not Found',
+        message: err.message || 'Failed to manage document lifecycle',
+      });
+    }
+  };
+
+  fastify.post(
+    '/v1/pdf/expire',
+    {
+      schema: {
+        tags: ['Dual-Brain & Cryptographic Proof'],
+        summary: 'Manage Time-Limited Isotope PDF Lifecycle (SCRAM / Expire Now, Extend TTL, Status)',
+        description:
+          'Remotely controls the lifecycle of a Time-Limited Isotope PDF by doc_id or file_id. Trigger action: "expire_now" (SCRAM Kill Switch) to immediately expire a sent quote/contract and switch its hosted PDF to its decayed state, or action: "extend" (e.g. extend_by: "7d") to extend the deadline without re-rendering.',
+        body: DocumentLifecycleRequestSchema,
+        response: {
+          200: DocumentLifecycleResponseSchema,
+          400: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+        },
+      },
+    },
+    lifecycleHandler
+  );
+
+  fastify.post(
+    '/v1/pdf/lifecycle',
+    {
+      schema: {
+        hide: true,
+        body: DocumentLifecycleRequestSchema,
+      },
+    },
+    lifecycleHandler
   );
 };

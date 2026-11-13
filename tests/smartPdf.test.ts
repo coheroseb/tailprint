@@ -413,4 +413,150 @@ describe('Dual-Brain PDFs (Zero-OCR) & Cryptographic Proof-of-Origin', () => {
     // Exactly 1 /Link annotation from the user's <div data-neural-button></div> (no duplicate bottom-left badge)
     expect(annots!.size()).toBe(1);
   });
+
+  it('supports Time-Limited Isotope PDFs with selective <span data-isotope> decay, AES-256-GCM Dual-Brain lock, SCRAM Kill Switch (POST /v1/pdf/expire), and deadline extension', async () => {
+    // 1. Render a stored Time-Limited Isotope PDF with <span data-isotope="14d" data-decayed="[TILBUD UDLØBET]">
+    const storeRes = await app.inject({
+      method: 'POST',
+      url: '/v1/render/pdf',
+      headers: { authorization: authHeader },
+      payload: {
+        html: `
+          <div class="p-10 font-sans">
+            <h1>Enterprise Kundetilbud #ISO-2026</h1>
+            <p>Kampagnepris: <span data-isotope="14d" data-decayed="[TILBUD UDLØBET — KONTAKT SALG]">85.000 DKK ekskl. moms</span></p>
+            <div data-expire-button></div>
+          </div>
+        `,
+        store: true,
+        embed_data: {
+          quote_id: 'ISO-2026',
+          special_price_dkk: 85000,
+          discount_code: 'VIP-25-OFF',
+        },
+        neural_implant: true,
+        neural_context: {
+          internal_margin: 'Kampagneprisen på 85.000 DKK gælder kun indtil udløbsdatoen.',
+        },
+        expire_message: 'Tilbuddet #ISO-2026 er udløbet.',
+      },
+    });
+
+    expect(storeRes.statusCode).toBe(200);
+    const storedBody = storeRes.json();
+    expect(storedBody.success).toBe(true);
+    expect(storedBody.isotope).toBe(true);
+    expect(storedBody.docId).toMatch(/^doc_/);
+    expect(storedBody.fileId).toMatch(/\.pdf$/);
+
+    const docId = storedBody.docId as string;
+    const fileId = storedBody.fileId as string;
+
+    // 2. Fetch the hosted PDF while ACTIVE -> should return X-Tailprint-Isotope-Status: active
+    const activeDownload = await app.inject({
+      method: 'GET',
+      url: `/d/${fileId}`,
+    });
+    expect(activeDownload.statusCode).toBe(200);
+    expect(activeDownload.headers['x-tailprint-isotope-status']).toBe('active');
+    const activePdfBuffer = activeDownload.rawPayload;
+
+    // 3. Verify the active PDF via POST /v1/pdf/verify -> should be valid: true, expired: false, and decrypt Dual-Brain data!
+    const verifyActiveRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/verify',
+      payload: { pdf: activePdfBuffer.toString('base64') },
+    });
+    expect(verifyActiveRes.statusCode).toBe(200);
+    const activeReport = verifyActiveRes.json();
+    expect(activeReport.valid).toBe(true);
+    expect(activeReport.isotope).toBe(true);
+    expect(activeReport.expired).toBe(false);
+    expect(activeReport.data).toEqual({
+      quote_id: 'ISO-2026',
+      special_price_dkk: 85000,
+      discount_code: 'VIP-25-OFF',
+    });
+
+    // 4. Trigger Remote SCRAM Kill Switch (POST /v1/pdf/expire with action: "expire_now")
+    const scramRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/expire',
+      payload: {
+        doc_id: docId,
+        action: 'expire_now',
+        expire_message: 'Tilbuddet blev tilbagekaldt af salgsafdelingen.',
+      },
+    });
+    expect(scramRes.statusCode).toBe(200);
+    const scramJson = scramRes.json();
+    expect(scramJson.expired).toBe(true);
+    expect(scramJson.revoked).toBe(true);
+
+    // 5. Fetch the SAME hosted URL (/d/:fileId) -> now seamlessly serves the pre-compiled Decayed PDF!
+    const decayedDownload = await app.inject({
+      method: 'GET',
+      url: `/d/${fileId}`,
+    });
+    expect(decayedDownload.statusCode).toBe(200);
+    expect(decayedDownload.headers['x-tailprint-isotope-status']).toBe('decayed');
+    expect(Buffer.compare(activePdfBuffer, decayedDownload.rawPayload)).not.toBe(0);
+
+    // 6. Verify that EVEN the previously downloaded activePdfBuffer now reports expired: true and withholds Dual-Brain JSON!
+    const verifyAfterExpireRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/verify',
+      payload: { pdf: activePdfBuffer.toString('base64') },
+    });
+    expect(verifyAfterExpireRes.statusCode).toBe(200);
+    const expiredReport = verifyAfterExpireRes.json();
+    expect(expiredReport.valid).toBe(false);
+    expect(expiredReport.expired).toBe(true);
+    expect(expiredReport.revoked).toBe(true);
+    expect(expiredReport.data).toBeNull();
+
+    // 7. Verify that POST /v1/pdf/ask refuses to answer questions on an expired/revoked Isotope PDF
+    const askExpiredRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/ask',
+      payload: {
+        doc_id: docId,
+        question: 'Hvad er kampagneprisen?',
+      },
+    });
+    expect(askExpiredRes.statusCode).toBe(400);
+    const askExpiredJson = askExpiredRes.json();
+    expect(askExpiredJson.message).toMatch(/EXPIRED|REVOKED|tilbagekaldt/i);
+
+    // 8. Extend the document's lifetime by +7d (POST /v1/pdf/expire with action: "extend") -> reactivates the document!
+    const extendRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/expire',
+      payload: {
+        doc_id: docId,
+        action: 'extend',
+        extend_by: '7d',
+      },
+    });
+    expect(extendRes.statusCode).toBe(200);
+    const extendJson = extendRes.json();
+    expect(extendJson.expired).toBe(false);
+    expect(extendJson.revoked).toBe(false);
+    expect(extendJson.remaining_seconds).toBeGreaterThan(86400);
+
+    // 9. Confirm /d/:fileId is active again and /v1/pdf/verify decrypts data again!
+    const reactivatedDownload = await app.inject({
+      method: 'GET',
+      url: `/d/${fileId}`,
+    });
+    expect(reactivatedDownload.headers['x-tailprint-isotope-status']).toBe('active');
+
+    const verifyReactivatedRes = await app.inject({
+      method: 'POST',
+      url: '/v1/pdf/verify',
+      payload: { pdf: activePdfBuffer.toString('base64') },
+    });
+    expect(verifyReactivatedRes.json().valid).toBe(true);
+    expect(verifyReactivatedRes.json().data.special_price_dkk).toBe(85000);
+  });
 });
